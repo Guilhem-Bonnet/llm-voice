@@ -23,8 +23,14 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./out/src/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": "profiles.json",
+        "url": "./schemas/profile-collection.schema.json"
+      }
+    ],
     "commands": [
       { "command": "llmVoice.speakDocument", "title": "LLM Voice: Speak Document", "category": "LLM Voice" },
       { "command": "llmVoice.speakSelection", "title": "LLM Voice: Speak Selection", "category": "LLM Voice" },
@@ -198,10 +204,13 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p ./ --noEmit",
     "test:unit": "vitest run --config vitest.config.ts",
-    "test:integration": "npm run compile && vscode-test",
+    "bundle": "node scripts/esbuild.mjs",
     "generate:icon": "node scripts/generate-icon.mjs",
-    "package": "npm run generate:icon && vsce package --no-dependencies -o llm-voice.vsix",
-    "vscode:prepublish": "npm run compile"
+    "generate:profile-schema": "node scripts/generate-profile-schema.mjs",
+    "build": "npm run compile && npm run generate:profile-schema && npm run bundle",
+    "test:integration": "npm run build && vscode-test",
+    "package": "npm run generate:icon && npm run build && vsce package --no-dependencies -o llm-voice.vsix",
+    "vscode:prepublish": "npm run build"
   },
   "dependencies": {
     "mdast-util-to-string": "^4.0.0",

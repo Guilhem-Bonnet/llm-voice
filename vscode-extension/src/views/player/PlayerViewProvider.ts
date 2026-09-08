@@ -1,8 +1,7 @@
 /**
  * Mini-player `WebviewView` (ADR-001, ADR-011): a passive, three-line player
  * hosted in the Panel. It owns no playback state — `WebviewAudioSink` relays
- * the D4 protocol to/from it, and `NotWiredPipeline` (S3.4) or the real
- * pipeline (S3.5) decides what to send.
+ * the D4 protocol to/from it, and `Pipeline` (S3.5) decides what to send.
  */
 
 import * as vscode from "vscode";
@@ -32,6 +31,19 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
   /** The sink other layers (the future PlaybackController) talk to. */
   get audioSink(): WebviewAudioSink {
     return this.sink;
+  }
+
+  /**
+   * `localResourceRoots` this provider configures the webview with (ADR-001):
+   * only the audio cache and the extension's `media/` folder. Exposed as
+   * plain fs paths for `Verify Local Mode` check #7 (`src/net/verifyLocalMode.ts`)
+   * without requiring a live, resolved webview.
+   */
+  get localResourceRoots(): readonly string[] {
+    return [
+      vscode.Uri.joinPath(this.globalStorageUri, "cache").fsPath,
+      vscode.Uri.joinPath(this.extensionUri, "media").fsPath
+    ];
   }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {

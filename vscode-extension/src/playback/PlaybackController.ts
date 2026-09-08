@@ -532,11 +532,20 @@ function chunksFrom(
   }));
 }
 
-/** Extracts the synthesis binding a profile declares (ADR-005). */
+/**
+ * Extracts the synthesis binding a profile declares (ADR-005).
+ *
+ * `tts.providerId` is optional on the profile (fix(review): resolved against
+ * `llmVoice.tts.provider` by `Pipeline.ttsFor`, `resolveTtsConfig`) — when the
+ * profile omits it, `AudioQueueBinding.providerId` is left unset too, and
+ * `AudioQueue` falls back to `tts.id` for the cache key, which is already the
+ * *resolved* provider id (`Pipeline.ttsFor` builds the `TtsProvider.id` from
+ * `resolveTtsConfig`'s output), never the unresolved, possibly-absent one.
+ */
 function bindingFrom(profile: VoiceProfile) {
   return {
-    providerId: profile.tts.providerId,
     language: profile.language,
+    ...(profile.tts.providerId !== undefined ? { providerId: profile.tts.providerId } : {}),
     ...(profile.tts.model !== undefined ? { model: profile.tts.model } : {}),
     ...(profile.tts.voice !== undefined ? { voice: profile.tts.voice } : {}),
     ...(profile.tts.parameters !== undefined

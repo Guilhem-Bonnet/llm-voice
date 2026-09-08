@@ -184,6 +184,7 @@ async function narrateGroup(
     language: profile.language,
     mode: profile.mode,
     outputContract: "narration-segments",
+    ...(profile.style !== undefined ? { style: profile.style } : {}),
     ...(options.maxOutputTokens !== undefined
       ? { maxOutputTokens: options.maxOutputTokens }
       : {}),
