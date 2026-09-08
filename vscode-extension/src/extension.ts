@@ -62,6 +62,9 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
       case "selectProfile":
         void pipeline.selectProfile();
         break;
+      case "openInbox":
+        void pipeline.openInbox();
+        break;
       default:
         break;
     }

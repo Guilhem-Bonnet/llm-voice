@@ -13,7 +13,7 @@ import {
 
 export type { StatusBarPlaybackState, StatusBarViewModel } from "./statusBarText.js";
 
-type QuickPickChoice = "resume" | "stop" | "selectProfile";
+type QuickPickChoice = "resume" | "stop" | "selectProfile" | "openInbox";
 
 interface QuickPickItemWithChoice extends vscode.QuickPickItem {
   choice: QuickPickChoice;
@@ -32,7 +32,9 @@ export class StatusBar implements vscode.Disposable {
     private readonly onChoice: (choice: QuickPickChoice) => void,
     commandId: string
   ) {
-    this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    // ADR-011: aligné à droite, priorité basse (VS Code place les priorités
+    // basses vers l'extrémité droite de la barre, loin du centre).
+    this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1);
     this.item.command = commandId;
     this.item.name = "LLM Voice";
     this.render();
@@ -53,7 +55,8 @@ export class StatusBar implements vscode.Disposable {
     const items: QuickPickItemWithChoice[] = [
       { label: "$(play) Reprendre", choice: "resume" },
       { label: "$(debug-stop) Arrêter", choice: "stop" },
-      { label: "$(mic) Changer de profil", choice: "selectProfile" }
+      { label: "$(mic) Changer de profil", choice: "selectProfile" },
+      { label: "$(inbox) Ouvrir l'inbox", choice: "openInbox" }
     ];
     const picked = await vscode.window.showQuickPick(items, {
       placeHolder: "LLM Voice"
