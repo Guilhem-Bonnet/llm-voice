@@ -71,3 +71,8 @@
 - **Décision** : D10 `EgressGuard` unique + CSP `connect-src 'none'` + commande Verify Local Mode + recette pare-feu Linux ; D11 ROCm 7.2 conteneur RDNA4 pour Chatterbox, Piper comme TTS léger FR sans GPU (openedai-speech archivé, wrapper actif ou maison), checklist Linux 1.0 ; D12 layout minimal (status bar + Quick Picks + CodeLens + mini-player 3 lignes dans le Panel), container complet en option `llmVoice.ui.layout`.
 - **Alternatives rejetées** : Secondary Side Bar par défaut (non ciblable par une extension) ; View Container complet par défaut (place) ; espeak comme niveau léger (qualité).
 - **Agent** : concierge (Marcel) sur études general-purpose (Sonnet)
+
+### [2026-09-08] Phase 1 livrée : repo public llm-voice, CI verte, protection active
+- **Contexte** : exécution après revue Sentinel (GO avec corrections).
+- **Décision** : repo https://github.com/Guilhem-Bonnet/llm-voice ; commit racine 99c640e ; HEAD 17fbf8e ; 7 jobs CI requis ; plus de merge `--admin` à partir de la phase 2 ; triage des 10 PR Dependabot confié à Flow (Haiku) en ouverture de phase 2.
+- **Agent** : concierge (Marcel) ; exécution pipeline-architect (Sonnet)
