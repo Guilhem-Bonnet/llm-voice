@@ -89,3 +89,8 @@
 - **Contexte** : 3 PR d'agents (#16, #17, #18) revues par Sentinel puis mergées ; 45 tests unitaires verts.
 - **Décision** : phase 3 démarre par `EgressGuard` (garde réelle du badge Local), puis le slice vertical Markdown → segments → FakeTts → mini-player → highlight. Le hook Grimoire interdit `git push --force` : les agents rebasent par merge. `zod` sera bundlé par esbuild en phase 3.
 - **Agent** : concierge (Marcel)
+
+### [2026-09-08] Phase 3 livrée : slice vertical, AC-01..06 verts
+- **Contexte** : 5 PR (#20-#24) revues et mergées ; 281 tests unit, 14 intégration, VSIX activable.
+- **Décision** : phase 4 = providers réels (Chatterbox via compose ROCm, Ollama narrator, Piper léger), backoff/buffering/pinning, E2E réel sur la machine RDNA4 (AC-07..11). Règle apprise : toute URL assignée dans un webview passe par `new URL()` + allowlist (CodeQL), et un circuit breaker à 2 tentatives identiques.
+- **Agent** : concierge (Marcel)

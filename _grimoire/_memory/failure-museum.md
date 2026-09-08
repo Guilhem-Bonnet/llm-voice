@@ -81,3 +81,10 @@
 
 *Template Grimoire Custom Kit — BM-03 Failure Museum | framework/memory/failure-museum.tpl.md*
 *Initialisé le : 2026-09-08 — Projet : TTS-Voice*
+
+### [2026-09-08] [sentinel] PROCESS-SKIP — Trois tentatives identiques contre CodeQL sur `audio.src`
+**Ce qui s'est passé** : l'agent de revue a poussé trois variantes de garde `startsWith` que CodeQL ne reconnaît pas comme sanitizer (js/xss, js/client-side-unvalidated-url-redirection).
+**Cause racine** : même signature d'échec répétée sans changer de stratégie ; le circuit breaker fix-loop (2 signatures identiques = stop) n'a pas été appliqué par l'agent.
+**Impact** : ~40 minutes et trois runs CI.
+**Leçon** : pour une URL assignée dans un webview, valider structurellement avec `new URL()` + allowlist protocole/hôte dès la première fois ; l'orchestrateur surveille les signatures d'échec des sous-agents.
+**Règle instaurée** : tout brief de revue impose « max 2 tentatives sur la même alerte, puis rapport ».
