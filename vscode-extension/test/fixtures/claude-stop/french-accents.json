@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-french-accents-0001",
+  "cwd": "/home/user/projets/cours-kubernetes",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "J'ai créé le chapitre sur les sondes de préparation (readiness) et de vivacité (liveness). Le déploiement échouait à cause d'un délai d'initialisation trop court. Résumé : configuration révisée, complétée et testée à l'unité."
+}

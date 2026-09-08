@@ -1,0 +1,5 @@
+{
+  "session_id": "fixture-invalid-0001",
+  "cwd": "/home/user/projects/broken",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "Ce payload est volontairement tronqué pour tester la tolérance du collector."

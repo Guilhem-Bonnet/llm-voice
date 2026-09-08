@@ -1,0 +1,7 @@
+{
+  "session_id": "fixture-normal-0001",
+  "transcript_path": "/home/user/.claude/projects/backend-api/transcript.jsonl",
+  "cwd": "/home/user/projects/backend-api",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "J'ai terminé le refactoring du module d'authentification. Les tests passent."
+}
