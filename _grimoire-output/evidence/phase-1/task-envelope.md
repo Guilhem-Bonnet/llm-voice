@@ -6,7 +6,7 @@
 - Request: Repo GitHub public `Guilhem-Bonnet/llm-voice` (MIT), gouvernance, CI matrice 3 OS, squelette extension VS Code vert en CI, squelette plugin Claude Code ; en parallèle, trois études : garantie 100 % local, Linux first, UI compacte dans VS Code.
 - Owner agent: concierge (Marcel) ; exécutants : pipeline-architect (Sonnet), general-purpose ×3 (Sonnet, avec web) ; revue : agent-optimizer Sentinel (Sonnet)
 - Profile: starter
-- Current state: `executing`
+- Current state: `done`
 - Risk level: `medium` (push public ; validé explicitement par l'utilisateur le 2026-09-08 : « Je valide tout »)
 
 ## Context orchestration
