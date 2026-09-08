@@ -28,7 +28,10 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      "@typescript-eslint/no-unused-vars": "error",
+      // Mirrors tsconfig's `noUnusedParameters`, which already treats a
+      // leading underscore as "intentionally unused" (e.g. `parseMarkdown`'s
+      // `_uri`, kept for API-contract symmetry with `SourceAdapter.capture`).
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-floating-promises": "off"
     }
