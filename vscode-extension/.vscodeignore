@@ -1,7 +1,8 @@
 .vscode-test/**
 test/**
-out/test/**
+out/**
 src/**
+scripts/**
 .gitignore
 .eslintrc*
 eslint.config.mjs

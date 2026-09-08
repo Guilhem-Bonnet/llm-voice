@@ -55,3 +55,39 @@ Le test de concurrence Claude (`test/unit/claude-capture.concurrency.test.ts`)
 lance 10 exécutions parallèles du collector réel via `child_process` sur un
 inbox temporaire, et vérifie 10 fichiers distincts, permissions 0600, aucun
 `.tmp` restant — invariant P0 : jamais d'appel `Inbox → Player.play()` (§44).
+
+## Slice vertical câblé (S3.5) : `LLM_VOICE_TEST_FAKE_TTS`
+
+Depuis S3.5, `src/pipeline/Pipeline.ts` est le vrai `PipelineFacade` (plus
+`NotWiredPipeline`). Les tests d'intégration ne peuvent ni lancer Chatterbox,
+ni décoder de l'audio dans la Webview sous `xvfb` : `extension.ts` remplace
+donc les deux dépendances réseau/audio par des fakes, **uniquement** quand :
+
+1. `context.extensionMode !== vscode.ExtensionMode.Production` (jamais dans un
+   VSIX installé — un `profiles.json` ou un environnement trafiqué ne peuvent
+   pas activer ce chemin sur une install réelle) ; **et**
+2. la variable d'environnement `LLM_VOICE_TEST_FAKE_TTS=1` est présente au
+   lancement du process Extension Host.
+
+Quand c'est le cas, `activate()` charge dynamiquement
+`out/test/fakes/FakeTtsProvider.js` et `out/test/fakes/FakeAudioSink.js` via
+un `require()` dont le chemin est construit à l'exécution (jamais un littéral
+qu'`esbuild` pourrait résoudre au bundling) : `dist/extension.js` n'embarque
+donc jamais `test/fakes/**`, qui est de toute façon exclu du VSIX par
+`.vscodeignore` (`test/**`, `out/**`). Les deux instances sont exposées par
+`ExtensionTestApi` (`activate()`) sous `audioSink`/`ttsProvider`, pour que les
+tests observent l'état de lecture (`FakeAudioSink.loads`/`.commands`,
+`FakeTtsProvider.requests`) sans dépendre du rendu réel de la Webview.
+
+### Deux profils `.vscode-test.mjs`
+
+`.vscode-test.mjs` définit deux configurations (`@vscode/test-cli` supporte un
+tableau de configs, chacune lançant sa propre instance de VS Code) :
+
+| Profil | `LLM_VOICE_TEST_FAKE_TTS` | Fichiers | Ce qu'il prouve |
+|---|---|---|---|
+| `fake-tts` | `1` | `out/test/integration/**` | AC-01..06 : session, highlight, pause, stop, Speak Selection — via `FakeTtsProvider` + `FakeAudioSink`. |
+| `real-provider-unavailable` | non défini | `out/test/integration-real/**` | Le vrai `OpenAICompatibleTtsProvider` + `EgressGuard` (mode `local`) contre le `baseUrl` par défaut du profil (`127.0.0.1:8004`, port fermé en CI) : message d'erreur propre, status bar `error`, aucune exception non gérée. |
+
+`npm run test:integration` (= `npm run build && vscode-test`) exécute les deux
+profils l'un après l'autre.

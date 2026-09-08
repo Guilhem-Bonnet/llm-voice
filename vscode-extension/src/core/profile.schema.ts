@@ -65,7 +65,8 @@ export const VoiceProfileSchema = z.object({
   narrator: NarratorBindingSchema.optional(),
   chunking: ChunkingOptionsSchema,
   playback: PlaybackDefaultsSchema,
-  description: z.string().optional()
+  description: z.string().optional(),
+  style: z.string().optional()
 });
 
 /** The whole `profiles.json` document. */

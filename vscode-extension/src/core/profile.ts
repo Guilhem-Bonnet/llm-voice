@@ -57,6 +57,13 @@ export interface VoiceProfile {
   chunking: ChunkingOptions;
   playback: PlaybackDefaults;
   description?: string;
+  /**
+   * Free-form narration prompt (CdC §19, e.g. "Professeur technique").
+   * Forwarded verbatim as `NarrationRequest.style`; unused when `mode` is
+   * `"faithful"` or no narrator is bound. Optional and additive: existing
+   * profiles without it keep validating and behaving exactly as before.
+   */
+  style?: string;
 }
 
 /** The `profiles.json` document, versioned for future migrations. */
