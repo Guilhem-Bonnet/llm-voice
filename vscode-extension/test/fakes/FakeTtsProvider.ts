@@ -1,14 +1,22 @@
 /**
- * Fake TtsProvider (cahier-des-charges.md §23, §78).
+ * Fake TtsProvider (cahier-des-charges.md §23, §78; src/core/tts.ts).
  *
- * Generates tiny in-memory WAV buffers (as `data:` URIs) so the whole
- * chain (source → parser → queue → player) can be exercised in tests
- * without GPU or network access. Duration is deterministic and derived
- * from the request's word count, which makes assertions on playback
- * timing reproducible.
+ * Generates tiny in-memory WAV buffers so the whole chain (source ->
+ * parser -> queue -> player) can be exercised in tests without GPU or
+ * network access. Duration is deterministic and derived from the
+ * request's word count, which makes assertions on playback timing
+ * reproducible.
  */
-import { delay, throwIfAborted } from "./contracts.js";
-import type { AudioFrame, AudioResult, ProviderHealth, TtsCapabilities, TtsProvider, TtsRequest, Voice } from "./contracts.js";
+import type {
+  AudioFrame,
+  AudioResult,
+  ProviderHealth,
+  TtsCapabilities,
+  TtsProvider,
+  TtsRequest,
+  Voice
+} from "../../src/core/index.js";
+import { delay, throwIfAborted } from "./async-utils.js";
 import { makeSilentWav } from "./wav.js";
 
 export interface FakeTtsProviderOptions {
@@ -32,10 +40,6 @@ function countWords(text: string): number {
   return trimmed.split(/\s+/).length;
 }
 
-function toDataUri(wav: Buffer): string {
-  return `data:audio/wav;base64,${wav.toString("base64")}`;
-}
-
 export class FakeTtsProvider implements TtsProvider {
   readonly id = "fake-tts";
 
@@ -54,15 +58,21 @@ export class FakeTtsProvider implements TtsProvider {
     this.sampleRate = options.sampleRate ?? 16000;
     this.failEveryNth = options.failEveryNth;
     this.latencyMs = options.latencyMs ?? 0;
-    this.voices = options.voices ?? [{ id: "fake-voice", name: "Fake Voice", language: "fr" }];
+    this.voices = options.voices ?? [{ id: "fake-voice", label: "Fake Voice", language: "fr" }];
   }
 
   async health(): Promise<ProviderHealth> {
-    return { ok: true };
+    return { providerId: this.id, status: "ok", checkedAt: Date.now() };
   }
 
   async getCapabilities(): Promise<TtsCapabilities> {
-    return { streaming: true, voices: this.voices };
+    return {
+      streaming: true,
+      voices: this.voices,
+      parameters: [],
+      formats: ["wav"],
+      languages: ["fr", "en"]
+    };
   }
 
   async listVoices(): Promise<Voice[]> {
@@ -96,7 +106,13 @@ export class FakeTtsProvider implements TtsProvider {
     const durationMs = this.durationMsFor(request.text);
     const wav = makeSilentWav(durationMs, this.sampleRate);
 
-    return { audioUri: toDataUri(wav), durationMs, mimeType: "audio/wav" };
+    return {
+      format: "wav",
+      data: new Uint8Array(wav),
+      durationMs,
+      sampleRate: this.sampleRate,
+      channels: 1
+    };
   }
 
   async *synthesizeStream(request: TtsRequest, signal?: AbortSignal): AsyncIterable<AudioFrame> {
@@ -109,6 +125,7 @@ export class FakeTtsProvider implements TtsProvider {
 
     const durationMs = this.durationMsFor(request.text);
     const wav = makeSilentWav(durationMs, this.sampleRate);
+    const chunkId = `fake-chunk-${callIndex}`;
 
     const frameCount = 3;
     const chunkSize = Math.max(1, Math.ceil(wav.length / frameCount));
@@ -117,7 +134,15 @@ export class FakeTtsProvider implements TtsProvider {
       throwIfAborted(signal);
       const start = i * chunkSize;
       const end = i === frameCount - 1 ? wav.length : Math.min(start + chunkSize, wav.length);
-      yield { data: wav.subarray(start, end), isFinal: i === frameCount - 1 };
+      yield {
+        chunkId,
+        sequence: i,
+        format: "wav",
+        sampleRate: this.sampleRate,
+        channels: 1,
+        data: new Uint8Array(wav.subarray(start, end)),
+        isFinal: i === frameCount - 1
+      };
     }
   }
 

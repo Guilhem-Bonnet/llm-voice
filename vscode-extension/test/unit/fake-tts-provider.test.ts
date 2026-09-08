@@ -2,19 +2,14 @@ import { describe, expect, it } from "vitest";
 import { FakeTtsProvider } from "../fakes/FakeTtsProvider.js";
 import { getWavDurationMs } from "../fakes/wav.js";
 
-function decodeAudioUri(audioUri: string): Buffer {
-  const base64 = audioUri.split(",")[1] ?? "";
-  return Buffer.from(base64, "base64");
-}
-
 describe("FakeTtsProvider", () => {
   it("produces a WAV whose duration matches wordCount * msPerWord", async () => {
     const provider = new FakeTtsProvider({ msPerWord: 100 });
     const result = await provider.synthesize({ text: "Bonjour le monde aujourd'hui" });
 
     expect(result.durationMs).toBe(400); // 4 words * 100ms
-    const wav = decodeAudioUri(result.audioUri);
-    expect(getWavDurationMs(wav)).toBeCloseTo(400, 0);
+    expect(result.format).toBe("wav");
+    expect(getWavDurationMs(result.data)).toBeCloseTo(400, 0);
   });
 
   it("uses a configurable msPerWord", async () => {
@@ -72,6 +67,8 @@ describe("FakeTtsProvider", () => {
     expect(frames[0]?.isFinal).toBe(false);
     expect(frames[1]?.isFinal).toBe(false);
     expect(frames[2]?.isFinal).toBe(true);
+    expect(frames.map((frame) => frame.sequence)).toEqual([0, 1, 2]);
+    expect(new Set(frames.map((frame) => frame.chunkId)).size).toBe(1);
 
     const totalBytes = frames.reduce((sum, frame) => sum + frame.data.length, 0);
     expect(totalBytes).toBeGreaterThan(44); // at least the WAV header
@@ -79,7 +76,7 @@ describe("FakeTtsProvider", () => {
 
   it("exposes health() and getCapabilities()", async () => {
     const provider = new FakeTtsProvider();
-    await expect(provider.health()).resolves.toEqual({ ok: true });
-    await expect(provider.getCapabilities()).resolves.toMatchObject({ streaming: true });
+    await expect(provider.health()).resolves.toMatchObject({ providerId: "fake-tts", status: "ok" });
+    await expect(provider.getCapabilities()).resolves.toMatchObject({ streaming: true, formats: ["wav"] });
   });
 });
