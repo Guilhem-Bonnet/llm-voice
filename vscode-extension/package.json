@@ -41,16 +41,19 @@
     "package": "vsce package --no-dependencies -o llm-voice.vsix",
     "vscode:prepublish": "npm run compile"
   },
+  "dependencies": {
+    "zod": "^4.5.4"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.10.2",
     "@types/vscode": "^1.95.0",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
+    "@vitest/coverage-v8": "^2.1.8",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.1",
-    "@vitest/coverage-v8": "^2.1.8",
     "esbuild": "^0.24.0",
     "eslint": "^9.17.0",
     "typescript": "^5.7.2",
