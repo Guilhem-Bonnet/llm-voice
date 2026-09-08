@@ -41,7 +41,8 @@ export type NarrationDegradedReason =
   | "invalid-structured-output"
   | "timeout"
   | "cancelled"
-  | "budget-exceeded";
+  | "budget-exceeded"
+  | "user-disabled";
 
 /** Narration outcome; `degraded` is surfaced to the user, never hidden. */
 export interface NarrationResult {

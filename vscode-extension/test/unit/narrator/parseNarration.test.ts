@@ -117,6 +117,37 @@ describe("parseNarration (CdC §21)", () => {
     expect(result.degradedReason).toBe("invalid-structured-output");
   });
 
+  it("keeps a stable BLOCK_xxx → source-segment mapping on a group of 5, whatever order the model lists them in", () => {
+    const group = makeSourceSegments(5);
+    // The model is free to return its segments in any order (here: reversed,
+    // and not one-to-one — BLOCK_002/BLOCK_003 merged); `blockLabel(index)`
+    // must still resolve back to `group[index]` regardless of that order.
+    const raw = JSON.stringify({
+      segments: [
+        { sourceIds: [blockLabel(4)], spokenText: "Cinquième." },
+        { sourceIds: [blockLabel(2), blockLabel(3)], spokenText: "Troisième et quatrième." },
+        { sourceIds: [blockLabel(0)], spokenText: "Premier." },
+        { sourceIds: [blockLabel(1)], spokenText: "Deuxième." }
+      ]
+    });
+
+    const { result, warnings } = parseNarration({ raw, group });
+
+    expect(result.degraded).toBe(false);
+    expect(warnings).toHaveLength(0);
+    expect(result.segments).toHaveLength(4);
+
+    const bySourceId = new Map(
+      result.segments.flatMap((segment) => segment.sourceSegmentIds.map((id) => [id, segment.spokenText] as const))
+    );
+    // Positional mapping, not the order the model returned them in.
+    expect(bySourceId.get(group[0]!.id)).toBe("Premier.");
+    expect(bySourceId.get(group[1]!.id)).toBe("Deuxième.");
+    expect(bySourceId.get(group[2]!.id)).toBe("Troisième et quatrième.");
+    expect(bySourceId.get(group[3]!.id)).toBe("Troisième et quatrième.");
+    expect(bySourceId.get(group[4]!.id)).toBe("Cinquième.");
+  });
+
   it("buildBlockPrompt formats each segment under its BLOCK_xxx label", () => {
     const group = makeSourceSegments(2);
     const prompt = buildBlockPrompt(group);

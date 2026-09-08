@@ -33,7 +33,8 @@ import {
   type AudioSink,
   type ChunkErrorDecision,
   type NarrationWarning,
-  type PlaybackErrorInfo
+  type PlaybackErrorInfo,
+  type SessionBuild
 } from "../playback/index.js";
 import {
   createEgressGuard,
@@ -133,6 +134,15 @@ export class Pipeline implements PipelineFacade {
   private lastCaptureContext: CaptureContext | undefined;
   private captureAbort: AbortController | undefined;
   private narratorWarningShown = false;
+  /**
+   * Set once "Read without narration" is chosen (CdC §52); every session
+   * built after that point starts pre-forced to faithful reading, so the
+   * choice sticks for the rest of the VS Code session — not just the
+   * document being read when the user answered — until the extension is
+   * reloaded or a narrator profile is explicitly re-selected via Retry.
+   */
+  private narrationDisabledForSession = false;
+  private currentSessionBuild: SessionBuild | undefined;
 
   constructor(options: PipelineOptions) {
     this.context = options.context;
@@ -247,11 +257,18 @@ export class Pipeline implements PipelineFacade {
         return;
       }
 
-      const narrator = profile.mode === "narrated" ? await this.narratorFor(profile) : undefined;
+      // "Read without narration" (CdC §52) sticks for the rest of the VS
+      // Code session: once set, no later `start()` — this document or the
+      // next one — resolves or calls a narrator again, until Retry clears it.
+      const narrator =
+        profile.mode === "narrated" && !this.narrationDisabledForSession
+          ? await this.narratorFor(profile)
+          : undefined;
       const build = await buildSession(segments, profile, narrator, {
         signal: abort.signal,
         onWarning: (warning) => this.handleNarratorWarning(warning)
       });
+      this.currentSessionBuild = build;
       const tts = await this.ttsFor(profile);
       const sink = this.sinkOverride ?? this.player.audioSink;
 
@@ -505,6 +522,11 @@ export class Pipeline implements PipelineFacade {
    * notification + the three choices — shown once per session (guarded by
    * `narratorWarningShown`, reset in `start()`) so a long document that
    * degrades on several groups does not stack dialogs.
+   *
+   * "Read without narration" sets `narrationDisabledForSession` (forcing
+   * every group of the current build via `SessionBuild.forceFaithful()`,
+   * and every future `start()` call — this document or the next — to skip
+   * the narrator entirely) until "Retry" explicitly clears it again.
    */
   private handleNarratorWarning(warning: NarrationWarning): void {
     this.output.appendLine(
@@ -518,15 +540,19 @@ export class Pipeline implements PipelineFacade {
       .showWarningMessage(ERROR_NARRATOR_UNAVAILABLE, "Retry", "Read without narration", "Cancel")
       .then((choice) => {
         if (choice === "Retry") {
+          this.narrationDisabledForSession = false;
           const context = this.lastCaptureContext;
           if (context !== undefined) {
             void this.start(context);
           }
+        } else if (choice === "Read without narration") {
+          this.narrationDisabledForSession = true;
+          this.currentSessionBuild?.forceFaithful();
         } else if (choice === "Cancel") {
           void this.stop();
         }
-        // "Read without narration" (or dismissed): no-op — playback is
-        // already reading the degraded groups faithfully.
+        // Dismissed (no choice): no-op — playback is already reading the
+        // degraded groups faithfully; only this group falls back.
       });
   }
 
