@@ -9,7 +9,7 @@ import type { PlaybackState } from "../core/playback.js";
 /** Status bar only distinguishes these states; `stopped`/`completed` behave as `idle`. */
 export type StatusBarPlaybackState = Extract<
   PlaybackState,
-  "idle" | "preparing" | "playing" | "paused" | "stale" | "error"
+  "idle" | "preparing" | "buffering" | "playing" | "paused" | "stale" | "error"
 >;
 
 export interface StatusBarViewModel {
@@ -37,6 +37,8 @@ export function formatStatusBarText(vm: StatusBarViewModel): string {
       return vm.isLocalOnly ? `$(lock) ${vm.profileLabel}` : `$(unmute) ${vm.profileLabel}`;
     case "preparing":
       return `$(sync~spin) ${vm.profileLabel}`;
+    case "buffering":
+      return "⏳ Buffering…";
     case "playing":
       return `$(debug-pause) ${time} • ${vm.profileLabel}`;
     case "paused":

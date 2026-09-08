@@ -31,11 +31,17 @@ export interface AudioChunk {
   error?: string;
 }
 
-/** States of the player state machine (CdC §34), plus `stale` from D6. */
+/**
+ * States of the player state machine (CdC §34), plus `stale` from D6 and
+ * `buffering` (ADR-005's reported-to-phase-4 gap): the machine was already
+ * `playing` a chunk, that chunk ended, and the next one is not `ready` yet —
+ * distinct from `preparing`, which is the very first chunk of a session.
+ */
 export type PlaybackState =
   | "idle"
   | "preparing"
   | "playing"
+  | "buffering"
   | "paused"
   | "stopped"
   | "completed"

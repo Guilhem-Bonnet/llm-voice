@@ -1,8 +1,14 @@
-import { mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DiskAudioCache } from "../../../src/playback/DiskAudioCache.js";
+
+function sidecarOf(root: string, key: string): Record<string, unknown> {
+  const shard = key.slice(0, 2);
+  const raw = readFileSync(join(root, shard, `${key}.json`), "utf8");
+  return JSON.parse(raw) as Record<string, unknown>;
+}
 
 function bytes(sizeInBytes: number, fill = 7): Uint8Array {
   return new Uint8Array(sizeInBytes).fill(fill);
@@ -108,5 +114,52 @@ describe("DiskAudioCache (ADR-004)", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     const size = await cache.size();
     expect(size).toBeLessThanOrEqual(10);
+  });
+
+  it("put() writes the full ADR-004 sidecar shape when meta is given (S4.2)", async () => {
+    const cache = new DiskAudioCache({ root });
+    await cache.put("abcdef", bytes(4), { format: "wav", durationMs: 987, providerId: "chatterbox" });
+
+    const sidecar = sidecarOf(root, "abcdef");
+    expect(sidecar["format"]).toBe("wav");
+    expect(sidecar["durationMs"]).toBe(987);
+    expect(sidecar["providerId"]).toBe("chatterbox");
+    expect(typeof sidecar["createdAt"]).toBe("number");
+    expect(typeof sidecar["lastAccessAt"]).toBe("number");
+    expect(sidecar["bytes"]).toBe(4);
+  });
+
+  it("touch() (an existing key) keeps prior meta when a later put() omits it", async () => {
+    const cache = new DiskAudioCache({ root });
+    await cache.put("k", bytes(4), { format: "wav", providerId: "kokoro" });
+    await cache.put("k", bytes(4)); // idempotent re-put, no meta this time
+
+    const sidecar = sidecarOf(root, "k");
+    expect(sidecar["format"]).toBe("wav");
+    expect(sidecar["providerId"]).toBe("kokoro");
+  });
+
+  it("never evicts a pinned entry, however old (ADR-004's reported-to-phase-4 gap, S4.2)", async () => {
+    const cache = new DiskAudioCache({ root });
+    await cache.put("old", bytes(50));
+    await cache.put("new", bytes(50));
+    cache.pin("old");
+
+    await cache.evict(60);
+
+    expect(await cache.get("old")).toBeDefined();
+    expect(await cache.get("new")).toBeUndefined();
+  });
+
+  it("unpin() lets a previously-pinned entry be evicted again", async () => {
+    const cache = new DiskAudioCache({ root });
+    await cache.put("a", bytes(50));
+    await cache.put("b", bytes(50));
+    cache.pin("a");
+    cache.unpin("a");
+
+    await cache.evict(60);
+
+    expect(await cache.get("a")).toBeUndefined();
   });
 });

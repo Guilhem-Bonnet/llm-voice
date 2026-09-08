@@ -23,6 +23,12 @@ export interface MockTtsServerOptions {
   sampleRate?: number;
   /** Milliseconds of audio generated per character of input text. */
   msPerChar?: number;
+  /** If true, GET /v1/audio/voices responds 404 (community-server fallback path). */
+  voices404?: boolean;
+  /** Body served by GET /get_predefined_voices when `voices404` is set (S4.2, CdC §25). */
+  predefinedVoices?: Array<{ voice_id: string; display_name?: string; language?: string }>;
+  /** Body merged into the GET /health JSON response (e.g. `{status: "loading"}`, S4.2). */
+  healthBody?: Record<string, unknown>;
 }
 
 export interface MockTtsServerRequestLog {
@@ -41,7 +47,10 @@ export class MockTtsServer {
       fail500: options.fail500 ?? false,
       redirectExternal: options.redirectExternal ?? false,
       sampleRate: options.sampleRate ?? 16000,
-      msPerChar: options.msPerChar ?? 10
+      msPerChar: options.msPerChar ?? 10,
+      voices404: options.voices404 ?? false,
+      predefinedVoices: options.predefinedVoices ?? [],
+      healthBody: options.healthBody ?? { status: "ok" }
     };
     this.server = createServer((req, res) => {
       this.handle(req, res).catch((error: unknown) => {
@@ -75,11 +84,16 @@ export class MockTtsServer {
 
     if (req.method === "GET" && url === "/health") {
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ status: "ok" }));
+      res.end(JSON.stringify(this.options.healthBody));
       return;
     }
 
     if (req.method === "GET" && url === "/v1/audio/voices") {
+      if (this.options.voices404) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "mock TTS server: /v1/audio/voices not implemented" }));
+        return;
+      }
       res.writeHead(200, { "content-type": "application/json" });
       res.end(
         JSON.stringify({
@@ -89,6 +103,12 @@ export class MockTtsServer {
           ]
         })
       );
+      return;
+    }
+
+    if (req.method === "GET" && url === "/get_predefined_voices") {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(this.options.predefinedVoices));
       return;
     }
 

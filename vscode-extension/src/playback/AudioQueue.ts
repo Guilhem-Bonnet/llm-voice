@@ -10,11 +10,43 @@
  *
  * The queue owns chunk status (`pending → generating → ready | error`); the
  * controller owns `playing` / `played`, which are player facts, not queue facts.
+ *
+ * A failed synthesis is retried with exponential backoff (`retryBackoffMs`,
+ * default `[100, 400]` plus jitter) rather than immediately, as ADR-005 noted
+ * was reported to phase 4. A chunk under backoff stays `generating` — never a
+ * new `retrying` status, which would ripple through every `AudioChunkStatus`
+ * consumer for no behavioural gain — so `waitFor` and the player see nothing
+ * different, only a delay before the next attempt.
+ *
+ * The key of every chunk that is `ready` or currently in the prefetch window
+ * `[cursor, cursor + prefetchChunks]` is pinned in the cache (`cache.pin`,
+ * ADR-004's reported-to-phase-4 gap): it cannot be evicted while it might
+ * still be played. Chunks that fall out of the window are unpinned.
  */
 
 import type { AudioChunk } from "../core/playback.js";
 import type { TtsProvider, TtsRequest } from "../core/tts.js";
 import { computeCacheKey, type AudioCacheStore } from "./AudioCache.js";
+
+/**
+ * Backoff delay before retry `attempt` (1-based): `backoffMs[attempt - 1]`,
+ * clamped to the last configured step, plus up to `jitterMs` of random delay.
+ * Pure and exported so tests can assert the exact schedule without faking
+ * `Math.random`'s distribution.
+ */
+export function computeBackoffDelay(
+  attempt: number,
+  backoffMs: readonly number[],
+  jitterMs = 0,
+  random: () => number = Math.random
+): number {
+  if (backoffMs.length === 0) {
+    return 0;
+  }
+  const step = backoffMs[Math.min(Math.max(attempt, 1) - 1, backoffMs.length - 1)] ?? 0;
+  const jitter = jitterMs > 0 ? Math.floor(random() * jitterMs) : 0;
+  return step + jitter;
+}
 
 /** Synthesis binding shared by every chunk of one session. */
 export interface AudioQueueBinding {
@@ -36,6 +68,12 @@ export interface AudioQueueOptions {
   prefetchChunks?: number;
   /** Retries after the first failure before the chunk is marked `error`. */
   maxRetries?: number;
+  /** Backoff delay (ms) before retry N: `retryBackoffMs[N-1]`, clamped to the last step. */
+  retryBackoffMs?: readonly number[];
+  /** Extra random delay in `[0, retryJitterMs)` added to every backoff step. Set `0` in tests. */
+  retryJitterMs?: number;
+  /** Injectable RNG for deterministic jitter assertions; defaults to `Math.random`. */
+  random?: () => number;
 }
 
 /** Everything the queue needs injected; none of it touches `vscode`. */
@@ -54,6 +92,8 @@ interface JobState {
 const DEFAULT_MAX_CONCURRENT = 1;
 const DEFAULT_PREFETCH = 2;
 const DEFAULT_MAX_RETRIES = 2;
+const DEFAULT_RETRY_BACKOFF_MS: readonly number[] = [100, 400];
+const DEFAULT_RETRY_JITTER_MS = 50;
 
 export class AudioQueue {
   private readonly tts: TtsProvider;
@@ -62,9 +102,15 @@ export class AudioQueue {
   private readonly maxConcurrentTtsJobs: number;
   private readonly prefetchChunks: number;
   private readonly maxRetries: number;
+  private readonly retryBackoffMs: readonly number[];
+  private readonly retryJitterMs: number;
+  private readonly random: () => number;
 
   private items: AudioChunk[] = [];
   private readonly jobs = new Map<number, JobState>();
+  /** Cache key of every chunk that has reached `run()`, for pin/unpin bookkeeping. */
+  private readonly chunkKeys = new Map<number, string>();
+  private readonly retryTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private cursor = 0;
   private active = 0;
   private disposed = false;
@@ -81,6 +127,9 @@ export class AudioQueue {
     );
     this.prefetchChunks = Math.max(0, options.prefetchChunks ?? DEFAULT_PREFETCH);
     this.maxRetries = Math.max(0, options.maxRetries ?? DEFAULT_MAX_RETRIES);
+    this.retryBackoffMs = options.retryBackoffMs ?? DEFAULT_RETRY_BACKOFF_MS;
+    this.retryJitterMs = Math.max(0, options.retryJitterMs ?? DEFAULT_RETRY_JITTER_MS);
+    this.random = options.random ?? Math.random;
   }
 
   /** Chunks currently queued, in playback order. */
@@ -96,6 +145,7 @@ export class AudioQueue {
   /** Replaces the queue content and rewinds the cursor. */
   reset(chunks: readonly AudioChunk[]): void {
     this.cancelAll();
+    this.unpinAll();
     this.items = chunks.map((chunk) => ({ ...chunk }));
     this.jobs.clear();
     this.cursor = 0;
@@ -118,6 +168,7 @@ export class AudioQueue {
   setCursor(index: number): void {
     this.cursor = Math.max(0, index);
     this.suspended = false;
+    this.reconcilePins();
     this.pump();
   }
 
@@ -149,6 +200,10 @@ export class AudioQueue {
    */
   cancelAll(): void {
     this.suspended = true;
+    for (const timer of this.retryTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.retryTimers.clear();
     for (const [index, job] of this.jobs) {
       job.controller?.abort();
       job.controller = undefined;
@@ -166,6 +221,7 @@ export class AudioQueue {
     }
     this.disposed = true;
     this.cancelAll();
+    this.unpinAll();
     this.jobs.clear();
   }
 
@@ -203,6 +259,31 @@ export class AudioQueue {
     }
   }
 
+  /**
+   * Pins the key of every chunk still inside `[cursor, cursor + prefetchChunks]`
+   * — "the chunk in playback and the ones prefetched" — and unpins whatever
+   * key fell out of the window (played chunks, or ones the cursor skipped
+   * past via `previous()`/`next()`). Both `pin`/`unpin` are optional on
+   * `AudioCacheStore`, so a store that predates ADR-004's pinning gap fix is
+   * a silent no-op here.
+   */
+  private reconcilePins(): void {
+    const last = Math.min(this.items.length - 1, this.cursor + this.prefetchChunks);
+    for (const [index, key] of this.chunkKeys) {
+      if (index < this.cursor || index > last) {
+        this.cache.unpin?.(key);
+        this.chunkKeys.delete(index);
+      }
+    }
+  }
+
+  private unpinAll(): void {
+    for (const key of this.chunkKeys.values()) {
+      this.cache.unpin?.(key);
+    }
+    this.chunkKeys.clear();
+  }
+
   private nextPendingIndex(): number | undefined {
     const last = Math.min(
       this.items.length - 1,
@@ -235,9 +316,10 @@ export class AudioQueue {
     job: JobState,
     signal: AbortSignal
   ): Promise<void> {
+    const providerId = this.binding.providerId ?? this.tts.id;
     try {
       const key = computeCacheKey({
-        providerId: this.binding.providerId ?? this.tts.id,
+        providerId,
         ...(this.binding.model !== undefined ? { model: this.binding.model } : {}),
         ...(this.binding.voice !== undefined ? { voice: this.binding.voice } : {}),
         ...(this.binding.parameters !== undefined
@@ -245,6 +327,11 @@ export class AudioQueue {
           : {}),
         spokenText: chunk.spokenText
       });
+      // Pin now: this index is by construction inside the prefetch window
+      // (`nextPendingIndex` only ever selects from it), so its audio must
+      // survive eviction until `reconcilePins()` sees the cursor move past it.
+      this.chunkKeys.set(index, key);
+      this.cache.pin?.(key);
 
       const cached = await this.cache.get(key);
       if (signal.aborted) {
@@ -252,7 +339,7 @@ export class AudioQueue {
         return;
       }
       if (cached !== undefined) {
-        chunk.audioUri = await this.cache.put(key, cached);
+        chunk.audioUri = await this.cache.put(key, cached, { providerId });
         chunk.status = "ready";
         return;
       }
@@ -262,7 +349,11 @@ export class AudioQueue {
         this.revertToPending(chunk);
         return;
       }
-      chunk.audioUri = await this.cache.put(key, result.data);
+      chunk.audioUri = await this.cache.put(key, result.data, {
+        format: result.format,
+        providerId,
+        ...(result.durationMs !== undefined ? { durationMs: result.durationMs } : {})
+      });
       chunk.format = result.format;
       if (result.durationMs !== undefined) {
         chunk.durationMs = result.durationMs;
@@ -275,7 +366,7 @@ export class AudioQueue {
       }
       job.attempts += 1;
       if (job.attempts <= this.maxRetries) {
-        chunk.status = "pending";
+        this.scheduleRetry(index, chunk, job);
         return;
       }
       chunk.status = "error";
@@ -293,6 +384,29 @@ export class AudioQueue {
   /** A cancelled job is not a failed job: the chunk stays synthesisable. */
   private revertToPending(chunk: AudioChunk): void {
     chunk.status = "pending";
+  }
+
+  /**
+   * Delays retry `job.attempts` by `computeBackoffDelay(...)`. The chunk stays
+   * `generating` for the whole wait (never a new status), which is exactly
+   * what keeps `nextPendingIndex()` from restarting it early and `waitFor()`
+   * from resolving prematurely.
+   */
+  private scheduleRetry(index: number, chunk: AudioChunk, job: JobState): void {
+    const delay = computeBackoffDelay(job.attempts, this.retryBackoffMs, this.retryJitterMs, this.random);
+    if (delay <= 0) {
+      chunk.status = "pending";
+      return;
+    }
+    const timer = setTimeout(() => {
+      this.retryTimers.delete(index);
+      if (this.disposed || this.suspended) {
+        return;
+      }
+      chunk.status = "pending";
+      this.pump();
+    }, delay);
+    this.retryTimers.set(index, timer);
   }
 
   private requestFor(chunk: AudioChunk): TtsRequest {

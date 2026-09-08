@@ -45,7 +45,7 @@ import { PlayerViewProvider } from "../views/player/PlayerViewProvider.js";
 import { StatusBar, type StatusBarPlaybackState, type StatusBarViewModel } from "../ui/StatusBar.js";
 import { ClipboardSource, MarkdownDocumentSource, TextSelectionSource, readCaptureRange } from "../sources/index.js";
 import { ProfileRepository } from "../profiles/index.js";
-import { InMemoryProviderRegistry, OpenAICompatibleTtsProvider } from "../tts/index.js";
+import { createTtsProvider, InMemoryProviderRegistry, presetKindForProviderId } from "../tts/index.js";
 import type { PipelineFacade } from "../commands/PipelineFacade.js";
 import { plainTextSegments, rangesOverlap } from "./textSegments.js";
 import {
@@ -84,6 +84,7 @@ function toStatusBarState(state: string): StatusBarPlaybackState {
     case "playing":
     case "paused":
     case "preparing":
+    case "buffering":
     case "stale":
     case "error":
       return state;
@@ -388,12 +389,19 @@ export class Pipeline implements PipelineFacade {
     }
     const apiKey =
       profile.tts.apiKeyRef !== undefined ? await this.context.secrets.get(profile.tts.apiKeyRef) : undefined;
-    const provider = new OpenAICompatibleTtsProvider({
-      id: key,
-      baseUrl: resolved.baseUrl,
-      egress: this.egress,
-      ...(apiKey !== undefined ? { apiKey } : {})
-    });
+    // ADR-005/D9: `providerId` picks the class (Chatterbox/Kokoro get their
+    // engine-specific parameters, CdC §28), never anything but `baseUrl` +
+    // an id string — `presetKindForProviderId` is the single place that maps
+    // one to the other; anything unrecognised stays the generic OpenAI-
+    // compatible client (enterprise/cloud tiers 2-3, ADR-009).
+    const provider = createTtsProvider(
+      { kind: presetKindForProviderId(resolved.providerId), baseUrl: resolved.baseUrl },
+      {
+        id: key,
+        egress: this.egress,
+        ...(apiKey !== undefined ? { apiKey } : {})
+      }
+    );
     this.registry.register(provider);
     return provider;
   }

@@ -13,7 +13,19 @@
  */
 
 import { createHash } from "node:crypto";
-import type { AudioCacheKeyMaterial } from "../core/tts.js";
+import type { AudioCacheKeyMaterial, AudioFormat } from "../core/tts.js";
+
+/**
+ * Sidecar metadata a caller may attach on `put` (ADR-004's full shape:
+ * `{format, durationMs, providerId}`, on top of the always-recorded
+ * `{createdAt, lastAccessAt, bytes}`). Additive and optional so every
+ * existing `put(key, bytes)` call site keeps compiling unchanged.
+ */
+export interface AudioCachePutMeta {
+  format?: AudioFormat;
+  durationMs?: number;
+  providerId?: string;
+}
 
 /**
  * Content-addressed audio store.
@@ -26,11 +38,19 @@ import type { AudioCacheKeyMaterial } from "../core/tts.js";
 export interface AudioCacheStore {
   get(key: string): Promise<Uint8Array | undefined>;
   /** Stores (or touches) `key` and returns the URI the sink should load. */
-  put(key: string, bytes: Uint8Array): Promise<string>;
+  put(key: string, bytes: Uint8Array, meta?: AudioCachePutMeta): Promise<string>;
   /** Total bytes currently held. */
   size(): Promise<number>;
   /** Evicts least-recently-used entries until the store fits `targetBytes`. */
   evict(targetBytes: number): Promise<void>;
+  /**
+   * Marks `key` as referenced by a session in progress (ADR-004's reported
+   * gap): `evict` must never remove a pinned entry. Optional — a store that
+   * does not implement pinning is simply never protected, not broken.
+   */
+  pin?(key: string): void;
+  /** Releases a pin set by `pin`; a no-op if `key` was not pinned. */
+  unpin?(key: string): void;
 }
 
 /** Deterministic JSON: object keys sorted, `undefined` members dropped. */
@@ -68,6 +88,7 @@ interface CacheRecord {
   bytes: Uint8Array;
   /** Monotonic counter rather than `Date.now()`: no ties under fake timers. */
   lastAccessAt: number;
+  meta?: AudioCachePutMeta;
 }
 
 /**
@@ -76,6 +97,7 @@ interface CacheRecord {
  */
 export class InMemoryAudioCache implements AudioCacheStore {
   private readonly records = new Map<string, CacheRecord>();
+  private readonly pinned = new Set<string>();
   private tick = 0;
 
   async get(key: string): Promise<Uint8Array | undefined> {
@@ -87,13 +109,16 @@ export class InMemoryAudioCache implements AudioCacheStore {
     return record.bytes;
   }
 
-  async put(key: string, bytes: Uint8Array): Promise<string> {
+  async put(key: string, bytes: Uint8Array, meta?: AudioCachePutMeta): Promise<string> {
     const existing = this.records.get(key);
     if (existing !== undefined) {
       existing.lastAccessAt = ++this.tick;
+      if (meta !== undefined) {
+        existing.meta = meta;
+      }
       return uriFor(key);
     }
-    this.records.set(key, { bytes, lastAccessAt: ++this.tick });
+    this.records.set(key, { bytes, lastAccessAt: ++this.tick, ...(meta !== undefined ? { meta } : {}) });
     return uriFor(key);
   }
 
@@ -103,6 +128,23 @@ export class InMemoryAudioCache implements AudioCacheStore {
       total += record.bytes.byteLength;
     }
     return total;
+  }
+
+  /** Sidecar metadata attached on `put`, for tests that assert it round-trips. */
+  metaFor(key: string): AudioCachePutMeta | undefined {
+    return this.records.get(key)?.meta;
+  }
+
+  pin(key: string): void {
+    this.pinned.add(key);
+  }
+
+  unpin(key: string): void {
+    this.pinned.delete(key);
+  }
+
+  isPinned(key: string): boolean {
+    return this.pinned.has(key);
   }
 
   async evict(targetBytes: number): Promise<void> {
@@ -117,6 +159,9 @@ export class InMemoryAudioCache implements AudioCacheStore {
       if (total <= targetBytes) {
         break;
       }
+      if (this.pinned.has(key)) {
+        continue;
+      }
       this.records.delete(key);
       total -= record.bytes.byteLength;
     }
@@ -130,6 +175,7 @@ export class InMemoryAudioCache implements AudioCacheStore {
   /** Drops everything, like the `Clear Audio Cache` command (ADR-004). */
   clear(): void {
     this.records.clear();
+    this.pinned.clear();
   }
 }
 
