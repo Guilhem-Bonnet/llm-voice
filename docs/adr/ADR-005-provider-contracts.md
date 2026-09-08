@@ -78,6 +78,24 @@ et chemin sans le corps, et honore `LLM_VOICE_STRICT_LOCAL=1` (mode bunker) et
 `synthesizeStream`, `health`, `fetch` : un `Stop` annule la synthèse en cours et
 tout le prefetch (CdC §62).
 
+### Validation des profils : `zod` en dépendance de production
+
+`profile.schema.ts` valide au runtime tout `VoiceProfile` importé ou lu depuis
+`profiles.json` avec `zod@^4` (AC-SEC-05) : refuser un profil malformé avant
+qu'il n'atteigne `EgressGuard` ou un provider vaut mieux qu'un `as VoiceProfile`
+non vérifié. C'est la seule dépendance de production de l'extension.
+`npm run package` (`vsce package --no-dependencies`) produit à ce jour un VSIX
+de **9.81 Ko** sans `zod` : `--no-dependencies` et `.vscodeignore`
+(`node_modules/**`) l'excluent tous deux du paquet, et rien ne le signale au
+build. Ça ne casse rien **pour l'instant** parce qu'aucun point d'activation
+n'importe encore `src/core/profile.schema.ts` (`profile.schema.js` est mort
+côté runtime packagé). Dès qu'une PR câble le chargement de `profiles.json`
+dans `extension.ts`, l'extension installée plantera à l'activation
+(`Cannot find module 'zod'`) tant que ce point n'est pas corrigé : soit
+bundler avec `esbuild` (déjà en devDependency, non câblé dans `scripts`), soit
+retirer `--no-dependencies` du script `package`. À trancher avant la PR qui
+active `profile.schema.ts` en dur.
+
 ## Conséquences
 
 - Local, entreprise et cloud partagent un seul `OpenAICompatibleTtsProvider`

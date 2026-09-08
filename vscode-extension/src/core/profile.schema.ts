@@ -98,7 +98,15 @@ export function isLoopbackUrl(url: string): boolean {
   return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname);
 }
 
-/** True when any endpoint of the profile leaves the loopback interface. */
+/**
+ * True when any endpoint of the profile leaves the loopback interface.
+ *
+ * This is the same lexical, no-DNS check as `isLoopbackUrl` above: it drives
+ * the 🔒 / ☁ badge only and must never be relied on as a security boundary.
+ * The actual guarantee that nothing leaves the machine in local mode is
+ * enforced at call time by `EgressGuard` (ADR-005, D10, phase 3), which
+ * resolves DNS and re-checks the real destination on every request.
+ */
 export function isRemoteProfile(profile: VoiceProfile): boolean {
   const urls = [profile.tts.baseUrl];
   if (profile.narrator !== undefined) {

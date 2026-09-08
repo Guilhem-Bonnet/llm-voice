@@ -29,7 +29,11 @@ fichier JSON (schéma d'ADR-003, `schemaVersion: 1`).
   un événement `watch` est perdu. Débounce de 200 ms avant lecture, et fichiers
   `.tmp-*` ignorés (écriture atomique côté collector).
 - **Supprimer** = supprimer le fichier. **Archiver** = déplacer vers
-  `inbox/archive/` (non surveillé).
+  `inbox/archive/` (non surveillé). Ni `inbox/` ni `inbox/archive/` n'ont de
+  borne de rétention ou de taille en 0.1 : l'archivage reste manuel et
+  l'éviction automatique (âge, taille, nombre de fichiers) est hors périmètre
+  de cet ADR, à spécifier par le protocole/CLI d'inbox (ADR-007) si le volume
+  le justifie.
 - **Lu / non-lu** : seul état dérivé, stocké dans `globalState` sous
   `llmVoice.inbox.read`, indexé par nom de fichier. Un nettoyage au démarrage
   retire les clés dont le fichier n'existe plus. Perdre cet état est bénin
