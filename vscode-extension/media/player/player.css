@@ -1,0 +1,112 @@
+/*
+ * Mini-player styling (ADR-011): three lines, ~80px tall, theme colours only.
+ * No hard-coded colours: every colour comes from a `--vscode-*` variable so
+ * the player stays legible on every theme (ADR-002, "theming strict").
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 6px 10px 10px;
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-sideBar-background, transparent);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 18px;
+}
+
+#title-line {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+#title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#profile {
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#time {
+  color: var(--vscode-descriptionForeground);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#progress-track {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--vscode-scrollbarSlider-background);
+  cursor: pointer;
+  margin: 6px 0;
+}
+
+#progress-track:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+#progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  border-radius: 3px;
+  background-color: var(--vscode-progressBar-background, var(--vscode-button-background));
+}
+
+#transport {
+  justify-content: center;
+  gap: 4px;
+}
+
+.transport-button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  padding: 2px 8px;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.transport-button:hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.transport-button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+
+#welcome {
+  color: var(--vscode-descriptionForeground);
+  padding: 8px 0;
+}
+
+body[data-state="idle"] #transport,
+body[data-state="idle"] #progress-track {
+  display: none;
+}
+
+body:not([data-state="idle"]) #welcome {
+  display: none;
+}

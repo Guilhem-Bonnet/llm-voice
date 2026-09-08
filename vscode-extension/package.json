@@ -6,6 +6,7 @@
   "publisher": "guilhem-bonnet",
   "license": "MIT",
   "private": true,
+  "icon": "media/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Guilhem-Bonnet/llm-voice.git",
@@ -25,11 +26,171 @@
   "main": "./out/src/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "llmVoice.hello",
-        "title": "LLM Voice: Hello"
+      { "command": "llmVoice.speakDocument", "title": "LLM Voice: Speak Document", "category": "LLM Voice" },
+      { "command": "llmVoice.speakSelection", "title": "LLM Voice: Speak Selection", "category": "LLM Voice" },
+      { "command": "llmVoice.speakFromCursor", "title": "LLM Voice: Speak From Cursor", "category": "LLM Voice" },
+      { "command": "llmVoice.speakSection", "title": "LLM Voice: Speak Section", "category": "LLM Voice" },
+      { "command": "llmVoice.speakClipboard", "title": "LLM Voice: Speak Clipboard", "category": "LLM Voice" },
+      { "command": "llmVoice.play", "title": "LLM Voice: Play", "category": "LLM Voice" },
+      { "command": "llmVoice.pause", "title": "LLM Voice: Pause", "category": "LLM Voice" },
+      { "command": "llmVoice.stop", "title": "LLM Voice: Stop", "category": "LLM Voice" },
+      { "command": "llmVoice.previousSegment", "title": "LLM Voice: Previous Segment", "category": "LLM Voice" },
+      { "command": "llmVoice.nextSegment", "title": "LLM Voice: Next Segment", "category": "LLM Voice" },
+      { "command": "llmVoice.selectProfile", "title": "LLM Voice: Select Profile", "category": "LLM Voice" },
+      { "command": "llmVoice.openProfiles", "title": "LLM Voice: Open Profiles", "category": "LLM Voice" },
+      { "command": "llmVoice.openInbox", "title": "LLM Voice: Open Inbox", "category": "LLM Voice" },
+      { "command": "llmVoice.speakLatestClaudeResponse", "title": "LLM Voice: Speak Latest Claude Response", "category": "LLM Voice" },
+      { "command": "llmVoice.clearHighlight", "title": "LLM Voice: Clear Highlight", "category": "LLM Voice" },
+      { "command": "llmVoice.clearAudioCache", "title": "LLM Voice: Clear Audio Cache", "category": "LLM Voice" },
+      { "command": "llmVoice.verifyLocalMode", "title": "LLM Voice: Verify Local Mode", "category": "LLM Voice" },
+      { "command": "llmVoice.installClaudeHook", "title": "LLM Voice: Install Claude Hook", "category": "LLM Voice" },
+      { "command": "llmVoice.statusBar.openMenu", "title": "LLM Voice: Status Bar Menu", "category": "LLM Voice" }
+    ],
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "llm-voice-panel",
+          "title": "LLM Voice",
+          "icon": "media/player-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "llm-voice-panel": [
+        {
+          "type": "webview",
+          "id": "llmVoice.player",
+          "name": "Player"
+        }
+      ]
+    },
+    "submenus": [
+      { "id": "llmVoice.markdownContextMenu", "label": "LLM Voice" }
+    ],
+    "menus": {
+      "commandPalette": [
+        { "command": "llmVoice.statusBar.openMenu", "when": "false" }
+      ],
+      "editor/context": [
+        { "submenu": "llmVoice.markdownContextMenu", "when": "resourceLangId == markdown", "group": "llmVoice" }
+      ],
+      "llmVoice.markdownContextMenu": [
+        { "command": "llmVoice.speakSelection", "when": "resourceLangId == markdown && editorHasSelection", "group": "1_speak@1" },
+        { "command": "llmVoice.speakFromCursor", "when": "resourceLangId == markdown", "group": "1_speak@2" },
+        { "command": "llmVoice.speakSection", "when": "resourceLangId == markdown", "group": "1_speak@3" },
+        { "command": "llmVoice.speakDocument", "when": "resourceLangId == markdown", "group": "1_speak@4" }
+      ]
+    },
+    "keybindings": [
+      { "key": "ctrl+alt+v d", "command": "llmVoice.speakDocument" },
+      { "key": "ctrl+alt+v s", "command": "llmVoice.speakSelection", "when": "editorHasSelection" },
+      { "key": "ctrl+alt+v c", "command": "llmVoice.speakClipboard" },
+      { "key": "ctrl+alt+v space", "command": "llmVoice.play" },
+      { "key": "ctrl+alt+v x", "command": "llmVoice.stop" },
+      { "key": "ctrl+alt+v n", "command": "llmVoice.nextSegment" },
+      { "key": "ctrl+alt+v p", "command": "llmVoice.previousSegment" }
+    ],
+    "configuration": {
+      "title": "LLM Voice",
+      "properties": {
+        "llmVoice.defaultProfile": {
+          "type": "string",
+          "default": "",
+          "description": "Identifiant du profil utilisé par défaut pour une nouvelle session de lecture."
+        },
+        "llmVoice.tts.baseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8880",
+          "description": "URL de base du service de synthèse vocale (TTS), doit rester locale par défaut (D2, D10)."
+        },
+        "llmVoice.tts.provider": {
+          "type": "string",
+          "default": "chatterbox",
+          "description": "Identifiant du provider TTS utilisé (provider agnostic, CdC §3.3)."
+        },
+        "llmVoice.narrator.provider": {
+          "type": "string",
+          "default": "",
+          "description": "Identifiant du provider de narration (LLM local), vide = lecture fidèle uniquement."
+        },
+        "llmVoice.narrator.baseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434",
+          "description": "URL de base du service de narration (LLM local, ex. Ollama)."
+        },
+        "llmVoice.narrator.model": {
+          "type": "string",
+          "default": "",
+          "description": "Nom du modèle utilisé par le provider de narration."
+        },
+        "llmVoice.audio.prefetchChunks": {
+          "type": "number",
+          "default": 2,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Nombre de chunks audio pré-synthétisés en avance (CdC §32)."
+        },
+        "llmVoice.highlight.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Active le surlignage du segment en cours de lecture dans l'éditeur (ADR-002)."
+        },
+        "llmVoice.highlight.mode": {
+          "type": "string",
+          "enum": ["sentence", "block"],
+          "default": "sentence",
+          "description": "Granularité du surlignage : phrase (lecture fidèle) ou bloc (narration transformée, CdC §15)."
+        },
+        "llmVoice.codeLens.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Affiche un CodeLens « ▶ Lire cette section » au-dessus de chaque titre Markdown (CdC §69)."
+        },
+        "llmVoice.cache.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Active le cache disque des fichiers audio synthétisés."
+        },
+        "llmVoice.cache.maxSizeMb": {
+          "type": "number",
+          "default": 512,
+          "minimum": 0,
+          "description": "Taille maximale du cache audio en mégaoctets."
+        },
+        "llmVoice.claude.inboxPath": {
+          "type": "string",
+          "default": "",
+          "description": "Chemin de l'inbox recevant les réponses de Claude Code capturées par le hook Stop."
+        },
+        "llmVoice.claude.captureEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Active la capture automatique des réponses Claude Code via le hook Stop."
+        },
+        "llmVoice.privacy.localOnly": {
+          "type": "boolean",
+          "default": true,
+          "description": "N'autorise que des providers locaux (loopback) ; toute cible réseau distante est refusée (D10, ADR-009)."
+        },
+        "llmVoice.network.trustedHosts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Hôtes explicitement autorisés lorsque `privacy.localOnly` est désactivé."
+        },
+        "llmVoice.ui.layout": {
+          "type": "string",
+          "enum": ["minimal", "full"],
+          "default": "minimal",
+          "description": "`minimal` (défaut) : status bar + Panel + CodeLens. `full` : View Container complet (ADR-011)."
+        },
+        "llmVoice.privacy.telemetryEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Active la télémétrie d'usage. Désactivée par défaut."
+        }
       }
-    ]
+    }
   },
   "scripts": {
     "compile": "tsc -p ./ --noEmit false --outDir out",
@@ -38,7 +199,8 @@
     "typecheck": "tsc -p ./ --noEmit",
     "test:unit": "vitest run --config vitest.config.ts",
     "test:integration": "npm run compile && vscode-test",
-    "package": "vsce package --no-dependencies -o llm-voice.vsix",
+    "generate:icon": "node scripts/generate-icon.mjs",
+    "package": "npm run generate:icon && vsce package --no-dependencies -o llm-voice.vsix",
     "vscode:prepublish": "npm run compile"
   },
   "dependencies": {
