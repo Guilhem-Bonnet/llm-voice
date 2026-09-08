@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-code-fences-0001",
+  "cwd": "/home/user/projects/k8s-course",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "Voici le correctif pour la readiness probe :\n\n```yaml\nreadinessProbe:\n  httpGet:\n    path: /health\n    port: 8080\n  initialDelaySeconds: 5\n  periodSeconds: 10\n```\n\nEt le test associé :\n\n```ts\nexpect(probe.path).toBe(\"/health\");\n```\n\nLes deux fichiers ont été mis à jour."
+}
