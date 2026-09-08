@@ -51,3 +51,43 @@
 - Conventional Commits, SemVer, trunk-based, PR obligatoire sur `main`
 - Toutes les décisions sont loggées dans `decisions-log.md`
 - Briefs de sous-agents préfixés `MODE NON-INTERACTIF` ; sortie dans un fichier, retour ≤ 10 lignes
+
+## Requêtes inter-agents
+
+- [ ] [forge→backend-engineer] `OpenAICompatibleTtsProvider` (`vscode-extension/src/tts/OpenAICompatibleTtsProvider.ts`)
+      ne colle pas au contrat réel de Chatterbox-TTS-Server (confirmé en E2E réel, S4.3, 2026-09-08,
+      `docs/e2e/report-2026-09-08.md`) : (1) `POST /v1/audio/speech` répond HTTP 422 sans `model` **et**
+      `voice` dans le corps — le provider ne les envoie que `if (request.xxx !== undefined)`, donc un
+      `TtsRequest` sans voix/modèle explicite (cas courant) échoue contre ce serveur ; (2)
+      `GET /v1/audio/voices` répond `{ status, voices: string[] }` (noms de fichiers, ex. `"Emily.wav"`),
+      pas `{ voices: { id, name, language }[] }` — `listVoices()` mapperait chaque entrée sur `id:
+      undefined`. À réconcilier (soit adapter le provider à ce serveur précis, soit documenter/adapter
+      côté `deploy/tts/config.yaml` un contrat différent) avant de considérer ADR-009 "un seul code pour
+      1/2/3" validé de bout en bout contre ce serveur communautaire.
+      **(3) Accent anglophone confirmé sur du texte FR** (retour utilisateur, diagnostiqué 2026-09-08,
+      2 itérations) : `POST /v1/audio/speech` accepte un champ optionnel `language` (schéma
+      `OpenAISpeechRequest`), mais l'envoyer (`"language":"fr"`) produit un WAV **strictement
+      identique octet pour octet** à ne pas l'envoyer (checksums MD5 comparés) — donc **ignoré** par cet
+      endpoint sur ce serveur. `POST /tts` (endpoint natif, hors contrat OpenAI), lui, **honore** bien
+      `language` (checksums différents entre `language` absent/`"fr"`/`"en"` sur les mêmes texte/voix).
+      Modèle bien `chatterbox-multilingual` chargé côté serveur (logs : `ChatterboxMultilingualTTS`,
+      23 langues dont `fr` confirmées via `GET /api/model-info`) — ce n'est donc pas un modèle anglais
+      chargé par erreur, c'est spécifiquement `/v1/audio/speech` qui n'applique pas `language`. Aucune
+      voix prédéfinie étiquetée française parmi les 28 embarquées (`GET /get_predefined_voices`), ni
+      dans `reference_audio/` (`Gianna.wav`, `Robert.wav`) — probable accent résiduel même avec
+      `language` correctement appliqué ; le clonage vocal avec un échantillon FR (CdC §55) reste la
+      vraie solution pour une voix nativement française. **Pertinent pour `ChatterboxProvider` (PR #28)**
+      si ce serveur communautaire est retenu comme défaut livré : il devra soit utiliser `/tts` au lieu
+      de `/v1/audio/speech` pour que `language` soit pris en compte, soit documenter/contourner
+      autrement. Non corrigé ici (hors périmètre ops, S4.3) ; validation à l'oreille du résultat non
+      faite par cet agent (pas de perception audio) — un humain doit confirmer sur
+      `~/.llm-voice/e2e/reference.wav` (régénéré via `/tts` + `language=fr`, `docs/e2e/report-2026-09-08.md`).
+      **Cause racine confirmée par retour utilisateur direct** : les 28 voix prédéfinies sont anglophones,
+      Chatterbox clone l'accent de la référence quel que soit `language`. `voice_mode: "clone"` avec une
+      référence FR (testé : Piper `fr_FR-siwis-medium` synthétique, puis extrait LibriVox humain domaine
+      public, 3 jeux de paramètres A/B/C) améliore le résultat mais reste un correctif, pas une solution
+      produit. **Le mode voix prédéfinie du serveur communautaire donne un accent anglais en français ;
+      le provider Chatterbox doit supporter `voice_mode: clone` avec un échantillon français, et LLM
+      Voice doit embarquer ou générer une référence FR par défaut (Piper siwis) — point de revue pour la
+      PR #28 et exigence CdC §55.** Détail complet, sources et tableau latence/paramètres :
+      `docs/e2e/report-2026-09-08.md`.

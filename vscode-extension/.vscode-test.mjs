@@ -40,7 +40,12 @@ export default defineConfig([
     // `OpenAICompatibleTtsProvider` + `EgressGuard` path against the default
     // profile's loopback `baseUrl`, which nothing listens on in CI/dev
     // sandboxes ("TTS unavailable" error path, story S3.5 task 6/8).
-    files: "out/test/integration-real/**/*.test.js",
+    // Named explicitly, not a `**` glob: `test/integration-real/` also holds
+    // `chatterbox-tts.test.ts` (S4.3), a plain-Node vitest test (imports
+    // `vitest`, no `vscode`) run separately via `npm run test:integration-real`
+    // (`vitest.integration-real.config.ts`) — it must never be collected
+    // here, `vitest`'s `describe`/`test` have no meaning under mocha.
+    files: "out/test/integration-real/tts-unavailable.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: undefined },
     // See the comment on the `fake-tts` profile above: a *different* cache
     // directory is what actually forces this run to hit the network.

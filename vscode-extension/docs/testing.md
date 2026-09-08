@@ -87,7 +87,19 @@ tableau de configs, chacune lançant sa propre instance de VS Code) :
 | Profil | `LLM_VOICE_TEST_FAKE_TTS` | Fichiers | Ce qu'il prouve |
 |---|---|---|---|
 | `fake-tts` | `1` | `out/test/integration/**` | AC-01..06 : session, highlight, pause, stop, Speak Selection — via `FakeTtsProvider` + `FakeAudioSink`. |
-| `real-provider-unavailable` | non défini | `out/test/integration-real/**` | Le vrai `OpenAICompatibleTtsProvider` + `EgressGuard` (mode `local`) contre le `baseUrl` par défaut du profil (`127.0.0.1:8004`, port fermé en CI) : message d'erreur propre, status bar `error`, aucune exception non gérée. |
+| `real-provider-unavailable` | non défini | `out/test/integration-real/tts-unavailable.test.js` | Le vrai `OpenAICompatibleTtsProvider` + `EgressGuard` (mode `local`) contre le `baseUrl` par défaut du profil (`127.0.0.1:8004`, port fermé en CI) : message d'erreur propre, status bar `error`, aucune exception non gérée. |
 
 `npm run test:integration` (= `npm run build && vscode-test`) exécute les deux
 profils l'un après l'autre.
+
+## E2E réel (S4.3) : `npm run test:integration-real`
+
+`test/integration-real/chatterbox-tts.test.ts` est un test **vitest**
+(pas `@vscode/test-cli` — pas d'import `vscode`), donc exécuté séparément
+via `vitest.integration-real.config.ts` (`npm run test:integration-real`),
+jamais par `.vscode-test.mjs` ni par `npm run test:integration`. Il est
+`skip` sauf `LLM_VOICE_E2E=1`, et cible `LLM_VOICE_E2E_TTS_URL`
+(`http://127.0.0.1:8004` par défaut) : health, liste des voix, synthèse
+d'une phrase FR de référence (CdC §50) → WAV valide. Orchestré par
+`scripts/e2e-local.sh` (racine du repo), qui écrit un rapport dans
+`~/.llm-voice/e2e/`.
