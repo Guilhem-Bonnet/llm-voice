@@ -52,32 +52,40 @@
     }
   }
 
+  // An explicit allowlist of the two schemes the Extension Host ever sends
+  // (`webview.asWebviewUri()` results are `https:`, cached blobs are
+  // `blob:`). `message.src` arrives over `postMessage`, which CodeQL
+  // (rightly) treats as externally controlled input regardless of who the
+  // sender is in this extension's threat model, so the value is matched
+  // against this fixed list before it is allowed anywhere near a URL sink
+  // (AC-SEC-02) — see js/xss and js/client-side-unvalidated-url-redirection.
+  const ALLOWED_AUDIO_SRC_SCHEMES = ["https://", "blob:"];
+
+  function handleLoad(message) {
+    currentChunkId = message.chunkId;
+    if (typeof message.src !== "string") {
+      return;
+    }
+    const matchedScheme = ALLOWED_AUDIO_SRC_SCHEMES.find((scheme) => message.src.startsWith(scheme));
+    if (matchedScheme === undefined) {
+      return;
+    }
+    audio.src = message.src;
+    audio.load();
+    if (typeof message.durationMs === "number") {
+      progressTrack.setAttribute("aria-valuemax", String(message.durationMs));
+    }
+    if (message.autoplay) {
+      void audio.play();
+    }
+  }
+
   // ---- Extension Host -> Webview -------------------------------------
   window.addEventListener("message", (event) => {
     const message = event.data;
     switch (message.type) {
       case "load": {
-        currentChunkId = message.chunkId;
-        // `message.src` arrives over `postMessage`, which CodeQL (rightly)
-        // treats as externally controlled input regardless of who the
-        // sender is in this extension's threat model. The Extension Host
-        // only ever sends a `webview.asWebviewUri()` result (https:) or a
-        // `blob:` URL, so reject anything else inline before it reaches
-        // `audio.src` (AC-SEC-02: no unvalidated value reaches a URL sink).
-        if (
-          typeof message.src !== "string" ||
-          !(message.src.startsWith("https://") || message.src.startsWith("blob:"))
-        ) {
-          break;
-        }
-        audio.src = message.src;
-        audio.load();
-        if (typeof message.durationMs === "number") {
-          progressTrack.setAttribute("aria-valuemax", String(message.durationMs));
-        }
-        if (message.autoplay) {
-          void audio.play();
-        }
+        handleLoad(message);
         break;
       }
       case "play":
