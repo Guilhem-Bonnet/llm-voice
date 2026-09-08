@@ -41,12 +41,13 @@ export default defineConfig([
     // profile's loopback `baseUrl`, which nothing listens on in CI/dev
     // sandboxes ("TTS unavailable" error path, story S3.5 task 6/8).
     // Named explicitly, not a `**` glob: `test/integration-real/` also holds
-    // plain-Node vitest tests (imports `vitest`, no `vscode` — e.g. S4.1's
-    // `ollama-narrator.test.ts`, self-skipped unless `LLM_VOICE_E2E_OLLAMA`
-    // is set, run separately via `npx vitest run test/integration-real/...`).
-    // A wildcard here makes mocha `require()` that file too and crash with
-    // "Vitest cannot be imported ... using require()" — `vitest`'s
-    // `describe`/`it` have no meaning under mocha.
+    // plain-Node vitest tests (import `vitest`, no `vscode` — S4.1's
+    // `ollama-narrator.test.ts`, S4.2/S4.3's `chatterbox-tts.test.ts`), run
+    // separately via `npm run test:integration-real`
+    // (`vitest.integration-real.config.ts`). A wildcard here makes mocha
+    // `require()` those files too and crash with "Vitest cannot be
+    // imported ... using require()" — `vitest`'s `describe`/`it`/`test`
+    // have no meaning under mocha.
     files: "out/test/integration-real/tts-unavailable.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: undefined },
     // See the comment on the `fake-tts` profile above: a *different* cache

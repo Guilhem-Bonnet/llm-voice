@@ -1,0 +1,202 @@
+# Services TTS/narration locaux pour LLM Voice (S4.3, docs/install-linux.md,
+# _grimoire-output/planning-artifacts/linux-first-v1.md §2-3, ADR-009).
+#
+# Usage :
+#   docker compose -f deploy/docker-compose.tts.yml up chatterbox          # niveau 1 (GPU)
+#   docker compose -f deploy/docker-compose.tts.yml --profile ollama up -d  # + Ollama conteneurisé (optionnel)
+#   docker compose -f deploy/docker-compose.tts.yml --profile light up piper # niveau 1b (CPU, sans installation)
+#
+# Aucun port publié hors 127.0.0.1 (local-guarantee-v1.md point #12).
+
+services:
+  chatterbox:
+    build:
+      # Dépôt communautaire, chemin RDNA4 dédié (linux-first-v1.md §2). Commit
+      # figé (ADR-009 : "figer une version testée avant de faire confiance") —
+      # c'est le commit qui a introduit Dockerfile.rdna4 (PR #151). `COPY . .`
+      # dans le Dockerfile a donc besoin du contenu du dépôt : `context` reste
+      # le dépôt distant.
+      context: https://github.com/devnen/Chatterbox-TTS-Server.git#915ae289340e10c6047f27f47e22eae9bf350c32
+      # FIX (exécution réelle S4.3, 2026-09-08) : `Dockerfile.rdna4` fixe
+      # `FROM rocm/dev-ubuntu-22.04:latest`, une étiquette flottante. Elle a
+      # dérivé vers ROCm 10.0 depuis la rédaction du Dockerfile (paquets
+      # renommés `amdrocm-*`, plus de paquet `rocm-ml-libraries` → build en
+      # échec, `apt-get install` exit 100). Tentative 1 : `additional_contexts`
+      # pour substituer la base sans forker le Dockerfile — accepté par
+      # `docker compose config` mais silencieusement sans effet en pratique
+      # avec un `context` distant (même échec `rocm-ml-libraries` observé,
+      # confirmé alors qu'un `docker buildx build --build-context ...` en
+      # ligne de commande directe sur un clone local, lui, fonctionne).
+      # Tentative 2 (retenue) : `dockerfile_inline`, copie fidèle du
+      # `Dockerfile.rdna4` du commit ci-dessus avec une seule ligne changée
+      # (`FROM ... :latest` → `:7.2.3`, la version que le fichier visait
+      # explicitement). Build complet testé avec succès (image ~8,5 Go).
+      dockerfile_inline: |
+        FROM rocm/dev-ubuntu-22.04:7.2.3
+
+        ENV PYTHONDONTWRITEBYTECODE=1
+        ENV PYTHONUNBUFFERED=1
+        ENV DEBIAN_FRONTEND=noninteractive
+        ENV HF_HOME=/app/hf_cache
+
+        RUN apt-get update && apt-get install -y --no-install-recommends \
+            build-essential \
+            libsndfile1 \
+            ffmpeg \
+            python3 \
+            python3-pip \
+            python3-dev \
+            python3-venv \
+            git \
+            rocm-ml-libraries \
+            && apt-get clean \
+            && rm -rf /var/lib/apt/lists/*
+
+        RUN ln -s /usr/bin/python3 /usr/bin/python
+
+        WORKDIR /app
+
+        # Self-contained RDNA4 requirements (no dependency on other requirements files)
+        COPY requirements-rdna4-init.txt ./requirements-rdna4-init.txt
+        COPY requirements-rdna4.txt ./requirements-rdna4.txt
+
+        # Install order mirrors Dockerfile.rocm: ROCm torch first, then app deps,
+        # then chatterbox with --no-deps to prevent pip from replacing ROCm torch
+        RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+            python3 -m pip install --no-cache-dir -r requirements-rdna4-init.txt && \
+            python3 -m pip install --no-cache-dir -r requirements-rdna4.txt && \
+            python3 -m pip install --no-cache-dir --no-deps git+https://github.com/devnen/chatterbox-v2.git@master s3tokenizer==0.3.0 onnx==1.16.0 && \
+            python3 -m pip install --no-cache-dir "protobuf>=4.25.0"
+
+        # Patches for torch 2.9+ compatibility (required when using ROCm 7.2 wheels):
+        # s3tokenizer: numpy defaults to float64; cast to float32 to avoid
+        # float64 STFT → float64 mel → assertion failure
+        RUN sed -i \
+            's/wav = torch\.from_numpy(wav)$/wav = torch.from_numpy(wav).float()/' \
+            /usr/local/lib/python3.10/dist-packages/chatterbox/models/s3tokenizer/s3tokenizer.py && \
+            sed -i \
+            's/mel_spec = self\._mel_filters\.to(self\.device) @ magnitudes/mel_spec = self._mel_filters.to(self.device).to(magnitudes.dtype) @ magnitudes/' \
+            /usr/local/lib/python3.10/dist-packages/chatterbox/models/s3tokenizer/s3tokenizer.py
+
+        # voice_encoder: melspectrogram() returns float64 → LSTM requires float32
+        RUN sed -i \
+            's/utt_embeds = self\.inference(mels\.to(self\.device),/utt_embeds = self.inference(mels.to(self.device).float(),/' \
+            /usr/local/lib/python3.10/dist-packages/chatterbox/models/voice_encoder/voice_encoder.py
+
+        COPY . .
+        RUN mkdir -p model_cache reference_audio outputs voices logs hf_cache
+
+        EXPOSE 8004
+        CMD ["python3", "server.py"]
+    ports:
+      - "127.0.0.1:8004:8004"
+    volumes:
+      - ${HOME}/.llm-voice/models/chatterbox/config.yaml:/app/config.yaml
+      - ${HOME}/.llm-voice/models/chatterbox/outputs:/app/outputs
+      - ${HOME}/.llm-voice/models/chatterbox/logs:/app/logs
+      - ${HOME}/.llm-voice/models/chatterbox/hf_cache:/app/hf_cache
+      # `/app/voices` et `/app/reference_audio` restent ceux de l'image (28
+      # voix + 2 références livrées par le dépôt communautaire) : ne PAS les
+      # bind-mounter en entier sans les avoir d'abord peuplées, un dossier
+      # hôte vide écraserait silencieusement les voix par défaut (dont
+      # `Emily.wav`, `default_voice_id` de deploy/tts/config.yaml). Le fichier
+      # ci-dessous est monté individuellement pour ne rien écraser.
+      # Référence de clonage FR par défaut (docs/voices.md, CC BY 4.0 —
+      # SIWIS French Speech Synthesis Database), retenue après validation
+      # utilisateur : `voice_mode: clone`, `language: fr`,
+      # `exaggeration: 0.4`, `cfg_weight: 0.5`, `temperature: 0.6`.
+      - ./tts/reference-audio/fr-female-siwis.wav:/app/reference_audio/fr-female-siwis.wav:ro
+    # --- Accès GPU ROCm (RDNA4/gfx1201) ---
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    # GID numériques, pas les noms : le process du conteneur tourne en root
+    # (le Dockerfile en amont ne déclare pas `USER`) donc ce n'est pas
+    # bloquant pour l'accès, mais `docker compose` résout un nom de groupe
+    # dans le conteneur au démarrage — `video`/`render` n'y existent pas
+    # forcément. Ajuster via `.env` si `getent group video render` sur cette
+    # machine donne d'autres GID (Fedora 44 observé : video=39, render=105).
+    group_add:
+      - "${LLM_VOICE_VIDEO_GID:-39}"
+      - "${LLM_VOICE_RENDER_GID:-105}"
+    ipc: host
+    shm_size: 8g
+    security_opt:
+      - seccomp=unconfined
+    environment:
+      # ROCm/RDNA4 (linux-first-v1.md §2) : PAS de HSA_OVERRIDE_GFX_VERSION,
+      # gfx1201 est nativement supporté par ROCm 7.2+ et le forcer peut
+      # provoquer des plantages sur ce matériel.
+      - ROCBLAS_USE_HIPBLASLT=0
+      - TTS_BF16=on
+      - TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
+      - MIOPEN_FIND_MODE=FAST
+      # Repli CPU documenté (S4.3 point 4) : `CHATTERBOX_DEVICE=cpu` dans
+      # `.env` ou `CHATTERBOX_DEVICE=cpu docker compose ... up chatterbox`.
+      - TTS_ENGINE_DEVICE=${CHATTERBOX_DEVICE:-auto}
+      # HF Hub (local-guarantee-v1.md §1 points 12-13) : télémétrie coupée
+      # inconditionnellement ; mode hors-ligne piloté par variable, à 0 le
+      # premier lancement (téléchargement du modèle), documenté à 1 ensuite
+      # dans deploy/README.md "Mode hors-ligne".
+      - HF_HUB_DISABLE_TELEMETRY=1
+      - DO_NOT_TRACK=1
+      - HF_HUB_ENABLE_HF_TRANSFER=1
+      - HF_HUB_OFFLINE=${HF_HUB_OFFLINE:-0}
+    healthcheck:
+      # Pas de `/health` sur ce serveur (seulement `/api/ui/initial-data`,
+      # cf. commentaire dans le code) ; curl/wget absents de l'image
+      # (Dockerfile.rdna4 n'installe ni l'un ni l'autre), python3 si présent.
+      test: [
+        "CMD-SHELL",
+        "python3 -c \"import urllib.request as u; u.urlopen('http://127.0.0.1:8004/api/ui/initial-data', timeout=5)\" || exit 1"
+      ]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 60s
+    restart: unless-stopped
+
+  # Optionnel : l'utilisateur a déjà Ollama natif sur :11434 (cas courant sur
+  # cette machine). N'activer que si un Ollama conteneurisé est préféré.
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:rocm
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ${HOME}/.llm-voice/models/ollama:/root/.ollama
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - "${LLM_VOICE_VIDEO_GID:-39}"
+      - "${LLM_VOICE_RENDER_GID:-105}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:11434/api/version || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
+  # Niveau 1b (ADR-009) : Piper CPU, sans installation, wrapper maison
+  # compatible /v1/audio/speech (openedai-speech est archivé). Voir
+  # deploy/piper/.
+  piper:
+    profiles: ["light"]
+    build:
+      context: ./piper
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ${HOME}/.llm-voice/models/piper:/models
+    environment:
+      - PIPER_VOICE=fr_FR-siwis-medium
+      - PIPER_MODELS_DIR=/models
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request as u; u.urlopen('http://127.0.0.1:5000/health', timeout=5)\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
