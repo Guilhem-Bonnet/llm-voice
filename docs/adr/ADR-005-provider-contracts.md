@@ -104,6 +104,10 @@ active `profile.schema.ts` en dur.
   `no-restricted-globals`), sinon elle sera contournée par mégarde.
 - Le mode dégradé rend les appelants plus verbeux, et `getCapabilities()` étant
   asynchrone l'UI doit gérer un état « capacités inconnues » : prix à payer.
+- `AudioQueue` retente une synthèse en échec immédiatement (`maxRetries = 2`,
+  sans backoff). Reporté phase 4.
+- `PlaybackController` n'a pas d'état `buffering` entre deux chunks : reste
+  `playing` même si le chunk suivant n'est pas prêt. Reporté phase 4.
 
 ## Alternatives rejetées
 
