@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ProfileCollectionSchema } from "../../../src/core/profile.schema.js";
+import { isLoopbackUrl, ProfileCollectionSchema } from "../../../src/core/profile.schema.js";
 import {
   DEFAULT_PROFILES,
   FAITHFUL_PROFILE,
@@ -55,9 +55,12 @@ describe("DEFAULT_PROFILES (CdC §19)", () => {
       // Every shipped default profile states its own baseUrl explicitly
       // (fix(review): the field is optional on VoiceProfile so a *custom*
       // profile can fall back to `llmVoice.tts.baseUrl` instead, but none of
-      // these four ever omit it).
+      // these four ever omit it). `isLoopbackUrl` (not a literal hostname
+      // check): the shipped `chatterbox-local` preset uses `localhost`,
+      // `127.0.0.1` elsewhere — both are loopback (D10), only the specific
+      // spelling differs.
       expect(profile.tts.baseUrl).toBeDefined();
-      expect(new URL(profile.tts.baseUrl as string).hostname).toBe("127.0.0.1");
+      expect(isLoopbackUrl(profile.tts.baseUrl as string)).toBe(true);
     }
   });
 });

@@ -44,6 +44,10 @@ describe("formatStatusBarText", () => {
     ).toBe("$(play) 03:12 • Professeur technique");
   });
 
+  it("renders the buffering text (ADR-005's reported-to-phase-4 gap, S4.2)", () => {
+    expect(formatStatusBarText({ ...base, state: "buffering" })).toBe("⏳ Buffering…");
+  });
+
   it("renders the stale text regardless of profile (D6, ADR-011)", () => {
     expect(formatStatusBarText({ ...base, state: "stale" })).toBe(
       "$(warning) Document modifié"

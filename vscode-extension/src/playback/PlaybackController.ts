@@ -130,7 +130,10 @@ export class PlaybackController {
       ...(options.prefetchChunks !== undefined
         ? { prefetchChunks: options.prefetchChunks }
         : {}),
-      ...(options.maxRetries !== undefined ? { maxRetries: options.maxRetries } : {})
+      ...(options.maxRetries !== undefined ? { maxRetries: options.maxRetries } : {}),
+      ...(options.retryBackoffMs !== undefined ? { retryBackoffMs: options.retryBackoffMs } : {}),
+      ...(options.retryJitterMs !== undefined ? { retryJitterMs: options.retryJitterMs } : {}),
+      ...(options.random !== undefined ? { random: options.random } : {})
     };
     this.onChunkError = options.onChunkError ?? (() => "skip");
     this.previousThresholdMs =
@@ -420,8 +423,20 @@ export class PlaybackController {
     this.positionMs = 0;
     session.queue.setCursor(index);
 
-    if (this.state !== "preparing" && this.state !== "playing") {
-      this.setState("preparing");
+    // A chunk already `ready` (cache hit, or synthesised ahead of time) never
+    // shows a transient state: it goes straight from whatever the machine was
+    // in to `playing` below, with no visible `preparing`/`buffering` blip.
+    const preloaded = session.queue.chunks[index]?.status === "ready";
+    if (!preloaded) {
+      if (this.state === "playing") {
+        // The chunk that just ended was playing and the next one is not
+        // ready yet: `buffering`, not `preparing` (that state is reserved
+        // for a session's very first chunk) and not a silent `playing`
+        // (nothing is actually audible).
+        this.setState("buffering");
+      } else if (this.state !== "preparing" && this.state !== "buffering") {
+        this.setState("preparing");
+      }
     }
 
     const chunk = await session.queue.waitFor(index);

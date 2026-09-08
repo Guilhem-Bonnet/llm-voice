@@ -2,31 +2,30 @@
  * Disk-backed `AudioCacheStore` over `globalStorageUri/cache` (ADR-004).
  *
  * Layout: `cache/<2 first hex chars of the key>/<key>.wav`, plus a sidecar
- * `<key>.json` with `{createdAt, lastAccessAt, bytes}`. Writes are atomic
- * (tmp file + rename), `put` is idempotent (an existing key is touched, not
- * rewritten), and eviction is LRU by `lastAccessAt` down to 90% of the
- * configured `maxSizeMb` budget, run best-effort after every write and once
- * at construction.
+ * `<key>.json` carrying the full ADR-004 shape —
+ * `{createdAt, lastAccessAt, bytes, format, durationMs, providerId}` — now
+ * that `AudioCacheStore.put(key, bytes, meta?)` can pass it in. Writes are
+ * atomic (tmp file + rename), `put` is idempotent (an existing key is
+ * touched, not rewritten), and eviction is LRU by `lastAccessAt` down to 90%
+ * of the configured `maxSizeMb` budget, run best-effort after every write
+ * and once at construction — but a pinned key (`pin()`/`unpin()`, ADR-004's
+ * "referenced by a session in progress") is never evicted, however old.
  *
  * Deliberately free of any `vscode` import: the extension layer passes in
  * `context.globalStorageUri.fsPath` as `root`, which is what keeps this class
  * unit-testable in plain Node (mirrors `AudioCache.ts`).
  *
- * Known gap vs. the full ADR-004 sidecar shape: `AudioCacheStore.put()` (a
- * contract already frozen in S3.2) only receives `key` and `bytes`, so
- * `format`/`durationMs`/`providerId` cannot be recorded here; every file is
- * written with a fixed `.wav` extension, which matches every TTS provider in
- * this slice (Fake and OpenAI-compatible both request `wav`). Likewise, this
- * store has no notion of "referenced by a session in progress" (no pinning
- * API exists on `AudioCacheStore`), so eviction never special-cases a chunk
- * that is currently playing. Both are noted for a follow-up story rather than
- * forking the interface here.
+ * Pinning is process-local, in-memory only (a `Set<string>`): it survives
+ * exactly as long as the `PlaybackController` session that pinned the key,
+ * which is the only lifetime that matters — nothing should still consider a
+ * chunk "in playback" after a window reload.
  */
 
 import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AudioCacheStore } from "./AudioCache.js";
+import type { AudioFormat } from "../core/tts.js";
+import type { AudioCachePutMeta, AudioCacheStore } from "./AudioCache.js";
 
 export interface DiskAudioCacheOptions {
   /** Absolute path to the cache root, e.g. `<globalStorageUri>/cache`. */
@@ -39,6 +38,9 @@ interface SidecarMeta {
   createdAt: number;
   lastAccessAt: number;
   bytes: number;
+  format?: AudioFormat;
+  durationMs?: number;
+  providerId?: string;
 }
 
 interface DiskEntry {
@@ -74,6 +76,8 @@ export class DiskAudioCache implements AudioCacheStore {
    * counter — not wall-clock alone — is what actually orders entries.
    */
   private sequence = 0;
+  /** In-memory only (ADR-004): pins never survive past this process/session. */
+  private readonly pinned = new Set<string>();
 
   constructor(options: DiskAudioCacheOptions) {
     this.root = options.root;
@@ -103,12 +107,12 @@ export class DiskAudioCache implements AudioCacheStore {
     }
   }
 
-  async put(key: string, bytes: Uint8Array): Promise<string> {
+  async put(key: string, bytes: Uint8Array, meta?: AudioCachePutMeta): Promise<string> {
     await this.ready;
     const dest = this.filePath(key);
     const already = await this.exists(dest);
     if (already) {
-      await this.touch(key, bytes.byteLength);
+      await this.touch(key, bytes.byteLength, meta);
       return dest;
     }
 
@@ -118,9 +122,25 @@ export class DiskAudioCache implements AudioCacheStore {
     await fs.rename(tmp, dest);
 
     const now = this.nextTimestamp();
-    await this.writeSidecar(key, { createdAt: now, lastAccessAt: now, bytes: bytes.byteLength });
+    await this.writeSidecar(key, {
+      createdAt: now,
+      lastAccessAt: now,
+      bytes: bytes.byteLength,
+      ...(meta?.format !== undefined ? { format: meta.format } : {}),
+      ...(meta?.durationMs !== undefined ? { durationMs: meta.durationMs } : {}),
+      ...(meta?.providerId !== undefined ? { providerId: meta.providerId } : {})
+    });
     void this.evictIfOverBudget().catch(() => {});
     return dest;
+  }
+
+  /** ADR-004 "referenced by a session in progress": never evicted while pinned. */
+  pin(key: string): void {
+    this.pinned.add(key);
+  }
+
+  unpin(key: string): void {
+    this.pinned.delete(key);
   }
 
   async size(): Promise<number> {
@@ -140,6 +160,10 @@ export class DiskAudioCache implements AudioCacheStore {
     for (const entry of oldestFirst) {
       if (total <= targetBytes) {
         break;
+      }
+      if (this.pinned.has(entry.key)) {
+        // ADR-004: a chunk referenced by a session in progress is never evicted.
+        continue;
       }
       await Promise.allSettled([fs.rm(entry.filePath, { force: true }), fs.rm(entry.sidecarPath, { force: true })]);
       total -= entry.bytes;
@@ -197,12 +221,18 @@ export class DiskAudioCache implements AudioCacheStore {
     }
   }
 
-  private async touch(key: string, bytes: number): Promise<void> {
+  private async touch(key: string, bytes: number, meta?: AudioCachePutMeta): Promise<void> {
     const existing = await this.readSidecar(key);
+    const format = meta?.format ?? existing?.format;
+    const durationMs = meta?.durationMs ?? existing?.durationMs;
+    const providerId = meta?.providerId ?? existing?.providerId;
     await this.writeSidecar(key, {
       createdAt: existing?.createdAt ?? this.nextTimestamp(),
       lastAccessAt: this.nextTimestamp(),
-      bytes: existing?.bytes ?? bytes
+      bytes: existing?.bytes ?? bytes,
+      ...(format !== undefined ? { format } : {}),
+      ...(durationMs !== undefined ? { durationMs } : {}),
+      ...(providerId !== undefined ? { providerId } : {})
     });
   }
 

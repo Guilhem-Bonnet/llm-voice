@@ -13,12 +13,20 @@
 
 import type { VoiceProfile } from "../core/profile.js";
 import { DEFAULT_PROFILE } from "../core/profile.schema.js";
+import { CHATTERBOX_LOCAL_PRESET } from "../tts/presets.js";
 
+// ADR-005/CdC §28: `chatterbox` (native `POST /tts`), voice-cloned by
+// default against the validated SIWIS-derived French reference — see the
+// same note on `DEFAULT_PROFILE.tts` in `core/profile.schema.ts`.
 const LOCAL_TTS = {
-  providerId: "openai-compatible",
-  baseUrl: "http://127.0.0.1:8004",
-  model: "chatterbox",
-  voice: "default",
+  providerId: "chatterbox",
+  baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl,
+  ...(CHATTERBOX_LOCAL_PRESET.referenceAudio !== undefined
+    ? { referenceAudio: CHATTERBOX_LOCAL_PRESET.referenceAudio }
+    : {}),
+  ...(CHATTERBOX_LOCAL_PRESET.parameters !== undefined
+    ? { parameters: { ...CHATTERBOX_LOCAL_PRESET.parameters } }
+    : {}),
   format: "wav"
 } as const;
 

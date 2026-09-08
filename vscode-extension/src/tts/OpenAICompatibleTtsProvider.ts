@@ -10,6 +10,13 @@
  * endpoint every OpenAI-compatible server is guaranteed to expose — when the
  * first one 404s or otherwise fails, so a server that skipped `/health`
  * still reports something better than `unreachable`.
+ *
+ * `baseUrl`/`egress`/`apiKey`/`headers()`/`endpointLabel()` are `protected`
+ * specifically so `ChatterboxProvider` and `KokoroProvider` (CdC §28:
+ * `ChatterboxProvider extends OpenAICompatibleTtsProvider`) can add
+ * engine-specific parameters and voice-listing fallbacks without
+ * re-implementing the HTTP plumbing — `buildSpeechRequestBody()` and
+ * `parseVoicesResponse()` are the two seams they override.
  */
 
 import type { ProviderHealth } from "../core/health.js";
@@ -29,16 +36,16 @@ interface VoicesResponseBody {
   voices?: Array<{ id: string; name?: string; language?: string }>;
 }
 
-function messageOf(error: unknown): string {
+export function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
 export class OpenAICompatibleTtsProvider implements TtsProvider {
   readonly id: string;
 
-  private readonly baseUrl: string;
-  private readonly egress: EgressGuardHandle;
-  private readonly apiKey: string | undefined;
+  protected readonly baseUrl: string;
+  protected readonly egress: EgressGuardHandle;
+  protected readonly apiKey: string | undefined;
 
   constructor(options: OpenAICompatibleTtsProviderOptions) {
     this.id = options.id ?? "openai-compatible";
@@ -115,8 +122,13 @@ export class OpenAICompatibleTtsProvider implements TtsProvider {
     if (!response.ok) {
       return [];
     }
-    const body = (await response.json()) as VoicesResponseBody;
-    return (body.voices ?? []).map((voice) => ({
+    return this.parseVoicesResponse(await response.json());
+  }
+
+  /** Turns a `/v1/audio/voices` body into `Voice[]`; overridable per engine. */
+  protected parseVoicesResponse(body: unknown): Voice[] {
+    const voices = (body as VoicesResponseBody | undefined)?.voices ?? [];
+    return voices.map((voice) => ({
       id: voice.id,
       label: voice.name ?? voice.id,
       ...(voice.language !== undefined ? { language: voice.language } : {})
@@ -127,25 +139,28 @@ export class OpenAICompatibleTtsProvider implements TtsProvider {
     const response = await this.egress.fetch(`${this.baseUrl}/v1/audio/speech`, {
       method: "POST",
       headers: this.headers({ "content-type": "application/json" }),
-      body: JSON.stringify({
-        ...(request.model !== undefined ? { model: request.model } : {}),
-        ...(request.voice !== undefined ? { voice: request.voice } : {}),
-        input: request.text,
-        response_format: "wav",
-        ...(request.speed !== undefined ? { speed: request.speed } : {})
-      }),
+      body: JSON.stringify(this.buildSpeechRequestBody(request)),
       ...(signal !== undefined ? { signal } : {})
     });
     if (!response.ok) {
-      throw new Error(
-        `OpenAICompatibleTtsProvider: HTTP ${response.status} from ${this.baseUrl}/v1/audio/speech`
-      );
+      throw new Error(`${this.constructor.name}: HTTP ${response.status} from ${this.baseUrl}/v1/audio/speech`);
     }
     const buffer = await response.arrayBuffer();
     return { format: "wav", data: new Uint8Array(buffer) };
   }
 
-  private headers(extra: Record<string, string> = {}): Record<string, string> {
+  /** JSON body of `POST /v1/audio/speech`; engine subclasses extend it. */
+  protected buildSpeechRequestBody(request: TtsRequest): Record<string, unknown> {
+    return {
+      ...(request.model !== undefined ? { model: request.model } : {}),
+      ...(request.voice !== undefined ? { voice: request.voice } : {}),
+      input: request.text,
+      response_format: "wav",
+      ...(request.speed !== undefined ? { speed: request.speed } : {})
+    };
+  }
+
+  protected headers(extra: Record<string, string> = {}): Record<string, string> {
     return {
       ...(this.apiKey !== undefined ? { authorization: `Bearer ${this.apiKey}` } : {}),
       ...extra
@@ -153,7 +168,7 @@ export class OpenAICompatibleTtsProvider implements TtsProvider {
   }
 
   /** Host + path only (D10): never a query string, never a body. */
-  private endpointLabel(path: string): string {
+  protected endpointLabel(path: string): string {
     try {
       const url = new URL(this.baseUrl);
       return `${url.hostname}${path}`;

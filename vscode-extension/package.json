@@ -106,13 +106,14 @@
         },
         "llmVoice.tts.baseUrl": {
           "type": "string",
-          "default": "http://127.0.0.1:8880",
-          "description": "URL de base du service de synthèse vocale (TTS), doit rester locale par défaut (D2, D10)."
+          "default": "http://127.0.0.1:8004",
+          "description": "URL de base du service de synthèse vocale (TTS), doit rester locale par défaut (D2, D10). Port 8004 = Chatterbox (ADR-009 niveau 1)."
         },
         "llmVoice.tts.provider": {
           "type": "string",
           "default": "chatterbox",
-          "description": "Identifiant du provider TTS utilisé (provider agnostic, CdC §3.3)."
+          "enum": ["chatterbox", "kokoro", "openai-compatible"],
+          "description": "Identifiant du provider TTS utilisé (provider agnostic, CdC §3.3). Voir docs/providers.md."
         },
         "llmVoice.narrator.provider": {
           "type": "string",
@@ -204,6 +205,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p ./ --noEmit",
     "test:unit": "vitest run --config vitest.config.ts",
+    "test:integration-real": "vitest run --config vitest.integration-real.config.ts",
     "bundle": "node scripts/esbuild.mjs",
     "generate:icon": "node scripts/generate-icon.mjs",
     "generate:profile-schema": "node scripts/generate-profile-schema.mjs",
