@@ -205,6 +205,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p ./ --noEmit",
     "test:unit": "vitest run --config vitest.config.ts",
+    "test:integration-real": "vitest run --config vitest.integration-real.config.ts",
     "bundle": "node scripts/esbuild.mjs",
     "generate:icon": "node scripts/generate-icon.mjs",
     "generate:profile-schema": "node scripts/generate-profile-schema.mjs",

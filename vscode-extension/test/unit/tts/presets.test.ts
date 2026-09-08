@@ -24,6 +24,15 @@ describe("TTS provider presets (ADR-009)", () => {
     expect(CHATTERBOX_LOCAL_PRESET.remote).toBe(false);
   });
 
+  it("chatterbox-local defaults to the validated SIWIS French voice clone (CdC §55)", () => {
+    expect(CHATTERBOX_LOCAL_PRESET.referenceAudio).toBe("../deploy/tts/reference-audio/fr-female-siwis.wav");
+    expect(CHATTERBOX_LOCAL_PRESET.parameters).toEqual({
+      exaggeration: 0.4,
+      cfg_weight: 0.5,
+      temperature: 0.6
+    });
+  });
+
   it("kokoro-local targets localhost:8880 with the French default voice", () => {
     expect(KOKORO_LOCAL_PRESET.baseUrl).toBe("http://localhost:8880");
     expect(KOKORO_LOCAL_PRESET.voice).toBe("ff_siwis");
@@ -72,6 +81,20 @@ describe("TTS provider presets (ADR-009)", () => {
       egress: egress()
     });
     expect((provider as unknown as { baseUrl: string }).baseUrl).toBe("http://127.0.0.1:9999");
+  });
+
+  it("createTtsProvider() threads referenceAudioPath into ChatterboxProvider only", () => {
+    const withRef = createTtsProvider(
+      { kind: "chatterbox", baseUrl: "http://localhost:8004" },
+      { egress: egress(), referenceAudioPath: "/tmp/ref.wav" }
+    ) as unknown as { referenceAudioPath: string | undefined };
+    expect(withRef.referenceAudioPath).toBe("/tmp/ref.wav");
+
+    const kokoro = createTtsProvider(
+      { kind: "kokoro", baseUrl: "http://localhost:8880" },
+      { egress: egress(), referenceAudioPath: "/tmp/ref.wav" }
+    ) as unknown as { referenceAudioPath: string | undefined };
+    expect(kokoro.referenceAudioPath).toBeUndefined();
   });
 
   it("createTtsProvider() never puts an apiKey where nothing was given", () => {

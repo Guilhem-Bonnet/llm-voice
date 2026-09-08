@@ -1,19 +1,47 @@
 /**
  * `ChatterboxProvider`: the ADR-009 niveau 1 default (`Chatterbox
  * Multilingual V3`, CdC §24-25, §28: `ChatterboxProvider extends
- * OpenAICompatibleTtsProvider`).
+ * OpenAICompatibleTtsProvider` for the shared HTTP plumbing — `health()`,
+ * `headers()`, `egress`, voice listing fallback — but synthesis itself talks
+ * the community `Chatterbox-TTS-Server`'s *native* `POST /tts`, not the
+ * inherited `/v1/audio/speech`).
  *
- * Adds the engine-specific tuning parameters the community
- * `Chatterbox-TTS-Server` accepts on top of the OpenAI-compatible
- * `/v1/audio/speech` body (`exaggeration`, `cfg_weight`, `temperature`,
- * `language_id`), and falls back to the server's own `/get_predefined_voices`
- * route when `/v1/audio/voices` 404s (older/community builds only expose the
- * former). `health()` reads an optional `{"status": "..."}` body on
- * `/health` so a model still warming up reports `degraded`, not a bare `ok`.
+ * fix(review, S4.2/S4.3): field names verified against the real server's
+ * OpenAPI schema (`GET /openapi.json` on `localhost:8004`, 2026-09-08), not
+ * guessed. `POST /v1/audio/speech` (`OpenAISpeechRequest`) requires `model`
+ * + `voice` and has **no** `exaggeration`/`cfg_weight`/`temperature`/
+ * `language`/clone-mode fields at all — extra JSON keys are silently
+ * dropped, and `docs/e2e/report-2026-09-08.md` ("Accent français") traced
+ * the English-accented French synthesis the S4.3 real E2E run first hit
+ * back to exactly this: `language` is honoured by `/tts` but ignored by
+ * `/v1/audio/speech` on this server. `POST /tts` (`CustomTTSRequest`) is
+ * the endpoint that actually exposes `voice_mode`, `predefined_voice_id`,
+ * `reference_audio_filename`, `exaggeration`, `cfg_weight`, `temperature`
+ * and `language`. `OpenAICompatibleTtsProvider.synthesize()` (unchanged,
+ * `/v1/audio/speech`) stays the code path for any *other* OpenAI-compatible
+ * engine (Piper via a wrapper, enterprise/cloud tiers 2-3, ADR-009) that has
+ * no native alternative — it requires `model` + `voice` and does not carry
+ * `language` to the engine; profiles pointed at it must pick a voice whose
+ * language already matches.
+ *
+ * Voice cloning (CdC §55): a profile's `tts.referenceAudio` (a local file
+ * path) is uploaded once, lazily, on the first `synthesize()` call, via
+ * `POST /upload_reference` (multipart/form-data, `files` field — verified
+ * in `/docs`/`openapi.json`); the community server keeps the uploaded file
+ * under its original basename, which is then sent back as
+ * `reference_audio_filename` on every `/tts` call for the rest of this
+ * provider instance's lifetime (one instance per resolved
+ * providerId/baseUrl/referenceAudio tuple, `Pipeline.ttsFor`'s registry
+ * key). Concurrent first calls share one upload via `uploadPromise`. Without
+ * a `referenceAudio`, `voice_mode: "predefined"` is used with
+ * `request.voice` as `predefined_voice_id`.
  */
 
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
+
 import type { ProviderHealth } from "../core/health.js";
-import type { TtsCapabilities, TtsParameterDescriptor, TtsRequest, Voice } from "../core/tts.js";
+import type { AudioResult, TtsCapabilities, TtsParameterDescriptor, TtsRequest, Voice } from "../core/tts.js";
 import {
   OpenAICompatibleTtsProvider,
   messageOf,
@@ -22,7 +50,7 @@ import {
 
 const DEFAULT_ID = "chatterbox";
 
-/** CdC §24: the tunables Chatterbox exposes beyond the base OpenAI-compatible request. */
+/** CdC §24: the tunables the native `/tts` endpoint accepts (`CustomTTSRequest`). */
 const PARAMETERS: readonly TtsParameterDescriptor[] = [
   {
     name: "exaggeration",
@@ -53,14 +81,10 @@ const PARAMETERS: readonly TtsParameterDescriptor[] = [
     max: 2,
     step: 0.05,
     description: "Variabilité de la génération."
-  },
-  {
-    name: "language_id",
-    label: "Langue",
-    type: "string",
-    default: "fr",
-    description: "Code de langue transmis au modèle (ex. \"fr\", \"en\")."
   }
+  // `language` is a first-class `TtsRequest.language`/profile field, not a
+  // free-form `parameters` entry (it used to be smuggled in here as
+  // "language_id", a field `/tts` does not have — see file header).
 ];
 
 interface PredefinedVoiceEntry {
@@ -76,9 +100,28 @@ function numberParam(parameters: Readonly<Record<string, unknown>> | undefined, 
   return typeof value === "number" ? value : undefined;
 }
 
+/** `"fr-FR"` → `"fr"`: profiles carry a BCP-47 tag, `/tts`'s `language` wants the short code. */
+function normalizeLanguage(language: string): string {
+  return language.slice(0, 2).toLowerCase();
+}
+
+export interface ChatterboxProviderOptions extends OpenAICompatibleTtsProviderOptions {
+  /**
+   * Local filesystem path to a reference sample for voice cloning (CdC §55).
+   * Uploaded once via `POST /upload_reference` on first use; absent means
+   * `voice_mode: "predefined"`.
+   */
+  referenceAudioPath?: string;
+}
+
 export class ChatterboxProvider extends OpenAICompatibleTtsProvider {
-  constructor(options: OpenAICompatibleTtsProviderOptions) {
+  private readonly referenceAudioPath: string | undefined;
+  private uploadedReferenceFilename: string | undefined;
+  private uploadPromise: Promise<string> | undefined;
+
+  constructor(options: ChatterboxProviderOptions) {
     super({ id: DEFAULT_ID, ...options });
+    this.referenceAudioPath = options.referenceAudioPath;
   }
 
   override async health(signal?: AbortSignal): Promise<ProviderHealth> {
@@ -174,19 +217,88 @@ export class ChatterboxProvider extends OpenAICompatibleTtsProvider {
     return { ...base, parameters: PARAMETERS };
   }
 
-  protected override buildSpeechRequestBody(request: TtsRequest): Record<string, unknown> {
-    const base = super.buildSpeechRequestBody(request);
+  /** `POST /tts` (native, CdC §24-25/§55) — not the inherited `/v1/audio/speech`, see file header. */
+  override async synthesize(request: TtsRequest, signal?: AbortSignal): Promise<AudioResult> {
+    const referenceAudioFilename = await this.ensureReferenceUploaded(signal);
+    const response = await this.egress.fetch(`${this.baseUrl}/tts`, {
+      method: "POST",
+      headers: this.headers({ "content-type": "application/json" }),
+      body: JSON.stringify(this.buildTtsRequestBody(request, referenceAudioFilename)),
+      ...(signal !== undefined ? { signal } : {})
+    });
+    if (!response.ok) {
+      throw new Error(`ChatterboxProvider: HTTP ${response.status} from ${this.baseUrl}/tts`);
+    }
+    const buffer = await response.arrayBuffer();
+    return { format: "wav", data: new Uint8Array(buffer) };
+  }
+
+  /** JSON body of `POST /tts` (`CustomTTSRequest`, verified field-for-field against `/openapi.json`). */
+  private buildTtsRequestBody(
+    request: TtsRequest,
+    referenceAudioFilename: string | undefined
+  ): Record<string, unknown> {
     const parameters = request.parameters;
     const exaggeration = numberParam(parameters, "exaggeration");
     const cfgWeight = numberParam(parameters, "cfg_weight");
     const temperature = numberParam(parameters, "temperature");
-    const languageId = request.language ?? (typeof parameters?.["language_id"] === "string" ? (parameters["language_id"] as string) : undefined);
+    const language = request.language !== undefined ? normalizeLanguage(request.language) : undefined;
+    const cloning = referenceAudioFilename !== undefined;
     return {
-      ...base,
-      ...(languageId !== undefined ? { language_id: languageId } : {}),
+      text: request.text,
+      voice_mode: cloning ? "clone" : "predefined",
+      ...(cloning
+        ? { reference_audio_filename: referenceAudioFilename }
+        : request.voice !== undefined
+          ? { predefined_voice_id: request.voice }
+          : {}),
+      output_format: "wav",
+      ...(language !== undefined ? { language } : {}),
       ...(exaggeration !== undefined ? { exaggeration } : {}),
       ...(cfgWeight !== undefined ? { cfg_weight: cfgWeight } : {}),
       ...(temperature !== undefined ? { temperature } : {})
     };
+  }
+
+  /** Uploads `referenceAudioPath` at most once (memoised across concurrent callers). */
+  private async ensureReferenceUploaded(signal?: AbortSignal): Promise<string | undefined> {
+    if (this.referenceAudioPath === undefined) {
+      return undefined;
+    }
+    if (this.uploadedReferenceFilename !== undefined) {
+      return this.uploadedReferenceFilename;
+    }
+    this.uploadPromise ??= this.uploadReference(this.referenceAudioPath, signal);
+    const filename = await this.uploadPromise;
+    this.uploadedReferenceFilename = filename;
+    return filename;
+  }
+
+  /** `POST /upload_reference` (multipart/form-data, `files[]`) — verified in `/openapi.json`. */
+  private async uploadReference(path: string, signal?: AbortSignal): Promise<string> {
+    const filename = basename(path);
+    let bytes: Buffer;
+    try {
+      bytes = await readFile(path);
+    } catch (error) {
+      throw new Error(`ChatterboxProvider: cannot read reference audio "${path}": ${messageOf(error)}`);
+    }
+    const form = new FormData();
+    form.append("files", new Blob([bytes]), filename);
+    // No content-type header here: `fetch` sets `multipart/form-data;
+    // boundary=...` itself from the `FormData` body — setting it manually
+    // would drop the boundary and break the upload.
+    const response = await this.egress.fetch(`${this.baseUrl}/upload_reference`, {
+      method: "POST",
+      headers: this.headers(),
+      body: form,
+      ...(signal !== undefined ? { signal } : {})
+    });
+    if (!response.ok) {
+      throw new Error(
+        `ChatterboxProvider: reference upload failed, HTTP ${response.status} from ${this.baseUrl}/upload_reference`
+      );
+    }
+    return filename;
   }
 }

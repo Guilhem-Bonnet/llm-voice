@@ -23,17 +23,43 @@ export interface TtsProviderPreset {
   baseUrl: string;
   model?: string;
   voice?: string;
+  /**
+   * Path to a reference sample for voice cloning (CdC §55, `chatterbox` kind
+   * only). Relative paths are resolved against the extension root by
+   * `Pipeline.ttsFor` (`docs/providers.md` "Voice cloning" documents exactly
+   * how, and its dev-only limitation); this field itself is pure data, read
+   * by nothing here — `src/profiles/defaults.ts` mirrors it into the shipped
+   * profiles' `tts.referenceAudio`.
+   */
+  referenceAudio?: string;
+  /**
+   * Engine tuning mirrored into a profile's `tts.parameters` (documentation
+   * only here, exactly like `referenceAudio` above — `createTtsProvider`
+   * never reads a preset's `parameters`/`referenceAudio` itself, only its
+   * `kind`/`baseUrl`; the *profile* is what actually carries them to a
+   * `TtsRequest`, `AudioQueue.requestFor`).
+   */
+  parameters?: Readonly<Record<string, unknown>>;
   /** ADR-009: false for `localhost`-only tiers 1/1b, true for tier 2/3. */
   remote: boolean;
 }
 
-/** ADR-009 niveau 1: Chatterbox Multilingual V3 on its RDNA4 container default port. */
+/**
+ * ADR-009 niveau 1: Chatterbox Multilingual V3 on its RDNA4 container
+ * default port. Voice-cloned by default (CdC §55) against the SIWIS-derived
+ * French reference chosen after listening to 5 candidates on the real S4.3
+ * E2E run — a French *predefined* voice does not exist on the community
+ * server (`docs/e2e/report-2026-09-08.md`, "Accent français": all 28
+ * predefined voices are English samples, and Chatterbox clones the
+ * reference's accent, not just its timbre, regardless of `language`).
+ */
 export const CHATTERBOX_LOCAL_PRESET: TtsProviderPreset = {
   id: "chatterbox-local",
-  label: "Chatterbox (local)",
+  label: "Chatterbox (local, voix clonée FR — SIWIS)",
   kind: "chatterbox",
   baseUrl: "http://localhost:8004",
-  voice: "default",
+  referenceAudio: "../deploy/tts/reference-audio/fr-female-siwis.wav",
+  parameters: { exaggeration: 0.4, cfg_weight: 0.5, temperature: 0.6 },
   remote: false
 };
 
@@ -85,6 +111,14 @@ export interface CreateTtsProviderOptions {
   egress: EgressGuardHandle;
   /** Resolved secret value (`SecretStorage`, ADR-004/D9 niveau 2-3), never logged. */
   apiKey?: string;
+  /**
+   * Absolute filesystem path to a voice-cloning reference sample (CdC §55).
+   * `chatterbox` kind only — ignored for every other preset kind. Callers
+   * resolve a possibly-relative `profile.tts.referenceAudio`/
+   * `preset.referenceAudio` to an absolute path themselves (`Pipeline.ttsFor`)
+   * before reaching here; this factory never touches the filesystem.
+   */
+  referenceAudioPath?: string;
 }
 
 /**
@@ -105,7 +139,10 @@ export function createTtsProvider(
   };
   switch (preset.kind) {
     case "chatterbox":
-      return new ChatterboxProvider(providerOptions);
+      return new ChatterboxProvider({
+        ...providerOptions,
+        ...(options.referenceAudioPath !== undefined ? { referenceAudioPath: options.referenceAudioPath } : {})
+      });
     case "kokoro":
       return new KokoroProvider(providerOptions);
     case "openai-compatible":

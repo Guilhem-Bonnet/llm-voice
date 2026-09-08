@@ -6,6 +6,7 @@
 import { z } from "zod";
 
 import type { VoiceProfile } from "./profile.js";
+import { CHATTERBOX_LOCAL_PRESET } from "../tts/presets.js";
 
 /** Chunk granularity accepted in a profile (CdC §33). */
 export const ChunkUnitSchema = z.enum(["sentence", "block"]);
@@ -50,7 +51,9 @@ export const TtsBindingSchema = z.object({
   voice: z.string().min(1).optional(),
   format: z.string().min(1).optional(),
   apiKeyRef: z.string().min(1).optional(),
-  parameters: z.record(z.string(), z.unknown()).optional()
+  parameters: z.record(z.string(), z.unknown()).optional(),
+  /** Voice cloning reference sample, local path (CdC §55). Backward-compatible: optional. */
+  referenceAudio: z.string().min(1).optional()
 });
 
 /**
@@ -139,10 +142,19 @@ export const DEFAULT_PROFILE: VoiceProfile = {
   mode: "faithful",
   language: "fr-FR",
   tts: {
-    providerId: "openai-compatible",
-    baseUrl: "http://127.0.0.1:8004",
-    model: "chatterbox",
-    voice: "default",
+    // ADR-005/CdC §28: `chatterbox`, not `openai-compatible` pointed at
+    // Chatterbox's port — `POST /v1/audio/speech` ignores `language` on this
+    // server (docs/e2e/report-2026-09-08.md), `ChatterboxProvider`'s native
+    // `POST /tts` doesn't. Voice-cloned by default (CdC §55) against the
+    // validated SIWIS-derived French reference.
+    providerId: "chatterbox",
+    baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl,
+    ...(CHATTERBOX_LOCAL_PRESET.referenceAudio !== undefined
+      ? { referenceAudio: CHATTERBOX_LOCAL_PRESET.referenceAudio }
+      : {}),
+    ...(CHATTERBOX_LOCAL_PRESET.parameters !== undefined
+      ? { parameters: { ...CHATTERBOX_LOCAL_PRESET.parameters } }
+      : {}),
     format: "wav"
   },
   chunking: {

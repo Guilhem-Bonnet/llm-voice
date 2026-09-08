@@ -6,9 +6,16 @@
  * without any GPU or external network access.
  *
  * Routes:
- *   POST /v1/audio/speech  -> WAV bytes (audio/wav)
- *   GET  /v1/audio/voices  -> { voices: Voice[] }
- *   GET  /health           -> { status: "ok" }
+ *   POST /v1/audio/speech   -> WAV bytes (audio/wav)
+ *   GET  /v1/audio/voices   -> { voices: Voice[] }
+ *   GET  /health            -> { status: "ok" }
+ *   POST /tts                -> WAV bytes (audio/wav) — Chatterbox's native
+ *                                endpoint (S4.2, `ChatterboxProvider`), field
+ *                                names verified against the real server's
+ *                                `/openapi.json` (`CustomTTSRequest`).
+ *   POST /upload_reference   -> { message } — voice-cloning reference upload
+ *                                (multipart/form-data, CdC §55)
+ *   GET  /get_reference_files -> string[] — uploaded reference filenames
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { makeSilentWav } from "./wav.js";
@@ -29,6 +36,8 @@ export interface MockTtsServerOptions {
   predefinedVoices?: Array<{ voice_id: string; display_name?: string; language?: string }>;
   /** Body merged into the GET /health JSON response (e.g. `{status: "loading"}`, S4.2). */
   healthBody?: Record<string, unknown>;
+  /** If true, POST /upload_reference always responds 500 (CdC §55 upload failure path). */
+  uploadReference500?: boolean;
 }
 
 export interface MockTtsServerRequestLog {
@@ -41,6 +50,8 @@ export class MockTtsServer {
   private readonly server: Server;
   private readonly options: Required<MockTtsServerOptions>;
   readonly requests: MockTtsServerRequestLog[] = [];
+  /** Filenames received by POST /upload_reference, in call order (CdC §55). */
+  readonly uploadedReferenceFilenames: string[] = [];
 
   constructor(options: MockTtsServerOptions = {}) {
     this.options = {
@@ -50,7 +61,8 @@ export class MockTtsServer {
       msPerChar: options.msPerChar ?? 10,
       voices404: options.voices404 ?? false,
       predefinedVoices: options.predefinedVoices ?? [],
-      healthBody: options.healthBody ?? { status: "ok" }
+      healthBody: options.healthBody ?? { status: "ok" },
+      uploadReference500: options.uploadReference500 ?? false
     };
     this.server = createServer((req, res) => {
       this.handle(req, res).catch((error: unknown) => {
@@ -133,6 +145,46 @@ export class MockTtsServer {
       return;
     }
 
+    // Chatterbox's native endpoint (S4.2, `ChatterboxProvider`): same WAV
+    // generation as `/v1/audio/speech` above, `CustomTTSRequest`'s `text`
+    // field instead of `input`, and no `redirectExternal` case (nothing
+    // exercises that egress-guard path through this route today).
+    if (req.method === "POST" && url === "/tts") {
+      if (this.options.fail500) {
+        res.writeHead(500, { "content-type": "application/json" });
+        res.end(JSON.stringify({ detail: "mock TTS server: simulated failure" }));
+        return;
+      }
+      const text = safeExtractText(body);
+      const durationMs = Math.max(text.length, 1) * this.options.msPerChar;
+      const wav = makeSilentWav(durationMs, this.options.sampleRate);
+
+      res.writeHead(200, { "content-type": "audio/wav", "content-length": wav.length });
+      res.end(wav);
+      return;
+    }
+
+    if (req.method === "POST" && url === "/upload_reference") {
+      if (this.options.uploadReference500) {
+        res.writeHead(500, { "content-type": "application/json" });
+        res.end(JSON.stringify({ detail: "mock TTS server: simulated upload failure" }));
+        return;
+      }
+      const filename = extractMultipartFilename(body);
+      if (filename !== undefined) {
+        this.uploadedReferenceFilenames.push(filename);
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ message: "Reference audio uploaded." }));
+      return;
+    }
+
+    if (req.method === "GET" && url === "/get_reference_files") {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(this.uploadedReferenceFilenames));
+      return;
+    }
+
     res.writeHead(404, { "content-type": "application/json" });
     res.end(JSON.stringify({ error: `mock TTS server: no route for ${req.method} ${url}` }));
   }
@@ -157,4 +209,14 @@ function safeExtractText(body: string): string {
     // fall through
   }
   return body;
+}
+
+/**
+ * Pulls the `filename="..."` off a `multipart/form-data` body's
+ * `Content-Disposition` header — good enough for a test double (the binary
+ * file bytes further down are irrelevant here, only the field's declared
+ * filename), not a general multipart parser.
+ */
+function extractMultipartFilename(body: string): string | undefined {
+  return /filename="([^"]+)"/.exec(body)?.[1];
 }

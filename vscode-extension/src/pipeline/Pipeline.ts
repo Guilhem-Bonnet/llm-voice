@@ -17,6 +17,7 @@
  * status bar switches to `error`, never an unhandled rejection.
  */
 
+import * as path from "node:path";
 import * as vscode from "vscode";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
@@ -414,7 +415,16 @@ export class Pipeline implements PipelineFacade {
       return this.ttsProviderOverride;
     }
     const resolved = resolveTtsConfig(profile.tts, this.ttsSettings());
-    const key = `${resolved.providerId}@${resolved.baseUrl}`;
+    const referenceAudioPath =
+      profile.tts.referenceAudio !== undefined ? this.resolveReferenceAudioPath(profile.tts.referenceAudio) : undefined;
+    // Two profiles sharing `providerId@baseUrl` but cloning different
+    // reference voices must never share a `ChatterboxProvider` instance —
+    // the upload (and the filename it memoises) is per-instance, so the
+    // reference path is part of the registry/cache key too.
+    const key =
+      referenceAudioPath !== undefined
+        ? `${resolved.providerId}@${resolved.baseUrl}@ref:${referenceAudioPath}`
+        : `${resolved.providerId}@${resolved.baseUrl}`;
     const existing = this.registry.get(key);
     if (existing !== undefined) {
       return existing;
@@ -431,11 +441,39 @@ export class Pipeline implements PipelineFacade {
       {
         id: key,
         egress: this.egress,
-        ...(apiKey !== undefined ? { apiKey } : {})
+        ...(apiKey !== undefined ? { apiKey } : {}),
+        ...(referenceAudioPath !== undefined ? { referenceAudioPath } : {})
       }
     );
     this.registry.register(provider);
     return provider;
+  }
+
+  /**
+   * `profile.tts.referenceAudio` (CdC §55) may be an absolute path (a
+   * user-recorded sample, `docs/voices.md`) or, for the shipped
+   * `chatterbox-local` default, a path relative to the extension root
+   * (`CHATTERBOX_LOCAL_PRESET.referenceAudio`, `../deploy/tts/reference-audio/...`).
+   *
+   * That relative form only resolves in a *repository checkout* —
+   * `context.extensionUri` is `vscode-extension/` there, so `../deploy/...`
+   * reaches `deploy/tts/reference-audio/` next to it (dev `F5` launch,
+   * `vscode-test`, and the real E2E scripts all run this way). A packaged
+   * `.vsix` install does **not** bundle `deploy/` (ops tooling, not
+   * extension content — `vsce package`'s file list is `vscode-extension/`
+   * only), so the shipped clone default has no reference file to read
+   * there yet: `ChatterboxProvider.synthesize()` then rejects (missing
+   * file) exactly like any other synthesis failure — `AudioQueue`'s retry
+   * then the existing "TTS unavailable" / Retry error surface, not a
+   * silent switch to a different (predefined, English-accented) voice.
+   * Documented as a known gap in `docs/providers.md` "Voice cloning";
+   * shipping the reference *inside* the extension package is future work.
+   */
+  private resolveReferenceAudioPath(referenceAudio: string): string {
+    if (path.isAbsolute(referenceAudio)) {
+      return referenceAudio;
+    }
+    return vscode.Uri.joinPath(this.context.extensionUri, referenceAudio).fsPath;
   }
 
   /**
