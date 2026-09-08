@@ -35,10 +35,17 @@ const HttpUrlSchema = z
     { message: "baseUrl must be an http(s) URL" }
   );
 
-/** Binding to a speech engine; the API key itself never lives here. */
+/**
+ * Binding to a speech engine; the API key itself never lives here.
+ *
+ * `providerId`/`baseUrl` are optional: an omitted value falls back to
+ * `llmVoice.tts.provider`/`llmVoice.tts.baseUrl` at resolution time
+ * (`resolveTtsConfig`, `src/pipeline/resolveProviderConfig.ts`) — the setting
+ * is the default, the profile can override it.
+ */
 export const TtsBindingSchema = z.object({
-  providerId: z.string().min(1),
-  baseUrl: HttpUrlSchema,
+  providerId: z.string().min(1).optional(),
+  baseUrl: HttpUrlSchema.optional(),
   model: z.string().min(1).optional(),
   voice: z.string().min(1).optional(),
   format: z.string().min(1).optional(),
@@ -46,11 +53,16 @@ export const TtsBindingSchema = z.object({
   parameters: z.record(z.string(), z.unknown()).optional()
 });
 
-/** Optional narrator binding; absent means faithful reading only. */
+/**
+ * Optional narrator binding; absent means faithful reading only.
+ *
+ * Same fallback as `TtsBindingSchema` above, against `llmVoice.narrator.*`
+ * (`resolveNarratorConfig`).
+ */
 export const NarratorBindingSchema = z.object({
-  providerId: z.string().min(1),
-  baseUrl: HttpUrlSchema,
-  model: z.string().min(1),
+  providerId: z.string().min(1).optional(),
+  baseUrl: HttpUrlSchema.optional(),
+  model: z.string().min(1).optional(),
   temperature: z.number().min(0).max(2).optional(),
   apiKeyRef: z.string().min(1).optional()
 });
@@ -109,10 +121,14 @@ export function isLoopbackUrl(url: string): boolean {
  * resolves DNS and re-checks the real destination on every request.
  */
 export function isRemoteProfile(profile: VoiceProfile): boolean {
-  const urls = [profile.tts.baseUrl];
-  if (profile.narrator !== undefined) {
-    urls.push(profile.narrator.baseUrl);
-  }
+  // An omitted `baseUrl` resolves against `llmVoice.*.baseUrl` at call time
+  // (`resolveTtsConfig`/`resolveNarratorConfig`) — this pure, settings-blind
+  // check has no way to know that resolved value, so it only judges the URLs
+  // the profile actually states; the 🔒/☁ badge itself is driven by
+  // `Pipeline.verifyLocalMode`, which resolves against settings first.
+  const urls = [profile.tts.baseUrl, profile.narrator?.baseUrl].filter(
+    (url): url is string => url !== undefined
+  );
   return urls.some((url) => !isLoopbackUrl(url));
 }
 

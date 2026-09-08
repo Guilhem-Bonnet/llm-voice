@@ -48,6 +48,12 @@ import { ProfileRepository } from "../profiles/index.js";
 import { InMemoryProviderRegistry, OpenAICompatibleTtsProvider } from "../tts/index.js";
 import type { PipelineFacade } from "../commands/PipelineFacade.js";
 import { plainTextSegments, rangesOverlap } from "./textSegments.js";
+import {
+  resolveNarratorConfig,
+  resolveTtsConfig,
+  type NarratorSettings,
+  type TtsSettings
+} from "./resolveProviderConfig.js";
 
 const ERROR_TTS_UNAVAILABLE = "LLM Voice: TTS unavailable";
 
@@ -324,9 +330,11 @@ export class Pipeline implements PipelineFacade {
 
   async verifyLocalMode(): Promise<void> {
     const profile = await this.profiles.getSelected();
+    const resolvedTts = resolveTtsConfig(profile.tts, this.ttsSettings());
+    const resolvedNarrator = resolveNarratorConfig(profile.narrator, this.narratorSettings());
     const inputs: VerifyLocalModeInputs = {
-      ttsBaseUrl: profile.tts.baseUrl,
-      ...(profile.narrator?.baseUrl !== undefined ? { narratorBaseUrl: profile.narrator.baseUrl } : {}),
+      ttsBaseUrl: resolvedTts.baseUrl,
+      ...(resolvedNarrator !== undefined ? { narratorBaseUrl: resolvedNarrator.baseUrl } : {}),
       egressMode: this.egressMode(),
       strictLocalEnv: process.env.LLM_VOICE_STRICT_LOCAL === "1",
       trustedHosts: this.trustedHosts(),
@@ -372,7 +380,8 @@ export class Pipeline implements PipelineFacade {
     if (this.ttsProviderOverride !== undefined) {
       return this.ttsProviderOverride;
     }
-    const key = `${profile.tts.providerId}@${profile.tts.baseUrl}`;
+    const resolved = resolveTtsConfig(profile.tts, this.ttsSettings());
+    const key = `${resolved.providerId}@${resolved.baseUrl}`;
     const existing = this.registry.get(key);
     if (existing !== undefined) {
       return existing;
@@ -381,12 +390,31 @@ export class Pipeline implements PipelineFacade {
       profile.tts.apiKeyRef !== undefined ? await this.context.secrets.get(profile.tts.apiKeyRef) : undefined;
     const provider = new OpenAICompatibleTtsProvider({
       id: key,
-      baseUrl: profile.tts.baseUrl,
+      baseUrl: resolved.baseUrl,
       egress: this.egress,
       ...(apiKey !== undefined ? { apiKey } : {})
     });
     this.registry.register(provider);
     return provider;
+  }
+
+  /** `llmVoice.tts.*`: the default a profile's `tts.providerId`/`tts.baseUrl` overrides when set. */
+  private ttsSettings(): TtsSettings {
+    const config = vscode.workspace.getConfiguration("llmVoice");
+    return {
+      provider: config.get<string>("tts.provider", "chatterbox"),
+      baseUrl: config.get<string>("tts.baseUrl", "http://127.0.0.1:8880")
+    };
+  }
+
+  /** `llmVoice.narrator.*`: the default a profile's `narrator.*` overrides when set. */
+  private narratorSettings(): NarratorSettings {
+    const config = vscode.workspace.getConfiguration("llmVoice");
+    return {
+      provider: config.get<string>("narrator.provider", ""),
+      baseUrl: config.get<string>("narrator.baseUrl", "http://127.0.0.1:11434"),
+      model: config.get<string>("narrator.model", "")
+    };
   }
 
   private async handleChunkError(info: PlaybackErrorInfo): Promise<ChunkErrorDecision> {

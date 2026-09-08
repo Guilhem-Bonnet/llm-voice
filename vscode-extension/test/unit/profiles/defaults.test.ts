@@ -52,7 +52,12 @@ describe("DEFAULT_PROFILES (CdC §19)", () => {
 
   it("every TTS endpoint stays loopback by default (D10)", () => {
     for (const profile of DEFAULT_PROFILES) {
-      expect(new URL(profile.tts.baseUrl).hostname).toBe("127.0.0.1");
+      // Every shipped default profile states its own baseUrl explicitly
+      // (fix(review): the field is optional on VoiceProfile so a *custom*
+      // profile can fall back to `llmVoice.tts.baseUrl` instead, but none of
+      // these four ever omit it).
+      expect(profile.tts.baseUrl).toBeDefined();
+      expect(new URL(profile.tts.baseUrl as string).hostname).toBe("127.0.0.1");
     }
   });
 });

@@ -23,11 +23,19 @@ export interface PlaybackDefaults {
   volume: number;
 }
 
-/** Which TTS engine a profile talks to, and how (D9). */
+/**
+ * Which TTS engine a profile talks to, and how (D9).
+ *
+ * `providerId`/`baseUrl` are optional here: when a profile omits either, the
+ * Pipeline falls back to `llmVoice.tts.provider`/`llmVoice.tts.baseUrl` (the
+ * setting is the default, a profile that sets its own value overrides it —
+ * `resolveTtsConfig`, `src/pipeline/resolveProviderConfig.ts`). The four
+ * shipped default profiles still set both explicitly.
+ */
 export interface TtsBinding {
-  providerId: string;
+  providerId?: string;
   /** Base URL of the speech endpoint; loopback keeps the profile local. */
-  baseUrl: string;
+  baseUrl?: string;
   model?: string;
   voice?: string;
   format?: string;
@@ -36,11 +44,16 @@ export interface TtsBinding {
   parameters?: Record<string, unknown>;
 }
 
-/** Optional narrator binding; absent means faithful reading only. */
+/**
+ * Optional narrator binding; absent means faithful reading only.
+ *
+ * Same fallback as `TtsBinding` above: an omitted `providerId`/`baseUrl`/
+ * `model` resolves against `llmVoice.narrator.*` (`resolveNarratorConfig`).
+ */
 export interface NarratorBinding {
-  providerId: string;
-  baseUrl: string;
-  model: string;
+  providerId?: string;
+  baseUrl?: string;
+  model?: string;
   temperature?: number;
   apiKeyRef?: string;
 }
