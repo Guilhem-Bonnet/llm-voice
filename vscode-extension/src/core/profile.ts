@@ -42,6 +42,14 @@ export interface TtsBinding {
   /** Key name in `SecretStorage`; the secret itself is never in the profile. */
   apiKeyRef?: string;
   parameters?: Record<string, unknown>;
+  /**
+   * Local filesystem path to a reference sample for voice cloning (CdC §55,
+   * `ChatterboxProvider` only). Relative paths are resolved against the
+   * extension root (`Pipeline.ttsFor`, `docs/providers.md` "Voice cloning").
+   * Optional and backward-compatible: an existing `profiles.json` with no
+   * `referenceAudio` still validates and keeps using `voice_mode: "predefined"`.
+   */
+  referenceAudio?: string;
 }
 
 /**

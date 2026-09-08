@@ -114,6 +114,40 @@ describe("InMemoryAudioCache", () => {
     expect(cache.count).toBe(0);
     expect(await cache.size()).toBe(0);
   });
+
+  it("round-trips the put() meta (ADR-004 full sidecar shape, S4.2)", async () => {
+    const cache = new InMemoryAudioCache();
+    await cache.put("a", new Uint8Array(4), {
+      format: "wav",
+      durationMs: 1234,
+      providerId: "chatterbox"
+    });
+    expect(cache.metaFor("a")).toEqual({ format: "wav", durationMs: 1234, providerId: "chatterbox" });
+  });
+
+  it("never evicts a pinned entry, however old (ADR-004's reported-to-phase-4 gap, S4.2)", async () => {
+    const cache = new InMemoryAudioCache();
+    await cache.put("a", new Uint8Array(10));
+    await cache.put("b", new Uint8Array(10));
+    cache.pin("a"); // oldest entry, would normally be evicted first
+
+    await cache.evict(15);
+
+    expect(await cache.get("a")).toBeDefined();
+    expect(cache.isPinned("a")).toBe(true);
+  });
+
+  it("unpin() releases the guarantee, clear() releases every pin", async () => {
+    const cache = new InMemoryAudioCache();
+    await cache.put("a", new Uint8Array(10));
+    cache.pin("a");
+    cache.unpin("a");
+    expect(cache.isPinned("a")).toBe(false);
+
+    cache.pin("a");
+    cache.clear();
+    expect(cache.isPinned("a")).toBe(false);
+  });
 });
 
 describe("computeCacheKey — edge material", () => {

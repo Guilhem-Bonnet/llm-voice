@@ -3,10 +3,32 @@ import type { AudioChunk, TtsProvider, TtsRequest } from "../../../src/core/inde
 import {
   AudioQueue,
   InMemoryAudioCache,
+  computeBackoffDelay,
   computeCacheKey
 } from "../../../src/playback/index.js";
 import { FakeTtsProvider } from "../../fakes/FakeTtsProvider.js";
 import { RecordingTtsProvider } from "./helpers.js";
+
+describe("computeBackoffDelay (ADR-005's reported-to-phase-4 backoff)", () => {
+  it("uses backoffMs[attempt - 1], clamped to the last configured step", () => {
+    expect(computeBackoffDelay(1, [100, 400])).toBe(100);
+    expect(computeBackoffDelay(2, [100, 400])).toBe(400);
+    expect(computeBackoffDelay(3, [100, 400])).toBe(400); // clamps past the last step
+  });
+
+  it("returns 0 when no backoff steps are configured", () => {
+    expect(computeBackoffDelay(1, [])).toBe(0);
+  });
+
+  it("adds up to jitterMs of extra delay, using the injected RNG", () => {
+    expect(computeBackoffDelay(1, [100], 50, () => 0)).toBe(100);
+    expect(computeBackoffDelay(1, [100], 50, () => 0.999999)).toBe(149);
+  });
+
+  it("adds no jitter when jitterMs is 0, regardless of the RNG", () => {
+    expect(computeBackoffDelay(1, [100], 0, () => 0.9)).toBe(100);
+  });
+});
 
 function chunks(count: number, text = (i: number) => `Texte ${i}.`): AudioChunk[] {
   return Array.from({ length: count }, (_, index) => ({
@@ -116,10 +138,17 @@ describe("AudioQueue", () => {
   it("retries twice then marks the chunk as error", async () => {
     // failEveryNth: 1 makes every call fail.
     const tts = new RecordingTtsProvider(new FakeTtsProvider({ failEveryNth: 1 }));
-    const queue = new AudioQueue({ tts, cache: new InMemoryAudioCache() });
+    // retryBackoffMs: 0 (D2 report note): keeps this test about retry *count*,
+    // not the backoff schedule — that is `computeBackoffDelay`'s own suite.
+    const queue = new AudioQueue(
+      { tts, cache: new InMemoryAudioCache() },
+      { retryBackoffMs: [0, 0], retryJitterMs: 0 }
+    );
     queue.reset(chunks(1));
 
-    const chunk = await queue.waitFor(0);
+    const resultPromise = queue.waitFor(0);
+    await vi.advanceTimersByTimeAsync(0);
+    const chunk = await resultPromise;
 
     expect(chunk.status).toBe("error");
     expect(chunk.error).toContain("simulated failure");
@@ -130,11 +159,19 @@ describe("AudioQueue", () => {
     // failEveryNth: 2 fails the 2nd call only; chunk 0 succeeds first try,
     // chunk 1 fails once then succeeds.
     const tts = new RecordingTtsProvider(new FakeTtsProvider({ failEveryNth: 2 }));
-    const queue = new AudioQueue({ tts, cache: new InMemoryAudioCache() });
+    const queue = new AudioQueue(
+      { tts, cache: new InMemoryAudioCache() },
+      { retryBackoffMs: [0, 0], retryJitterMs: 0 }
+    );
     queue.reset(chunks(2));
 
-    expect((await queue.waitFor(0)).status).toBe("ready");
-    expect((await queue.waitFor(1)).status).toBe("ready");
+    const firstPromise = queue.waitFor(0);
+    await vi.advanceTimersByTimeAsync(0);
+    expect((await firstPromise).status).toBe("ready");
+
+    const secondPromise = queue.waitFor(1);
+    await vi.advanceTimersByTimeAsync(0);
+    expect((await secondPromise).status).toBe("ready");
     expect(tts.callCount).toBe(3);
   });
 
@@ -315,5 +352,72 @@ describe("AudioQueue", () => {
     await vi.advanceTimersByTimeAsync(100);
 
     expect(tts.callCount).toBe(0);
+  });
+
+  it("waits the configured backoff (100 ms, then 400 ms) between retries", async () => {
+    const tts = new RecordingTtsProvider(new FakeTtsProvider({ failEveryNth: 1 }));
+    const queue = new AudioQueue(
+      { tts, cache: new InMemoryAudioCache() },
+      { retryBackoffMs: [100, 400], retryJitterMs: 0 }
+    );
+    queue.reset(chunks(1));
+
+    const resultPromise = queue.waitFor(0);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(tts.callCount).toBe(1); // first attempt, failed — now waiting 100 ms
+
+    await vi.advanceTimersByTimeAsync(99);
+    expect(tts.callCount).toBe(1); // still backing off
+    await vi.advanceTimersByTimeAsync(1);
+    expect(tts.callCount).toBe(2); // retry 1 fired, failed — now waiting 400 ms
+
+    await vi.advanceTimersByTimeAsync(399);
+    expect(tts.callCount).toBe(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(tts.callCount).toBe(3); // retry 2 fired, failed — maxRetries exhausted
+
+    const chunk = await resultPromise;
+    expect(chunk.status).toBe("error");
+  });
+
+  it("pins the chunk in playback and the prefetched window; unpins once the cursor moves past them", async () => {
+    const tts = new RecordingTtsProvider(new FakeTtsProvider({ latencyMs: 10 }));
+    const cache = new InMemoryAudioCache();
+    const queue = new AudioQueue({ tts, cache }, { prefetchChunks: 1 });
+    queue.reset(chunks(4));
+
+    queue.setCursor(0);
+    await vi.advanceTimersByTimeAsync(50);
+
+    const keyFor = (index: number) =>
+      computeCacheKey({ providerId: tts.id, spokenText: `Texte ${index}.` });
+    expect(cache.isPinned(keyFor(0))).toBe(true);
+    expect(cache.isPinned(keyFor(1))).toBe(true);
+    expect(cache.isPinned(keyFor(2))).toBe(false);
+
+    queue.setCursor(2);
+    await vi.advanceTimersByTimeAsync(50);
+
+    // The cursor moved past chunk 0 and 1: their keys are unpinned, the new
+    // window (2, 3) is pinned instead.
+    expect(cache.isPinned(keyFor(0))).toBe(false);
+    expect(cache.isPinned(keyFor(1))).toBe(false);
+    expect(cache.isPinned(keyFor(2))).toBe(true);
+    expect(cache.isPinned(keyFor(3))).toBe(true);
+  });
+
+  it("unpins every remaining key on reset() and dispose()", async () => {
+    const tts = new RecordingTtsProvider(new FakeTtsProvider({ latencyMs: 10 }));
+    const cache = new InMemoryAudioCache();
+    const queue = new AudioQueue({ tts, cache });
+    queue.reset(chunks(2));
+    queue.setCursor(0);
+    await vi.advanceTimersByTimeAsync(50);
+
+    const key = computeCacheKey({ providerId: tts.id, spokenText: "Texte 0." });
+    expect(cache.isPinned(key)).toBe(true);
+
+    queue.dispose();
+    expect(cache.isPinned(key)).toBe(false);
   });
 });

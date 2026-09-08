@@ -30,8 +30,24 @@
  * `voices` as `string[]`, to prove the *server* works end-to-end regardless
  * of that gap (it does not assert on accent/pronunciation quality — no
  * automated way to judge that here).
+ *
+ * fix(review, S4.2/PR #28): the raw-`fetch` tests above predate
+ * `ChatterboxProvider`'s rewrite to the server's *native* `POST /tts` (see
+ * `src/tts/ChatterboxProvider.ts`'s header — `/v1/audio/speech` above is
+ * kept only as a standing proof the community server itself works; it is
+ * not what ships). The suite below exercises `ChatterboxProvider` itself,
+ * end to end, in voice-cloning mode (CdC §55): synthesize a short reference
+ * clip through the real server's *predefined* voice (bootstrapping — no
+ * repo asset required), use it as `referenceAudioPath`, and prove the
+ * upload → `voice_mode: "clone"` → synthesis path produces a valid WAV over
+ * 1 second, logging latency and byte size for the evidence report.
  */
-import { describe, expect, test } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterAll, describe, expect, test } from "vitest";
+import { createEgressGuard } from "../../src/net/EgressGuard.js";
+import { ChatterboxProvider } from "../../src/tts/ChatterboxProvider.js";
 import { readWavHeader } from "../fakes/wav.js";
 
 const RUN_E2E = process.env["LLM_VOICE_E2E"] === "1";
@@ -81,5 +97,58 @@ describe.skipIf(!RUN_E2E)("Chatterbox-TTS-Server (S4.3, real E2E)", () => {
     expect(header.sampleRate).toBeGreaterThan(0);
     expect(header.numChannels).toBeGreaterThan(0);
     expect(header.durationMs).toBeGreaterThan(0);
+  });
+});
+
+describe.skipIf(!RUN_E2E)("ChatterboxProvider — voice cloning end to end (S4.2/PR #28, CdC §55, real E2E)", () => {
+  let tmpDir: string | undefined;
+
+  afterAll(async () => {
+    if (tmpDir !== undefined) {
+      await rm(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  test("synthesize() in clone mode: upload once, POST /tts, WAV over 1s", async () => {
+    const egress = createEgressGuard({ mode: "local", trustedHosts: [], strictLocal: false });
+
+    // Bootstrap a reference clip from the server's own predefined voice —
+    // no repo asset required to exercise the upload → clone code path.
+    const bootstrap = new ChatterboxProvider({ baseUrl: BASE_URL, egress });
+    const bootstrapResult = await bootstrap.synthesize({
+      text: "Ceci est la référence de clonage vocal pour le test end-to-end.",
+      voice: VOICE,
+      language: "fr"
+    });
+    tmpDir = await mkdtemp(join(tmpdir(), "chatterbox-e2e-ref-"));
+    const referenceAudioPath = join(tmpDir, "e2e-reference.wav");
+    await writeFile(referenceAudioPath, bootstrapResult.data);
+
+    const provider = new ChatterboxProvider({
+      baseUrl: BASE_URL,
+      egress,
+      referenceAudioPath,
+      id: "chatterbox-e2e-clone"
+    });
+
+    const started = Date.now();
+    const result = await provider.synthesize({
+      text: REFERENCE_TEXT,
+      language: "fr",
+      parameters: { exaggeration: 0.4, cfg_weight: 0.5, temperature: 0.6 }
+    });
+    const latencyMs = Date.now() - started;
+
+    const header = readWavHeader(Buffer.from(result.data));
+    expect(header.sampleRate).toBeGreaterThan(0);
+    expect(header.durationMs).toBeGreaterThan(1000);
+    expect(result.data.byteLength).toBeGreaterThan(0);
+
+    // Left for the evidence report (docs/e2e/*, PR #28 review): latency and
+    // size of a real clone-mode synthesis against the live GPU server.
+    console.log(
+      `[chatterbox-tts.test.ts] clone-mode synthesize(): latency=${latencyMs}ms, ` +
+        `bytes=${result.data.byteLength}, durationMs=${header.durationMs}, sampleRate=${header.sampleRate}`
+    );
   });
 });

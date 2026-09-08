@@ -45,6 +45,11 @@ function harness(
   );
   const controller = new PlaybackController({
     cache: new InMemoryAudioCache(),
+    // ADR-005's reported backoff (100 ms/400 ms + jitter) is exercised by
+    // `AudioQueue`'s own suite; these tests are about the state machine, so
+    // retries stay instantaneous here (dispatch note: "0 en test").
+    retryBackoffMs: [0, 0],
+    retryJitterMs: 0,
     ...(options.onChunkError !== undefined ? { onChunkError: options.onChunkError } : {}),
     ...(options.prefetchChunks !== undefined
       ? { prefetchChunks: options.prefetchChunks }
@@ -660,5 +665,58 @@ describe("PlaybackController — configuration", () => {
 
     expect(h.sink.isPlaying).toBe(false);
     expect(h.sink.loads).toHaveLength(0);
+  });
+});
+
+describe("PlaybackController — buffering (ADR-005's reported-to-phase-4 gap)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("moves playing -> buffering -> playing when the next chunk isn't ready at the end of the current one", async () => {
+    // Synthesis (4000 ms/chunk) outlasts playback (CHUNK_MS = 3000 ms/chunk),
+    // so chunk 1's audio is still generating when chunk 0 finishes playing.
+    const h = harness({ ttsLatencyMs: 4000 });
+    const started = h.controller.start({
+      segments: makeSegments(3),
+      profile: makeProfile(),
+      tts: h.tts,
+      sink: h.sink
+    });
+    await vi.advanceTimersByTimeAsync(4000); // chunk 0 ready, playback starts
+    await started;
+    expect(h.controller.getState()).toBe("playing");
+
+    await vi.advanceTimersByTimeAsync(CHUNK_MS); // chunk 0 ends; chunk 1 still generating
+    expect(h.controller.getState()).toBe("buffering");
+    expect(h.sink.loads).toHaveLength(1); // no second `load()` yet — nothing to play
+
+    await vi.advanceTimersByTimeAsync(1000); // chunk 1 (started at t=4000) becomes ready at t=8000
+    expect(h.controller.getState()).toBe("playing");
+    expect(h.sink.loads).toHaveLength(2);
+    expect(h.controller.getCurrentIndex()).toBe(1);
+  });
+
+  it("never shows buffering for the very first chunk of a session (that is `preparing`)", async () => {
+    const h = harness();
+    await h.start(1);
+    expect(h.states).not.toContain("buffering");
+    expect(h.controller.getState()).toBe("playing");
+  });
+
+  it("skips straight to playing when the next chunk was already prefetched (no visible buffering)", async () => {
+    // Fast synthesis relative to playback: by the time chunk 0 ends, chunk 1
+    // (and its prefetch neighbour) are long since `ready`.
+    const h = harness({ ttsLatencyMs: 5 });
+    await h.start(3);
+    h.states.length = 0;
+
+    await vi.advanceTimersByTimeAsync(CHUNK_MS);
+    expect(h.states).not.toContain("buffering");
+    expect(h.controller.getState()).toBe("playing");
   });
 });
