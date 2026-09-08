@@ -21,6 +21,7 @@ import * as vscode from "vscode";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
 import type { VoiceProfile } from "../core/profile.js";
+import type { NarratorProvider } from "../core/narration.js";
 import type { TtsProvider } from "../core/tts.js";
 import type { MarkdownPolicy, SegmentationPolicy } from "../parser/types.js";
 import { parseMarkdown } from "../parser/MarkdownParser.js";
@@ -31,7 +32,9 @@ import {
   PlaybackController,
   type AudioSink,
   type ChunkErrorDecision,
-  type PlaybackErrorInfo
+  type NarrationWarning,
+  type PlaybackErrorInfo,
+  type SessionBuild
 } from "../playback/index.js";
 import {
   createEgressGuard,
@@ -46,6 +49,7 @@ import { StatusBar, type StatusBarPlaybackState, type StatusBarViewModel } from 
 import { ClipboardSource, MarkdownDocumentSource, TextSelectionSource, readCaptureRange } from "../sources/index.js";
 import { ProfileRepository } from "../profiles/index.js";
 import { InMemoryProviderRegistry, OpenAICompatibleTtsProvider } from "../tts/index.js";
+import { createNarratorProvider } from "../narrator/index.js";
 import type { PipelineFacade } from "../commands/PipelineFacade.js";
 import { plainTextSegments, rangesOverlap } from "./textSegments.js";
 import {
@@ -56,6 +60,7 @@ import {
 } from "./resolveProviderConfig.js";
 
 const ERROR_TTS_UNAVAILABLE = "LLM Voice: TTS unavailable";
+const ERROR_NARRATOR_UNAVAILABLE = "LLM Voice: Narrator unavailable";
 
 const DEFAULT_MARKDOWN_POLICY: MarkdownPolicy = {
   headings: "read",
@@ -102,6 +107,8 @@ export interface PipelineOptions {
   sinkOverride?: AudioSink;
   /** Test-only: replaces the real `OpenAICompatibleTtsProvider`. */
   ttsProviderOverride?: TtsProvider;
+  /** Test-only: replaces the narrator `createNarratorProvider` would build. */
+  narratorProviderOverride?: NarratorProvider;
 }
 
 export class Pipeline implements PipelineFacade {
@@ -112,9 +119,11 @@ export class Pipeline implements PipelineFacade {
   private readonly statusBar: StatusBar;
   private readonly sinkOverride: AudioSink | undefined;
   private readonly ttsProviderOverride: TtsProvider | undefined;
+  private readonly narratorProviderOverride: NarratorProvider | undefined;
 
   private readonly egress: EgressGuardHandle;
   private readonly registry = new InMemoryProviderRegistry<TtsProvider>();
+  private readonly narratorRegistry = new InMemoryProviderRegistry<NarratorProvider>();
   private readonly diskCache: DiskAudioCache;
   private readonly profiles: ProfileRepository;
   private readonly controller: PlaybackController;
@@ -124,6 +133,16 @@ export class Pipeline implements PipelineFacade {
   private currentProfileLabel = "—";
   private lastCaptureContext: CaptureContext | undefined;
   private captureAbort: AbortController | undefined;
+  private narratorWarningShown = false;
+  /**
+   * Set once "Read without narration" is chosen (CdC §52); every session
+   * built after that point starts pre-forced to faithful reading, so the
+   * choice sticks for the rest of the VS Code session — not just the
+   * document being read when the user answered — until the extension is
+   * reloaded or a narrator profile is explicitly re-selected via Retry.
+   */
+  private narrationDisabledForSession = false;
+  private currentSessionBuild: SessionBuild | undefined;
 
   constructor(options: PipelineOptions) {
     this.context = options.context;
@@ -133,6 +152,7 @@ export class Pipeline implements PipelineFacade {
     this.statusBar = options.statusBar;
     this.sinkOverride = options.sinkOverride;
     this.ttsProviderOverride = options.ttsProviderOverride;
+    this.narratorProviderOverride = options.narratorProviderOverride;
 
     this.egress = createEgressGuard({
       mode: this.egressMode(),
@@ -218,6 +238,7 @@ export class Pipeline implements PipelineFacade {
     this.captureAbort?.abort();
     const abort = new AbortController();
     this.captureAbort = abort;
+    this.narratorWarningShown = false;
 
     try {
       const source = this.sources.find((candidate) => candidate.canCapture(captureContext));
@@ -236,7 +257,18 @@ export class Pipeline implements PipelineFacade {
         return;
       }
 
-      const build = await buildSession(segments, profile, undefined, {});
+      // "Read without narration" (CdC §52) sticks for the rest of the VS
+      // Code session: once set, no later `start()` — this document or the
+      // next one — resolves or calls a narrator again, until Retry clears it.
+      const narrator =
+        profile.mode === "narrated" && !this.narrationDisabledForSession
+          ? await this.narratorFor(profile)
+          : undefined;
+      const build = await buildSession(segments, profile, narrator, {
+        signal: abort.signal,
+        onWarning: (warning) => this.handleNarratorWarning(warning)
+      });
+      this.currentSessionBuild = build;
       const tts = await this.ttsFor(profile);
       const sink = this.sinkOverride ?? this.player.audioSink;
 
@@ -398,6 +430,46 @@ export class Pipeline implements PipelineFacade {
     return provider;
   }
 
+  /**
+   * Builds (or reuses) the `NarratorProvider` for a `"narrated"` profile.
+   * `resolveNarratorConfig` returning `undefined` means the profile carries
+   * no narrator binding at all — `SessionFactory` already treats that as
+   * faithful-only, so this returns `undefined` too rather than conjuring a
+   * `NoNarrator` out of nothing. A *resolved* `providerId` of `"none"`/`""`
+   * (profile or settings explicitly opting out) does return a `NoNarrator`
+   * instance, so narration failure UX and AC-09's "zero requests" both go
+   * through the same `NarratorProvider` contract.
+   */
+  private async narratorFor(profile: VoiceProfile): Promise<NarratorProvider | undefined> {
+    if (this.narratorProviderOverride !== undefined) {
+      return this.narratorProviderOverride;
+    }
+    const resolved = resolveNarratorConfig(profile.narrator, this.narratorSettings());
+    if (resolved === undefined) {
+      return undefined;
+    }
+    const key = `narrator:${resolved.providerId}@${resolved.baseUrl}@${resolved.model}`;
+    const existing = this.narratorRegistry.get(key);
+    if (existing !== undefined) {
+      return existing;
+    }
+    const apiKey =
+      profile.narrator?.apiKeyRef !== undefined
+        ? await this.context.secrets.get(profile.narrator.apiKeyRef)
+        : undefined;
+    const provider = createNarratorProvider({
+      id: key,
+      providerId: resolved.providerId,
+      baseUrl: resolved.baseUrl,
+      model: resolved.model,
+      egress: this.egress,
+      ...(profile.narrator?.temperature !== undefined ? { temperature: profile.narrator.temperature } : {}),
+      ...(apiKey !== undefined ? { apiKey } : {})
+    });
+    this.narratorRegistry.register(provider);
+    return provider;
+  }
+
   /** `llmVoice.tts.*`: the default a profile's `tts.providerId`/`tts.baseUrl` overrides when set. */
   private ttsSettings(): TtsSettings {
     const config = vscode.workspace.getConfiguration("llmVoice");
@@ -407,13 +479,20 @@ export class Pipeline implements PipelineFacade {
     };
   }
 
-  /** `llmVoice.narrator.*`: the default a profile's `narrator.*` overrides when set. */
+  /**
+   * `llmVoice.narrator.*`: the default a profile's `narrator.*` overrides
+   * when set. `model` defaults to `qwen2.5:7b` — small enough to run
+   * comfortably alongside a TTS engine on a single local GPU/CPU, while
+   * still reliable at Ollama's JSON-Schema structured output (CdC §21),
+   * which smaller `1.5b`/`3b` Qwen variants are noticeably less consistent
+   * at. Documented here and in `package.json#llmVoice.narrator.model`.
+   */
   private narratorSettings(): NarratorSettings {
     const config = vscode.workspace.getConfiguration("llmVoice");
     return {
       provider: config.get<string>("narrator.provider", ""),
       baseUrl: config.get<string>("narrator.baseUrl", "http://127.0.0.1:11434"),
-      model: config.get<string>("narrator.model", "")
+      model: config.get<string>("narrator.model", "qwen2.5:7b")
     };
   }
 
@@ -434,6 +513,47 @@ export class Pipeline implements PipelineFacade {
       }
     });
     return "stop";
+  }
+
+  /**
+   * CdC §52 "Narrator indisponible" : Retry / Read without narration /
+   * Cancel. `SessionFactory` already keeps playing faithfully for every
+   * degraded group on its own (ADR-005's mode dégradé), so this is purely
+   * notification + the three choices — shown once per session (guarded by
+   * `narratorWarningShown`, reset in `start()`) so a long document that
+   * degrades on several groups does not stack dialogs.
+   *
+   * "Read without narration" sets `narrationDisabledForSession` (forcing
+   * every group of the current build via `SessionBuild.forceFaithful()`,
+   * and every future `start()` call — this document or the next — to skip
+   * the narrator entirely) until "Retry" explicitly clears it again.
+   */
+  private handleNarratorWarning(warning: NarrationWarning): void {
+    this.output.appendLine(
+      `[pipeline] narration group ${warning.groupIndex} degraded (${warning.reason}), reading faithfully`
+    );
+    if (this.narratorWarningShown) {
+      return;
+    }
+    this.narratorWarningShown = true;
+    void vscode.window
+      .showWarningMessage(ERROR_NARRATOR_UNAVAILABLE, "Retry", "Read without narration", "Cancel")
+      .then((choice) => {
+        if (choice === "Retry") {
+          this.narrationDisabledForSession = false;
+          const context = this.lastCaptureContext;
+          if (context !== undefined) {
+            void this.start(context);
+          }
+        } else if (choice === "Read without narration") {
+          this.narrationDisabledForSession = true;
+          this.currentSessionBuild?.forceFaithful();
+        } else if (choice === "Cancel") {
+          void this.stop();
+        }
+        // Dismissed (no choice): no-op — playback is already reading the
+        // degraded groups faithfully; only this group falls back.
+      });
   }
 
   private egressMode(): EgressMode {

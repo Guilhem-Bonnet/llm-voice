@@ -41,7 +41,8 @@ export type NarrationDegradedReason =
   | "invalid-structured-output"
   | "timeout"
   | "cancelled"
-  | "budget-exceeded";
+  | "budget-exceeded"
+  | "user-disabled";
 
 /** Narration outcome; `degraded` is surfaced to the user, never hidden. */
 export interface NarrationResult {
@@ -50,10 +51,22 @@ export interface NarrationResult {
   degradedReason?: NarrationDegradedReason;
 }
 
+/** Whether the narrator enforces schema-conformant output (CdC §21-22). */
+export interface NarratorCapabilities {
+  /** True when the provider can be asked for a JSON-Schema-conformant reply
+   *  (Ollama's `format`, OpenAI's `response_format: json_schema`); `false`
+   *  narrators are still asked for JSON via the prompt, just without a
+   *  server-enforced guarantee. */
+  structuredOutput: boolean;
+}
+
 /** Optional local LLM that rewrites source text; never a cloud voice (D8). */
 export interface NarratorProvider {
   readonly id: string;
   health(signal?: AbortSignal): Promise<ProviderHealth>;
+  /** Optional: mirrors `TtsProvider.getCapabilities`, absent means "assume
+   *  no structured-output guarantee". */
+  getCapabilities?(signal?: AbortSignal): Promise<NarratorCapabilities>;
   /** Must resolve with `degraded: true` rather than reject on provider failure. */
   transform(
     request: NarrationRequest,
