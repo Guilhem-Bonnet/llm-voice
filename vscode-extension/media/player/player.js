@@ -36,25 +36,6 @@
     vscode.postMessage(message);
   }
 
-  // `message.src` arrives over `postMessage`, which CodeQL (rightly) treats
-  // as externally controlled input regardless of who the sender is in this
-  // extension's threat model. The Extension Host only ever sends a
-  // `webview.asWebviewUri()` result (https:) or a `blob:` URL, so reject
-  // anything else instead of handing an unvalidated string to `audio.src`
-  // (AC-SEC-02: no untrusted value reaches a navigation/URL sink unchecked).
-  function isSafeAudioSrc(src) {
-    if (typeof src !== "string" || src.length === 0) {
-      return false;
-    }
-    let url;
-    try {
-      url = new URL(src, window.location.href);
-    } catch {
-      return false;
-    }
-    return url.protocol === "https:" || url.protocol === "blob:";
-  }
-
   function setState(state) {
     body.setAttribute("data-state", state);
     const isPlaying = state === "playing";
@@ -77,7 +58,16 @@
     switch (message.type) {
       case "load": {
         currentChunkId = message.chunkId;
-        if (!isSafeAudioSrc(message.src)) {
+        // `message.src` arrives over `postMessage`, which CodeQL (rightly)
+        // treats as externally controlled input regardless of who the
+        // sender is in this extension's threat model. The Extension Host
+        // only ever sends a `webview.asWebviewUri()` result (https:) or a
+        // `blob:` URL, so reject anything else inline before it reaches
+        // `audio.src` (AC-SEC-02: no unvalidated value reaches a URL sink).
+        if (
+          typeof message.src !== "string" ||
+          !(message.src.startsWith("https://") || message.src.startsWith("blob:"))
+        ) {
           break;
         }
         audio.src = message.src;
