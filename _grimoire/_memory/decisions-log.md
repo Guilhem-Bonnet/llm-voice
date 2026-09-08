@@ -76,3 +76,16 @@
 - **Contexte** : exécution après revue Sentinel (GO avec corrections).
 - **Décision** : repo https://github.com/Guilhem-Bonnet/llm-voice ; commit racine 99c640e ; HEAD 17fbf8e ; 7 jobs CI requis ; plus de merge `--admin` à partir de la phase 2 ; triage des 10 PR Dependabot confié à Flow (Haiku) en ouverture de phase 2.
 - **Agent** : concierge (Marcel) ; exécution pipeline-architect (Sonnet)
+### [2026-09-08] Règle de merge tant que le projet est solo
+- **Contexte** : branch protection exige 1 review humaine ; un seul mainteneur.
+- **Décision** : les PR d'agents sont revues par Sentinel (commentaire consigné dans la PR), puis mergées en squash `--admin` par l'orchestrateur. Les PR Dependabot majeures ne sont jamais mergées sans CI verte et note de compatibilité. Règle à revoir dès qu'un second mainteneur arrive.
+- **Agent** : concierge (Marcel)
+
+### [2026-09-08] Économie de tokens en phase 2 : Opus limité aux ADR difficiles
+- **Décision** : Opus sur ADR-001..005 uniquement ; Sonnet sur ADR-006..011, fakes, revue ; Haiku sur Dependabot. Agents en worktrees isolés, une branche et une PR chacun.
+- **Agent** : concierge (Marcel)
+
+### [2026-09-08] Phase 2 livrée : 11 ADR, contrats src/core, outillage de test
+- **Contexte** : 3 PR d'agents (#16, #17, #18) revues par Sentinel puis mergées ; 45 tests unitaires verts.
+- **Décision** : phase 3 démarre par `EgressGuard` (garde réelle du badge Local), puis le slice vertical Markdown → segments → FakeTts → mini-player → highlight. Le hook Grimoire interdit `git push --force` : les agents rebasent par merge. `zod` sera bundlé par esbuild en phase 3.
+- **Agent** : concierge (Marcel)

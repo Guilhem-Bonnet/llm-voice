@@ -1,4 +1,4 @@
 # Session State
 
-status: phase-1-done-next-phase-2-ADR
+status: phase-2-done-next-phase-3-egressguard-slice-vertical
 first_run: false
