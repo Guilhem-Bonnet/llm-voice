@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "grimoire": {
+      "command": "grimoire-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}

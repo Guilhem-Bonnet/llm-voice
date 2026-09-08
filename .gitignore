@@ -1,0 +1,28 @@
+# --- Grimoire Kit ---
+# Session runs — ephemeral runtime data
+_grimoire-output/.runs/
+# Memory archives — compressed old sessions
+_grimoire/_memory/archives/
+# Internal agent telemetry — no secrets, no value for OSS contributors.
+# planning-artifacts/ and evidence/ stay tracked (public ADRs, decisions, proofs).
+_grimoire-output/traces/
+_grimoire-output/events/
+
+# --- Node / npm ---
+node_modules/
+npm-debug.log*
+
+# --- Build outputs ---
+out/
+dist/
+*.vsix
+
+# --- Tests ---
+.vscode-test/
+coverage/
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+

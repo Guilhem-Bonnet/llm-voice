@@ -1,0 +1,6 @@
+name,file,description
+dep-check,dep-check.py,dep-check.py — Dependency graph & validation for Grimoire tools
+failure-museum,failure-museum.py,Failure Museum — Catalogue structuré des échecs du projet
+grimoire-mcp-tools,grimoire-mcp-tools.py,grimoire-mcp-tools.py — MCP Server Grimoire Synapse Intelligence Layer (BM-40/42/47)
+tool-resolver,tool-resolver.py,tool-resolver.py — Tool Discovery; Provision & Resolution for Grimoire Agents
+web-browser,web-browser.py,web-browser.py — Navigateur web sandboxé pour agents Grimoire

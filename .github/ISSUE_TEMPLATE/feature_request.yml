@@ -1,0 +1,30 @@
+name: Feature request
+description: Proposer une nouvelle fonctionnalité pour LLM Voice
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème à résoudre
+      description: Quel besoin non couvert cette fonctionnalité adresse-t-elle ?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposition
+      description: Comment imaginez-vous la solution ?
+    validations:
+      required: true
+  - type: checkboxes
+    id: invariants
+    attributes:
+      label: Compatibilité avec les invariants du projet
+      options:
+        - label: Compatible avec "zéro autoplay"
+        - label: Compatible avec "local-first" (pas d'appel réseau non-localhost sans consentement explicite)
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives envisagées

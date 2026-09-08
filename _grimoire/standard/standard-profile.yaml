@@ -1,0 +1,38 @@
+$schema: grimoire-agentic-standard-profile/v1
+artifacts:
+- path: _grimoire/standard/mission-brief.md
+  type: mission_brief
+- path: _grimoire-output/evidence/bootstrap/task-envelope.md
+  type: task_envelope
+- path: _grimoire-output/evidence/bootstrap/evidence-pack.md
+  type: evidence_pack
+- path: _grimoire-output/evidence/bootstrap/claim-ledger.md
+  type: claim_ledger
+- path: _grimoire-output/evidence/bootstrap/acceptance-record.md
+  type: acceptance_record
+- path: _grimoire/standard/retention-registry.yaml
+  type: retention_registry
+display_name: Starter
+generated_at: '2026-09-08T16:03:54.994692+00:00'
+mapped_capabilities:
+- evidence-gated-fsm
+- tool-blast-radius-limiter
+- workflow-state-manifest
+minimum_evidence:
+- Selected profile and task state are declared.
+- Tools and writable paths are bounded.
+- Completion includes validation evidence or an explicit non-applicability note.
+profile: starter
+project: LLM Voice
+required_artifacts:
+- mission_brief
+- task_envelope
+- evidence_pack
+- claim_ledger
+- acceptance_record
+- retention_registry
+task_id: bootstrap
+upstream_standard:
+  entrypoint: docs/norme-structure-agentique.md
+  matrix: docs/matrice-normative-maitresse.md
+  repository: processus-developpement-agentique

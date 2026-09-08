@@ -1,0 +1,31 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * 1"
+
+jobs:
+  analyze:
+    name: codeql
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: vscode-extension/.nvmrc
+          cache: npm
+          cache-dependency-path: vscode-extension/package-lock.json
+      - run: npm ci --prefix vscode-extension
+      - run: npm run compile --prefix vscode-extension
+      - uses: github/codeql-action/analyze@v3

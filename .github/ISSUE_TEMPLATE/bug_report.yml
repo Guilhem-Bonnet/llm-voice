@@ -1,0 +1,50 @@
+name: Bug report
+description: Signaler un comportement anormal de l'extension LLM Voice
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de remplir ce formulaire aussi précisément que possible.
+        Pour une vulnérabilité de sécurité, utilisez plutôt les GitHub
+        Security Advisories (voir SECURITY.md) et non ce formulaire.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du bug
+      description: Que se passe-t-il ? Que devrait-il se passer ?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes de reproduction
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version de l'extension
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Système d'exploitation
+      options:
+        - Linux
+        - Windows
+        - macOS
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs pertinents (Output Channel "LLM Voice")
+      render: shell

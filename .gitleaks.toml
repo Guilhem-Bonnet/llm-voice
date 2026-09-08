@@ -1,0 +1,22 @@
+title = "llm-voice gitleaks config"
+
+# Extends the default gitleaks ruleset.
+[extend]
+useDefault = true
+
+# `gitleaks detect --no-git` scans the working tree directly (not just
+# tracked files), so it also walks build artefacts and downloaded binaries
+# that are already excluded by .gitignore (node_modules/, out/, dist/,
+# coverage/, *.vsix, .vscode-test/ — the latter contains a full downloaded
+# VS Code build used by @vscode/test-electron, which trips generic-api-key /
+# private-key rules on minified bundles). These are never committed; keep
+# the scan focused on real repo content.
+[allowlist]
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.vscode-test/''',
+  '''(^|/)out/''',
+  '''(^|/)dist/''',
+  '''(^|/)coverage/''',
+  '''\.vsix$'''
+]

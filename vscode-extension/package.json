@@ -1,0 +1,58 @@
+{
+  "name": "llm-voice",
+  "displayName": "LLM Voice",
+  "description": "Local-first voice narration for Markdown documents and LLM agent output (Claude Code, and more).",
+  "version": "0.1.0",
+  "publisher": "guilhem-bonnet",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Guilhem-Bonnet/llm-voice.git",
+    "directory": "vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.95.0",
+    "node": ">=22"
+  },
+  "extensionKind": [
+    "ui"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "llmVoice.hello",
+        "title": "LLM Voice: Hello"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./ --noEmit false --outDir out",
+    "watch": "tsc -p ./ --watch",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc -p ./ --noEmit",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:integration": "npm run compile && vscode-test",
+    "package": "vsce package --no-dependencies -o llm-voice.vsix",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.2",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

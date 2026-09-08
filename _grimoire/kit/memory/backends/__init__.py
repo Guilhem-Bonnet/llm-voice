@@ -1,0 +1,217 @@
+"""
+Grimoire Memory Backends — Factory
+
+Sélectionne le backend mémoire selon project-context.yaml et les variables
+d'environnement. Priorité : ENV vars > config fichier > auto-détection > local.
+
+Backends disponibles :
+  local          — JSON fichier, zéro dépendance (recherche mots-clés naïve)
+  lexical        — sqlite FTS5 BM25, zéro dépendance, ZÉRO DB vectorielle
+                   (sélectionné par memory.vector_database=false)
+  qdrant-local   — Qdrant en process, pip install qdrant-client required
+  qdrant-server  — Qdrant distant (URL), circuit breaker intégré
+  ollama         — Ollama embeddings + Qdrant (local ou distant)
+"""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Protocol, runtime_checkable
+
+
+def _env_url(suffix: str, default: str = "") -> str:
+    """Lit ``GRIMOIRE_<SUFFIX>`` (casse canonique de l'écosystème) avec repli sur
+    l'ancienne casse ``Grimoire_<SUFFIX>`` pour ne pas casser les setups existants."""
+    return os.environ.get(f"GRIMOIRE_{suffix}") or os.environ.get(f"Grimoire_{suffix}", default)
+
+
+@runtime_checkable
+class MemoryBackend(Protocol):
+    """Contrat minimal que tout backend doit respecter."""
+
+    def add(self, text: str, user_id: str = "", metadata: dict | None = None) -> dict: ...
+    def search(self, query: str, user_id: str = "", limit: int = 5) -> list[dict]: ...
+    def get_all(self, user_id: str = "") -> list[dict]: ...
+    def count(self) -> int: ...
+    def status(self) -> dict: ...
+
+
+def _load_project_context() -> dict:
+    """Cherche project-context.yaml depuis le répertoire courant vers la racine."""
+    try:
+        import yaml
+    except ImportError:
+        return {}
+    for parent in [Path.cwd(), Path.cwd().parent, Path.cwd().parent.parent]:
+        f = parent / "project-context.yaml"
+        if f.exists():
+            with open(f, encoding="utf-8") as fh:
+                return yaml.safe_load(fh) or {}
+    return {}
+
+
+def get_backend(config_override: dict | None = None) -> tuple:
+    """
+    Retourne (backend_instance, backend_name).
+
+    Ordre de priorité :
+    1. ENV GRIMOIRE_OLLAMA_URL (repli GRIMOIRE_OLLAMA_URL) → ollama
+    2. ENV GRIMOIRE_QDRANT_URL (repli GRIMOIRE_QDRANT_URL) → qdrant-server
+    3. project-context.yaml memory.backend
+    4. Auto-détection
+    5. Fallback local
+    """
+    ctx = config_override or _load_project_context()
+    mem_cfg = ctx.get("memory", {})
+
+    # Option de setup : base de données vectorielle ON/OFF.
+    # vector_database=false (ou retrieval_mode=lexical) force le backend lexical et
+    # COURT-CIRCUITE toute auto-détection réseau (pas de sonde ollama/qdrant) — requis
+    # pour les environnements qui interdisent une DB vectorielle locale.
+    if not _vector_enabled(mem_cfg):
+        return _instantiate("lexical", mem_cfg, "", "")
+
+    # ENV vars priment toujours (casse canonique GRIMOIRE_*, repli legacy Grimoire_*)
+    env_ollama = _env_url("OLLAMA_URL")
+    env_qdrant = _env_url("QDRANT_URL")
+
+    backend_name = mem_cfg.get("backend", "auto")
+
+    if env_ollama:
+        backend_name = "ollama"
+    elif env_qdrant:
+        backend_name = "qdrant-server"
+
+    # Résoudre "auto"
+    if backend_name == "auto":
+        backend_name = _auto_detect(mem_cfg)
+
+    # Instancier
+    return _instantiate(backend_name, mem_cfg, env_ollama, env_qdrant)
+
+
+def _vector_enabled(mem_cfg: dict) -> bool:
+    """Option de setup : DB vectorielle activée ? Défaut True (rétro-compatible).
+
+    Désactivée si vector_database=false, retrieval_mode in {lexical,none}, ou
+    backend=lexical|local.
+    """
+    if mem_cfg.get("vector_database") is False:
+        return False
+    if str(mem_cfg.get("retrieval_mode", "vector")).lower() in {"lexical", "none"}:
+        return False
+    return mem_cfg.get("backend") not in {"lexical", "local"}
+
+
+def _auto_detect(mem_cfg: dict) -> str:
+    """Détection automatique du meilleur backend disponible."""
+    import urllib.error
+    import urllib.request
+
+    # 1. Qdrant distant configuré ?
+    qdrant_url = mem_cfg.get("qdrant_url", _env_url("QDRANT_URL"))
+    ollama_url = mem_cfg.get("ollama_url", _env_url("OLLAMA_URL", "http://localhost:11434"))
+
+    # 2. Ollama accessible avec nomic-embed-text ?
+    try:
+        req = urllib.request.urlopen(f"{ollama_url.rstrip('/')}/api/tags", timeout=1)
+        data = req.read().decode()
+        if "nomic-embed-text" in data:
+            return "ollama"
+    except Exception:
+        pass
+
+    # 3. Qdrant accessible ?
+    if qdrant_url:
+        try:
+            urllib.request.urlopen(f"{qdrant_url.rstrip('/')}/health", timeout=1)
+            return "qdrant-server"
+        except Exception:
+            pass
+
+    # 4. qdrant-client Python installé ?
+    try:
+        import qdrant_client  # noqa: F401
+        try:
+            import sentence_transformers  # noqa: F401
+            return "qdrant-local"
+        except ImportError:
+            pass
+    except ImportError:
+        pass
+
+    return "local"
+
+
+def _instantiate(backend_name: str, mem_cfg: dict, env_ollama: str, env_qdrant: str) -> tuple:
+    """Instancie le backend avec fallback sur local en cas d'erreur."""
+    ollama_url = env_ollama or mem_cfg.get("ollama_url", "http://localhost:11434")
+    qdrant_url = env_qdrant or mem_cfg.get("qdrant_url", "")
+    qdrant_api_key = _env_url("QDRANT_API_KEY") or mem_cfg.get("qdrant_api_key", "")
+    embedding_model = mem_cfg.get("embedding_model", "nomic-embed-text")
+    collection = mem_cfg.get("collection_prefix", "grimoire")
+
+    if backend_name == "ollama":
+        try:
+            from .backend_ollama import OllamaBackend
+            b = OllamaBackend(
+                ollama_url=ollama_url,
+                qdrant_url=qdrant_url,
+                embedding_model=embedding_model,
+                collection=collection,
+            )
+            return b, "ollama"
+        except ImportError:
+            _warn_install("ollama", "qdrant-client")
+        except Exception as e:
+            _warn_connection("ollama", ollama_url, e)
+
+    if backend_name == "qdrant-server":
+        try:
+            from .backend_qdrant_server import QdrantServerBackend
+            b = QdrantServerBackend(
+                qdrant_url=qdrant_url or "http://localhost:6333",
+                embedding_model=embedding_model,
+                collection=collection,
+                api_key=qdrant_api_key or None,
+            )
+            return b, "qdrant-server"
+        except ImportError:
+            _warn_install("qdrant-server", "qdrant-client sentence-transformers")
+        except Exception as e:
+            _warn_connection("qdrant-server", qdrant_url, e)
+
+    if backend_name == "qdrant-local":
+        try:
+            from .backend_qdrant_local import QdrantLocalBackend
+            b = QdrantLocalBackend(embedding_model=embedding_model, collection=collection)
+            return b, "qdrant-local"
+        except ImportError:
+            _warn_install("qdrant-local", "qdrant-client sentence-transformers")
+        except Exception as e:
+            print(f"⚠️  Backend qdrant-local échoué ({e}) → fallback local JSON")
+
+    if backend_name == "lexical":
+        try:
+            from .backend_lexical import LexicalBackend
+            return LexicalBackend(), "lexical"
+        except Exception as e:
+            print(f"⚠️  Backend lexical échoué ({e}) → fallback local JSON")
+
+    # Fallback
+    from .backend_local import LocalBackend
+    return LocalBackend(), "local"
+
+
+def _warn_install(backend: str, packages: str) -> None:
+    print(f"❌ Backend {backend} : dépendances manquantes")
+    print(f"   → pip install {packages}")
+    print("   → Fallback backend local JSON (fonctionnel, recherche par mots-clés)")
+
+
+def _warn_connection(backend: str, url: str, err: Exception) -> None:
+    print(f"⚠️  Backend {backend} inaccessible ({err})")
+    print(f"   → URL tentée : {url}")
+    print("   → Vérifier GRIMOIRE_OLLAMA_URL / GRIMOIRE_QDRANT_URL ou lancer le service")
+    print("   → Fallback backend local JSON (fonctionnel, recherche par mots-clés)")

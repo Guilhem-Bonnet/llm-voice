@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "grimoire-hook --host copilot --event PreToolUse",
+        "timeout": 10
+      }
+    ]
+  }
+}

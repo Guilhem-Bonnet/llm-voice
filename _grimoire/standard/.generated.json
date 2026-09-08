@@ -1,0 +1,10 @@
+{
+ "schema": "grimoire-standard-generation/v1",
+ "artifacts": {
+  "_grimoire-output/evidence/bootstrap/acceptance-record.md": "ab42b1cb598b541800db471cdc25df7487b33a808ae9d19663020d1d03b9ac64",
+  "_grimoire-output/evidence/bootstrap/claim-ledger.md": "f5dd59cc2eba171379b42ec6864839b8fd0a46ee6a62286b14f8f4e9d4c31c6e",
+  "_grimoire/standard/mission-brief.md": "e440ecd06f19ccf26364e85810f17fc011df289d753a08d66f5d53ed062fb1c4",
+  "_grimoire/standard/retention-registry.yaml": "aa9e92272b115d5c38790e3042743cca07b0a175ff956d68399f4db3b05f19ed",
+  "_grimoire/standard/standard-profile.yaml": "e7c1c80c037569271730b7ce14ce0175950fc0029edc183cf469c4b2f48c99e0"
+ }
+}

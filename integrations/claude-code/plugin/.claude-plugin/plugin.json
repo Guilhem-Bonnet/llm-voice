@@ -1,0 +1,10 @@
+{
+  "name": "llm-voice",
+  "version": "0.1.0",
+  "description": "Deposits Claude Code's final response into the LLM Voice inbox for on-demand narration. Never triggers autoplay.",
+  "author": {
+    "name": "Guilhem Bonnet"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Guilhem-Bonnet/llm-voice"
+}
