@@ -8,7 +8,30 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json"],
       reportsDirectory: "./coverage",
-      include: ["src/**/*.ts"]
+      // Coverage is scoped to the modules that are actually unit-testable in
+      // plain Node (fix(review): the 80% target applies to "modules purs",
+      // not to the whole extension). `src/pipeline` here means
+      // `textSegments.ts` only — `Pipeline.ts` itself is excluded below.
+      include: [
+        "src/core/**/*.ts",
+        "src/parser/**/*.ts",
+        "src/playback/**/*.ts",
+        "src/net/**/*.ts",
+        "src/pipeline/**/*.ts",
+        "src/profiles/defaults*.ts"
+      ],
+      // Everything below imports `vscode` (directly or by re-exporting a
+      // module that does) and therefore cannot run under plain-Node vitest —
+      // it is exercised by `test/integration/**` and `test/integration-real/**`
+      // instead (`.vscode-test.mjs`), never by `test:unit`.
+      exclude: [
+        "src/playback/WebviewAudioSink.ts",
+        "src/pipeline/Pipeline.ts",
+        "src/profiles/ProfileRepository.ts"
+      ],
+      thresholds: {
+        lines: 80
+      }
     }
   }
 });
