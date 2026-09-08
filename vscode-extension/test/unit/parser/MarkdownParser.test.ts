@@ -178,6 +178,12 @@ describe("parseMarkdown — pathological.md", () => {
     const lastItem = list?.children?.[list.children.length - 1];
     expect(lastItem?.text).toContain("`code inline`");
   });
+
+  it("has exact source ranges on this pathological fixture too: text.slice(startOffset, endOffset) === rawSource", async () => {
+    const text = readFixture("pathological.md");
+    const blocks = await parseMarkdown(text);
+    expectOffsetsMatchSource(text, blocks);
+  });
 });
 
 describe("parseMarkdown — additional block kinds not covered by the story fixtures", () => {
