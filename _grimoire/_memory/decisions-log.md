@@ -94,3 +94,14 @@
 - **Contexte** : 5 PR (#20-#24) revues et mergées ; 281 tests unit, 14 intégration, VSIX activable.
 - **Décision** : phase 4 = providers réels (Chatterbox via compose ROCm, Ollama narrator, Piper léger), backoff/buffering/pinning, E2E réel sur la machine RDNA4 (AC-07..11). Règle apprise : toute URL assignée dans un webview passe par `new URL()` + allowlist (CodeQL), et un circuit breaker à 2 tentatives identiques.
 - **Agent** : concierge (Marcel)
+
+### [2026-09-08] Voix française par défaut : référence humaine SIWIS en mode clonage
+- **Contexte** : premier E2E réel sur RX 9070 (ROCm, conteneur). Les voix prédéfinies de Chatterbox-TTS-Server sont toutes anglophones → accent anglais en français malgré `language_id=fr`. Référence Piper = timbre synthétique. Lectrice LibriVox jugée trop âgée par l'utilisateur.
+- **Décision** : référence par défaut = extrait de la base SIWIS (locutrice française, CC BY 4.0, attribution dans `docs/voices.md`), Chatterbox en `voice_mode: clone`, paramètres = dernière combinaison validée à l'oreille par l'utilisateur (consignée dans le rapport E2E de Forge). L'utilisateur peut remplacer par sa propre voix (consentement, CdC §55). Le provider Chatterbox doit supporter le clonage (point de revue PR #28).
+- **Alternatives rejetées** : voix prédéfinies anglophones ; Piper comme référence de clonage ; LibriVox (timbre non souhaité).
+- **Agent** : concierge (Marcel), sur écoute et validation de guilhem-bonnet
+
+### [2026-09-08] Phase 4 livrée : providers réels, E2E réel validé à l'oreille
+- **Contexte** : PR #27, #28, #30 mergées ; 369 tests unit, 14 intégration, 5 E2E réels.
+- **Décision** : Chatterbox passe par `/tts` natif (le endpoint compatible OpenAI ignore la langue) ; clonage de voix par défaut avec référence SIWIS ; phase 5 = inbox Claude + hook, profils (Quick Pick, `profiles.json`), status bar complète, commande Provider Status ; phase 6 = hardening, latence, docs, VSIX 0.1.
+- **Agent** : concierge (Marcel)
