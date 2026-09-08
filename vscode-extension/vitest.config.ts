@@ -18,6 +18,7 @@ export default defineConfig({
         "src/playback/**/*.ts",
         "src/net/**/*.ts",
         "src/pipeline/**/*.ts",
+        "src/narrator/**/*.ts",
         "src/profiles/defaults*.ts"
       ],
       // Everything below imports `vscode` (directly or by re-exporting a

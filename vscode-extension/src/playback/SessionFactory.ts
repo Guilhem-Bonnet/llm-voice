@@ -65,6 +65,15 @@ export interface SessionBuild {
   onWarning(listener: (warning: NarrationWarning) => void): Unsubscribe;
   /** Stops narrating the remaining groups; already built segments are kept. */
   cancel(): void;
+  /**
+   * CdC §52 "Read without narration": once called, every group not yet
+   * dispatched to the narrator (the current session only — a fresh
+   * `buildSession()` call, e.g. from Retry, starts un-forced again) falls
+   * back to the faithful 1:1 mapping without ever calling
+   * `NarratorProvider.transform()` again. Idempotent, and safe to call
+   * before, during, or after the whole session has finished narrating.
+   */
+  forceFaithful(): void;
 }
 
 class SessionBuildImpl implements SessionBuild {
@@ -72,6 +81,7 @@ class SessionBuildImpl implements SessionBuild {
   readonly warned = new Emitter<NarrationWarning>();
   readonly built: NarrationSegment[] = [];
   degraded = false;
+  forced = false;
   completion: Promise<readonly NarrationSegment[]> = Promise.resolve([]);
 
   constructor(
@@ -81,6 +91,10 @@ class SessionBuildImpl implements SessionBuild {
 
   get segments(): readonly NarrationSegment[] {
     return this.built;
+  }
+
+  forceFaithful(): void {
+    this.forced = true;
   }
 
   onSegmentsAppended(
@@ -175,6 +189,10 @@ async function narrateGroup(
 ): Promise<void> {
   if (controller.signal.aborted) {
     fallback(build, group, groupIndex, "cancelled");
+    return;
+  }
+  if (build.forced) {
+    fallback(build, group, groupIndex, "user-disabled");
     return;
   }
 

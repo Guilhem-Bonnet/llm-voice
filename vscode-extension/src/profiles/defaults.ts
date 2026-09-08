@@ -5,13 +5,10 @@
  * "Lecture fidèle" already (`src/core/profile.schema.ts`).
  *
  * The narrator binding on the three narrated profiles points at the default
- * local Ollama endpoint (`llmVoice.narrator.baseUrl`); no `NarratorProvider`
- * is registered in this slice (S3.5 keeps `NoNarrator`, phase 4 wires
- * `OllamaNarrator`), so `SessionFactory.buildSession` degrades every one of
- * them to faithful reading automatically (`narrator === undefined` short-
- * circuits `narrationEnabled`, ADR-005) — selecting them today changes
- * nothing audible yet, but they are ready for phase 4 without another schema
- * change.
+ * local Ollama endpoint (`llmVoice.narrator.baseUrl`) and deliberately omits
+ * `model`: it falls back to `llmVoice.narrator.model` (default `qwen2.5:7b`,
+ * `Pipeline.narratorSettings`) rather than pinning a model per profile, so
+ * changing the setting once retunes all three (S4.1, `OllamaNarrator`).
  */
 
 import type { VoiceProfile } from "../core/profile.js";
@@ -27,8 +24,7 @@ const LOCAL_TTS = {
 
 const LOCAL_NARRATOR = {
   providerId: "ollama",
-  baseUrl: "http://127.0.0.1:11434",
-  model: "llama3.1"
+  baseUrl: "http://127.0.0.1:11434"
 } as const;
 
 /** "Lecture fidèle" (CdC §19): no transformation, sentence-level highlight. */
