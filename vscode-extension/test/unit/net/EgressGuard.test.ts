@@ -75,6 +75,20 @@ describe("EgressGuard.assertAllowed", () => {
     }
   });
 
+  it("open mode allows an unlisted remote host, but strictLocal still refuses it", async () => {
+    const openGuard = createEgressGuard({ mode: "open", trustedHosts: [], strictLocal: false });
+    await expect(openGuard.assertAllowed(new URL("https://not-listed.example.com/v1"))).resolves.toBeUndefined();
+
+    const strictGuard = createEgressGuard({ mode: "open", trustedHosts: [], strictLocal: true });
+    try {
+      await strictGuard.assertAllowed(new URL("https://not-listed.example.com/v1"));
+      expect.unreachable();
+    } catch (error) {
+      expect(error).toBeInstanceOf(EgressDeniedError);
+      expect((error as EgressDeniedError).reason).toBe("strict-local-mode");
+    }
+  });
+
   it("strictLocal forces local mode and ignores trustedHosts", async () => {
     const guard = createEgressGuard({
       mode: "trusted",
