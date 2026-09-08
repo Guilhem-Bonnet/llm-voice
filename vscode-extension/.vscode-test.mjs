@@ -25,7 +25,13 @@ export default defineConfig([
     // user-data dir with the `real-provider-unavailable` profile below would
     // let audio synthesised by `FakeTtsProvider` here satisfy a cache *hit*
     // there, silently skipping the real network call it exists to exercise.
-    launchArgs: ["--user-data-dir=.vscode-test/user-data-fake-tts"]
+    // fix(review): kept short — on the macOS GH Actions runner the checkout
+    // path (`/Users/runner/work/<repo>/<repo>/vscode-extension/...`) is long
+    // enough that `user-data-fake-tts`/`user-data-real-provider` pushed the
+    // extension host's IPC unix socket path past the 103-char `sockaddr_un`
+    // limit ("Error: listen EINVAL", integration (macos-latest) failing in
+    // CI while passing locally on Linux).
+    launchArgs: ["--user-data-dir=.vscode-test/fake-tts"]
   },
   {
     ...common,
@@ -38,6 +44,7 @@ export default defineConfig([
     env: { LLM_VOICE_TEST_FAKE_TTS: undefined },
     // See the comment on the `fake-tts` profile above: a *different* cache
     // directory is what actually forces this run to hit the network.
-    launchArgs: ["--user-data-dir=.vscode-test/user-data-real-provider"]
+    // See the comment on the `fake-tts` profile above re: the socket path length.
+    launchArgs: ["--user-data-dir=.vscode-test/real-provider"]
   }
 ]);
