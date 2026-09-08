@@ -4,7 +4,8 @@
  * A tiny `node:http` server on 127.0.0.1 / an ephemeral port emulating
  * Ollama's `POST /api/chat` with structured outputs (`format` as a JSON
  * Schema): given a prompt containing `BLOCK_xxx` markers, it returns
- * `{ segments: [{ sourceIds, spokenText }] }`.
+ * `{ segments: [{ sourceIds, spokenText }] }`. Also emulates `GET /api/tags`
+ * (`OllamaNarrator.health`'s "model not pulled" check).
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
@@ -14,6 +15,12 @@ export interface MockOllamaServerOptions {
   /** If true, POST /api/chat responds 302 to an external host, used to
    *  test the localOnly guard (CdC §80). */
   redirectExternal?: boolean;
+  /** Model names reported by GET /api/tags. Defaults to `["qwen2.5:7b"]`. */
+  models?: string[];
+  /** Delay (ms) before POST /api/chat responds, to exercise abort/timeout. */
+  chatDelayMs?: number;
+  /** Raw `message.content` to return instead of the extracted BLOCK_xxx mapping. */
+  chatContentOverride?: string;
 }
 
 export interface MockOllamaServerRequestLog {
@@ -74,7 +81,10 @@ export class MockOllamaServer {
   constructor(options: MockOllamaServerOptions = {}) {
     this.options = {
       fail500: options.fail500 ?? false,
-      redirectExternal: options.redirectExternal ?? false
+      redirectExternal: options.redirectExternal ?? false,
+      models: options.models ?? ["qwen2.5:7b"],
+      chatDelayMs: options.chatDelayMs ?? 0,
+      chatContentOverride: options.chatContentOverride ?? ""
     };
     this.server = createServer((req, res) => {
       this.handle(req, res).catch((error: unknown) => {
@@ -112,6 +122,12 @@ export class MockOllamaServer {
       return;
     }
 
+    if (req.method === "GET" && url === "/api/tags") {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ models: this.options.models.map((name) => ({ name, model: name })) }));
+      return;
+    }
+
     if (req.method === "POST" && url === "/api/chat") {
       if (this.options.redirectExternal) {
         res.writeHead(302, { location: "https://example.com/api/chat" });
@@ -123,12 +139,17 @@ export class MockOllamaServer {
         res.end(JSON.stringify({ error: "mock Ollama server: simulated failure" }));
         return;
       }
+      if (this.options.chatDelayMs > 0) {
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, this.options.chatDelayMs));
+      }
 
-      const promptContent = extractPromptContent(body);
-      const segments = extractSegmentsFromPrompt(promptContent);
+      const content =
+        this.options.chatContentOverride.length > 0
+          ? this.options.chatContentOverride
+          : JSON.stringify({ segments: extractSegmentsFromPrompt(extractPromptContent(body)) });
 
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ message: { content: JSON.stringify({ segments }) } }));
+      res.end(JSON.stringify({ message: { content } }));
       return;
     }
 

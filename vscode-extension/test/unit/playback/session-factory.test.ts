@@ -199,6 +199,47 @@ describe("buildSession — narrated mode", () => {
     expect(build.segments).toHaveLength(4);
   });
 
+  it('forceFaithful() ("Read without narration", CdC §52) stops calling the narrator for the rest of the session', async () => {
+    const narrator = new ManualNarrator();
+    // 4 groups of 2: group 0 resolves before `build` is even returned, group 1
+    // is already dispatched by then (see the cancel test above) — forcing
+    // after `await building` can therefore only still catch groups 2 and 3.
+    const warnings: NarrationWarning[] = [];
+    const building = buildSession(makeSourceSegments(8), narratedProfile, narrator, {
+      groupSize: 2,
+      onWarning: (warning) => warnings.push(warning)
+    });
+    await Promise.resolve();
+    narrator.resolveNext(); // group 0
+    const build = await building;
+
+    build.forceFaithful();
+    narrator.resolveNext(); // group 1, already in flight before forceFaithful()
+    await build.completion;
+
+    // Groups 2 and 3 never reached the narrator at all.
+    expect(narrator.requests).toHaveLength(2);
+    expect(build.segments.map((segment) => segment.spokenText)).toEqual([
+      "[narrated] Bloc source 0.",
+      "[narrated] Bloc source 1.",
+      "[narrated] Bloc source 2.",
+      "[narrated] Bloc source 3.",
+      "Bloc source 4.",
+      "Bloc source 5.",
+      "Bloc source 6.",
+      "Bloc source 7."
+    ]);
+    expect(build.degraded).toBe(true);
+    expect(warnings).toEqual([
+      { groupIndex: 2, reason: "user-disabled", segmentIds: ["src-4", "src-5"] },
+      { groupIndex: 3, reason: "user-disabled", segmentIds: ["src-6", "src-7"] }
+    ]);
+
+    // Calling it again is a no-op, and it never un-forces a session.
+    build.forceFaithful();
+    expect(narrator.requests).toHaveLength(2);
+  });
+
   it("honours an externally supplied AbortSignal", async () => {
     const narrator = new FakeNarratorProvider();
     const controller = new AbortController();

@@ -127,8 +127,8 @@
         },
         "llmVoice.narrator.model": {
           "type": "string",
-          "default": "",
-          "description": "Nom du modèle utilisé par le provider de narration."
+          "default": "qwen2.5:7b",
+          "description": "Nom du modèle utilisé par le provider de narration (défaut : qwen2.5:7b, un compromis raisonnable taille/fiabilité en sortie structurée avec Ollama, CdC §21)."
         },
         "llmVoice.audio.prefetchChunks": {
           "type": "number",
