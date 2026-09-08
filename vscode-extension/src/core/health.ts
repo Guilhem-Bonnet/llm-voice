@@ -36,61 +36,13 @@ export interface ProviderRegistry<T extends Identified> {
   list(): readonly T[];
 }
 
-/** Network posture applied by the egress guard for a given call. */
-export type EgressMode = "strict-local" | "local" | "trusted" | "consented";
-
-/** Why a network call is being attempted, used for logging and consent prompts. */
-export type EgressPurpose = "tts" | "narration" | "health" | "voices";
-
-/** How an allowed destination was classified, driving the 🔒 / 🏢 / ☁ badge (D9). */
-export type EgressClassification = "loopback" | "trusted-host" | "remote";
-
-/** Reason an egress attempt was refused; every value is user-presentable. */
-export type EgressDenialReason =
-  | "not-loopback"
-  | "strict-local-mode"
-  | "untrusted-host"
-  | "consent-missing"
-  | "tls-required"
-  | "dns-resolution-failed"
-  | "cross-host-redirect";
-
-/** A network call submitted to the guard before any socket is opened. */
-export interface EgressRequest {
-  url: string;
-  providerId: string;
-  purpose: EgressPurpose;
-  mode?: EgressMode;
-}
-
-/** Discriminated verdict: a refusal is a value, not an exception to catch. */
-export type EgressDecision =
-  | {
-      allowed: true;
-      resolvedHost: string;
-      resolvedAddresses: readonly string[];
-      classification: EgressClassification;
-    }
-  | {
-      allowed: false;
-      resolvedHost: string;
-      reason: EgressDenialReason;
-    };
-
-/** Request options accepted by the guard; redirects are always host-checked. */
-export interface EgressFetchInit {
-  method?: string;
-  headers?: Readonly<Record<string, string>>;
-  body?: string | Uint8Array;
-  timeoutMs?: number;
-}
-
-/** Single choke point every outbound HTTP call must go through (D10). */
-export interface EgressGuard {
-  check(request: EgressRequest, signal?: AbortSignal): Promise<EgressDecision>;
-  fetch(
-    request: EgressRequest,
-    init?: EgressFetchInit,
-    signal?: AbortSignal
-  ): Promise<Response>;
-}
+/**
+ * The egress-guard contract sketched in ADR-005 (`check`/`EgressDecision` as
+ * a discriminated return value) was superseded by the implementation landed
+ * for ADR-010: `createEgressGuard` in `../net/EgressGuard.js`, which throws
+ * `EgressDeniedError` instead of returning a verdict object. Nothing in this
+ * codebase consumed the ADR-005 sketch, so it was removed here rather than
+ * kept as a second, incompatible shape — import egress types from
+ * `../net/EgressGuard.js` (`EgressMode`, `EgressClassification`,
+ * `EgressDenialReason`, `EgressGuardHandle`, etc.).
+ */
