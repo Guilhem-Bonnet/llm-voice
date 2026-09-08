@@ -89,6 +89,15 @@ et chemin, jamais le corps ni les en-têtes (D10).
   seulement — à documenter explicitement dans la page confidentialité (§53).
 - Le budget de cache par taille et non par âge peut évincer un audio récent si un
   gros document vient d'être synthétisé ; accepté, la re-synthèse est locale.
+- **Reporté phase 4** : `DiskAudioCache` (S3.5) n'a pas de notion de « chunk
+  référencé par une session en cours » — aucun épinglage (pinning) du chunk en
+  lecture contre l'éviction LRU, et le sidecar `<clé>.json` ne porte que
+  `{createdAt, lastAccessAt, bytes}`, pas encore `{format, durationMs,
+  providerId}` comme prévu ci-dessus. Le code documente l'écart
+  (`DiskAudioCache.ts`, commentaire « Known gap vs. the full ADR-004 sidecar
+  shape »). Risque accepté pour cette tranche : le budget par défaut (512 Mo)
+  rend une éviction du chunk en cours de lecture improbable en usage normal ;
+  à traiter avant que le cache ne soit dimensionné plus agressivement.
 
 ## Alternatives rejetées
 
