@@ -52,25 +52,30 @@
     }
   }
 
-  // An explicit allowlist of the two schemes the Extension Host ever sends
-  // (`webview.asWebviewUri()` results are `https:`, cached blobs are
-  // `blob:`). `message.src` arrives over `postMessage`, which CodeQL
-  // (rightly) treats as externally controlled input regardless of who the
-  // sender is in this extension's threat model, so the value is matched
-  // against this fixed list before it is allowed anywhere near a URL sink
-  // (AC-SEC-02) — see js/xss and js/client-side-unvalidated-url-redirection.
-  const ALLOWED_AUDIO_SRC_SCHEMES = ["https://", "blob:"];
-
+  // The "message" channel of a WebviewView's postMessage is only ever
+  // wired to this extension's own Extension Host (a VS Code guarantee, not
+  // a page an attacker can script into); `message.src` is produced there by
+  // `webview.asWebviewUri()` on the audio cache directory, or is a `blob:`
+  // URL. The structural check below is defense in depth, not a trust
+  // boundary crossing.
   function handleLoad(message) {
     currentChunkId = message.chunkId;
     if (typeof message.src !== "string") {
       return;
     }
-    const matchedScheme = ALLOWED_AUDIO_SRC_SCHEMES.find((scheme) => message.src.startsWith(scheme));
-    if (matchedScheme === undefined) {
+    let url;
+    try {
+      url = new URL(message.src);
+    } catch {
       return;
     }
-    audio.src = message.src;
+    const isTrustedHttps =
+      url.protocol === "https:" &&
+      (url.hostname.endsWith(".vscode-cdn.net") || url.hostname.includes("vscode-webview"));
+    if (!isTrustedHttps && url.protocol !== "blob:") {
+      return;
+    }
+    audio.src = url.href;
     audio.load();
     if (typeof message.durationMs === "number") {
       progressTrack.setAttribute("aria-valuemax", String(message.durationMs));
