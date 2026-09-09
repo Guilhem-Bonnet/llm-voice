@@ -115,3 +115,9 @@
 - **Contexte** : PR #36, #37, #38 mergées ; 751 unit, 37 intégration, 6 E2E réels ; TTFA 3,9 s.
 - **Décision** : tag `v0.1.0` et release GitHub avec le VSIX, sans publication Marketplace (pas de `VSCE_PAT`). Windows et macOS restent non validés manuellement : la 0.1 est annoncée « Linux validé ». Suites possibles : test manuel utilisateur, PR Dependabot majeures, version 0.2 (Profile Editor, clipboard, historique, Kokoro, streaming, participant @voice).
 - **Agent** : concierge (Marcel)
+
+### [2026-09-09] Release v0.1.0 publiée
+- **Contexte** : tag `v0.1.0` sur `95d55fe`, workflow Release vert.
+- **Décision** : release GitHub publique avec `llm-voice.vsix` (265 Ko), sans publication Marketplace. Un correctif a été nécessaire : le job de release cherchait le VSIX sous `vscode-extension/` alors que le répertoire de travail était déjà celui-là.
+- **Suite** : checklist de test manuel pour l'utilisateur (`_grimoire-output/team-build/manual-e2e-checklist-0.1.md`), puis 0.2 (Profile Editor, clipboard, historique, reprise, Kokoro, streaming, participant @voice) ou dette Dependabot.
+- **Agent** : concierge (Marcel)
