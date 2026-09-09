@@ -8,6 +8,7 @@ Index complet de la documentation du projet.
 - **[install-linux.md](install-linux.md)** — Instructions d'installation Linux détaillées : VS Code (RPM/Flatpak/Snap), Ollama, Chatterbox (CUDA/ROCm/CPU).
 - **[providers.md](providers.md)** — Guide des providers TTS et Narrator : contrats d'interface, presets, sélection du provider adapté.
 - **[privacy.md](privacy.md)** — Politique de confidentialité : données locales, transmission distante, télémétrie (désactivée par défaut).
+- **[performance.md](performance.md)** — Latence de lecture (S6.2) : mesures réelles TTFA/RTF, réglages qui comptent (`firstChunkSentences`, `warmup`, cache), comment reproduire avec `scripts/bench-tts.mjs`.
 
 ## Conception et architecture
 
@@ -23,7 +24,8 @@ Index complet de la documentation du projet.
 ## Traçabilité et sécurité
 
 - **[traceability.md](traceability.md)** — Matrice de traçabilité AC-01..17 (critères d'acceptation MVP) et AC-SEC-01..10 (critères sécurité) vers fichiers de test.
-- **Security Review** — Voir `_grimoire-output/planning-artifacts/security-privacy-review-v1.md` pour l'analyse STRIDE complète (findings F-01..12 et contrôles).
+- **[security/audit-0.1.md](security/audit-0.1.md)** — Audit de sécurité 0.1 (S6.1) : 14 constats du code livré, tous corrigés et verrouillés par un test d'attaque, chaîne d'approvisionnement (VSIX, licences).
+- **Security Review (conception)** — Voir `_grimoire-output/planning-artifacts/security-privacy-review-v1.md` pour l'analyse STRIDE amont (findings F-01..12 et contrôles) ; l'audit du code livré est `security/audit-0.1.md` ci-dessus.
 
 ## État du projet
 

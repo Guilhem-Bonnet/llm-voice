@@ -32,7 +32,7 @@ Extension VS Code permettant de transformer en **contenu vocal naturel** documen
 
 ## ⚡ Essayer en 5 étapes
 
-1. **VSIX** : téléchargez `llm-voice-0.1.0.vsix` et `code --install-extension llm-voice-0.1.0.vsix`.
+1. **VSIX** : téléchargez `llm-voice-0.1.0.vsix` depuis la [release GitHub](https://github.com/Guilhem-Bonnet/llm-voice/releases) (paquet vérifié — `npm run check:vsix`/`check:licenses` : aucun test, source, secret, dépendance non permissive) et `code --install-extension llm-voice-0.1.0.vsix`.
 2. **Ollama** (narrateur, optionnel) : `curl -fsSL https://ollama.ai/install.sh | sh && ollama pull mistral`.
 3. **Chatterbox** (TTS, recommandé) : `docker run -p 8004:8000 resemble-ai/chatterbox:latest --device cuda --language_id fr` (ou [docs/install-linux.md](docs/install-linux.md) pour ROCm/CPU).
 4. **VS Code** : ouvrez un `.md` et lancez **LLM Voice: Speak Document** (palette `Ctrl+Shift+P`).
@@ -48,6 +48,17 @@ Extension VS Code permettant de transformer en **contenu vocal naturel** documen
 | **Révision rapide** | Kokoro léger | ✓ Ollama (concis) | Réviser vite |
 
 Profils entièrement personnalisables : prompt, voix, vitesse, mode local/cloud.
+
+## Performance
+
+Temps avant le premier son (TTFA), mesuré sur GPU local déjà chaud (RX 9070, ROCm) — détail et méthode dans [docs/performance.md](docs/performance.md) :
+
+| Taille du 1er segment | TTFA |
+|---|---|
+| 1 phrase (réglage par défaut) | ~4-5 s |
+| Paragraphe entier (6 phrases) | ~30-33 s |
+
+Un second passage sur un document déjà lu ne réémet aucune requête TTS (cache disque).
 
 ## Invariants fondamentaux
 

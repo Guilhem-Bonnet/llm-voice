@@ -54,7 +54,13 @@ Phase 5 complète (S5.1-5.3) : slice vertical câblé, providers TTS réels, nar
 - **AC-SEC-05** : Validation JSON Schema strict profils, détection `baseUrl` distante, badge `☁ Remote provider`.
 - **AC-SEC-07/08** : Logger redaction, SecretStorage exclusif pour clés API.
 - **AC-SEC-09** : Permissions 0600/0700 Inbox/cache (POSIX).
-- Pas de secrets dans les logs, CSP Webview (à vérifier pour AC-SEC-02 XSS), aucune télémétrie par défaut.
+- **AC-SEC-02** : CSP stricte + nonce imprévisible par rendu de la webview ; contenu externe (réponses Inbox, résumés) toujours inséré en `textContent`, jamais interprété comme markup.
+- Pas de secrets dans les logs, CSP Webview, aucune télémétrie par défaut.
+- **Audit de sécurité 0.1** (S6.1, `docs/security/audit-0.1.md`) : 14 constats identifiés et corrigés avant gel de la release, chacun verrouillé par un test d'attaque dédié — durcissement de la résolution des clés API d'un profil importé (une clé n'est plus utilisable que par le provider auquel elle appartient), fermeture d'une fenêtre de re-résolution DNS entre la vérification d'une adresse locale et la requête réelle, restriction des schémas réseau autorisés, imprévisibilité du nonce de la webview, robustesse du hook Claude Code face à une configuration tierce malformée, et vérification automatisée du contenu exact du paquet publié (aucun test, source ou secret) et des licences des dépendances de production. Détail complet dans le rapport d'audit, sans reproduction d'exploit.
+
+### Performance
+
+- **Latence de lecture** (S6.2, CdC §63, `docs/performance.md`) : le premier segment lu est raccourci (`llmVoice.audio.firstChunkSentences`, défaut 1 phrase) pour réduire le temps avant le premier son sans changer la taille des segments suivants — mesuré à ~4-5 s sur le matériel de référence (GPU local déjà chaud) contre ~30 s pour un paragraphe entier de même contenu. Préchauffage du moteur TTS en tâche de fond (`llmVoice.tts.warmup`, désactivable, jamais de lecture audible ni de requête si le mode local refuse l'hôte). Réutilisation des connexions HTTP (keep-alive) vérifiée sans dépendance ajoutée. Un second passage sur un document déjà lu ne réémet aucune requête TTS (cache disque, restauration correcte de la durée/format sur un succès de cache). Reproductible avec `node scripts/bench-tts.mjs` contre un serveur Chatterbox réel.
 
 ---
 

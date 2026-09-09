@@ -4,9 +4,11 @@ import * as path from "node:path";
 import * as url from "node:url";
 
 const scriptDir = path.dirname(url.fileURLToPath(import.meta.url));
-const workDir = path.dirname(scriptDir);
-const docPath = path.join(workDir, "docs", "traceability.md");
-const mainRepoRoot = "/mnt/Travail/Projets/Dev/TTS-Voice";
+// The repo root, wherever this checkout actually lives — CI and every
+// contributor's machine put it somewhere different; the only thing that is
+// always true is "one level up from scripts/".
+const repoRoot = path.dirname(scriptDir);
+const docPath = path.join(repoRoot, "docs", "traceability.md");
 
 if (!fs.existsSync(docPath)) {
   console.error(`[ERROR] File not found: ${docPath}`);
@@ -14,7 +16,12 @@ if (!fs.existsSync(docPath)) {
 }
 
 const content = fs.readFileSync(docPath, "utf-8");
-const testFilePattern = /`(test\/[^`]+\.test\.ts)`/g;
+// Any backtick-quoted `*.test.ts` path, wherever it is in the tree
+// (`vscode-extension/test/...`, `.github/workflows/ci.yml` config
+// references are matched separately below) — not anchored to a literal
+// `test/` prefix, which used to silently drop the `vscode-extension/`
+// segment and resolve every path wrong.
+const testFilePattern = /`([^`]+\.test\.ts)`/g;
 const referencedFiles = new Set();
 
 let match;
@@ -24,7 +31,7 @@ while ((match = testFilePattern.exec(content)) !== null) {
 
 const errors = [];
 for (const filePath of referencedFiles) {
-  const fullPath = path.join(mainRepoRoot, filePath);
+  const fullPath = path.join(repoRoot, filePath);
   if (!fs.existsSync(fullPath)) {
     errors.push(`Test file missing: ${filePath}`);
   }
@@ -40,7 +47,7 @@ console.log(`Coverage: ${coveredACs} Couvert, ${partialACs} Partiel, ${notCovere
 console.log(`Test files referenced: ${referencedFiles.size}`);
 console.log("\nTest files:");
 for (const file of Array.from(referencedFiles).sort()) {
-  const exists = fs.existsSync(path.join(mainRepoRoot, file)) ? "✓" : "✗";
+  const exists = fs.existsSync(path.join(repoRoot, file)) ? "✓" : "✗";
   console.log(`  ${exists} ${file}`);
 }
 
