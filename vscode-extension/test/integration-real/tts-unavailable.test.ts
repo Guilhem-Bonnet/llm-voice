@@ -2,12 +2,22 @@
  * S3.5, the "no local TTS server" error path — run under the
  * `real-provider-unavailable` `.vscode-test.mjs` profile, deliberately
  * *without* `LLM_VOICE_TEST_FAKE_TTS=1`: `Pipeline` uses the real
- * `OpenAICompatibleTtsProvider`, `EgressGuard` in `local` mode, and the
- * default profile's `baseUrl` (`http://127.0.0.1:8004`), which nothing
+ * `ChatterboxProvider`, `EgressGuard` in `local` mode, and an explicitly
+ * selected profile's `baseUrl` (`http://127.0.0.1:8004`), which nothing
  * listens on in this sandbox — a closed loopback port, not a firewalled
  * remote host, so `EgressGuard` allows the attempt and only the TCP connect
  * fails (CdC/AC: "sans serveur TTS, Speak Document affiche l'erreur propre
  * « TTS unavailable » avec Retry, pas de crash").
+ *
+ * S7.1: the *first-launch default* profile is now "Voix système (aucune
+ * installation)" (`SYSTEM_VOICE_PROFILE`, `tts.providerId: "system"`) —
+ * zero-config sound is the whole point of that story. On a machine with a
+ * built-in system voice (macOS `say`, Windows SAPI) that profile actually
+ * succeeds instead of erroring, so this test can no longer rely on
+ * whatever profile a fresh `--user-data-dir` happens to default to. It
+ * selects `faithful-local` (still points at the closed Chatterbox loopback
+ * port) explicitly, keeping this test's assertion about the *real network
+ * provider's* error path independent of S7.1's system-voice fallback.
  */
 import * as assert from "node:assert/strict";
 import * as path from "node:path";
@@ -37,7 +47,14 @@ suite("LLM Voice: TTS unavailable (S3.5, real provider, closed port)", () => {
     const fileUri = vscode.Uri.file(path.join(folder.uri.fsPath, "markdown", "short.md"));
     await vscode.workspace.openTextDocument(fileUri);
 
-    const testPipeline = api.pipeline as unknown as { getPlaybackState(): string };
+    const testPipeline = api.pipeline as unknown as {
+      getPlaybackState(): string;
+      selectProfileById(id: string): Promise<void>;
+    };
+    // S7.1: pin the profile explicitly — the first-launch default is now
+    // "Voix système" (`system`, always available), not this closed-port
+    // real provider (see the file header).
+    await testPipeline.selectProfileById("faithful-local");
 
     // Must resolve, never throw or hang: the whole point of the "stop on
     // synthesis failure" decision (`Pipeline.handleChunkError`).
