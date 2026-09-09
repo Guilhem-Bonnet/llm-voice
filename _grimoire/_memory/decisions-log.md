@@ -110,3 +110,8 @@
 - **Contexte** : PR #32, #33, #34 mergées ; 484 unit, 28 intégration, 5 E2E réels.
 - **Décision** : phase 6 = audit sécurité (Opus, `src/claude` + `src/net` + webview), latence Chatterbox, E2E manuel complet par l'utilisateur (hook réel, VSIX), docs, CHANGELOG, tag v0.1.0.
 - **Agent** : concierge (Marcel)
+
+### [2026-09-09] Phase 6 livrée : audit, latence, docs ; release 0.1.0 prête
+- **Contexte** : PR #36, #37, #38 mergées ; 751 unit, 37 intégration, 6 E2E réels ; TTFA 3,9 s.
+- **Décision** : tag `v0.1.0` et release GitHub avec le VSIX, sans publication Marketplace (pas de `VSCE_PAT`). Windows et macOS restent non validés manuellement : la 0.1 est annoncée « Linux validé ». Suites possibles : test manuel utilisateur, PR Dependabot majeures, version 0.2 (Profile Editor, clipboard, historique, Kokoro, streaming, participant @voice).
+- **Agent** : concierge (Marcel)
