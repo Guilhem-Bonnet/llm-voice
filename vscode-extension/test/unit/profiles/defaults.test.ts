@@ -5,13 +5,15 @@ import {
   FAITHFUL_PROFILE,
   LLM_SUMMARY_PROFILE,
   QUICK_REVIEW_PROFILE,
+  SYSTEM_VOICE_PROFILE,
   TECHNICAL_TEACHER_PROFILE
 } from "../../../src/profiles/defaults.js";
 
-describe("DEFAULT_PROFILES (CdC §19)", () => {
-  it("ships exactly the four profiles from the cahier des charges", () => {
-    expect(DEFAULT_PROFILES).toHaveLength(4);
+describe("DEFAULT_PROFILES (CdC §19, +1 S7.1)", () => {
+  it("ships exactly the five profiles from the cahier des charges plus 'Voix système'", () => {
+    expect(DEFAULT_PROFILES).toHaveLength(5);
     expect(DEFAULT_PROFILES.map((profile) => profile.label)).toEqual([
+      "Voix système (aucune installation)",
       "Lecture fidèle (local)",
       "Professeur technique",
       "Résumé LLM",
@@ -54,11 +56,18 @@ describe("DEFAULT_PROFILES (CdC §19)", () => {
     for (const profile of DEFAULT_PROFILES) {
       // Every shipped default profile states its own baseUrl explicitly
       // (fix(review): the field is optional on VoiceProfile so a *custom*
-      // profile can fall back to `llmVoice.tts.baseUrl` instead, but none of
-      // these four ever omit it). `isLoopbackUrl` (not a literal hostname
+      // profile can fall back to `llmVoice.tts.baseUrl` instead) — except
+      // `SYSTEM_VOICE_PROFILE` (S7.1): `SystemTtsProvider` never makes a
+      // network call at all (its file header), so it has no `baseUrl` to
+      // state, loopback or otherwise — the strongest possible form of
+      // "stays local" (D10). `isLoopbackUrl` (not a literal hostname
       // check): the shipped `chatterbox-local` preset uses `localhost`,
       // `127.0.0.1` elsewhere — both are loopback (D10), only the specific
       // spelling differs.
+      if (profile.id === SYSTEM_VOICE_PROFILE.id) {
+        expect(profile.tts.baseUrl).toBeUndefined();
+        continue;
+      }
       expect(profile.tts.baseUrl).toBeDefined();
       expect(isLoopbackUrl(profile.tts.baseUrl as string)).toBe(true);
     }

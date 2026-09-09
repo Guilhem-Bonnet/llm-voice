@@ -11,12 +11,13 @@
  */
 
 import * as fs from "node:fs/promises";
+import { randomBytes } from "node:crypto";
 import * as path from "node:path";
 import * as vscode from "vscode";
 import type { ProfileCollection, VoiceProfile } from "../core/profile.js";
 import { ProfileCollectionSchema, parseVoiceProfile } from "../core/profile.schema.js";
 import type { SourceType } from "../core/source.js";
-import { DEFAULT_PROFILES, FAITHFUL_PROFILE } from "./defaults.js";
+import { DEFAULT_PROFILES, SYSTEM_VOICE_PROFILE } from "./defaults.js";
 import { resolveDefaultProfileId, type BySourceSetting } from "./bySource.js";
 
 const LAST_SELECTED_KEY = "llmVoice.profiles.lastSelectedId";
@@ -181,16 +182,28 @@ export class ProfileRepository {
     return `${base}-${suffix}`;
   }
 
+  /**
+   * S7.1: `SYSTEM_VOICE_PROFILE` is the first-launch default — a fresh
+   * install must produce sound with zero server/config (the user problem
+   * this story exists to fix), not silently fail against a Chatterbox
+   * server that was never started.
+   */
   private defaultCollection(): ProfileCollection {
     return {
       schemaVersion: 1,
-      defaultProfileId: FAITHFUL_PROFILE.id,
+      defaultProfileId: SYSTEM_VOICE_PROFILE.id,
       profiles: [...DEFAULT_PROFILES]
     };
   }
 
   private async write(collection: ProfileCollection): Promise<void> {
-    const tmp = `${this.filePath}.tmp-${process.pid}-${Date.now()}`;
+    // `pid` + `Date.now()` alone can collide: two writes issued in quick
+    // succession from the same process (e.g. two profile imports awaited
+    // back to back) can land in the same millisecond, so the second
+    // `rename()` fails ENOENT once the first has already consumed that tmp
+    // path. A random suffix makes every write's tmp path unique regardless
+    // of timing.
+    const tmp = `${this.filePath}.tmp-${process.pid}-${Date.now()}-${randomBytes(4).toString("hex")}`;
     await fs.writeFile(tmp, `${JSON.stringify(collection, null, 2)}\n`, "utf8");
     await fs.rename(tmp, this.filePath);
   }

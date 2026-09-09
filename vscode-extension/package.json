@@ -96,24 +96,33 @@
         "category": "LLM Voice"
       },
       {
+        "command": "llmVoice.playPause",
+        "title": "LLM Voice: Play/Pause",
+        "category": "LLM Voice"
+      },
+      {
         "command": "llmVoice.pause",
         "title": "LLM Voice: Pause",
-        "category": "LLM Voice"
+        "category": "LLM Voice",
+        "enablement": "llmVoice.state == 'playing'"
       },
       {
         "command": "llmVoice.stop",
         "title": "LLM Voice: Stop",
-        "category": "LLM Voice"
+        "category": "LLM Voice",
+        "enablement": "llmVoice.state != 'idle'"
       },
       {
         "command": "llmVoice.previousSegment",
         "title": "LLM Voice: Previous Segment",
-        "category": "LLM Voice"
+        "category": "LLM Voice",
+        "enablement": "llmVoice.state != 'idle'"
       },
       {
         "command": "llmVoice.nextSegment",
         "title": "LLM Voice: Next Segment",
-        "category": "LLM Voice"
+        "category": "LLM Voice",
+        "enablement": "llmVoice.state != 'idle'"
       },
       {
         "command": "llmVoice.selectProfile",
@@ -208,6 +217,11 @@
       {
         "command": "llmVoice.uninstallClaudeHook",
         "title": "LLM Voice: Uninstall Claude Hook",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.installPiperVoice",
+        "title": "LLM Voice: Install Local Voice (Piper)",
         "category": "LLM Voice"
       },
       {
@@ -390,32 +404,38 @@
     "keybindings": [
       {
         "key": "ctrl+alt+v d",
-        "command": "llmVoice.speakDocument"
+        "command": "llmVoice.speakDocument",
+        "when": "editorTextFocus && !terminalFocus"
       },
       {
         "key": "ctrl+alt+v s",
         "command": "llmVoice.speakSelection",
-        "when": "editorHasSelection"
+        "when": "editorTextFocus && editorHasSelection && !terminalFocus"
       },
       {
         "key": "ctrl+alt+v c",
-        "command": "llmVoice.speakClipboard"
+        "command": "llmVoice.speakClipboard",
+        "when": "!terminalFocus"
       },
       {
         "key": "ctrl+alt+v space",
-        "command": "llmVoice.play"
+        "command": "llmVoice.playPause",
+        "when": "!terminalFocus"
       },
       {
         "key": "ctrl+alt+v x",
-        "command": "llmVoice.stop"
+        "command": "llmVoice.stop",
+        "when": "!terminalFocus"
       },
       {
         "key": "ctrl+alt+v n",
-        "command": "llmVoice.nextSegment"
+        "command": "llmVoice.nextSegment",
+        "when": "!terminalFocus"
       },
       {
         "key": "ctrl+alt+v p",
-        "command": "llmVoice.previousSegment"
+        "command": "llmVoice.previousSegment",
+        "when": "!terminalFocus"
       }
     ],
     "configuration": {
@@ -464,13 +484,24 @@
         },
         "llmVoice.tts.provider": {
           "type": "string",
-          "default": "chatterbox",
+          "default": "auto",
           "enum": [
+            "auto",
             "chatterbox",
             "kokoro",
+            "piper-local",
+            "system",
             "openai-compatible"
           ],
-          "description": "Identifiant du provider TTS utilisé (provider agnostic, CdC §3.3). Voir docs/providers.md."
+          "enumDescriptions": [
+            "Sélection automatique (S7.1, ADR-009) : Chatterbox si disponible, sinon Piper local, sinon la voix système — zéro configuration.",
+            "Chatterbox (niveau 1, GPU, port 8004 par défaut).",
+            "Kokoro (niveau 1, repli léger).",
+            "Piper derrière un serveur compatible OpenAI (niveau 1b, port 5000 par défaut).",
+            "Voix système sans installation ni serveur — espeak-ng/Piper local/say/SAPI selon la plateforme (niveau 1b, ADR-009).",
+            "Point de terminaison compatible OpenAI générique (entreprise/cloud, niveaux 2-3)."
+          ],
+          "description": "Identifiant du provider TTS utilisé (provider agnostic, CdC §3.3). « auto » (défaut) ne nécessite aucune installation. Voir docs/providers.md."
         },
         "llmVoice.narrator.provider": {
           "type": "string",

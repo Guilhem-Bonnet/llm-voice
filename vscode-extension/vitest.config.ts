@@ -26,6 +26,10 @@ export default defineConfig({
         // injected parameter instead of importing it — both S5.3 (CdC §52,
         // §81), both testable in plain Node like everything else here.
         "src/ui/notifications.ts",
+        // S7.3: `playDecision.ts` only imports `PlaybackState` (`import type`,
+        // erased at compile time) — same vscode-free posture as
+        // `notifications.ts` just above.
+        "src/commands/playDecision.ts",
         "src/claude/**/*.ts"
       ],
       // Everything below imports `vscode` (directly or by re-exporting a

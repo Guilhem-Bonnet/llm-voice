@@ -23,19 +23,46 @@
  */
 export type ShowMessage = (message: string, ...items: string[]) => PromiseLike<string | undefined>;
 
-export const TTS_UNAVAILABLE_MESSAGE = "Chatterbox is unavailable.";
+/**
+ * S7.3: replaces the previous "Chatterbox is unavailable." — that wording
+ * named one specific provider regardless of which one the active profile
+ * actually configures, and gave no actionable next step besides Retry (of
+ * limited use when the real problem is "nothing is configured at all", the
+ * most common cause of AC-01 chunk-0 failures on a fresh install).
+ */
+export const TTS_UNAVAILABLE_MESSAGE = "LLM Voice : aucune voix configurée.";
 export const NARRATOR_UNAVAILABLE_MESSAGE = "LLM Voice: Narrator unavailable";
 
-export type TtsUnavailableChoice = "retry" | "openSettings" | "dismissed";
+export const CHOOSE_VOICE_LABEL = "Choisir une voix";
+export const OPEN_TTS_SETTINGS_LABEL = "Voir les réglages";
+export const RETRY_LABEL = "Réessayer";
 
-/** CdC §52 "TTS indisponible": Retry / Open provider settings. */
+export type TtsUnavailableChoice = "setupVoice" | "openSettings" | "retry" | "dismissed";
+
+/**
+ * CdC §52 "TTS indisponible" (S7.3 wording): "Choisir une voix" (runs
+ * `llmVoice.setupVoice` if that command is registered, else opens the
+ * provider docs — decided by the caller, which is the only side that can
+ * check `vscode.commands.getCommands()`) / "Voir les réglages" / "Réessayer"
+ * (re-attempts only the chunk that failed, CdC §52 "sans recréer la
+ * session" — kept for a TTS server that is merely down/loading rather than
+ * genuinely unconfigured).
+ */
 export async function notifyTtsUnavailable(showErrorMessage: ShowMessage): Promise<TtsUnavailableChoice> {
-  const choice = await showErrorMessage(TTS_UNAVAILABLE_MESSAGE, "Retry", "Open provider settings");
-  if (choice === "Retry") {
-    return "retry";
+  const choice = await showErrorMessage(
+    TTS_UNAVAILABLE_MESSAGE,
+    CHOOSE_VOICE_LABEL,
+    OPEN_TTS_SETTINGS_LABEL,
+    RETRY_LABEL
+  );
+  if (choice === CHOOSE_VOICE_LABEL) {
+    return "setupVoice";
   }
-  if (choice === "Open provider settings") {
+  if (choice === OPEN_TTS_SETTINGS_LABEL) {
     return "openSettings";
+  }
+  if (choice === RETRY_LABEL) {
+    return "retry";
   }
   return "dismissed";
 }

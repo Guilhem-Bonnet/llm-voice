@@ -13,7 +13,18 @@ import type { CaptureContext } from "../core/source.js";
 export interface PipelineFacade {
   /** Captures `source` and starts a new reading session. */
   start(source: CaptureContext): Promise<void>;
+  /**
+   * `LLM Voice: Play` (S7.3): resumes a paused session, starts reading the
+   * active editor (selection if non-empty, else the whole document) when
+   * there is none, and reports why nothing happens rather than staying
+   * silent (no editor open, already playing).
+   */
   play(): Promise<void>;
+  /**
+   * `Ctrl+Alt+V Space` (ADR-011): a real Play/Pause toggle, unlike `play()`
+   * — pauses a playing session instead of no-op'ing.
+   */
+  playPause(): Promise<void>;
   pause(): Promise<void>;
   stop(): Promise<void>;
   previousSegment(): Promise<void>;
@@ -43,6 +54,8 @@ export interface PipelineFacade {
   verifyLocalMode(): Promise<void>;
   installClaudeHook(): Promise<void>;
   uninstallClaudeHook(): Promise<void>;
+  /** `LLM Voice: Install Local Voice (Piper)` (S7.1, ADR-009 §3). */
+  installPiperVoice(): Promise<void>;
 }
 
 const NOT_WIRED_MESSAGE = "LLM Voice : pipeline non câblé (S3.5)";
@@ -56,6 +69,10 @@ export class NotWiredPipeline implements PipelineFacade {
   }
 
   play(): Promise<void> {
+    return this.notWired();
+  }
+
+  playPause(): Promise<void> {
     return this.notWired();
   }
 
@@ -148,6 +165,10 @@ export class NotWiredPipeline implements PipelineFacade {
   }
 
   uninstallClaudeHook(): Promise<void> {
+    return this.notWired();
+  }
+
+  installPiperVoice(): Promise<void> {
     return this.notWired();
   }
 

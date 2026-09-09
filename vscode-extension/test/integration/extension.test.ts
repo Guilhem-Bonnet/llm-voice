@@ -9,6 +9,7 @@ const EXPECTED_COMMANDS = [
   "llmVoice.speakSection",
   "llmVoice.speakClipboard",
   "llmVoice.play",
+  "llmVoice.playPause",
   "llmVoice.pause",
   "llmVoice.stop",
   "llmVoice.previousSegment",

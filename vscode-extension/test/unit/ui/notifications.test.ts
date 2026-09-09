@@ -12,20 +12,22 @@ function stub(answer: string | undefined): ShowMessage {
   return () => Promise.resolve(answer);
 }
 
-describe("notifyTtsUnavailable (CdC §52 'TTS indisponible')", () => {
-  it("shows the exact CdC wording and maps 'Retry' to 'retry'", async () => {
+describe("notifyTtsUnavailable (CdC §52 'TTS indisponible', S7.3 actionable wording)", () => {
+  it("shows 'Aucune voix configurée' (not a hardcoded provider name) and maps 'Choisir une voix'", async () => {
     let seenMessage: string | undefined;
     const show: ShowMessage = (message) => {
       seenMessage = message;
-      return Promise.resolve("Retry");
+      return Promise.resolve("Choisir une voix");
     };
     const choice = await notifyTtsUnavailable(show);
     expect(seenMessage).toBe(TTS_UNAVAILABLE_MESSAGE);
-    expect(choice).toBe("retry");
+    expect(seenMessage).not.toContain("Chatterbox");
+    expect(choice).toBe("setupVoice");
   });
 
-  it("maps 'Open provider settings' and a dismissed dialog", async () => {
-    expect(await notifyTtsUnavailable(stub("Open provider settings"))).toBe("openSettings");
+  it("maps 'Voir les réglages', 'Réessayer', and a dismissed dialog", async () => {
+    expect(await notifyTtsUnavailable(stub("Voir les réglages"))).toBe("openSettings");
+    expect(await notifyTtsUnavailable(stub("Réessayer"))).toBe("retry");
     expect(await notifyTtsUnavailable(stub(undefined))).toBe("dismissed");
   });
 });
