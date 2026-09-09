@@ -60,7 +60,7 @@ même type par session de lecture :
 
 | Situation | Message | Boutons |
 |---|---|---|
-| Serveur TTS injoignable | « Chatterbox is unavailable. » | **Retry** (relance seulement le passage en échec, sans tout redémarrer) / **Open provider settings** |
+| Aucun TTS disponible (provider injoignable ou rien de configuré) | « LLM Voice : aucune voix configurée. » | **Choisir une voix** (assistant de configuration si disponible, sinon la doc providers) / **Voir les réglages** / **Réessayer** (relance seulement le passage en échec, sans tout redémarrer) |
 | Narrateur injoignable | « LLM Voice: Narrator unavailable » | **Retry** / **Read without narration** (bascule en lecture fidèle) / **Cancel** |
 | Un passage échoue après plusieurs tentatives | « LLM Voice: audio chunk failed after N retries. » | **Skip** (passe au suivant) / **Stop** |
 
@@ -68,6 +68,32 @@ Un serveur qui charge encore son modèle (statut « Loading ») fait patienter
 la première lecture quelques secondes au lieu d'échouer immédiatement.
 Un provider complètement hors ligne n'empêche jamais l'extension de démarrer
 — la status bar passe simplement à l'état `$(error)`.
+
+## Aucune commande silencieuse
+
+Chaque commande de la palette produit toujours un effet visible ou un
+message expliquant pourquoi elle ne fait rien — jamais un clic qui ne
+produit rien d'observable :
+
+- **Play** (`Ctrl+Alt+V Espace`, en réalité **Play/Pause**, une vraie
+  bascule) : sans lecture en cours, démarre la sélection si elle n'est pas
+  vide, sinon le document actif ; sans éditeur ouvert, propose « Ouvrir un
+  document » ; en pause, reprend ; en lecture, met en pause (bascule) — la
+  commande **LLM Voice: Play** de la palette, elle, ne fait jamais que
+  démarrer/reprendre (jamais pause, `Pause` reste une commande séparée).
+- **Pause** / **Stop** / **Segment suivant/précédent** sans lecture en
+  cours : notification expliquant qu'il n'y a rien à faire (grisées dans la
+  palette de commandes, `llmVoice.state`).
+- **Speak Selection** sans sélection : propose de lire le document entier.
+- **Clear Highlight** sans surlignage actif : notification, pas de no-op muet.
+- **Clear Audio Cache** : confirmation puis rapport de l'espace libéré (ou
+  « déjà vide » si le cache était vide).
+
+## Aucun raccourci capturé dans le terminal
+
+Le chord `Ctrl+Alt+V` ne s'active jamais quand le focus est dans le terminal
+intégré (`!terminalFocus`) — utile pour garder `Ctrl+Alt+V` disponible pour
+d'autres usages shell sans conflit.
 
 ## Mode local et badge 🔒
 
