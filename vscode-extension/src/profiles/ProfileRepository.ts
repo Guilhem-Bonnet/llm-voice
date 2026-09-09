@@ -16,7 +16,7 @@ import * as vscode from "vscode";
 import type { ProfileCollection, VoiceProfile } from "../core/profile.js";
 import { ProfileCollectionSchema, parseVoiceProfile } from "../core/profile.schema.js";
 import type { SourceType } from "../core/source.js";
-import { DEFAULT_PROFILES, FAITHFUL_PROFILE } from "./defaults.js";
+import { DEFAULT_PROFILES, SYSTEM_VOICE_PROFILE } from "./defaults.js";
 import { resolveDefaultProfileId, type BySourceSetting } from "./bySource.js";
 
 const LAST_SELECTED_KEY = "llmVoice.profiles.lastSelectedId";
@@ -181,10 +181,16 @@ export class ProfileRepository {
     return `${base}-${suffix}`;
   }
 
+  /**
+   * S7.1: `SYSTEM_VOICE_PROFILE` is the first-launch default — a fresh
+   * install must produce sound with zero server/config (the user problem
+   * this story exists to fix), not silently fail against a Chatterbox
+   * server that was never started.
+   */
   private defaultCollection(): ProfileCollection {
     return {
       schemaVersion: 1,
-      defaultProfileId: FAITHFUL_PROFILE.id,
+      defaultProfileId: SYSTEM_VOICE_PROFILE.id,
       profiles: [...DEFAULT_PROFILES]
     };
   }

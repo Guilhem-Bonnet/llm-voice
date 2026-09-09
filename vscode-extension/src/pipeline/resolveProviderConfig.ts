@@ -14,6 +14,7 @@
  */
 
 import type { NarratorBinding, TtsBinding } from "../core/profile.js";
+import type { ProviderHealth } from "../core/health.js";
 
 /** Snapshot of `llmVoice.tts.*`, read once by the caller (`vscode.workspace.getConfiguration`). */
 export interface TtsSettings {
@@ -64,4 +65,49 @@ export function resolveNarratorConfig(
     baseUrl: narrator.baseUrl ?? settings.baseUrl,
     model: narrator.model ?? settings.model
   };
+}
+
+/**
+ * S7.1 / `llmVoice.tts.provider: "auto"` (the shipped default, ADR-009):
+ * a candidate this extension can automatically fall back to, in the order
+ * it should be tried. `health` is a thunk (not a bound method reference) so
+ * a test double never has to be an actual `TtsProvider`.
+ */
+export interface AutoTtsCandidate {
+  providerId: string;
+  baseUrl: string;
+  health(signal?: AbortSignal): Promise<ProviderHealth>;
+}
+
+/** `ok` (fully up) or `degraded` (e.g. "loading", CdC §51) both count as "usable now" — only `unreachable`/`unauthorized`/`unverified` fall through to the next candidate. */
+export function isHealthyEnough(health: ProviderHealth): boolean {
+  return health.status === "ok" || health.status === "degraded";
+}
+
+/**
+ * ADR-009's auto-selection order (S7.1): the first candidate whose
+ * `health()` resolves "usable now" wins; a candidate whose `health()`
+ * itself throws is treated exactly like `unreachable` (never lets one
+ * misbehaving probe abort the whole selection — same spirit as
+ * `probeHealth`, `src/tts/ProviderRegistry.ts`). `fallback` (always
+ * `{ providerId: "system", baseUrl: "" }` in production, ADR-009 §"1b" —
+ * `SystemTtsProvider` needs no server, so it is always eligible) is
+ * returned when every candidate is unusable.
+ */
+export async function selectAutoTtsProvider(
+  candidates: readonly AutoTtsCandidate[],
+  fallback: ResolvedTtsConfig,
+  signal?: AbortSignal
+): Promise<ResolvedTtsConfig> {
+  for (const candidate of candidates) {
+    try {
+      const health = await candidate.health(signal);
+      if (isHealthyEnough(health)) {
+        return { providerId: candidate.providerId, baseUrl: candidate.baseUrl };
+      }
+    } catch {
+      // Treated as unreachable: try the next candidate.
+    }
+  }
+  return fallback;
 }

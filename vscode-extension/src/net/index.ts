@@ -6,3 +6,4 @@
 
 export * from "./EgressGuard.js";
 export * from "./verifyLocalMode.js";
+export * from "./AssetDownloader.js";

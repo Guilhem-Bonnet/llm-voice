@@ -68,12 +68,19 @@ import {
   type BySourceSetting
 } from "../profiles/index.js";
 import {
+  ChatterboxProvider,
+  CHATTERBOX_LOCAL_PRESET,
   createTtsProvider,
+  installPiperVoice as runPiperInstall,
+  OpenAICompatibleTtsProvider,
+  PIPER_LOCAL_PRESET,
   presetKindForProviderId,
   probeHealth,
   TtsProviderRegistry,
   warmupProvider,
-  type HealthCheckable
+  type HealthCheckable,
+  type PiperInstallConsentDetails,
+  type PiperInstallOutcome
 } from "../tts/index.js";
 import { createNarratorProvider } from "../narrator/index.js";
 import type { Logger } from "../infrastructure/logger.js";
@@ -82,7 +89,9 @@ import { plainTextSegments, rangesOverlap } from "./textSegments.js";
 import {
   resolveNarratorConfig,
   resolveTtsConfig,
+  selectAutoTtsProvider,
   type NarratorSettings,
+  type ResolvedTtsConfig,
   type TtsSettings
 } from "./resolveProviderConfig.js";
 import type { InboxEntry } from "../core/inbox.js";
@@ -230,6 +239,14 @@ export class Pipeline implements PipelineFacade {
   private readonly notificationGate = new NotificationGate();
   private cachedLocalModeResult: VerifyLocalModeResult | undefined;
   private healthCache: { entries: readonly ProviderHealthEntry[]; expiresAt: number } | undefined;
+  /**
+   * `llmVoice.tts.provider: "auto"` (S7.1, ADR-009 default): the last
+   * ADR-009-order resolution (Chatterbox → Piper local → système),
+   * memoised for `HEALTH_CACHE_TTL_MS` so every `ttsFor`/`probeProviderHealth`
+   * call in that window does not re-probe two HTTP endpoints just to find
+   * out (again) that neither is up.
+   */
+  private autoTtsCache: { config: ResolvedTtsConfig; expiresAt: number } | undefined;
   /**
    * Set once "Read without narration" is chosen (CdC §52); every session
    * built after that point starts pre-forced to faithful reading, so the
@@ -731,7 +748,7 @@ export class Pipeline implements PipelineFacade {
       return this.healthCache.entries;
     }
     const profile = await this.profiles.getSelected();
-    const resolvedTts = resolveTtsConfig(profile.tts, this.ttsSettings());
+    const resolvedTts = await this.resolveTtsProviderConfig(profile);
     const tts = await this.ttsFor(profile);
     const providers: { label: string; provider: HealthCheckable }[] = [
       { label: titleCaseProviderId(resolvedTts.providerId), provider: tts }
@@ -908,6 +925,75 @@ export class Pipeline implements PipelineFacade {
     await runUninstallClaudeHook();
   }
 
+  /**
+   * `LLM Voice: Install Local Voice (Piper)` (S7.1, ADR-009 §3): a modal
+   * consent dialog naming size/source/licence, a cancellable progress
+   * notification, then `PiperSetup.installPiperVoice`. Never runs a
+   * download before the user explicitly confirms — `confirmPiperInstall`
+   * is the only place `installPiperVoice`'s `prompt.confirm` resolves
+   * `true`.
+   */
+  async installPiperVoice(): Promise<void> {
+    const outcome = await vscode.window.withProgress<PiperInstallOutcome>(
+      { location: vscode.ProgressLocation.Notification, title: "LLM Voice : voix Piper (fr_FR-siwis-medium)", cancellable: true },
+      async (progress, token) => {
+        const controller = new AbortController();
+        token.onCancellationRequested(() => controller.abort());
+        let lastPercent = 0;
+        return runPiperInstall({
+          installDir: this.piperInstallDir(),
+          signal: controller.signal,
+          prompt: { confirm: (details) => this.confirmPiperInstall(details) },
+          progress: {
+            report: (info) => {
+              const percent = Math.round(info.fraction * 100);
+              progress.report({ message: info.message, increment: percent - lastPercent });
+              lastPercent = percent;
+            }
+          },
+          onLog: (event) => this.output.debug("piper download", { host: event.host, decision: event.decision, ...(event.reason !== undefined ? { reason: event.reason } : {}) })
+        });
+      }
+    );
+    this.reportPiperInstallOutcome(outcome);
+  }
+
+  /** The one dialog `installPiperVoice`'s network access is gated behind — names size, source and licence, never assumed. */
+  private async confirmPiperInstall(details: PiperInstallConsentDetails): Promise<boolean> {
+    const mb = (bytes: number): string => (bytes / (1024 * 1024)).toFixed(0);
+    const message =
+      `Télécharger le moteur Piper (~${mb(details.binarySizeBytes)} Mo, licence ${details.piperLicense}, ` +
+      `${details.piperSourceUrl}) et la voix française « ${details.voiceId} » (~${mb(details.voiceSizeBytes)} Mo, ` +
+      `licence ${details.voiceLicense}, ${details.voiceSourceUrl}) ? Total ~${mb(details.totalBytes)} Mo, ` +
+      "stocké localement, aucune donnée envoyée au-delà de ce téléchargement.";
+    const choice = await vscode.window.showWarningMessage(message, { modal: true }, "Télécharger");
+    return choice === "Télécharger";
+  }
+
+  private reportPiperInstallOutcome(outcome: PiperInstallOutcome): void {
+    if (outcome.status === "installed") {
+      // A fresh Piper install may change what "auto" resolves to (S7.1):
+      // drop the cache so the very next synthesis notices it, instead of
+      // waiting out HEALTH_CACHE_TTL_MS.
+      this.autoTtsCache = undefined;
+      void vscode.window.showInformationMessage(
+        "LLM Voice : voix Piper installée. Utilisée automatiquement si aucun serveur Chatterbox n'est détecté (llmVoice.tts.provider = auto)."
+      );
+      return;
+    }
+    if (outcome.status === "declined") {
+      return;
+    }
+    if (outcome.status === "unsupported-platform") {
+      void vscode.window.showErrorMessage(
+        "LLM Voice : Piper n'est pas proposé pour cette plateforme/architecture — la voix système (espeak-ng/say/SAPI) reste disponible."
+      );
+      return;
+    }
+    this.output.error("piper install failed", { error: outcome.message });
+    void vscode.window.showErrorMessage(`LLM Voice : installation de Piper impossible — ${outcome.message}`);
+  }
+
   /** Speaks one inbox entry (Quick Pick/Tree/`speakLatestClaudeResponse`), marking it read first — zero autoplay: only ever reached from a command the user triggered. */
   private async speakInboxEntry(entry: InboxEntry): Promise<void> {
     await this.inboxRepository.markRead(entry.id, true);
@@ -1000,7 +1086,7 @@ export class Pipeline implements PipelineFacade {
     if (this.ttsProviderOverride !== undefined) {
       return this.ttsProviderOverride;
     }
-    const resolved = resolveTtsConfig(profile.tts, this.ttsSettings());
+    const resolved = await this.resolveTtsProviderConfig(profile);
     const referenceAudioPath =
       profile.tts.referenceAudio !== undefined ? this.resolveReferenceAudioPath(profile.tts.referenceAudio) : undefined;
     // Two profiles sharing `providerId@baseUrl` but cloning different
@@ -1027,7 +1113,8 @@ export class Pipeline implements PipelineFacade {
         id: key,
         egress: this.egress,
         ...(apiKey !== undefined ? { apiKey } : {}),
-        ...(referenceAudioPath !== undefined ? { referenceAudioPath } : {})
+        ...(referenceAudioPath !== undefined ? { referenceAudioPath } : {}),
+        systemPiperInstallDir: this.piperInstallDir()
       }
     );
     this.registry.register(provider);
@@ -1037,6 +1124,59 @@ export class Pipeline implements PipelineFacade {
     // make it a no-op (this early return also skips the `Set` lookup).
     this.warmupIfEnabled(provider, key, profile.language, profile.tts.voice);
     return provider;
+  }
+
+  /**
+   * `profile.tts.providerId`/`llmVoice.tts.provider` resolved, with
+   * `"auto"` (S7.1, the shipped default) expanded to a concrete provider via
+   * `autoSelectTts()`. A profile or setting that names a provider
+   * explicitly always wins — `"auto"` only ever comes from
+   * `resolveTtsConfig` falling through to the setting's own default.
+   */
+  private async resolveTtsProviderConfig(profile: VoiceProfile): Promise<ResolvedTtsConfig> {
+    const settingsResolved = resolveTtsConfig(profile.tts, this.ttsSettings());
+    if (settingsResolved.providerId !== "auto") {
+      return settingsResolved;
+    }
+    return this.autoSelectTts();
+  }
+
+  /**
+   * ADR-009's zero-config default (S7.1): Chatterbox (if `health()`
+   * answers) → Piper local (same) → système (`SystemTtsProvider`, always
+   * eligible — no server to be down). Memoised for `HEALTH_CACHE_TTL_MS`
+   * (`autoTtsCache`): every call in that window reuses the last resolution
+   * instead of probing two HTTP endpoints again.
+   */
+  private async autoSelectTts(): Promise<ResolvedTtsConfig> {
+    const now = Date.now();
+    if (this.autoTtsCache !== undefined && this.autoTtsCache.expiresAt > now) {
+      return this.autoTtsCache.config;
+    }
+    const chatterboxProbe = new ChatterboxProvider({
+      id: "auto-probe-chatterbox",
+      baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl,
+      egress: this.egress
+    });
+    const piperLocalProbe = new OpenAICompatibleTtsProvider({
+      id: "auto-probe-piper-local",
+      baseUrl: PIPER_LOCAL_PRESET.baseUrl,
+      egress: this.egress
+    });
+    const config = await selectAutoTtsProvider(
+      [
+        { providerId: "chatterbox", baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl, health: (s) => chatterboxProbe.health(s) },
+        { providerId: "piper-local", baseUrl: PIPER_LOCAL_PRESET.baseUrl, health: (s) => piperLocalProbe.health(s) }
+      ],
+      { providerId: "system", baseUrl: "" }
+    );
+    this.autoTtsCache = { config, expiresAt: now + HEALTH_CACHE_TTL_MS };
+    return config;
+  }
+
+  /** `globalStorageUri/piper` — where `PiperSetup`/`LLM Voice: Install Local Voice (Piper)` installs, and the only place `SystemTtsProvider` ever looks for Piper (its file header). */
+  private piperInstallDir(): string {
+    return vscode.Uri.joinPath(this.context.globalStorageUri, "piper").fsPath;
   }
 
   /**
@@ -1136,11 +1276,16 @@ export class Pipeline implements PipelineFacade {
     return provider;
   }
 
-  /** `llmVoice.tts.*`: the default a profile's `tts.providerId`/`tts.baseUrl` overrides when set. */
+  /**
+   * `llmVoice.tts.*`: the default a profile's `tts.providerId`/`tts.baseUrl`
+   * overrides when set. `"auto"` (S7.1, the shipped default, ADR-009) is
+   * expanded by `resolveTtsProviderConfig`/`autoSelectTts`, never here —
+   * this stays a plain settings read, symmetric with `narratorSettings()`.
+   */
   private ttsSettings(): TtsSettings {
     const config = vscode.workspace.getConfiguration("llmVoice");
     return {
-      provider: config.get<string>("tts.provider", "chatterbox"),
+      provider: config.get<string>("tts.provider", "auto"),
       baseUrl: config.get<string>("tts.baseUrl", "http://127.0.0.1:8880")
     };
   }

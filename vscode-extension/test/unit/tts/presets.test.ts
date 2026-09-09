@@ -3,11 +3,13 @@ import { createEgressGuard } from "../../../src/net/EgressGuard.js";
 import { ChatterboxProvider } from "../../../src/tts/ChatterboxProvider.js";
 import { KokoroProvider } from "../../../src/tts/KokoroProvider.js";
 import { OpenAICompatibleTtsProvider } from "../../../src/tts/OpenAICompatibleTtsProvider.js";
+import { SystemTtsProvider } from "../../../src/tts/SystemTtsProvider.js";
 import {
   CHATTERBOX_LOCAL_PRESET,
   KOKORO_LOCAL_PRESET,
   OPENAI_COMPATIBLE_PRESET,
   PIPER_LOCAL_PRESET,
+  SYSTEM_LOCAL_PRESET,
   TTS_PROVIDER_PRESETS,
   createTtsProvider,
   findTtsProviderPreset,
@@ -55,9 +57,16 @@ describe("TTS provider presets (ADR-009)", () => {
     expect(findTtsProviderPreset("does-not-exist")).toBeUndefined();
   });
 
+  it("system (S7.1) is zero-install, no baseUrl needed", () => {
+    expect(SYSTEM_LOCAL_PRESET.kind).toBe("system");
+    expect(SYSTEM_LOCAL_PRESET.remote).toBe(false);
+    expect(TTS_PROVIDER_PRESETS).toContain(SYSTEM_LOCAL_PRESET);
+  });
+
   it("presetKindForProviderId() maps known ids, defaults everything else to generic", () => {
     expect(presetKindForProviderId("chatterbox")).toBe("chatterbox");
     expect(presetKindForProviderId("kokoro")).toBe("kokoro");
+    expect(presetKindForProviderId("system")).toBe("system");
     expect(presetKindForProviderId("openai-compatible")).toBe("openai-compatible");
     expect(presetKindForProviderId("some-enterprise-endpoint")).toBe("openai-compatible");
   });
@@ -73,6 +82,15 @@ describe("TTS provider presets (ADR-009)", () => {
     expect(
       createTtsProvider({ kind: "openai-compatible", baseUrl: "http://localhost:5000" }, options)
     ).toBeInstanceOf(OpenAICompatibleTtsProvider);
+    expect(createTtsProvider({ kind: "system", baseUrl: "" }, options)).toBeInstanceOf(SystemTtsProvider);
+  });
+
+  it("createTtsProvider() forwards systemPiperInstallDir only to the system provider", () => {
+    const provider = createTtsProvider(
+      { kind: "system", baseUrl: "" },
+      { egress: egress(), systemPiperInstallDir: "/tmp/piper" }
+    );
+    expect(provider).toBeInstanceOf(SystemTtsProvider);
   });
 
   it("createTtsProvider() lets an explicit baseUrl override the preset's own", () => {
