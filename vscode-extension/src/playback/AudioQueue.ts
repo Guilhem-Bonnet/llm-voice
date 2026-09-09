@@ -86,6 +86,28 @@ export interface AudioQueueOptions {
    * existing test that does not pass this option.
    */
   timeoutMs?: number;
+  /**
+   * S6.2 instrumentation hook: fired once per chunk, right when it turns
+   * `ready` (both the cache-hit and the freshly-synthesised path), and once
+   * more if it ends in `error`. Carries no `spokenText`/audio (CdC §81) —
+   * only timings and counts, safe to forward straight to `Logger.debug`.
+   * Never thrown from: a throwing listener is swallowed, since a broken
+   * instrumentation hook must not break synthesis.
+   */
+  onChunkTiming?: (event: ChunkTimingEvent) => void;
+}
+
+/** One `AudioQueue.onChunkTiming` sample (S6.2). No text, no audio — CdC §81. */
+export interface ChunkTimingEvent {
+  index: number;
+  /** `true` when `AudioCacheStore.get` already had this chunk's audio. */
+  cacheHit: boolean;
+  /** `undefined` on a cache hit: no `TtsProvider.synthesize` call was made. */
+  synthesisMs?: number;
+  /** `false` only for the terminal `error` event. */
+  ready: boolean;
+  /** Total chunks currently queued (`AudioQueue.chunks.length`), for "file d'attente". */
+  queueSize: number;
 }
 
 /** Everything the queue needs injected; none of it touches `vscode`. */
@@ -107,6 +129,33 @@ const DEFAULT_MAX_RETRIES = 2;
 const DEFAULT_RETRY_BACKOFF_MS: readonly number[] = [100, 400];
 const DEFAULT_RETRY_JITTER_MS = 50;
 
+/**
+ * S6.2 (CdC §32/§65): the number of chunks to synthesise ahead of the cursor
+ * that keeps playback gapless *without* over-buffering, as a function of the
+ * measured real-time factor (`rtf` = synthesis time / audio duration, see
+ * `scripts/bench-tts.mjs`).
+ *
+ * Rule of thumb: `ceil(rtf) + 1`. At `rtf <= 1` (synthesis at least as fast
+ * as playback) this is `2` — one chunk absorbs the jitter of a single slow
+ * request, the second tolerates a second one in a row, matching CdC §32's
+ * recommended `prefetchChunks = 2`. Above `rtf = 1` the queue structurally
+ * cannot keep up forever (each chunk takes longer to make than it takes to
+ * play), so more prefetch only buys a longer runway before the player first
+ * has to wait — it does not fix the underlying deficit. `docs/performance.md`
+ * documents this and the RTF measured on the reference machine, which is
+ * `≈ 1` and is exactly why `llmVoice.audio.prefetchChunks`'s default (`2`,
+ * unchanged by this story) already matches what this formula recommends.
+ * Nothing calls this at runtime yet — the setting stays a static default —
+ * but it is what that default's value is derived from, and what a future
+ * "auto-tune from Test Voice" could call with a freshly measured RTF.
+ */
+export function recommendedPrefetchChunks(rtf: number): number {
+  if (!Number.isFinite(rtf) || rtf <= 0) {
+    return DEFAULT_PREFETCH;
+  }
+  return Math.min(10, Math.max(1, Math.ceil(rtf) + 1));
+}
+
 export class AudioQueue {
   private readonly tts: TtsProvider;
   private readonly cache: AudioCacheStore;
@@ -118,6 +167,7 @@ export class AudioQueue {
   private readonly retryJitterMs: number;
   private readonly random: () => number;
   private readonly timeoutMs: number | undefined;
+  private readonly onChunkTiming: ((event: ChunkTimingEvent) => void) | undefined;
 
   private items: AudioChunk[] = [];
   private readonly jobs = new Map<number, JobState>();
@@ -144,6 +194,7 @@ export class AudioQueue {
     this.retryJitterMs = Math.max(0, options.retryJitterMs ?? DEFAULT_RETRY_JITTER_MS);
     this.random = options.random ?? Math.random;
     this.timeoutMs = options.timeoutMs;
+    this.onChunkTiming = options.onChunkTiming;
   }
 
   /** Chunks currently queued, in playback order. */
@@ -374,17 +425,31 @@ export class AudioQueue {
       }
       if (cached !== undefined) {
         chunk.audioUri = await this.cache.put(key, cached, { providerId });
+        // S6.2: without this, a cache hit reached the sink with
+        // `durationMs`/`format` both `undefined` — CdC §37's "no second
+        // synthesis" held, but the sink lost the audio's real length on
+        // every hit (`AudioCacheStore.getMeta`'s doc comment).
+        const meta = await this.cache.getMeta?.(key);
+        if (meta?.format !== undefined) {
+          chunk.format = meta.format;
+        }
+        if (meta?.durationMs !== undefined) {
+          chunk.durationMs = meta.durationMs;
+        }
         chunk.status = "ready";
+        this.emitTiming(index, { cacheHit: true, ready: true });
         return;
       }
 
       const deadline = this.withTimeout(signal);
       let result;
+      const synthesisStartedAt = Date.now();
       try {
         result = await this.tts.synthesize(this.requestFor(chunk), deadline.signal);
       } finally {
         deadline.cleanup();
       }
+      const synthesisMs = Date.now() - synthesisStartedAt;
       if (signal.aborted) {
         this.revertToPending(chunk);
         return;
@@ -399,6 +464,7 @@ export class AudioQueue {
         chunk.durationMs = result.durationMs;
       }
       chunk.status = "ready";
+      this.emitTiming(index, { cacheHit: false, synthesisMs, ready: true });
     } catch (error) {
       if (signal.aborted) {
         this.revertToPending(chunk);
@@ -411,6 +477,7 @@ export class AudioQueue {
       }
       chunk.status = "error";
       chunk.error = messageOf(error);
+      this.emitTiming(index, { cacheHit: false, ready: false });
     } finally {
       this.active -= 1;
       job.controller = undefined;
@@ -496,6 +563,21 @@ export class AudioQueue {
         ? { parameters: this.binding.parameters }
         : {})
     };
+  }
+
+  /** Forwards one `ChunkTimingEvent` to `onChunkTiming` (S6.2); never throws. */
+  private emitTiming(
+    index: number,
+    partial: Pick<ChunkTimingEvent, "cacheHit" | "ready"> & Partial<Pick<ChunkTimingEvent, "synthesisMs">>
+  ): void {
+    if (this.onChunkTiming === undefined) {
+      return;
+    }
+    try {
+      this.onChunkTiming({ index, queueSize: this.items.length, ...partial });
+    } catch {
+      // Instrumentation must never break synthesis (S6.2).
+    }
   }
 }
 

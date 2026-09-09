@@ -31,6 +31,8 @@ export interface PipelineFacade {
   testVoice(): Promise<void>;
   /** `LLM Voice: Provider Status` (CdC §51). */
   providerStatus(): Promise<void>;
+  /** `LLM Voice: Show Performance Report` (S6.2): TTFA/synthesis/cache stats of the current session. */
+  performanceReport(): Promise<void>;
   /** `LLM Voice: Set Provider API Key` (AC-17). */
   setProviderApiKey(): Promise<void>;
   /** `LLM Voice: Clear Provider API Key` (AC-17). */
@@ -110,6 +112,10 @@ export class NotWiredPipeline implements PipelineFacade {
   }
 
   providerStatus(): Promise<void> {
+    return this.notWired();
+  }
+
+  performanceReport(): Promise<void> {
     return this.notWired();
   }
 

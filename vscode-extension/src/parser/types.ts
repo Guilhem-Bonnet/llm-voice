@@ -78,10 +78,21 @@ export interface MarkdownPolicy {
  * contract required by the story; `lang` is a deliberate addition (BCP-47
  * tag, mirrors `VoiceProfile.language`) since both sentence splitting and
  * spoken-text normalisation are language-aware (ADR-006).
+ *
+ * `firstChunkSentences` (S6.2, CdC §63 "la lecture démarre dès le premier
+ * chunk"): when set and smaller than `maxSentencesPerChunk`, the very first
+ * sentence-mode chunk of the *whole document* is capped at this many
+ * sentences instead of `maxSentencesPerChunk`, so TTFA is bounded by a short
+ * chunk while later chunks keep the larger size for prosody. Only the first
+ * opportunity to group sentences (across every block) is affected; every
+ * later group — including the rest of that same block — uses
+ * `maxSentencesPerChunk` unchanged. `undefined`/`>= maxSentencesPerChunk` is
+ * a no-op (`llmVoice.audio.firstChunkSentences`, `Pipeline.segmentationPolicyFor`).
  */
 export interface SegmentationPolicy {
   mode: "sentence" | "block";
   maxSentencesPerChunk: number;
   markdown: MarkdownPolicy;
   lang: string;
+  firstChunkSentences?: number;
 }

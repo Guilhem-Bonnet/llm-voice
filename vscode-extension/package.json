@@ -51,6 +51,7 @@
       { "command": "llmVoice.setDefaultProfile", "title": "LLM Voice: Set Default Profile", "category": "LLM Voice" },
       { "command": "llmVoice.testVoice", "title": "LLM Voice: Test Voice", "category": "LLM Voice" },
       { "command": "llmVoice.providerStatus", "title": "LLM Voice: Provider Status", "category": "LLM Voice" },
+      { "command": "llmVoice.performanceReport", "title": "LLM Voice: Show Performance Report", "category": "LLM Voice" },
       { "command": "llmVoice.setProviderApiKey", "title": "LLM Voice: Set Provider API Key", "category": "LLM Voice" },
       { "command": "llmVoice.clearProviderApiKey", "title": "LLM Voice: Clear Provider API Key", "category": "LLM Voice" },
       { "command": "llmVoice.openInbox", "title": "LLM Voice: Open Inbox", "category": "LLM Voice" },
@@ -218,7 +219,19 @@
           "default": 2,
           "minimum": 0,
           "maximum": 10,
-          "description": "Nombre de chunks audio pré-synthétisés en avance (CdC §32)."
+          "description": "Nombre de chunks audio pré-synthétisés en avance (CdC §32). 2 convient tant que le facteur temps réel (RTF) du provider TTS reste ≈ 1 — voir docs/performance.md."
+        },
+        "llmVoice.audio.firstChunkSentences": {
+          "type": "number",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Nombre de phrases du tout premier chunk audio d'un document, avant la taille normale du profil (CdC §63 : la lecture doit démarrer dès le premier chunk). Sans effet si ≥ à la taille de chunk du profil."
+        },
+        "llmVoice.tts.warmup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Préchauffe le provider TTS (health() + courte synthèse jetable) dès la première résolution du provider, en tâche de fond, pour absorber le cold start (compilation GPU) hors du chemin critique d'une vraie lecture."
         },
         "llmVoice.highlight.enabled": {
           "type": "boolean",

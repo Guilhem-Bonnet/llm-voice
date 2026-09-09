@@ -39,6 +39,16 @@ export interface AudioCacheStore {
   get(key: string): Promise<Uint8Array | undefined>;
   /** Stores (or touches) `key` and returns the URI the sink should load. */
   put(key: string, bytes: Uint8Array, meta?: AudioCachePutMeta): Promise<string>;
+  /**
+   * S6.2: the sidecar metadata (`format`/`durationMs`/`providerId`) attached
+   * on the `put` that first wrote `key`, so a cache *hit* (`AudioQueue.run()`)
+   * can restore `AudioChunk.durationMs` — without this, every cache-hit chunk
+   * used to reach the sink with `durationMs: undefined`, silently falling
+   * back to whatever default the sink assumes instead of the audio's real
+   * length. Optional, like `pin`/`unpin`: a store that predates this is
+   * simply never able to restore it, not broken.
+   */
+  getMeta?(key: string): Promise<AudioCachePutMeta | undefined>;
   /** Total bytes currently held. */
   size(): Promise<number>;
   /** Evicts least-recently-used entries until the store fits `targetBytes`. */
@@ -113,8 +123,19 @@ export class InMemoryAudioCache implements AudioCacheStore {
     const existing = this.records.get(key);
     if (existing !== undefined) {
       existing.lastAccessAt = ++this.tick;
+      // S6.2: merge, mirroring `DiskAudioCache.touch()` — a `put(key, ...,
+      // {providerId})` re-pin/touch call (`AudioQueue`'s cache-hit path)
+      // must not blank out the `format`/`durationMs` an earlier fresh
+      // synthesis already recorded for this key.
       if (meta !== undefined) {
-        existing.meta = meta;
+        const format = meta.format ?? existing.meta?.format;
+        const durationMs = meta.durationMs ?? existing.meta?.durationMs;
+        const providerId = meta.providerId ?? existing.meta?.providerId;
+        existing.meta = {
+          ...(format !== undefined ? { format } : {}),
+          ...(durationMs !== undefined ? { durationMs } : {}),
+          ...(providerId !== undefined ? { providerId } : {})
+        };
       }
       return uriFor(key);
     }
@@ -132,6 +153,10 @@ export class InMemoryAudioCache implements AudioCacheStore {
 
   /** Sidecar metadata attached on `put`, for tests that assert it round-trips. */
   metaFor(key: string): AudioCachePutMeta | undefined {
+    return this.records.get(key)?.meta;
+  }
+
+  async getMeta(key: string): Promise<AudioCachePutMeta | undefined> {
     return this.records.get(key)?.meta;
   }
 
