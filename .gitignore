@@ -34,3 +34,4 @@ coverage/
 .env.*
 !.env.example
 
+_grimoire/_memory/grimoire_lexical.sqlite3
