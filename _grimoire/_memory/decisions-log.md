@@ -121,3 +121,9 @@
 - **Décision** : release GitHub publique avec `llm-voice.vsix` (265 Ko), sans publication Marketplace. Un correctif a été nécessaire : le job de release cherchait le VSIX sous `vscode-extension/` alors que le répertoire de travail était déjà celui-là.
 - **Suite** : checklist de test manuel pour l'utilisateur (`_grimoire-output/team-build/manual-e2e-checklist-0.1.md`), puis 0.2 (Profile Editor, clipboard, historique, reprise, Kokoro, streaming, participant @voice) ou dette Dependabot.
 - **Agent** : concierge (Marcel)
+
+### [2026-09-09] Phase 7 et release 0.1.1 : l'extension marche sans rien installer
+- **Contexte** : retour utilisateur après installation réelle de la 0.1.0 (aucun son sans Chatterbox, page vide, Play muet, fonctions introuvables).
+- **Décision** : trois niveaux de voix (système sans installation → Piper guidé → Chatterbox), sélection automatique du provider (`llmVoice.tts.provider = "auto"`), parcours de découverte à la première activation, README dans le VSIX, aucune commande silencieuse. Publié en v0.1.1.
+- **Règle instaurée** : toute release passe par un test d'acceptation sur un profil VS Code neuf, sans service tiers démarré.
+- **Agent** : concierge (Marcel)

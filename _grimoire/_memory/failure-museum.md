@@ -116,3 +116,10 @@
 **Impact** : aucun (jamais publié).
 **Leçon** : ne jamais raisonner sur le contenu d'un paquet à partir du fichier d'exclusion — le vérifier sur la liste réelle, et sur une arborescence *après* un run de tests, pas sur un checkout propre.
 **Règle instaurée** : `npm run check:vsix` dans la checklist pre-push, et un test unitaire interdit toute ligne `!` dans `.vscodeignore`.
+
+### [2026-09-09] [equipe] WRONG-ASSUMPTION — 17 critères d'acceptation verts, produit inutilisable à l'installation
+**Ce qui s'est passé** : la 0.1.0 satisfaisait AC-01..17 et 751 tests, mais le premier utilisateur n'a obtenu qu'une erreur « Chatterbox n'est pas installé », une page d'extension vide et une commande Play sans effet.
+**Cause racine** : tous les tests, y compris les E2E, partaient d'une machine où les serveurs tournaient déjà. Le cahier des charges décrivait le pipeline, pas la première minute d'utilisation.
+**Impact** : une release publique inutilisable pour un nouvel utilisateur, corrigée en 0.1.1.
+**Leçon** : des critères d'acceptation complets ne valent pas un parcours de première utilisation. Le chemin par défaut doit fonctionner sans dépendance externe.
+**Règle instaurée** : chaque release exige un test sur profil neuf, sans service tiers, et une commande d'installation guidée pour toute dépendance externe.
