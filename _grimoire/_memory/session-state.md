@@ -1,4 +1,4 @@
 # Session State
 
-status: phase-5-done-next-phase-6-hardening-release
+status: phase-6-done-release-v0.1.0
 first_run: false
