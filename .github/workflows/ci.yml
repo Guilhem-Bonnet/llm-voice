@@ -31,6 +31,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - name: Traceability matrix (docs/traceability.md vs actual test files)
+        working-directory: .
+        run: node scripts/check-traceability.mjs
 
   audit:
     name: audit
