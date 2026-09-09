@@ -31,6 +31,19 @@ const SCHEMA_VERSION = 1;
 const PROVIDER = "claude-code";
 /** ADR-004: `.tmp-` prefix, ignored by the extension's inbox watcher. */
 const TMP_PREFIX = ".tmp-";
+/**
+ * AC-SEC-03: `sessionId` becomes a literal segment of the written file
+ * name (`<capturedAt>-<sessionId>-<rand>.json`) and comes straight from
+ * the hook payload's `session_id` — untrusted input. Anything outside a
+ * conservative allowlist (in particular `/`, `\`, and `.`, which enables
+ * `..` traversal) is rejected rather than embedded, to keep `path.join()`
+ * from ever escaping `inboxDir`.
+ */
+const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
+
+function sanitizeSessionId(sessionId) {
+  return typeof sessionId === "string" && SAFE_SESSION_ID.test(sessionId) ? sessionId : crypto.randomUUID();
+}
 
 function readStdin() {
   try {
@@ -67,11 +80,10 @@ function buildEntry(payload) {
   return {
     schemaVersion: SCHEMA_VERSION,
     provider: PROVIDER,
-    // A missing/non-string session id must never produce an entry the
-    // extension's Zod schema rejects: fall back to a fresh random one.
-    sessionId: typeof payload?.session_id === "string" && payload.session_id.length > 0
-      ? payload.session_id
-      : crypto.randomUUID(),
+    // A missing/non-string/unsafe session id must never produce an entry
+    // the extension's Zod schema rejects, nor a path-traversal file name
+    // (AC-SEC-03): fall back to a fresh random one.
+    sessionId: sanitizeSessionId(payload?.session_id),
     // Epoch milliseconds (ADR-003's canonical wire shape; also what the
     // `<capturedAt>-<sessionId>-<rand>.json` file name is derived from).
     capturedAt: Date.now(),

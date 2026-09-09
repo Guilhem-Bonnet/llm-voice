@@ -59,4 +59,29 @@ describe("llm-voice-inbox.js (ADR-007 open CLI)", () => {
     });
     expect(readdirSync(inboxDir).some((name) => name.startsWith(".tmp-"))).toBe(false);
   });
+
+  // AC-SEC-03: --session-id is attacker-influenced and becomes a literal
+  // segment of the written file name. A traversal payload must never let
+  // the write escape inboxDir (confirmed exploitable pre-fix: it landed a
+  // file outside inboxDir on the real filesystem).
+  it("rejects a path-traversal --session-id instead of embedding it in the file name", () => {
+    const parentDir = join(inboxDir, "..");
+    const markerBefore = readdirSync(parentDir).filter((name) => name.includes("pwned_marker"));
+
+    execFileSync("node", [cliPath, "add", "--provider", "evil", "--session-id", "/../../pwned_marker"], {
+      input: "malicious payload",
+      env: { ...process.env, LLM_VOICE_INBOX: inboxDir }
+    });
+
+    const markerAfter = readdirSync(parentDir).filter((name) => name.includes("pwned_marker"));
+    expect(markerAfter).toEqual(markerBefore);
+
+    const files = readdirSync(inboxDir);
+    expect(files).toHaveLength(1);
+    expect(files[0]).not.toContain("..");
+    expect(files[0]).not.toContain("/");
+
+    const written = JSON.parse(readFileSync(join(inboxDir, files[0]!), "utf8"));
+    expect(written.sessionId).not.toMatch(/[./\\]/);
+  });
 });

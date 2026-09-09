@@ -29,6 +29,19 @@ const crypto = require("node:crypto");
 
 const SCHEMA_VERSION = 1;
 const TMP_PREFIX = ".tmp-";
+/**
+ * AC-SEC-03: `sessionId` becomes a literal segment of the written file
+ * name (`<capturedAt>-<sessionId>-<rand>.json`). It is attacker-influenced
+ * (`--session-id` is a plain CLI flag), so anything outside a conservative
+ * allowlist — in particular `/`, `\`, and `.` (which enables `..`
+ * traversal) — is rejected rather than embedded, to keep `path.join()`
+ * from ever escaping `inboxDir`.
+ */
+const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
+
+function sanitizeSessionId(sessionId) {
+  return typeof sessionId === "string" && SAFE_SESSION_ID.test(sessionId) ? sessionId : crypto.randomUUID();
+}
 
 function resolveInboxDir() {
   const override = process.env.LLM_VOICE_INBOX;
@@ -50,7 +63,7 @@ function buildEntry({ provider, sessionId, cwd, title, message }) {
   return {
     schemaVersion: SCHEMA_VERSION,
     provider,
-    sessionId: typeof sessionId === "string" && sessionId.length > 0 ? sessionId : crypto.randomUUID(),
+    sessionId: sanitizeSessionId(sessionId),
     capturedAt: Date.now(),
     ...(typeof cwd === "string" && cwd.length > 0 ? { cwd } : {}),
     ...(typeof title === "string" && title.length > 0 ? { title } : {}),
