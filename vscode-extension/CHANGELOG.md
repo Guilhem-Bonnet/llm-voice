@@ -7,6 +7,28 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), et
 ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/) à
 partir de la version `0.1.0`.
 
+## [0.1.1] - 2026-09-09
+
+**Corrige le problème remonté sur la 0.1.0 : un utilisateur non technique installe le VSIX et entend du son immédiatement, sans configurer ni installer quoi que ce soit.**
+
+### Added
+
+- **Voix système sans installation** (S7.1, ADR-009 niveau 1b) : `SystemTtsProvider` synthétise via un binaire déjà présent sur la machine (espeak-ng, `say` sur macOS, SAPI via PowerShell sur Windows) — aucun serveur, aucune configuration. Devient le profil par défaut au premier lancement (« Voix système (aucune installation) »).
+- **Installation guidée de Piper** (S7.1) : commande `LLM Voice: Install Local Voice (Piper)`, téléchargement du binaire et de la voix `fr_FR-siwis-medium` vérifié par SHA-256, consentement explicite avant tout octet réseau, hôtes limités à GitHub Releases/Hugging Face, refusé sous `LLM_VOICE_STRICT_LOCAL=1`.
+- **Sélection automatique du provider TTS** (`llmVoice.tts.provider: "auto"`, nouveau défaut) : Chatterbox si disponible, sinon Piper local, sinon la voix système — un choix explicite (profil ou setting) n'est jamais recouvert.
+- **Parcours de découverte** (S7.2) : « Démarrer avec LLM Voice » s'ouvre automatiquement une seule fois à la première activation, jamais ensuite ; document Markdown d'exemple embarqué pour l'essayer sans fichier personnel.
+- **`LLM Voice: Setup Voice`** : choix honnête entre trois niveaux de qualité (voix système / Piper local / Chatterbox), plus jamais bloqué sur « Chatterbox n'est pas installé ».
+- **README de l'extension**, vues d'accueil (`viewsWelcome`) pour le lecteur et l'inbox vides, bouton haut-parleur dans la barre de titre de l'éditeur (Markdown uniquement).
+- **`Ctrl+Alt+V Espace`** (`llmVoice.playPause`) : vraie bascule Play/Pause, distincte de `llmVoice.play`.
+- **Contexte `llmVoice.state`** : les commandes sans effet dans l'état courant (Pause/Stop/segment suivant-précédent) sont grisées dans la palette.
+
+### Fixed
+
+- **Play sans session active** démarre désormais la lecture du document (ou de la sélection) au lieu de ne rien faire silencieusement.
+- **Commandes muettes** : les 30 commandes de la palette produisent toujours un effet visible ou un message explicite, jamais un clic sans effet observable.
+- **Message d'erreur sans issue** : « Chatterbox is unavailable » remplacé par un message actionnable proposant de choisir une voix (assistant de configuration) ou de consulter les réglages, plus jamais un cul-de-sac.
+- **README/CHANGELOG/LICENSE absents du VSIX** : le paquet publié embarque désormais la documentation utilisateur et les media du parcours de découverte.
+
 ## [0.1.0] - 2026-09-09
 
 **Extension VS Code pour narration vocale locale de documents Markdown et réponses d'agents LLM via TTS local (Chatterbox, Kokoro) et narrateur optionnel (Ollama, llama.cpp).**
