@@ -62,7 +62,7 @@ jobs:
           cache-dependency-path: vscode-extension/package-lock.json
       - run: npm ci
       - run: npm run test:unit -- --coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: coverage-unit
           path: vscode-extension/coverage/
@@ -107,7 +107,7 @@ jobs:
       - run: npm run check:vsix
       - run: npm run check:licenses
       - run: npm run package
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: llm-voice-vsix
           path: vscode-extension/*.vsix
