@@ -1,8 +1,8 @@
 /**
- * The four voice profiles shipped out of the box (CdC §19). Every profile
- * validates against `VoiceProfileSchema` (AC-SEC-05); `profile.schema.test.ts`
- * asserts that for the three narrated ones and `DEFAULT_PROFILE` covers
- * "Lecture fidèle" already (`src/core/profile.schema.ts`).
+ * The five voice profiles shipped out of the box (CdC §19, +1 for S7.1).
+ * Every profile validates against `VoiceProfileSchema` (AC-SEC-05);
+ * `profile.schema.test.ts` asserts that for the three narrated ones and
+ * `DEFAULT_PROFILE` covers "Lecture fidèle" already (`src/core/profile.schema.ts`).
  *
  * The narrator binding on the three narrated profiles points at the default
  * local Ollama endpoint (`llmVoice.narrator.baseUrl`) and deliberately omits
@@ -37,6 +37,29 @@ const LOCAL_NARRATOR = {
 
 /** "Lecture fidèle" (CdC §19): no transformation, sentence-level highlight. */
 export const FAITHFUL_PROFILE: VoiceProfile = DEFAULT_PROFILE;
+
+/**
+ * "Voix système (aucune installation)" (S7.1, ADR-009 niveau 1b): the
+ * first-launch default (`ProfileRepository.defaultCollection`) — reads with
+ * whatever voice is already on the machine (`SystemTtsProvider`:
+ * `espeak-ng`/Piper local/`say`/SAPI), no server, no network call, so a
+ * fresh install produces sound immediately (the S7.1 user problem this
+ * story exists to fix). `tts.baseUrl` is deliberately omitted:
+ * `SystemTtsProvider` never makes a network call (its file header), there
+ * is nothing to point it at.
+ */
+export const SYSTEM_VOICE_PROFILE: VoiceProfile = {
+  id: "system-voice",
+  label: "Voix système (aucune installation)",
+  mode: "faithful",
+  language: "fr-FR",
+  tts: { providerId: "system" },
+  chunking: { unit: "sentence", maxSentences: 3, prefetchChunks: 2 },
+  playback: { rate: 1, volume: 1 },
+  description:
+    "Lecture fidèle avec la voix déjà installée sur votre système (espeak-ng, Piper local, say, SAPI…), " +
+    "sans serveur ni configuration. « LLM Voice: Install Local Voice (Piper) » pour une meilleure qualité."
+};
 
 /** "Professeur technique" (CdC §19): pedagogical rewrite, block highlight. */
 export const TECHNICAL_TEACHER_PROFILE: VoiceProfile = {
@@ -89,8 +112,14 @@ export const QUICK_REVIEW_PROFILE: VoiceProfile = {
     "pièges et éléments essentiels à retenir."
 };
 
-/** The four profiles created in `profiles.json` on first launch (CdC §19). */
+/**
+ * The five profiles created in `profiles.json` on first launch (CdC §19,
+ * +1 for S7.1). `SYSTEM_VOICE_PROFILE` comes first: it is
+ * `ProfileRepository.defaultCollection`'s `defaultProfileId`, so a brand
+ * new install reads with it before any other profile is ever selected.
+ */
 export const DEFAULT_PROFILES: readonly VoiceProfile[] = [
+  SYSTEM_VOICE_PROFILE,
   FAITHFUL_PROFILE,
   TECHNICAL_TEACHER_PROFILE,
   LLM_SUMMARY_PROFILE,

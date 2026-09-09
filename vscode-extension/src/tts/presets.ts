@@ -12,9 +12,10 @@ import type { EgressGuardHandle } from "../net/EgressGuard.js";
 import { ChatterboxProvider } from "./ChatterboxProvider.js";
 import { KokoroProvider, KOKORO_DEFAULT_FR_VOICE } from "./KokoroProvider.js";
 import { OpenAICompatibleTtsProvider } from "./OpenAICompatibleTtsProvider.js";
+import { SystemTtsProvider } from "./SystemTtsProvider.js";
 
 /** Which concrete class a preset instantiates; never guessed from an id (ADR-005). */
-export type TtsPresetKind = "chatterbox" | "kokoro" | "openai-compatible";
+export type TtsPresetKind = "chatterbox" | "kokoro" | "openai-compatible" | "system";
 
 export interface TtsProviderPreset {
   id: string;
@@ -92,10 +93,26 @@ export const OPENAI_COMPATIBLE_PRESET: TtsProviderPreset = {
   remote: true
 };
 
+/**
+ * ADR-009 niveau 1b (S7.1, `SystemTtsProvider`): zero-install system voices
+ * — Piper (once installed via `LLM Voice: Install Local Voice (Piper)`),
+ * `espeak-ng`, macOS `say`, or Windows SAPI, in that order per platform.
+ * `baseUrl` is empty and unused: `SystemTtsProvider` never makes a network
+ * call (its file header), so there is nothing to point it at.
+ */
+export const SYSTEM_LOCAL_PRESET: TtsProviderPreset = {
+  id: "system",
+  label: "Voix système (aucune installation)",
+  kind: "system",
+  baseUrl: "",
+  remote: false
+};
+
 export const TTS_PROVIDER_PRESETS: readonly TtsProviderPreset[] = [
   CHATTERBOX_LOCAL_PRESET,
   KOKORO_LOCAL_PRESET,
   PIPER_LOCAL_PRESET,
+  SYSTEM_LOCAL_PRESET,
   OPENAI_COMPATIBLE_PRESET
 ];
 
@@ -119,6 +136,14 @@ export interface CreateTtsProviderOptions {
    * before reaching here; this factory never touches the filesystem.
    */
   referenceAudioPath?: string;
+  /**
+   * `globalStorageUri/piper` (`kind: "system"` only): where `PiperSetup`
+   * installs the optional Piper binary/voice — `SystemTtsProvider` only
+   * ever trusts an install found there (its file header). `undefined`
+   * disables the Piper tier for this instance (still falls back to
+   * `espeak-ng`/`say`/SAPI).
+   */
+  systemPiperInstallDir?: string;
 }
 
 /**
@@ -147,6 +172,11 @@ export function createTtsProvider(
       return new KokoroProvider(providerOptions);
     case "openai-compatible":
       return new OpenAICompatibleTtsProvider(providerOptions);
+    case "system":
+      return new SystemTtsProvider({
+        ...(options.id !== undefined ? { id: options.id } : {}),
+        ...(options.systemPiperInstallDir !== undefined ? { piperInstallDir: options.systemPiperInstallDir } : {})
+      });
     default: {
       const exhaustive: never = preset.kind;
       return exhaustive;
@@ -154,13 +184,16 @@ export function createTtsProvider(
   }
 }
 
-/** `TtsPresetKind` for a resolved `providerId` (`chatterbox`, `kokoro`, ...), else generic. */
+/** `TtsPresetKind` for a resolved `providerId` (`chatterbox`, `kokoro`, `system`, ...), else generic. */
 export function presetKindForProviderId(providerId: string): TtsPresetKind {
   if (providerId === "chatterbox") {
     return "chatterbox";
   }
   if (providerId === "kokoro") {
     return "kokoro";
+  }
+  if (providerId === "system") {
+    return "system";
   }
   return "openai-compatible";
 }
