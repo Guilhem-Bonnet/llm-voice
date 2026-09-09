@@ -143,7 +143,12 @@ export class OpenAICompatibleTtsProvider implements TtsProvider {
       ...(signal !== undefined ? { signal } : {})
     });
     if (!response.ok) {
-      throw new Error(`${this.constructor.name}: HTTP ${response.status} from ${this.baseUrl}/v1/audio/speech`);
+      // `endpointLabel` (host + path), never `baseUrl`: it may embed a
+      // userinfo segment carrying a secret and this message reaches the
+      // Output Channel (S6.1 audit F-07).
+      throw new Error(
+        `${this.constructor.name}: HTTP ${response.status} from ${this.endpointLabel("/v1/audio/speech")}`
+      );
     }
     const buffer = await response.arrayBuffer();
     return { format: "wav", data: new Uint8Array(buffer) };

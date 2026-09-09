@@ -60,7 +60,8 @@
               },
               "apiKeyRef": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "pattern": "^llmVoice\\.apiKey\\.[A-Za-z0-9._@-]{1,64}$"
               },
               "parameters": {
                 "type": "object",
@@ -71,7 +72,8 @@
               },
               "referenceAudio": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "pattern": "\\.(wav|mp3|flac|ogg|opus|m4a)$"
               }
             },
             "additionalProperties": false
@@ -98,7 +100,8 @@
               },
               "apiKeyRef": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "pattern": "^llmVoice\\.apiKey\\.[A-Za-z0-9._@-]{1,64}$"
               }
             },
             "additionalProperties": false

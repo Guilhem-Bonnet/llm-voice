@@ -40,6 +40,22 @@ const TMP_PREFIX = ".tmp-";
  * from ever escaping `inboxDir`.
  */
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
+/**
+ * Hard cap on one inbox entry (S6.1 audit F-13). The extension reads every
+ * inbox file into memory on each scan; a single 50 MB payload (a hook that
+ * dumped a whole build log into `last_assistant_message`) would make every
+ * refresh allocate 50 MB. Truncating keeps the entry usable and visibly
+ * marked, which is better than either writing it whole or dropping it.
+ */
+const MAX_MESSAGE_BYTES = 1024 * 1024;
+const TRUNCATION_NOTICE = "\n\n[LLM Voice] message tronqué : dépassait 1 Mio.";
+
+function capMessage(message) {
+  if (typeof message !== "string" || Buffer.byteLength(message, "utf8") <= MAX_MESSAGE_BYTES) {
+    return message;
+  }
+  return Buffer.from(message, "utf8").subarray(0, MAX_MESSAGE_BYTES).toString("utf8") + TRUNCATION_NOTICE;
+}
 
 function sanitizeSessionId(sessionId) {
   return typeof sessionId === "string" && SAFE_SESSION_ID.test(sessionId) ? sessionId : crypto.randomUUID();
@@ -88,7 +104,7 @@ function buildEntry(payload) {
     // `<capturedAt>-<sessionId>-<rand>.json` file name is derived from).
     capturedAt: Date.now(),
     cwd: typeof payload?.cwd === "string" ? payload.cwd : process.cwd(),
-    message
+    message: capMessage(message)
   };
 }
 
@@ -104,12 +120,42 @@ function writeAtomic(inboxDir, entry) {
   const finalPath = path.join(inboxDir, fileName);
   const tmpPath = path.join(inboxDir, `${TMP_PREFIX}${fileName}`);
 
-  fs.writeFileSync(tmpPath, `${JSON.stringify(entry, null, 2)}\n`, { mode: 0o600 });
-  fs.renameSync(tmpPath, finalPath);
+  try {
+    fs.writeFileSync(tmpPath, `${JSON.stringify(entry, null, 2)}\n`, { mode: 0o600 });
+    fs.renameSync(tmpPath, finalPath);
+  } catch (error) {
+    // ENOSPC/EACCES mid-write would otherwise leave a `.tmp-` file behind
+    // forever — the watcher ignores it, but it still consumes the disk the
+    // write just ran out of (S6.1 audit F-13).
+    try {
+      fs.rmSync(tmpPath, { force: true });
+    } catch {
+      // Nothing more we can do; the caller reports the original failure.
+    }
+    throw error;
+  }
   fs.chmodSync(finalPath, 0o600);
 
   return finalPath;
 }
+
+/**
+ * The contract of this script is "never make Claude Code fail" (ADR-003).
+ * `main()` already guards the write, but everything *around* it could still
+ * throw — `os.homedir()` on an exotic environment, an EPIPE on stderr, a
+ * `RangeError` from `JSON.stringify` on a pathological payload — and an
+ * uncaught throw exits 1, which Claude Code surfaces as a hook failure.
+ * These two nets make exit 0 unconditional (S6.1 audit F-13).
+ */
+process.on("uncaughtException", (error) => {
+  try {
+    process.stderr.write(`llm-voice-capture: uncaught error: ${error}\n`);
+  } catch {
+    // stderr itself is gone; there is nothing left to report to.
+  }
+  process.exit(0);
+});
+process.on("unhandledRejection", () => process.exit(0));
 
 function main() {
   const raw = readStdin();
@@ -132,4 +178,13 @@ function main() {
   process.exit(0);
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  try {
+    process.stderr.write(`llm-voice-capture: unexpected error: ${error}\n`);
+  } catch {
+    // See `uncaughtException` above.
+  }
+  process.exit(0);
+}

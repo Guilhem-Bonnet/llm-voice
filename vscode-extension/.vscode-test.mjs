@@ -21,6 +21,10 @@ const common = {
 const inboxDirFakeTts = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-fake-tts-"));
 const inboxDirRealProvider = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-real-provider-"));
 const inboxDirPrefetch = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-prefetch-"));
+// S6.1: the security profile writes deliberately hostile inbox entries
+// (script tags, ANSI escapes) and must never see, or be seen by, the
+// functional profiles' entries.
+const inboxDirSecurity = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-security-"));
 
 // S5.3: `llmVoice.audio.prefetchChunks` (CdC §32/§48) is read once, at
 // `Pipeline`'s construction (activation time) — a live `config.update()`
@@ -112,5 +116,21 @@ export default defineConfig([
     files: "out/test/integration-prefetch/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirPrefetch },
     launchArgs: [`--user-data-dir=${prefetchChunksUserDataDir}`]
+  },
+  {
+    ...common,
+    label: "integration-security",
+    // S6.1 audit (AC-SEC-02/05/08): the attack tests that need a *real* VS
+    // Code — the CSP a live webview actually serves, `localResourceRoots` as
+    // actually applied, and profile import going through the real
+    // `SecretStorage`. Own profile for two reasons: the hostile inbox
+    // entries it writes would pollute the functional profiles' assertions,
+    // and the API keys it sets/clears must not share a `SecretStorage` with
+    // `test/integration/profiles.test.ts`, which asserts on the same keys.
+    // `FAKE_TTS` is on: nothing here needs a real engine, and a synthesis
+    // attempt against an absent loopback server would only add noise.
+    files: "out/test/integration-security/**/*.test.js",
+    env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirSecurity },
+    launchArgs: ["--user-data-dir=.vscode-test/security"]
   }
 ]);

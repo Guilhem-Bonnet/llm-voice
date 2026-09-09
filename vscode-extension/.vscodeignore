@@ -1,15 +1,43 @@
-.vscode-test/**
+# What must never reach a user's disk (S6.1 audit, axis 6).
+# `scripts/check-vsix.mjs` asserts the resulting file list; keep the two in
+# sync — this file is allow-by-default, so anything new that is not listed
+# here ships.
+
+# Test code and its fixtures — the fixtures carry hostile payloads on purpose.
 test/**
-out/**
+.vscode-test/**
+.vscode-test.mjs
+coverage/**
+
+# Sources, intermediate builds and maps: `dist/extension.js` is what ships.
 src/**
+out/**
+**/*.ts
+**/*.map
+
+# Build and tooling configuration, only meaningful in the repository.
 scripts/**
-.gitignore
-.eslintrc*
-eslint.config.mjs
 tsconfig.json
 vitest.config.ts
-.vscode-test.mjs
-**/*.map
-**/*.ts
+vitest.integration-real.config.ts
+eslint.config.mjs
+.eslintrc*
 node_modules/**
-coverage/**
+package-lock.json
+docs/**
+
+# Repository/editor metadata.
+.gitignore
+.editorconfig
+.nvmrc
+.github/**
+.vscode/**
+
+# Anything that looks like a secret or a local environment.
+.env
+.env.*
+.npmrc
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx

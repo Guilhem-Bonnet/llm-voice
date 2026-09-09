@@ -32,41 +32,186 @@
       }
     ],
     "commands": [
-      { "command": "llmVoice.speakDocument", "title": "LLM Voice: Speak Document", "category": "LLM Voice" },
-      { "command": "llmVoice.speakSelection", "title": "LLM Voice: Speak Selection", "category": "LLM Voice" },
-      { "command": "llmVoice.speakFromCursor", "title": "LLM Voice: Speak From Cursor", "category": "LLM Voice" },
-      { "command": "llmVoice.speakSection", "title": "LLM Voice: Speak Section", "category": "LLM Voice" },
-      { "command": "llmVoice.speakClipboard", "title": "LLM Voice: Speak Clipboard", "category": "LLM Voice" },
-      { "command": "llmVoice.play", "title": "LLM Voice: Play", "category": "LLM Voice" },
-      { "command": "llmVoice.pause", "title": "LLM Voice: Pause", "category": "LLM Voice" },
-      { "command": "llmVoice.stop", "title": "LLM Voice: Stop", "category": "LLM Voice" },
-      { "command": "llmVoice.previousSegment", "title": "LLM Voice: Previous Segment", "category": "LLM Voice" },
-      { "command": "llmVoice.nextSegment", "title": "LLM Voice: Next Segment", "category": "LLM Voice" },
-      { "command": "llmVoice.selectProfile", "title": "LLM Voice: Select Profile", "category": "LLM Voice" },
-      { "command": "llmVoice.openProfiles", "title": "LLM Voice: Open Profiles", "category": "LLM Voice" },
-      { "command": "llmVoice.duplicateProfile", "title": "LLM Voice: Duplicate Profile", "category": "LLM Voice" },
-      { "command": "llmVoice.deleteProfile", "title": "LLM Voice: Delete Profile", "category": "LLM Voice" },
-      { "command": "llmVoice.importProfile", "title": "LLM Voice: Import Profile", "category": "LLM Voice" },
-      { "command": "llmVoice.exportProfile", "title": "LLM Voice: Export Profile", "category": "LLM Voice" },
-      { "command": "llmVoice.setDefaultProfile", "title": "LLM Voice: Set Default Profile", "category": "LLM Voice" },
-      { "command": "llmVoice.testVoice", "title": "LLM Voice: Test Voice", "category": "LLM Voice" },
-      { "command": "llmVoice.providerStatus", "title": "LLM Voice: Provider Status", "category": "LLM Voice" },
-      { "command": "llmVoice.performanceReport", "title": "LLM Voice: Show Performance Report", "category": "LLM Voice" },
-      { "command": "llmVoice.setProviderApiKey", "title": "LLM Voice: Set Provider API Key", "category": "LLM Voice" },
-      { "command": "llmVoice.clearProviderApiKey", "title": "LLM Voice: Clear Provider API Key", "category": "LLM Voice" },
-      { "command": "llmVoice.openInbox", "title": "LLM Voice: Open Inbox", "category": "LLM Voice" },
-      { "command": "llmVoice.speakLatestClaudeResponse", "title": "LLM Voice: Speak Latest Claude Response", "category": "LLM Voice" },
-      { "command": "llmVoice.clearHighlight", "title": "LLM Voice: Clear Highlight", "category": "LLM Voice" },
-      { "command": "llmVoice.clearAudioCache", "title": "LLM Voice: Clear Audio Cache", "category": "LLM Voice" },
-      { "command": "llmVoice.verifyLocalMode", "title": "LLM Voice: Verify Local Mode", "category": "LLM Voice" },
-      { "command": "llmVoice.installClaudeHook", "title": "LLM Voice: Install Claude Hook", "category": "LLM Voice" },
-      { "command": "llmVoice.uninstallClaudeHook", "title": "LLM Voice: Uninstall Claude Hook", "category": "LLM Voice" },
-      { "command": "llmVoice.statusBar.openMenu", "title": "LLM Voice: Status Bar Menu", "category": "LLM Voice" },
-      { "command": "llmVoice.inbox.refresh", "title": "LLM Voice: Refresh Inbox", "category": "LLM Voice", "icon": "$(refresh)" },
-      { "command": "llmVoice.inbox.speak", "title": "LLM Voice: Speak Inbox Message", "category": "LLM Voice", "icon": "$(play)" },
-      { "command": "llmVoice.inbox.openFull", "title": "LLM Voice: Open Full Response", "category": "LLM Voice", "icon": "$(eye)" },
-      { "command": "llmVoice.inbox.delete", "title": "LLM Voice: Delete Inbox Message", "category": "LLM Voice", "icon": "$(trash)" },
-      { "command": "llmVoice.inbox.markRead", "title": "LLM Voice: Toggle Inbox Message Read", "category": "LLM Voice", "icon": "$(check)" }
+      {
+        "command": "llmVoice.speakDocument",
+        "title": "LLM Voice: Speak Document",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.speakSelection",
+        "title": "LLM Voice: Speak Selection",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.speakFromCursor",
+        "title": "LLM Voice: Speak From Cursor",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.speakSection",
+        "title": "LLM Voice: Speak Section",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.speakClipboard",
+        "title": "LLM Voice: Speak Clipboard",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.play",
+        "title": "LLM Voice: Play",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.pause",
+        "title": "LLM Voice: Pause",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.stop",
+        "title": "LLM Voice: Stop",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.previousSegment",
+        "title": "LLM Voice: Previous Segment",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.nextSegment",
+        "title": "LLM Voice: Next Segment",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.selectProfile",
+        "title": "LLM Voice: Select Profile",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.openProfiles",
+        "title": "LLM Voice: Open Profiles",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.duplicateProfile",
+        "title": "LLM Voice: Duplicate Profile",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.deleteProfile",
+        "title": "LLM Voice: Delete Profile",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.importProfile",
+        "title": "LLM Voice: Import Profile",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.exportProfile",
+        "title": "LLM Voice: Export Profile",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.setDefaultProfile",
+        "title": "LLM Voice: Set Default Profile",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.testVoice",
+        "title": "LLM Voice: Test Voice",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.providerStatus",
+        "title": "LLM Voice: Provider Status",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.performanceReport",
+        "title": "LLM Voice: Show Performance Report",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.setProviderApiKey",
+        "title": "LLM Voice: Set Provider API Key",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.clearProviderApiKey",
+        "title": "LLM Voice: Clear Provider API Key",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.openInbox",
+        "title": "LLM Voice: Open Inbox",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.speakLatestClaudeResponse",
+        "title": "LLM Voice: Speak Latest Claude Response",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.clearHighlight",
+        "title": "LLM Voice: Clear Highlight",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.clearAudioCache",
+        "title": "LLM Voice: Clear Audio Cache",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.verifyLocalMode",
+        "title": "LLM Voice: Verify Local Mode",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.installClaudeHook",
+        "title": "LLM Voice: Install Claude Hook",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.uninstallClaudeHook",
+        "title": "LLM Voice: Uninstall Claude Hook",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.statusBar.openMenu",
+        "title": "LLM Voice: Status Bar Menu",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.inbox.refresh",
+        "title": "LLM Voice: Refresh Inbox",
+        "category": "LLM Voice",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "llmVoice.inbox.speak",
+        "title": "LLM Voice: Speak Inbox Message",
+        "category": "LLM Voice",
+        "icon": "$(play)"
+      },
+      {
+        "command": "llmVoice.inbox.openFull",
+        "title": "LLM Voice: Open Full Response",
+        "category": "LLM Voice",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "llmVoice.inbox.delete",
+        "title": "LLM Voice: Delete Inbox Message",
+        "category": "LLM Voice",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "llmVoice.inbox.markRead",
+        "title": "LLM Voice: Toggle Inbox Message Read",
+        "category": "LLM Voice",
+        "icon": "$(check)"
+      }
     ],
     "viewsContainers": {
       "panel": [
@@ -101,43 +246,123 @@
       ]
     },
     "submenus": [
-      { "id": "llmVoice.markdownContextMenu", "label": "LLM Voice" }
+      {
+        "id": "llmVoice.markdownContextMenu",
+        "label": "LLM Voice"
+      }
     ],
     "menus": {
       "commandPalette": [
-        { "command": "llmVoice.statusBar.openMenu", "when": "false" },
-        { "command": "llmVoice.inbox.speak", "when": "false" },
-        { "command": "llmVoice.inbox.openFull", "when": "false" },
-        { "command": "llmVoice.inbox.delete", "when": "false" },
-        { "command": "llmVoice.inbox.markRead", "when": "false" }
+        {
+          "command": "llmVoice.statusBar.openMenu",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.inbox.speak",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.inbox.openFull",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.inbox.delete",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.inbox.markRead",
+          "when": "false"
+        }
       ],
       "editor/context": [
-        { "submenu": "llmVoice.markdownContextMenu", "when": "resourceLangId == markdown", "group": "llmVoice" }
+        {
+          "submenu": "llmVoice.markdownContextMenu",
+          "when": "resourceLangId == markdown",
+          "group": "llmVoice"
+        }
       ],
       "llmVoice.markdownContextMenu": [
-        { "command": "llmVoice.speakSelection", "when": "resourceLangId == markdown && editorHasSelection", "group": "1_speak@1" },
-        { "command": "llmVoice.speakFromCursor", "when": "resourceLangId == markdown", "group": "1_speak@2" },
-        { "command": "llmVoice.speakSection", "when": "resourceLangId == markdown", "group": "1_speak@3" },
-        { "command": "llmVoice.speakDocument", "when": "resourceLangId == markdown", "group": "1_speak@4" }
+        {
+          "command": "llmVoice.speakSelection",
+          "when": "resourceLangId == markdown && editorHasSelection",
+          "group": "1_speak@1"
+        },
+        {
+          "command": "llmVoice.speakFromCursor",
+          "when": "resourceLangId == markdown",
+          "group": "1_speak@2"
+        },
+        {
+          "command": "llmVoice.speakSection",
+          "when": "resourceLangId == markdown",
+          "group": "1_speak@3"
+        },
+        {
+          "command": "llmVoice.speakDocument",
+          "when": "resourceLangId == markdown",
+          "group": "1_speak@4"
+        }
       ],
       "view/title": [
-        { "command": "llmVoice.inbox.refresh", "when": "view == llmVoice.inboxView", "group": "navigation" }
+        {
+          "command": "llmVoice.inbox.refresh",
+          "when": "view == llmVoice.inboxView",
+          "group": "navigation"
+        }
       ],
       "view/item/context": [
-        { "command": "llmVoice.inbox.speak", "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry", "group": "inline@1" },
-        { "command": "llmVoice.inbox.openFull", "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry", "group": "inline@2" },
-        { "command": "llmVoice.inbox.markRead", "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry", "group": "inline@3" },
-        { "command": "llmVoice.inbox.delete", "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry", "group": "inline@4" }
+        {
+          "command": "llmVoice.inbox.speak",
+          "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry",
+          "group": "inline@1"
+        },
+        {
+          "command": "llmVoice.inbox.openFull",
+          "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry",
+          "group": "inline@2"
+        },
+        {
+          "command": "llmVoice.inbox.markRead",
+          "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry",
+          "group": "inline@3"
+        },
+        {
+          "command": "llmVoice.inbox.delete",
+          "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry",
+          "group": "inline@4"
+        }
       ]
     },
     "keybindings": [
-      { "key": "ctrl+alt+v d", "command": "llmVoice.speakDocument" },
-      { "key": "ctrl+alt+v s", "command": "llmVoice.speakSelection", "when": "editorHasSelection" },
-      { "key": "ctrl+alt+v c", "command": "llmVoice.speakClipboard" },
-      { "key": "ctrl+alt+v space", "command": "llmVoice.play" },
-      { "key": "ctrl+alt+v x", "command": "llmVoice.stop" },
-      { "key": "ctrl+alt+v n", "command": "llmVoice.nextSegment" },
-      { "key": "ctrl+alt+v p", "command": "llmVoice.previousSegment" }
+      {
+        "key": "ctrl+alt+v d",
+        "command": "llmVoice.speakDocument"
+      },
+      {
+        "key": "ctrl+alt+v s",
+        "command": "llmVoice.speakSelection",
+        "when": "editorHasSelection"
+      },
+      {
+        "key": "ctrl+alt+v c",
+        "command": "llmVoice.speakClipboard"
+      },
+      {
+        "key": "ctrl+alt+v space",
+        "command": "llmVoice.play"
+      },
+      {
+        "key": "ctrl+alt+v x",
+        "command": "llmVoice.stop"
+      },
+      {
+        "key": "ctrl+alt+v n",
+        "command": "llmVoice.nextSegment"
+      },
+      {
+        "key": "ctrl+alt+v p",
+        "command": "llmVoice.previousSegment"
+      }
     ],
     "configuration": {
       "title": "LLM Voice",
@@ -149,13 +374,27 @@
         },
         "llmVoice.profiles.bySource": {
           "type": "object",
-          "default": { "claude-code": "llm-summary" },
+          "default": {
+            "claude-code": "llm-summary"
+          },
           "description": "Profil par défaut selon la source de capture (CdC §47) : markdown, text (sélection), clipboard, claude-code. Une source non renseignée utilise le dernier profil sélectionné. Ex. par défaut : Claude Inbox → Résumé LLM.",
           "properties": {
-            "markdown": { "type": "string", "description": "Profil par défaut pour un document Markdown." },
-            "text": { "type": "string", "description": "Profil par défaut pour une sélection de texte." },
-            "clipboard": { "type": "string", "description": "Profil par défaut pour le presse-papiers." },
-            "claude-code": { "type": "string", "description": "Profil par défaut pour l'inbox Claude Code." }
+            "markdown": {
+              "type": "string",
+              "description": "Profil par défaut pour un document Markdown."
+            },
+            "text": {
+              "type": "string",
+              "description": "Profil par défaut pour une sélection de texte."
+            },
+            "clipboard": {
+              "type": "string",
+              "description": "Profil par défaut pour le presse-papiers."
+            },
+            "claude-code": {
+              "type": "string",
+              "description": "Profil par défaut pour l'inbox Claude Code."
+            }
           },
           "additionalProperties": false
         },
@@ -172,7 +411,11 @@
         "llmVoice.tts.provider": {
           "type": "string",
           "default": "chatterbox",
-          "enum": ["chatterbox", "kokoro", "openai-compatible"],
+          "enum": [
+            "chatterbox",
+            "kokoro",
+            "openai-compatible"
+          ],
           "description": "Identifiant du provider TTS utilisé (provider agnostic, CdC §3.3). Voir docs/providers.md."
         },
         "llmVoice.narrator.provider": {
@@ -240,7 +483,10 @@
         },
         "llmVoice.highlight.mode": {
           "type": "string",
-          "enum": ["sentence", "block"],
+          "enum": [
+            "sentence",
+            "block"
+          ],
           "default": "sentence",
           "description": "Granularité du surlignage : phrase (lecture fidèle) ou bloc (narration transformée, CdC §15)."
         },
@@ -277,13 +523,18 @@
         },
         "llmVoice.network.trustedHosts": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": [],
           "description": "Hôtes explicitement autorisés lorsque `privacy.localOnly` est désactivé."
         },
         "llmVoice.ui.layout": {
           "type": "string",
-          "enum": ["minimal", "full"],
+          "enum": [
+            "minimal",
+            "full"
+          ],
           "default": "minimal",
           "description": "`minimal` (défaut) : status bar + Panel + CodeLens. `full` : View Container complet (ADR-011)."
         },
@@ -294,7 +545,12 @@
         },
         "llmVoice.log.level": {
           "type": "string",
-          "enum": ["error", "warn", "info", "debug"],
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug"
+          ],
           "default": "info",
           "description": "Niveau de journalisation de l'Output Channel « LLM Voice » (CdC §81). Aucun niveau ne journalise de clé API, contenu de document, réponse Claude ou audio (AC-SEC-07)."
         }
@@ -308,6 +564,7 @@
     "typecheck": "tsc -p ./ --noEmit",
     "test:unit": "vitest run --config vitest.config.ts",
     "test:integration-real": "vitest run --config vitest.integration-real.config.ts",
+    "test:integration-security": "npm run build && vscode-test --label integration-security",
     "bundle": "node scripts/esbuild.mjs",
     "generate:icon": "node scripts/generate-icon.mjs",
     "generate:profile-schema": "node scripts/generate-profile-schema.mjs",
@@ -316,7 +573,11 @@
     "build": "npm run compile && npm run generate:profile-schema && npm run copy:claude-integration && npm run bundle",
     "test:integration": "npm run build && vscode-test",
     "package": "npm run generate:icon && npm run build && vsce package --no-dependencies -o llm-voice.vsix",
-    "vscode:prepublish": "npm run build"
+    "vscode:prepublish": "npm run build",
+    "check:audit": "npm audit --omit=dev --audit-level=high",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "check:vsix": "npm run build && node scripts/check-vsix.mjs",
+    "check:security": "npm run check:audit && npm run check:licenses && npm run check:vsix"
   },
   "dependencies": {
     "mdast-util-to-string": "^4.0.0",
