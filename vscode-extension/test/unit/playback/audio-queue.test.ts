@@ -4,7 +4,9 @@ import {
   AudioQueue,
   InMemoryAudioCache,
   computeBackoffDelay,
-  computeCacheKey
+  computeCacheKey,
+  recommendedPrefetchChunks,
+  type ChunkTimingEvent
 } from "../../../src/playback/index.js";
 import { FakeTtsProvider } from "../../fakes/FakeTtsProvider.js";
 import { RecordingTtsProvider } from "./helpers.js";
@@ -119,6 +121,23 @@ describe("AudioQueue", () => {
     expect(first.status).toBe("ready");
     // Only chunk 0 was actually synthesised; chunk 1 came from the cache.
     expect(tts.texts).toEqual(["Texte 0."]);
+  });
+
+  it("restores durationMs/format on a cache hit (S6.2, AudioCacheStore.getMeta)", async () => {
+    const cache = new InMemoryAudioCache();
+    const key = computeCacheKey({ providerId: "fake-tts", spokenText: "Texte 1." });
+    await cache.put(key, new Uint8Array([1, 2, 3, 4]), { format: "wav", durationMs: 4242 });
+
+    const tts = new RecordingTtsProvider(new FakeTtsProvider());
+    const queue = new AudioQueue({ tts, cache });
+    queue.reset(chunks(2));
+
+    const second = await queue.waitFor(1);
+
+    expect(second.status).toBe("ready");
+    expect(second.format).toBe("wav");
+    expect(second.durationMs).toBe(4242);
+    expect(tts.callCount).toBe(1); // only chunk 0 hit the provider
   });
 
   it("reuses the audio of an identical spoken text across chunks", async () => {
@@ -504,5 +523,107 @@ describe("AudioQueue", () => {
 
     queue.dispose();
     expect(cache.isPinned(key)).toBe(false);
+  });
+});
+
+describe("recommendedPrefetchChunks (S6.2, CdC §32/§65)", () => {
+  it("recommends 2 at rtf <= 1 (matches CdC §32's default)", () => {
+    expect(recommendedPrefetchChunks(1)).toBe(2);
+    expect(recommendedPrefetchChunks(0.5)).toBe(2);
+    expect(recommendedPrefetchChunks(0.1)).toBe(2);
+  });
+
+  it("grows with rtf above 1 (ceil(rtf) + 1)", () => {
+    expect(recommendedPrefetchChunks(1.2)).toBe(3);
+    expect(recommendedPrefetchChunks(2)).toBe(3);
+    expect(recommendedPrefetchChunks(2.1)).toBe(4);
+  });
+
+  it("clamps to 10 for a pathologically slow provider", () => {
+    expect(recommendedPrefetchChunks(50)).toBe(10);
+  });
+
+  it("falls back to the default (2) for invalid input", () => {
+    expect(recommendedPrefetchChunks(0)).toBe(2);
+    expect(recommendedPrefetchChunks(-1)).toBe(2);
+    expect(recommendedPrefetchChunks(NaN)).toBe(2);
+  });
+});
+
+describe("AudioQueue.onChunkTiming (S6.2)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("reports a cache miss with a measured synthesisMs and the queue size", async () => {
+    const tts = new RecordingTtsProvider(new FakeTtsProvider({ latencyMs: 30 }));
+    const events: ChunkTimingEvent[] = [];
+    const queue = new AudioQueue(
+      { tts, cache: new InMemoryAudioCache() },
+      { onChunkTiming: (event) => events.push(event) }
+    );
+    queue.reset(chunks(3));
+
+    const first = queue.waitFor(0);
+    await vi.advanceTimersByTimeAsync(30);
+    await first;
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ index: 0, cacheHit: false, ready: true, queueSize: 3 });
+    expect(events[0]?.synthesisMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it("reports a cache hit with no synthesisMs", async () => {
+    const cache = new InMemoryAudioCache();
+    const key = computeCacheKey({ providerId: "fake-tts", spokenText: "Texte 0." });
+    await cache.put(key, new Uint8Array([1, 2, 3]));
+    const tts = new RecordingTtsProvider(new FakeTtsProvider());
+    const events: ChunkTimingEvent[] = [];
+    const queue = new AudioQueue({ tts, cache }, { onChunkTiming: (event) => events.push(event) });
+    queue.reset(chunks(1));
+
+    await queue.waitFor(0);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ index: 0, cacheHit: true, ready: true });
+    expect(events[0]?.synthesisMs).toBeUndefined();
+    expect(tts.callCount).toBe(0);
+  });
+
+  it("reports ready: false once a chunk is exhausted after maxRetries", async () => {
+    const tts = new RecordingTtsProvider(new FakeTtsProvider({ failFromNth: 1 }));
+    const events: ChunkTimingEvent[] = [];
+    const queue = new AudioQueue(
+      { tts, cache: new InMemoryAudioCache() },
+      { maxRetries: 0, retryJitterMs: 0, onChunkTiming: (event) => events.push(event) }
+    );
+    queue.reset(chunks(1));
+
+    const first = queue.waitFor(0);
+    await vi.advanceTimersByTimeAsync(0);
+    await first;
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ index: 0, cacheHit: false, ready: false });
+  });
+
+  it("never lets a throwing listener break synthesis", async () => {
+    const tts = new RecordingTtsProvider(new FakeTtsProvider());
+    const queue = new AudioQueue(
+      { tts, cache: new InMemoryAudioCache() },
+      {
+        onChunkTiming: () => {
+          throw new Error("boom");
+        }
+      }
+    );
+    queue.reset(chunks(1));
+
+    const result = await queue.waitFor(0);
+    expect(result.status).toBe("ready");
   });
 });

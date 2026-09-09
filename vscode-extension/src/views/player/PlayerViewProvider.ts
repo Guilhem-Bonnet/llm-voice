@@ -6,15 +6,7 @@
 
 import * as vscode from "vscode";
 import { WebviewAudioSink } from "../../playback/WebviewAudioSink.js";
-
-function getNonce(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let text = "";
-  for (let i = 0; i < 32; i++) {
-    text += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return text;
-}
+import { buildPlayerHtml, getNonce } from "./playerHtml.js";
 
 export class PlayerViewProvider implements vscode.WebviewViewProvider {
   static readonly viewType = "llmVoice.player";
@@ -84,66 +76,15 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
   }
 
   private renderHtml(webview: vscode.Webview): string {
-    const nonce = getNonce();
-    const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.extensionUri, "media", "player", "player.js")
-    );
-    const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.extensionUri, "media", "player", "player.css")
-    );
-    const csp = [
-      "default-src 'none'",
-      `media-src ${webview.cspSource} blob:`,
-      `script-src 'nonce-${nonce}'`,
-      `style-src ${webview.cspSource} 'nonce-${nonce}'`,
-      `font-src ${webview.cspSource}`,
-      `img-src ${webview.cspSource}`,
-      "connect-src 'none'"
-    ].join("; ");
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="${csp}" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="${styleUri.toString()}" rel="stylesheet" />
-  <title>LLM Voice Player</title>
-</head>
-<body data-state="idle">
-  <p id="welcome">Aucune lecture en cours&hellip;</p>
-
-  <div id="title-line" class="line">
-    <span id="title"></span>
-    <span id="profile"></span>
-  </div>
-
-  <div id="progress-line" class="line">
-    <div
-      id="progress-track"
-      role="slider"
-      tabindex="0"
-      aria-label="Progression de la lecture"
-      aria-valuemin="0"
-      aria-valuemax="0"
-      aria-valuenow="0"
-    >
-      <div id="progress-fill"></div>
-    </div>
-    <span id="time">00:00</span>
-  </div>
-
-  <div id="transport" class="line" role="toolbar" aria-label="Contrôles de lecture">
-    <button id="btn-prev" class="transport-button" type="button" aria-label="Segment précédent">⏮</button>
-    <button id="btn-play-pause" class="transport-button" type="button" aria-label="Lecture">▶</button>
-    <button id="btn-next" class="transport-button" type="button" aria-label="Segment suivant">⏭</button>
-    <button id="btn-stop" class="transport-button" type="button" aria-label="Arrêter">⏹</button>
-  </div>
-
-  <audio id="audio"></audio>
-
-  <script nonce="${nonce}" src="${scriptUri.toString()}"></script>
-</body>
-</html>`;
+    return buildPlayerHtml({
+      nonce: getNonce(),
+      cspSource: webview.cspSource,
+      scriptUri: webview
+        .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "media", "player", "player.js"))
+        .toString(),
+      styleUri: webview
+        .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "media", "player", "player.css"))
+        .toString()
+    });
   }
 }

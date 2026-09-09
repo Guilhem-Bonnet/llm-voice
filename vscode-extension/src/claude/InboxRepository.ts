@@ -21,6 +21,7 @@ import type {
   InboxStore
 } from "../core/inbox.js";
 import { InboxMessageSchema } from "../core/inbox.schema.js";
+import { isSafePathSegment } from "../core/safePath.js";
 import { InMemoryReadStateStore, type ReadStateStore } from "./ReadStateStore.js";
 
 const ARCHIVE_DIRNAME = "archive";
@@ -38,8 +39,17 @@ function idFor(fileName: string): string {
   return fileName.slice(0, -".json".length);
 }
 
+/**
+ * A `*.json` name we are willing to open, `.tmp-*` excluded (ADR-004).
+ *
+ * The stem must also be a safe path segment: `id` is derived from it and
+ * later fed back to `archive()`/`remove()` to rebuild a path. A directory
+ * entry literally named `..%2f….json` is not something the collector ever
+ * writes, so refusing it costs nothing and removes the only way an id can
+ * carry a separator (AC-SEC-03; failure museum, 2026-09-08).
+ */
 function isCandidateFile(fileName: string): boolean {
-  return fileName.endsWith(".json") && !fileName.startsWith(TMP_PREFIX);
+  return fileName.endsWith(".json") && !fileName.startsWith(TMP_PREFIX) && isSafePathSegment(idFor(fileName));
 }
 
 function classifyRejection(parsed: unknown): InboxRejectionReason {
@@ -119,11 +129,16 @@ export class InboxRepository implements InboxStore {
       }
       const fullPath = path.join(this.directory, fileName);
 
+      // `lstat`, not `stat` (S6.1 audit F-09): the inbox is written to by
+      // external processes, and a symlink named `<something>.json` pointing
+      // at a file outside the directory would otherwise be followed, read,
+      // and — if it happens to be valid JSON of our shape — spoken aloud.
+      // A symlink is not a regular file, so this drops it.
       let stat;
       try {
-        stat = await fs.stat(fullPath);
+        stat = await fs.lstat(fullPath);
       } catch {
-        continue; // removed between readdir() and stat(): not an error, just gone
+        continue; // removed between readdir() and lstat(): not an error, just gone
       }
       if (!stat.isFile()) {
         continue;
@@ -194,6 +209,12 @@ export class InboxRepository implements InboxStore {
   }
 
   private async resolveFileName(id: string): Promise<string> {
+    // `id` reaches `archive()`/`remove()` from a tree-view/command argument
+    // and is about to become a path segment: allowlist it before `path.join`
+    // ever sees it (AC-SEC-03).
+    if (!isSafePathSegment(id)) {
+      throw new Error(`InboxRepository: invalid message id`);
+    }
     const direct = `${id}.json`;
     try {
       await fs.access(path.join(this.directory, direct));

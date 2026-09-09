@@ -95,3 +95,24 @@
 **Impact** : aucun (corrigé avant merge).
 **Leçon** : tout identifiant venant d'un fichier externe passe par une allowlist stricte avant toute opération filesystem, avec un test d'attaque explicite.
 **Règle instaurée** : la revue Sentinel exécute un PoC pour chaque AC-SEC de type filesystem.
+
+### [2026-09-09] [vault] ARCH-MISTAKE — `apiKeyRef` d'un profil importé lisait n'importe quelle clé du SecretStorage
+**Ce qui s'est passé** : `Pipeline.ttsFor`/`narratorFor` passaient `profile.tts.apiKeyRef` tel quel à `context.secrets.get()`. Un profil importé pouvait donc nommer `llmVoice.apiKey.openai` tout en déclarant son propre `baseUrl` distant : la clé de l'utilisateur partait en `Bearer` chez l'attaquant. Trouvé en audit S6.1, jamais exploité.
+**Cause racine** : AC-SEC-05 (« valider le profil importé ») a été lu comme « valider les types », pas comme « valider les *références* ». Une chaîne validée par le schéma restait une capacité.
+**Impact** : aucun (corrigé avant la 0.1).
+**Leçon** : un champ de profil qui *désigne* une ressource (clé, chemin, URL) est une capacité, pas une donnée. Valider son format ne suffit pas — il faut vérifier que le porteur y a droit.
+**Règle instaurée** : toute référence portée par un fichier importable est liée à l'identité qui l'utilise (`apiKeyRef === apiKeySecretKey(providerId)`), et l'audit vérifie chaque champ « qui pointe vers quelque chose ».
+
+### [2026-09-09] [vault] WRONG-ASSUMPTION — `EgressGuard` résolvait le DNS puis laissait `fetch` le re-résoudre
+**Ce qui s'est passé** : ADR-010 annonce « résolution DNS avant connexion (anti rebinding — on ne fait confiance qu'à l'IP résolue) ». Le code résolvait bien, validait bien… puis passait le **nom** à `fetch`, qui refaisait sa propre résolution. Deux résolutions = la fenêtre TOCTOU que la garde prétendait fermer.
+**Cause racine** : la vérification et la connexion étaient écrites comme deux étapes indépendantes ; les tests unitaires validaient `assertAllowed` seul, jamais le couple.
+**Impact** : aucun (corrigé avant la 0.1).
+**Leçon** : une vérification qui ne contraint pas l'action qu'elle autorise n'est pas un contrôle. Le test doit observer l'**effet** (quelle adresse est réellement composée), pas la décision.
+**Règle instaurée** : `guardedFetch` compose l'URL avec l'adresse validée ; le test injecte un résolveur qui change de réponse au 2e appel et assert que le 2e appel n'a jamais lieu.
+
+### [2026-09-09] [vault] PROCESS-SKIP — une négation dans `.vscodeignore` a failli publier 130 fichiers de VS Code
+**Ce qui s'est passé** : en réécrivant `.vscodeignore`, l'ajout de `!**/*.d.ts` (censé préserver d'éventuelles définitions livrées) a ré-inclus tous les `.d.ts` du VS Code téléchargé dans `.vscode-test/`. Détecté par `scripts/check-vsix.mjs` écrit dix minutes plus tôt, pas à la relecture.
+**Cause racine** : `.vscodeignore` est une liste *deny* dans un monde *allow-by-default* ; une négation y ouvre un trou global, invisible tant que le dossier concerné n'existe pas.
+**Impact** : aucun (jamais publié).
+**Leçon** : ne jamais raisonner sur le contenu d'un paquet à partir du fichier d'exclusion — le vérifier sur la liste réelle, et sur une arborescence *après* un run de tests, pas sur un checkout propre.
+**Règle instaurée** : `npm run check:vsix` dans la checklist pre-push, et un test unitaire interdit toute ligne `!` dans `.vscodeignore`.

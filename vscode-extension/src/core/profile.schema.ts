@@ -6,6 +6,7 @@
 import { z } from "zod";
 
 import type { VoiceProfile } from "./profile.js";
+import { REFERENCE_AUDIO_PATTERN, SAFE_API_KEY_REF, rejectReferenceAudioPath } from "./safePath.js";
 import { CHATTERBOX_LOCAL_PRESET } from "../tts/presets.js";
 
 /** Chunk granularity accepted in a profile (CdC §33). */
@@ -44,16 +45,47 @@ const HttpUrlSchema = z
  * (`resolveTtsConfig`, `src/pipeline/resolveProviderConfig.ts`) — the setting
  * is the default, the profile can override it.
  */
+/**
+ * A `SecretStorage` key an imported profile is allowed to name (AC-SEC-08,
+ * S6.1 audit F-01): only `llmVoice.apiKey.<providerId>`, the shape
+ * `apiKeySecretKey()` writes. `Pipeline` additionally requires the ref to
+ * match the profile's own resolved `providerId` — this schema only keeps a
+ * profile from naming something outside the namespace at all.
+ */
+const ApiKeyRefSchema = z
+  .string()
+  .min(1)
+  .regex(SAFE_API_KEY_REF, { message: "apiKeyRef must be llmVoice.apiKey.<providerId>" });
+
+/**
+ * Voice-cloning reference sample (CdC §55). An imported profile's value is
+ * read from disk and uploaded to the TTS endpoint, so it is validated here
+ * before it can reach either — see `rejectReferenceAudioPath`.
+ */
+const ReferenceAudioSchema = z
+  .string()
+  .min(1)
+  // As a pattern *and* as a predicate: the pattern is what reaches the
+  // generated JSON Schema (editor-side validation of `profiles.json`), the
+  // predicate is what catches the rest (deceptive characters, length).
+  .regex(REFERENCE_AUDIO_PATTERN, { message: "referenceAudio must be an audio file" })
+  .superRefine((value, ctx) => {
+    const rejection = rejectReferenceAudioPath(value);
+    if (rejection !== undefined) {
+      ctx.addIssue({ code: "custom", message: `referenceAudio rejected: ${rejection}` });
+    }
+  });
+
 export const TtsBindingSchema = z.object({
   providerId: z.string().min(1).optional(),
   baseUrl: HttpUrlSchema.optional(),
   model: z.string().min(1).optional(),
   voice: z.string().min(1).optional(),
   format: z.string().min(1).optional(),
-  apiKeyRef: z.string().min(1).optional(),
+  apiKeyRef: ApiKeyRefSchema.optional(),
   parameters: z.record(z.string(), z.unknown()).optional(),
   /** Voice cloning reference sample, local path (CdC §55). Backward-compatible: optional. */
-  referenceAudio: z.string().min(1).optional()
+  referenceAudio: ReferenceAudioSchema.optional()
 });
 
 /**
@@ -67,7 +99,7 @@ export const NarratorBindingSchema = z.object({
   baseUrl: HttpUrlSchema.optional(),
   model: z.string().min(1).optional(),
   temperature: z.number().min(0).max(2).optional(),
-  apiKeyRef: z.string().min(1).optional()
+  apiKeyRef: ApiKeyRefSchema.optional()
 });
 
 /** Full profile schema, also exported as the JSON Schema attached to profiles.json. */
@@ -92,7 +124,11 @@ export const ProfileCollectionSchema = z.object({
 });
 
 /** Hostnames that are always loopback without any DNS resolution. */
-const LOOPBACK_HOSTNAMES = new Set(["localhost", "::1", "[::1]", "0.0.0.0"]);
+/** Hostnames that are always loopback without any DNS resolution.
+ *  `0.0.0.0` is deliberately *not* here (S6.1 audit F-11): it is the
+ *  unspecified address, `EgressGuard` refuses it, and listing it made the
+ *  🔒 badge claim "local" for a destination the guard would deny. */
+const LOOPBACK_HOSTNAMES = new Set(["localhost", "::1", "[::1]"]);
 
 /**
  * Pure, offline check that a URL points at the loopback interface.

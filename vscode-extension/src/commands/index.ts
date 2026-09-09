@@ -103,6 +103,7 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.setDefaultProfile", () => pipeline.setDefaultProfile()),
     vscode.commands.registerCommand("llmVoice.testVoice", () => pipeline.testVoice()),
     vscode.commands.registerCommand("llmVoice.providerStatus", () => pipeline.providerStatus()),
+    vscode.commands.registerCommand("llmVoice.performanceReport", () => pipeline.performanceReport()),
     vscode.commands.registerCommand("llmVoice.setProviderApiKey", () => pipeline.setProviderApiKey()),
     vscode.commands.registerCommand("llmVoice.clearProviderApiKey", () => pipeline.clearProviderApiKey()),
     vscode.commands.registerCommand("llmVoice.openInbox", () => pipeline.openInbox()),

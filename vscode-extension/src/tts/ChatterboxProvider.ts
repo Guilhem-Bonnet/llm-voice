@@ -37,8 +37,14 @@
  * `request.voice` as `predefined_voice_id`.
  */
 
-import { readFile } from "node:fs/promises";
-import { basename } from "node:path";
+import { lstat, readFile, realpath, stat } from "node:fs/promises";
+import { basename, extname } from "node:path";
+
+import {
+  MAX_REFERENCE_AUDIO_BYTES,
+  REFERENCE_AUDIO_EXTENSIONS,
+  isSafeReferenceAudioPath
+} from "../core/safePath.js";
 
 import type { ProviderHealth } from "../core/health.js";
 import type { AudioResult, TtsCapabilities, TtsParameterDescriptor, TtsRequest, Voice } from "../core/tts.js";
@@ -227,7 +233,10 @@ export class ChatterboxProvider extends OpenAICompatibleTtsProvider {
       ...(signal !== undefined ? { signal } : {})
     });
     if (!response.ok) {
-      throw new Error(`ChatterboxProvider: HTTP ${response.status} from ${this.baseUrl}/tts`);
+      // Endpoint label only (host + path): `baseUrl` may embed a userinfo
+      // segment carrying a secret, and this message reaches the Output
+      // Channel (S6.1 audit F-07).
+      throw new Error(`ChatterboxProvider: HTTP ${response.status} from ${this.endpointLabel("/tts")}`);
     }
     const buffer = await response.arrayBuffer();
     return { format: "wav", data: new Uint8Array(buffer) };
@@ -274,14 +283,62 @@ export class ChatterboxProvider extends OpenAICompatibleTtsProvider {
     return filename;
   }
 
+  /**
+   * Reads the reference sample, refusing anything that is not plainly an
+   * audio file (S6.1 audit F-03). `referenceAudio` comes from a profile,
+   * which may have been *imported* (AC-SEC-05) — without these checks,
+   * importing a profile is enough to have an arbitrary local file read and
+   * uploaded to the TTS endpoint. Four controls, in order:
+   *
+   *  1. the declared path passes `isSafeReferenceAudioPath` (audio
+   *     extension, no deceptive character) — already enforced by the schema
+   *     on import, re-checked here because a profile can also be
+   *     hand-edited in `profiles.json` after the fact;
+   *  2. the path is not a symlink to something else, and its `realpath`
+   *     still ends in an audio extension — a `voice.wav` symlink pointing
+   *     at `~/.ssh/id_rsa` is refused, not followed;
+   *  3. it is a regular file (not a fifo, device, or directory);
+   *  4. it is under `MAX_REFERENCE_AUDIO_BYTES`.
+   */
+  private async readReferenceAudio(filePath: string): Promise<Buffer> {
+    if (!isSafeReferenceAudioPath(filePath)) {
+      throw new Error(
+        `ChatterboxProvider: refusing reference audio "${basename(filePath)}" ` +
+          `(expected one of ${REFERENCE_AUDIO_EXTENSIONS.join(", ")})`
+      );
+    }
+    const link = await lstat(filePath);
+    if (link.isSymbolicLink()) {
+      const resolved = await realpath(filePath);
+      if (!REFERENCE_AUDIO_EXTENSIONS.includes(extname(resolved).toLowerCase())) {
+        throw new Error(
+          `ChatterboxProvider: refusing reference audio "${basename(filePath)}" — symlink to a non-audio file`
+        );
+      }
+    }
+    const target = await stat(filePath);
+    if (!target.isFile()) {
+      throw new Error(`ChatterboxProvider: reference audio "${basename(filePath)}" is not a regular file`);
+    }
+    if (target.size > MAX_REFERENCE_AUDIO_BYTES) {
+      throw new Error(
+        `ChatterboxProvider: reference audio "${basename(filePath)}" is ${target.size} bytes, ` +
+          `over the ${MAX_REFERENCE_AUDIO_BYTES} byte limit`
+      );
+    }
+    return readFile(filePath);
+  }
+
   /** `POST /upload_reference` (multipart/form-data, `files[]`) — verified in `/openapi.json`. */
   private async uploadReference(path: string, signal?: AbortSignal): Promise<string> {
     const filename = basename(path);
     let bytes: Buffer;
     try {
-      bytes = await readFile(path);
+      bytes = await this.readReferenceAudio(path);
     } catch (error) {
-      throw new Error(`ChatterboxProvider: cannot read reference audio "${path}": ${messageOf(error)}`);
+      // `basename` only: an absolute path is user-identifying and this
+      // message reaches the Output Channel (CdC §81).
+      throw new Error(`ChatterboxProvider: cannot read reference audio "${filename}": ${messageOf(error)}`);
     }
     const form = new FormData();
     form.append("files", new Blob([bytes]), filename);
@@ -296,7 +353,7 @@ export class ChatterboxProvider extends OpenAICompatibleTtsProvider {
     });
     if (!response.ok) {
       throw new Error(
-        `ChatterboxProvider: reference upload failed, HTTP ${response.status} from ${this.baseUrl}/upload_reference`
+        `ChatterboxProvider: reference upload failed, HTTP ${response.status} from ${this.endpointLabel("/upload_reference")}`
       );
     }
     return filename;

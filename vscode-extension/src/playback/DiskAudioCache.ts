@@ -134,6 +134,26 @@ export class DiskAudioCache implements AudioCacheStore {
     return dest;
   }
 
+  /**
+   * S6.2: restores the `format`/`durationMs`/`providerId` a previous `put()`
+   * recorded for `key`, for `AudioQueue`'s cache-hit path (`AudioCacheStore
+   * .getMeta`'s doc comment). `undefined` for a key that was never written,
+   * or whose sidecar is missing/corrupt — same "derived data, never fatal"
+   * posture as `readSidecar`'s other callers.
+   */
+  async getMeta(key: string): Promise<AudioCachePutMeta | undefined> {
+    await this.ready;
+    const meta = await this.readSidecar(key);
+    if (meta === undefined) {
+      return undefined;
+    }
+    return {
+      ...(meta.format !== undefined ? { format: meta.format } : {}),
+      ...(meta.durationMs !== undefined ? { durationMs: meta.durationMs } : {}),
+      ...(meta.providerId !== undefined ? { providerId: meta.providerId } : {})
+    };
+  }
+
   /** ADR-004 "referenced by a session in progress": never evicted while pinned. */
   pin(key: string): void {
     this.pinned.add(key);

@@ -12,3 +12,4 @@ export * from "./ChatterboxProvider.js";
 export * from "./KokoroProvider.js";
 export * from "./presets.js";
 export * from "./ProviderRegistry.js";
+export * from "./warmup.js";

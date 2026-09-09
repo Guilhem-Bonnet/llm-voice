@@ -38,6 +38,22 @@ const TMP_PREFIX = ".tmp-";
  * from ever escaping `inboxDir`.
  */
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
+/**
+ * Hard cap on one inbox entry (S6.1 audit F-13). The extension reads every
+ * inbox file into memory on each scan; a single 50 MB payload (a hook that
+ * dumped a whole build log into `last_assistant_message`) would make every
+ * refresh allocate 50 MB. Truncating keeps the entry usable and visibly
+ * marked, which is better than either writing it whole or dropping it.
+ */
+const MAX_MESSAGE_BYTES = 1024 * 1024;
+const TRUNCATION_NOTICE = "\n\n[LLM Voice] message tronqué : dépassait 1 Mio.";
+
+function capMessage(message) {
+  if (typeof message !== "string" || Buffer.byteLength(message, "utf8") <= MAX_MESSAGE_BYTES) {
+    return message;
+  }
+  return Buffer.from(message, "utf8").subarray(0, MAX_MESSAGE_BYTES).toString("utf8") + TRUNCATION_NOTICE;
+}
 
 function sanitizeSessionId(sessionId) {
   return typeof sessionId === "string" && SAFE_SESSION_ID.test(sessionId) ? sessionId : crypto.randomUUID();
@@ -83,8 +99,20 @@ function writeAtomic(inboxDir, entry) {
   const finalPath = path.join(inboxDir, fileName);
   const tmpPath = path.join(inboxDir, `${TMP_PREFIX}${fileName}`);
 
-  fs.writeFileSync(tmpPath, `${JSON.stringify(entry, null, 2)}\n`, { mode: 0o600 });
-  fs.renameSync(tmpPath, finalPath);
+  try {
+    fs.writeFileSync(tmpPath, `${JSON.stringify(entry, null, 2)}\n`, { mode: 0o600 });
+    fs.renameSync(tmpPath, finalPath);
+  } catch (error) {
+    // ENOSPC/EACCES mid-write would otherwise leave a `.tmp-` file behind
+    // forever — the watcher ignores it, but it still consumes the disk the
+    // write just ran out of (S6.1 audit F-13).
+    try {
+      fs.rmSync(tmpPath, { force: true });
+    } catch {
+      // Nothing more we can do; the caller reports the original failure.
+    }
+    throw error;
+  }
   fs.chmodSync(finalPath, 0o600);
 
   return finalPath;
@@ -153,7 +181,7 @@ function main() {
     sessionId: typeof args["session-id"] === "string" ? args["session-id"] : undefined,
     cwd: typeof args.cwd === "string" ? args.cwd : process.cwd(),
     title: typeof args.title === "string" ? args.title : undefined,
-    message
+    message: capMessage(message)
   });
 
   try {
