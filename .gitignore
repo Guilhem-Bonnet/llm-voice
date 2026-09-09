@@ -16,6 +16,8 @@ npm-debug.log*
 out/
 dist/
 *.vsix
+# Copied from integrations/claude-code/ at build time (npm run copy:claude-integration)
+vscode-extension/resources/claude-code/
 # Generated from src/core/profile.schema.ts (npm run generate:profile-schema)
 vscode-extension/schemas/
 

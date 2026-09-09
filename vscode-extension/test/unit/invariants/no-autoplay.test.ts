@@ -1,15 +1,16 @@
 /**
  * Invariant: `src/claude/**` and `src/inbox/**` (captured-agent-output
- * stories, not built yet) must never drive playback directly — starting a
- * session always goes through a command the user triggered (CdC §9's "always
- * user-initiated", ADR-001). A static grep, not a runtime assertion, so it
- * fails the moment such an import lands rather than depending on the feature
- * being exercised.
+ * sources, S5.1) must never drive playback directly — starting a session
+ * always goes through a command the user triggered (CdC §9's "always
+ * user-initiated", ADR-001, ADR-003's "zero autoplay"). A static grep, not a
+ * runtime assertion, so it fails the moment such an import lands rather than
+ * depending on the feature being exercised.
  *
- * `src/claude` and `src/inbox` do not exist as of S3.5: this test must still
- * pass, trivially, so it starts failing (not silently skips) the instant the
- * first file under either directory imports `PlaybackController` or calls a
- * `.start(`-shaped method.
+ * `src/claude/**` (S5.1: `InboxRepository`, `InboxWatcher`,
+ * `ClaudeInboxSource`, the Quick Pick/Tree View, the hook installer) is
+ * real, importable code as of this story; `src/inbox` still does not exist.
+ * Both cases must produce zero offenders either way — the second `it` below
+ * is what actually proves the invariant and never gets skipped.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -36,10 +37,9 @@ function listTsFiles(dir: string): string[] {
 }
 
 describe("invariant: zero autoplay from src/claude or src/inbox", () => {
-  it("does not exist yet, and this test still passes (trivial, not skipped)", () => {
-    for (const dirName of FORBIDDEN_DIRS) {
-      expect(existsSync(resolve(SRC_ROOT, dirName))).toBe(false);
-    }
+  it("src/claude exists (S5.1); src/inbox still does not — both are fine, grepped below", () => {
+    expect(existsSync(resolve(SRC_ROOT, "claude"))).toBe(true);
+    expect(existsSync(resolve(SRC_ROOT, "inbox"))).toBe(false);
   });
 
   it("never imports PlaybackController or calls .start(", () => {

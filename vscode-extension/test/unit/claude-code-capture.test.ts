@@ -63,4 +63,31 @@ describe("llm-voice-capture.js", () => {
       })
     ).not.toThrow();
   });
+
+  // AC-SEC-03: session_id comes straight from the hook payload (untrusted)
+  // and becomes a literal segment of the written file name. A traversal
+  // payload must never let the write escape inboxDir.
+  it("rejects a path-traversal session_id instead of embedding it in the file name", () => {
+    const parentDir = join(inboxDir, "..");
+    const markerBefore = readdirSync(parentDir).filter((name) => name.includes("pwned_marker"));
+
+    execFileSync("node", [scriptPath], {
+      input: JSON.stringify({
+        last_assistant_message: "malicious payload",
+        session_id: "/../../pwned_marker"
+      }),
+      env: { ...process.env, LLM_VOICE_INBOX: inboxDir }
+    });
+
+    const markerAfter = readdirSync(parentDir).filter((name) => name.includes("pwned_marker"));
+    expect(markerAfter).toEqual(markerBefore);
+
+    const files = readdirSync(inboxDir);
+    expect(files).toHaveLength(1);
+    expect(files[0]).not.toContain("..");
+    expect(files[0]).not.toContain("/");
+
+    const written = JSON.parse(readFileSync(join(inboxDir, files[0]!), "utf8"));
+    expect(written.sessionId).not.toMatch(/[./\\]/);
+  });
 });

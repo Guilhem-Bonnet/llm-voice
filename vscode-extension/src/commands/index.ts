@@ -103,6 +103,7 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.clearHighlight", () => highlight.clear()),
     vscode.commands.registerCommand("llmVoice.clearAudioCache", () => pipeline.clearAudioCache()),
     vscode.commands.registerCommand("llmVoice.verifyLocalMode", () => pipeline.verifyLocalMode()),
-    vscode.commands.registerCommand("llmVoice.installClaudeHook", () => pipeline.installClaudeHook())
+    vscode.commands.registerCommand("llmVoice.installClaudeHook", () => pipeline.installClaudeHook()),
+    vscode.commands.registerCommand("llmVoice.uninstallClaudeHook", () => pipeline.uninstallClaudeHook())
   ];
 }
