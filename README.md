@@ -1,67 +1,89 @@
-# LLM Voice
+# LLM Voice — Extension VS Code pour Narration Vocale
 
-Extension VS Code pour la narration vocale locale de documents Markdown et des
-réponses d'agents LLM (Claude Code, Codex, Gemini CLI, etc.), via un moteur
-TTS local (Chatterbox, Kokoro) et un narrateur optionnel (Ollama, llama.cpp,
-compatible OpenAI).
+Extension VS Code permettant de transformer en **contenu vocal naturel** documents Markdown, réponses d'agents LLM (Claude Code, Copilot), sélections de code, et contenu presse-papiers via un moteur TTS local (Chatterbox, Kokoro) et un narrateur optionnel (Ollama, llama.cpp).
 
-## Invariants
+```
+┌─────────────────────────────────┐
+│  📄 Document Markdown / Claude  │
+└────────────┬────────────────────┘
+             │
+             ▼
+     ┌──────────────────┐
+     │  Segmentation    │
+     └────────┬─────────┘
+              │
+             ▼
+    ┌─────────────────────┐
+    │ Profil (Voix/Prompt)│
+    └────────┬────────────┘
+             │
+             ▼
+    ┌─────────────────────┐
+    │ TTS Local 🔒        │
+    │ (Chatterbox/Kokoro) │
+    └────────┬────────────┘
+             │
+             ▼
+      ┌──────────────┐
+      │ 🔊 Lecture   │  [⏮ ▶️ ⏭ ■]
+      │ Surlignage   │  Professeur ▼
+      └──────────────┘
+```
 
-- **Zéro autoplay** : rien n'est jamais lu automatiquement, y compris le
-  contenu déposé par un hook d'agent dans l'inbox.
-- **Local-first** : le moteur TTS et le narrateur tournent sur `localhost`
-  par défaut ; tout hôte distant demande un consentement explicite.
-- **Provider agnostic** : un seul contrat `TtsProvider` pour le TTS local, un
-  serveur d'entreprise ou une API cloud compatible OpenAI.
-- **Linux first** : développé et testé en priorité sur Linux, avec support
-  Windows et macOS en CI.
+## ⚡ Essayer en 5 étapes
 
-## Essayer en 2 minutes
+1. **VSIX** : téléchargez `llm-voice-0.1.0.vsix` et `code --install-extension llm-voice-0.1.0.vsix`.
+2. **Ollama** (narrateur, optionnel) : `curl -fsSL https://ollama.ai/install.sh | sh && ollama pull mistral`.
+3. **Chatterbox** (TTS, recommandé) : `docker run -p 8004:8000 resemble-ai/chatterbox:latest --device cuda --language_id fr` (ou [docs/install-linux.md](docs/install-linux.md) pour ROCm/CPU).
+4. **VS Code** : ouvrez un `.md` et lancez **LLM Voice: Speak Document** (palette `Ctrl+Shift+P`).
+5. **Aucun serveur ?** `LLM_VOICE_TEST_FAKE_TTS=1` avant VS Code pour tester (pas de GPU requis).
 
-Voir [`docs/user-guide.md`](./docs/user-guide.md) pour le guide complet
-(installation, premier « Speak Document », profils, erreurs courantes,
-mode local). En bref :
+## 4 Profils par défaut
 
-1. Ouvrir `vscode-extension/` dans VS Code, `npm ci`, puis **F5** (Run
-   Extension) : une nouvelle fenêtre VS Code s'ouvre avec l'extension activée
-   en mode développement.
-2. Ouvrir un fichier `.md` (`vscode-extension/test/fixtures/markdown/short.md`
-   par exemple) et lancer **LLM Voice: Speak Document** (palette de commandes).
-3. Sans serveur TTS local, la commande affiche proprement « Chatterbox is
-   unavailable. » (Retry / Open provider settings) plutôt que de planter —
-   voir `docs/install-linux.md` et `docs/providers.md` pour installer
-   Chatterbox (recommandé) ou Kokoro (léger, sans GPU) en local.
-4. Pour entendre une lecture complète sans GPU, lancer avec
-   `LLM_VOICE_TEST_FAKE_TTS=1` dans l'environnement avant **F5** : l'extension
-   bascule alors sur `FakeTtsProvider` (audio silencieux généré localement) —
-   voir `vscode-extension/docs/testing.md`. C'est aussi le mode utilisé par la
-   suite d'intégration (`npm run test:integration`).
+| Profil | Voix | Narration | Usage |
+|--------|------|-----------|-------|
+| **Lecture fidèle** | Chatterbox native | ✗ | Lire tel quel |
+| **Professeur** | Teacher | ✓ Ollama (explique) | Concepts techniques |
+| **Résumé LLM** | Native | ✓ Ollama (résume) | Réponses Claude |
+| **Révision rapide** | Kokoro léger | ✓ Ollama (concis) | Réviser vite |
+
+Profils entièrement personnalisables : prompt, voix, vitesse, mode local/cloud.
+
+## Invariants fondamentaux
+
+- **Zéro autoplay** : rien ne parle automatiquement.
+- **Local-first** (🔒 Local) : tout reste sur votre machine par défaut.
+- **Provider agnostic** : contrat unique pour toute source et tout TTS.
+- **Linux d'abord** : validé Linux ; Windows/macOS CI non validés manuellement.
+
+## Documentation
+
+- **[docs/user-guide.md](docs/user-guide.md)** — installation complète, profils, FAQ.
+- **[docs/install-linux.md](docs/install-linux.md)** — VS Code, Ollama, Chatterbox.
+- **[docs/providers.md](docs/providers.md)** — contrats TTS/Narrator, presets.
+- **[docs/adr/](docs/adr/)** — 11 décisions architecturales.
+- **[docs/privacy.md](docs/privacy.md)** — confidentialité, mode local.
+- **[docs/security/local-mode.md](docs/security/local-mode.md)** — EgressGuard.
 
 ## État du projet
 
-Phase 5 en cours. Phases 3-4 livrées : slice vertical (sources, profils,
-pipeline source→segmentation→synthèse→lecteur→surlignage, cache disque LRU),
-providers TTS réels (`ChatterboxProvider`, `KokoroProvider`,
-`OpenAICompatibleTtsProvider`, `EgressGuard`/D10, `Verify Local Mode`) et
-narrateur (`OllamaNarrator`, `OpenAICompatibleNarrator`, mode dégradé
-ADR-005). Phase 5 : gestion d'erreurs UX (CdC §52), Output Channel avec
-journalisation redigée (CdC §81, AC-SEC-07), timeouts/anti-spam, guide
-utilisateur. Voir le cahier des charges complet et les décisions de cadrage :
+**Version 0.1.0** — MVP complet.
 
-- [`cahier-des-charges.md`](./cahier-des-charges.md)
-- [`docs/user-guide.md`](./docs/user-guide.md)
-- [`docs/adr/`](./docs/adr/) — décisions d'architecture (ADR-001..011)
-- [`_grimoire-output/planning-artifacts/`](./_grimoire-output/planning-artifacts/)
+- ✅ Slice vertical (source → TTS → lecteur → surlignage).
+- ✅ 4 profils, providers TTS réels, narrateur réel.
+- ✅ Inbox Claude Code passive.
+- ✅ Mode local + EgressGuard, gestion erreurs.
+- ✅ Tests complets (AC-01..17, AC-SEC-01..10).
+- ⚠️ Linux ✓ • Windows/macOS CI ⚠
 
-## Structure du repo
+## Commandes principales
 
-```
-vscode-extension/        # Extension VS Code (TypeScript)
-integrations/claude-code/ # Plugin et scripts d'intégration Claude Code
-docs/                     # Documentation
-.github/workflows/        # CI, release, CodeQL, Dependabot
-```
+`Speak Document` • `Speak Selection` • `Play`/`Pause`/`Stop` • `Select Profile` • `Verify Local Mode`
 
 ## Licence
 
-MIT — voir [`LICENSE`](./LICENSE).
+MIT — [LICENSE](LICENSE) — Voice : Chatterbox Multilingual V3 (Resemble AI, MIT).
+
+---
+
+**0.1.0** • [Cahier des charges](cahier-des-charges.md) • [Changelog](CHANGELOG.md) • [Traçabilité](docs/traceability.md)
