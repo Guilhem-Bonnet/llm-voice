@@ -40,6 +40,7 @@ export interface PipelineFacade {
   clearAudioCache(): Promise<void>;
   verifyLocalMode(): Promise<void>;
   installClaudeHook(): Promise<void>;
+  uninstallClaudeHook(): Promise<void>;
 }
 
 const NOT_WIRED_MESSAGE = "LLM Voice : pipeline non câblé (S3.5)";
@@ -137,6 +138,10 @@ export class NotWiredPipeline implements PipelineFacade {
   }
 
   installClaudeHook(): Promise<void> {
+    return this.notWired();
+  }
+
+  uninstallClaudeHook(): Promise<void> {
     return this.notWired();
   }
 

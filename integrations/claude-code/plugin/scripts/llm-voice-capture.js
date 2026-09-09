@@ -2,16 +2,24 @@
 "use strict";
 
 /**
- * LLM Voice — Claude Code capture script.
+ * LLM Voice — Claude Code capture script (ADR-003).
  *
  * Reads a Claude Code `Stop` hook payload from stdin, extracts
  * `last_assistant_message`, and writes it as a JSON entry into the LLM
  * Voice inbox. Writes are atomic (tmp file + rename) with 0600 permissions.
  *
+ * Deliberately self-contained (no `require()` outside Node core modules,
+ * no relative import): a Claude Code plugin install may copy only this
+ * `plugin/` directory, so nothing this script needs may live outside it —
+ * see `integrations/cli/llm-voice-inbox.js` for the open-CLI twin, which
+ * duplicates the same ~30 lines of write logic for the same reason
+ * (ADR-007: "un unique script Node cross-platform, auditable en une
+ * lecture", kept true for each independently-distributed artifact).
+ *
  * Contract: this script MUST NOT play any audio, MUST NOT throw an
  * uncaught exception, and MUST always exit 0 so it never blocks the
  * Claude Code session it is attached to. Failures are reported on stderr
- * only.
+ * only. `SubagentStop` is deliberately not wired to this script (ADR-003).
  */
 
 const fs = require("node:fs");
@@ -21,6 +29,21 @@ const crypto = require("node:crypto");
 
 const SCHEMA_VERSION = 1;
 const PROVIDER = "claude-code";
+/** ADR-004: `.tmp-` prefix, ignored by the extension's inbox watcher. */
+const TMP_PREFIX = ".tmp-";
+/**
+ * AC-SEC-03: `sessionId` becomes a literal segment of the written file
+ * name (`<capturedAt>-<sessionId>-<rand>.json`) and comes straight from
+ * the hook payload's `session_id` — untrusted input. Anything outside a
+ * conservative allowlist (in particular `/`, `\`, and `.`, which enables
+ * `..` traversal) is rejected rather than embedded, to keep `path.join()`
+ * from ever escaping `inboxDir`.
+ */
+const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
+
+function sanitizeSessionId(sessionId) {
+  return typeof sessionId === "string" && SAFE_SESSION_ID.test(sessionId) ? sessionId : crypto.randomUUID();
+}
 
 function readStdin() {
   try {
@@ -32,7 +55,7 @@ function readStdin() {
 
 function resolveInboxDir() {
   const override = process.env.LLM_VOICE_INBOX;
-  if (override && override.trim().length > 0) {
+  if (typeof override === "string" && override.trim().length > 0) {
     return override;
   }
   return path.join(os.homedir(), ".llm-voice", "inbox");
@@ -57,22 +80,31 @@ function buildEntry(payload) {
   return {
     schemaVersion: SCHEMA_VERSION,
     provider: PROVIDER,
-    sessionId: typeof payload?.session_id === "string" ? payload.session_id : null,
-    capturedAt: new Date().toISOString(),
+    // A missing/non-string/unsafe session id must never produce an entry
+    // the extension's Zod schema rejects, nor a path-traversal file name
+    // (AC-SEC-03): fall back to a fresh random one.
+    sessionId: sanitizeSessionId(payload?.session_id),
+    // Epoch milliseconds (ADR-003's canonical wire shape; also what the
+    // `<capturedAt>-<sessionId>-<rand>.json` file name is derived from).
+    capturedAt: Date.now(),
     cwd: typeof payload?.cwd === "string" ? payload.cwd : process.cwd(),
-    title: null,
     message
   };
 }
 
 function writeAtomic(inboxDir, entry) {
   fs.mkdirSync(inboxDir, { recursive: true, mode: 0o700 });
+  try {
+    fs.chmodSync(inboxDir, 0o700);
+  } catch {
+    // Best-effort: umask/Windows can make this a no-op.
+  }
 
-  const filename = `${entry.capturedAt.replace(/[:.]/g, "-")}-${crypto.randomUUID()}.json`;
-  const finalPath = path.join(inboxDir, filename);
-  const tmpPath = `${finalPath}.tmp`;
+  const fileName = `${entry.capturedAt}-${entry.sessionId}-${crypto.randomUUID()}.json`;
+  const finalPath = path.join(inboxDir, fileName);
+  const tmpPath = path.join(inboxDir, `${TMP_PREFIX}${fileName}`);
 
-  fs.writeFileSync(tmpPath, JSON.stringify(entry, null, 2), { mode: 0o600 });
+  fs.writeFileSync(tmpPath, `${JSON.stringify(entry, null, 2)}\n`, { mode: 0o600 });
   fs.renameSync(tmpPath, finalPath);
   fs.chmodSync(finalPath, 0o600);
 

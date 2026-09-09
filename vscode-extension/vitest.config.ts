@@ -19,7 +19,8 @@ export default defineConfig({
         "src/net/**/*.ts",
         "src/pipeline/**/*.ts",
         "src/narrator/**/*.ts",
-        "src/profiles/defaults*.ts"
+        "src/profiles/defaults*.ts",
+        "src/claude/**/*.ts"
       ],
       // Everything below imports `vscode` (directly or by re-exporting a
       // module that does) and therefore cannot run under plain-Node vitest —
@@ -28,7 +29,12 @@ export default defineConfig({
       exclude: [
         "src/playback/WebviewAudioSink.ts",
         "src/pipeline/Pipeline.ts",
-        "src/profiles/ProfileRepository.ts"
+        "src/profiles/ProfileRepository.ts",
+        "src/claude/GlobalStateReadStore.ts",
+        "src/claude/InboxQuickPick.ts",
+        "src/claude/InboxTreeProvider.ts",
+        "src/claude/InboxContentProvider.ts",
+        "src/claude/ClaudeHookCommand.ts"
       ],
       thresholds: {
         lines: 80
