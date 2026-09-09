@@ -88,3 +88,10 @@
 **Impact** : ~40 minutes et trois runs CI.
 **Leçon** : pour une URL assignée dans un webview, valider structurellement avec `new URL()` + allowlist protocole/hôte dès la première fois ; l'orchestrateur surveille les signatures d'échec des sous-agents.
 **Règle instaurée** : tout brief de revue impose « max 2 tentatives sur la même alerte, puis rapport ».
+
+### [2026-09-08] [backend-engineer] ARCH-MISTAKE — Traversée de chemin dans l'inbox livrée en PR
+**Ce qui s'est passé** : `InboxRepository` construisait un chemin à partir de `sessionId` sans allowlist ; un `sessionId` contenant `../` écrivait hors du dossier inbox (PoC réel par Sentinel).
+**Cause racine** : AC-SEC-03 était dans le brief mais l'auteur a testé la lecture, pas l'écriture avec un identifiant hostile.
+**Impact** : aucun (corrigé avant merge).
+**Leçon** : tout identifiant venant d'un fichier externe passe par une allowlist stricte avant toute opération filesystem, avec un test d'attaque explicite.
+**Règle instaurée** : la revue Sentinel exécute un PoC pour chaque AC-SEC de type filesystem.

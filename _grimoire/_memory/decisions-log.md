@@ -105,3 +105,8 @@
 - **Contexte** : PR #27, #28, #30 mergées ; 369 tests unit, 14 intégration, 5 E2E réels.
 - **Décision** : Chatterbox passe par `/tts` natif (le endpoint compatible OpenAI ignore la langue) ; clonage de voix par défaut avec référence SIWIS ; phase 5 = inbox Claude + hook, profils (Quick Pick, `profiles.json`), status bar complète, commande Provider Status ; phase 6 = hardening, latence, docs, VSIX 0.1.
 - **Agent** : concierge (Marcel)
+
+### [2026-09-08] Phase 5 livrée : inbox Claude, profils, erreurs ; AC-01..17 couverts
+- **Contexte** : PR #32, #33, #34 mergées ; 484 unit, 28 intégration, 5 E2E réels.
+- **Décision** : phase 6 = audit sécurité (Opus, `src/claude` + `src/net` + webview), latence Chatterbox, E2E manuel complet par l'utilisateur (hook réel, VSIX), docs, CHANGELOG, tag v0.1.0.
+- **Agent** : concierge (Marcel)
