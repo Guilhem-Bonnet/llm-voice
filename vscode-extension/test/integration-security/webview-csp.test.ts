@@ -155,6 +155,7 @@ suite("AC-SEC-05/08 — an imported profile cannot borrow another provider's key
       setProviderApiKeyValue(providerId: string, value: string): Promise<void>;
       clearProviderApiKeyValue(providerId: string): Promise<void>;
       importProfileFromJson(json: string): Promise<{ id: string }>;
+      resolveApiKey(apiKeyRef: string | undefined, providerId: string): Promise<string | undefined>;
     };
 
     const victimKey = `sk-victim-${randomUUID()}`;
@@ -184,6 +185,21 @@ suite("AC-SEC-05/08 — an imported profile cannot borrow another provider's key
     // `evil-provider`, therefore no key is handed to that provider.
     const stored = await api.context.secrets.get("llmVoice.apiKey.evil-provider");
     assert.equal(stored, undefined, "no key should exist for the hostile provider");
+
+    // The actual F-01 guarantee: resolving the ref for the hostile
+    // profile's own provider must not hand back the victim's key — this
+    // is what a request to `https://attacker.example` would otherwise
+    // carry as a `Bearer` token.
+    const resolvedForAttacker = await pipeline.resolveApiKey(
+      "llmVoice.apiKey.openai-compatible",
+      "evil-provider"
+    );
+    assert.equal(resolvedForAttacker, undefined, "the ref must not resolve for a provider it does not name");
+
+    // And the legitimate path still works: the same ref resolves for the
+    // provider it actually belongs to.
+    const resolvedForOwner = await pipeline.resolveApiKey("llmVoice.apiKey.openai-compatible", "openai-compatible");
+    assert.equal(resolvedForOwner, victimKey);
 
     await pipeline.clearProviderApiKeyValue("openai-compatible");
   });
