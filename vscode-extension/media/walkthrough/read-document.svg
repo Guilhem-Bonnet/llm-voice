@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" role="img" aria-label="Un document Markdown lu à voix haute, segment surligné">
+  <rect x="40" y="30" width="200" height="200" rx="10" fill="#24272E"/>
+  <rect x="64" y="56" width="120" height="12" rx="3" fill="#8A93A3"/>
+  <rect x="64" y="86" width="150" height="8" rx="3" fill="#5B6472"/>
+  <rect x="64" y="104" width="150" height="8" rx="3" fill="#5B6472"/>
+  <rect x="60" y="128" width="158" height="20" rx="4" fill="#2E6B57"/>
+  <rect x="64" y="134" width="146" height="8" rx="3" fill="#BFF3E3"/>
+  <rect x="64" y="162" width="150" height="8" rx="3" fill="#5B6472"/>
+  <rect x="64" y="180" width="120" height="8" rx="3" fill="#5B6472"/>
+
+  <!-- speaker + soundwave -->
+  <g transform="translate(270,108)">
+    <path d="M0 16 L16 16 L36 0 L36 48 L16 32 L0 32 Z" fill="#D7DBE3"/>
+    <path d="M46 8 Q60 24 46 40" stroke="#9FE3CD" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M56 -2 Q76 24 56 50" stroke="#9FE3CD" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  </g>
+</svg>

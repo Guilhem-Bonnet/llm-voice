@@ -12,6 +12,11 @@
     "url": "https://github.com/Guilhem-Bonnet/llm-voice.git",
     "directory": "vscode-extension"
   },
+  "bugs": {
+    "url": "https://github.com/Guilhem-Bonnet/llm-voice/issues"
+  },
+  "homepage": "https://github.com/Guilhem-Bonnet/llm-voice/blob/main/vscode-extension/README.md",
+  "qna": "marketplace",
   "engines": {
     "vscode": "^1.95.0",
     "node": ">=22"
@@ -22,6 +27,23 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "tts",
+    "text-to-speech",
+    "voice",
+    "narration",
+    "accessibility",
+    "markdown",
+    "claude",
+    "claude code",
+    "local-first",
+    "chatterbox",
+    "piper"
+  ],
+  "galleryBanner": {
+    "color": "#1E1E1E",
+    "theme": "dark"
+  },
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
@@ -35,6 +57,17 @@
       {
         "command": "llmVoice.speakDocument",
         "title": "LLM Voice: Speak Document",
+        "category": "LLM Voice",
+        "icon": "$(unmute)"
+      },
+      {
+        "command": "llmVoice.setupVoice",
+        "title": "LLM Voice: Setup Voice",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.walkthroughOpenExample",
+        "title": "LLM Voice: Open Walkthrough Example",
         "category": "LLM Voice"
       },
       {
@@ -245,6 +278,16 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "llmVoice.player",
+        "contents": "Aucune lecture en cours.\n[Choisir une voix](command:llmVoice.setupVoice)\n[Lire le document actuel](command:llmVoice.speakDocument)"
+      },
+      {
+        "view": "llmVoice.inboxView",
+        "contents": "Aucune réponse capturée.\n[Connecter Claude Code](command:llmVoice.installClaudeHook)"
+      }
+    ],
     "submenus": [
       {
         "id": "llmVoice.markdownContextMenu",
@@ -255,6 +298,10 @@
       "commandPalette": [
         {
           "command": "llmVoice.statusBar.openMenu",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.walkthroughOpenExample",
           "when": "false"
         },
         {
@@ -301,6 +348,13 @@
           "command": "llmVoice.speakDocument",
           "when": "resourceLangId == markdown",
           "group": "1_speak@4"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "llmVoice.speakDocument",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
         }
       ],
       "view/title": [
@@ -555,7 +609,64 @@
           "description": "Niveau de journalisation de l'Output Channel « LLM Voice » (CdC §81). Aucun niveau ne journalise de clé API, contenu de document, réponse Claude ou audio (AC-SEC-07)."
         }
       }
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "llmVoice.gettingStarted",
+        "title": "Démarrer avec LLM Voice",
+        "description": "Lisez vos documents Markdown et les réponses de vos agents LLM à voix haute, 100 % en local — quatre étapes pour être opérationnel.",
+        "steps": [
+          {
+            "id": "chooseVoice",
+            "title": "Choisir une voix",
+            "description": "LLM Voice fonctionne dès l'installation avec la voix de votre système, sans rien installer. Deux niveaux de meilleure qualité sont disponibles en option : Piper (local, léger) et Chatterbox (local, clonage de voix, nécessite Docker).\n[Choisir une voix](command:llmVoice.setupVoice)",
+            "media": {
+              "image": "media/walkthrough/choose-voice.svg",
+              "altText": "Trois niveaux de voix : système, Piper, Chatterbox"
+            },
+            "completionEvents": [
+              "onCommand:llmVoice.setupVoice"
+            ]
+          },
+          {
+            "id": "readDocument",
+            "title": "Lire un document",
+            "description": "Ouvrez un fichier Markdown et lancez la lecture : le segment en cours de lecture est surligné dans l'éditeur, et les contrôles de lecture apparaissent dans le mini-player.\n[Ouvrir l'exemple et lire](command:llmVoice.walkthroughOpenExample)",
+            "media": {
+              "image": "media/walkthrough/read-document.svg",
+              "altText": "Un document Markdown lu à voix haute, segment surligné"
+            },
+            "completionEvents": [
+              "onCommand:llmVoice.speakDocument"
+            ]
+          },
+          {
+            "id": "chooseProfile",
+            "title": "Choisir un profil",
+            "description": "Un profil fixe la voix, le provider TTS et le narrateur. Quatre profils sont fournis par défaut : Lecture fidèle, Professeur technique, Résumé LLM, Révision rapide.\n[Choisir un profil](command:llmVoice.selectProfile)",
+            "media": {
+              "image": "media/walkthrough/choose-profile.svg",
+              "altText": "Quatre profils de lecture au choix"
+            },
+            "completionEvents": [
+              "onCommand:llmVoice.selectProfile"
+            ]
+          },
+          {
+            "id": "connectClaude",
+            "title": "Optionnel : connecter Claude Code",
+            "description": "Capturez automatiquement les réponses de Claude Code dans une inbox dédiée, et écoutez-les au lieu de les lire.\n[Connecter Claude Code](command:llmVoice.installClaudeHook)",
+            "media": {
+              "image": "media/walkthrough/connect-claude.svg",
+              "altText": "Réponses de Claude Code capturées dans une inbox"
+            },
+            "completionEvents": [
+              "onCommand:llmVoice.installClaudeHook"
+            ]
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p ./ --noEmit false --outDir out",

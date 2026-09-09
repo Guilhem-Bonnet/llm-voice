@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" role="img" aria-label="Quatre profils de lecture au choix">
+  <rect x="30" y="40" width="160" height="60" rx="12" fill="#20486B"/>
+  <circle cx="58" cy="70" r="12" fill="#BFE0FF"/>
+  <text x="82" y="66" font-family="sans-serif" font-size="13" fill="#F3F4F6">Lecture fidèle</text>
+  <text x="82" y="82" font-family="sans-serif" font-size="10" fill="#9FC6E8">tel quel</text>
+
+  <rect x="210" y="40" width="160" height="60" rx="12" fill="#0E6B57"/>
+  <circle cx="238" cy="70" r="12" fill="#BFF3E3"/>
+  <text x="262" y="66" font-family="sans-serif" font-size="13" fill="#F3F4F6">Professeur</text>
+  <text x="262" y="82" font-family="sans-serif" font-size="10" fill="#9FE3CD">explique</text>
+
+  <rect x="30" y="120" width="160" height="60" rx="12" fill="#5A3D8A"/>
+  <circle cx="58" cy="150" r="12" fill="#E3D6FF"/>
+  <text x="82" y="146" font-family="sans-serif" font-size="13" fill="#F3F4F6">Résumé LLM</text>
+  <text x="82" y="162" font-family="sans-serif" font-size="10" fill="#D2BCF5">condense</text>
+
+  <rect x="210" y="120" width="160" height="60" rx="12" fill="#8A4B22"/>
+  <circle cx="238" cy="150" r="12" fill="#FFDCB8"/>
+  <text x="262" y="146" font-family="sans-serif" font-size="13" fill="#F3F4F6">Révision rapide</text>
+  <text x="262" y="162" font-family="sans-serif" font-size="10" fill="#F5C99A">concis</text>
+</svg>

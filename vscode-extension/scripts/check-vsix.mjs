@@ -48,7 +48,19 @@ const REQUIRED = [
   "dist/extension.js",
   "media/player/player.js",
   "media/player/player.css",
-  "schemas/profile-collection.schema.json"
+  "schemas/profile-collection.schema.json",
+  // S7.2: the extension's Marketplace page (README) and the two other
+  // files VS Code surfaces in the extension details view — a `.vscodeignore`
+  // that swallows any of these silently ships a blank "no README" page
+  // again (the real 0.1.0 user complaint this story fixes).
+  "README.md",
+  "CHANGELOG.md",
+  "LICENSE",
+  "media/walkthrough/exemple.md",
+  "media/walkthrough/choose-voice.svg",
+  "media/walkthrough/read-document.svg",
+  "media/walkthrough/choose-profile.svg",
+  "media/walkthrough/connect-claude.svg"
 ];
 
 const listed = execFileSync("npx", ["vsce", "ls", "--no-dependencies"], {
