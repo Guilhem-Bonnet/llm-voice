@@ -18,7 +18,7 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
       - uses: actions/setup-node@v4
@@ -28,4 +28,4 @@ jobs:
           cache-dependency-path: vscode-extension/package-lock.json
       - run: npm ci --prefix vscode-extension
       - run: npm run compile --prefix vscode-extension
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
