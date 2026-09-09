@@ -19,12 +19,28 @@ export interface PipelineFacade {
   previousSegment(): Promise<void>;
   nextSegment(): Promise<void>;
   selectProfile(): Promise<void>;
+  /** Non-interactive: selects a profile by id without a Quick Pick (CdC §47). */
+  selectProfileById(id: string): Promise<void>;
   openProfiles(): Promise<void>;
+  duplicateProfile(): Promise<void>;
+  deleteProfile(): Promise<void>;
+  importProfile(): Promise<void>;
+  exportProfile(): Promise<void>;
+  setDefaultProfile(): Promise<void>;
+  /** `LLM Voice: Test Voice` (CdC §50). */
+  testVoice(): Promise<void>;
+  /** `LLM Voice: Provider Status` (CdC §51). */
+  providerStatus(): Promise<void>;
+  /** `LLM Voice: Set Provider API Key` (AC-17). */
+  setProviderApiKey(): Promise<void>;
+  /** `LLM Voice: Clear Provider API Key` (AC-17). */
+  clearProviderApiKey(): Promise<void>;
   openInbox(): Promise<void>;
   speakLatestClaudeResponse(): Promise<void>;
   clearAudioCache(): Promise<void>;
   verifyLocalMode(): Promise<void>;
   installClaudeHook(): Promise<void>;
+  uninstallClaudeHook(): Promise<void>;
 }
 
 const NOT_WIRED_MESSAGE = "LLM Voice : pipeline non câblé (S3.5)";
@@ -61,7 +77,47 @@ export class NotWiredPipeline implements PipelineFacade {
     return this.notWired();
   }
 
+  selectProfileById(): Promise<void> {
+    return this.notWired();
+  }
+
   openProfiles(): Promise<void> {
+    return this.notWired();
+  }
+
+  duplicateProfile(): Promise<void> {
+    return this.notWired();
+  }
+
+  deleteProfile(): Promise<void> {
+    return this.notWired();
+  }
+
+  importProfile(): Promise<void> {
+    return this.notWired();
+  }
+
+  exportProfile(): Promise<void> {
+    return this.notWired();
+  }
+
+  setDefaultProfile(): Promise<void> {
+    return this.notWired();
+  }
+
+  testVoice(): Promise<void> {
+    return this.notWired();
+  }
+
+  providerStatus(): Promise<void> {
+    return this.notWired();
+  }
+
+  setProviderApiKey(): Promise<void> {
+    return this.notWired();
+  }
+
+  clearProviderApiKey(): Promise<void> {
     return this.notWired();
   }
 
@@ -82,6 +138,10 @@ export class NotWiredPipeline implements PipelineFacade {
   }
 
   installClaudeHook(): Promise<void> {
+    return this.notWired();
+  }
+
+  uninstallClaudeHook(): Promise<void> {
     return this.notWired();
   }
 

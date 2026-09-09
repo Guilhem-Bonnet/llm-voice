@@ -13,7 +13,14 @@ import {
 
 export type { StatusBarPlaybackState, StatusBarViewModel } from "./statusBarText.js";
 
-type QuickPickChoice = "resume" | "stop" | "selectProfile" | "openInbox";
+type QuickPickChoice =
+  | "resume"
+  | "pause"
+  | "stop"
+  | "selectProfile"
+  | "openInbox"
+  | "providerStatus"
+  | "verifyLocalMode";
 
 interface QuickPickItemWithChoice extends vscode.QuickPickItem {
   choice: QuickPickChoice;
@@ -52,11 +59,16 @@ export class StatusBar implements vscode.Disposable {
   }
 
   async openMenu(): Promise<void> {
+    const isPlaying = this.model.state === "playing";
     const items: QuickPickItemWithChoice[] = [
-      { label: "$(play) Reprendre", choice: "resume" },
+      isPlaying
+        ? { label: "$(debug-pause) Pause", choice: "pause" }
+        : { label: "$(play) Reprendre", choice: "resume" },
       { label: "$(debug-stop) Arrêter", choice: "stop" },
       { label: "$(mic) Changer de profil", choice: "selectProfile" },
-      { label: "$(inbox) Ouvrir l'inbox", choice: "openInbox" }
+      { label: "$(inbox) Ouvrir l'inbox", choice: "openInbox" },
+      { label: "$(pulse) Provider Status", choice: "providerStatus" },
+      { label: "$(shield) Verify Local Mode", choice: "verifyLocalMode" }
     ];
     const picked = await vscode.window.showQuickPick(items, {
       placeHolder: "LLM Voice"

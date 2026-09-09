@@ -34,6 +34,12 @@ export interface ExtensionTestApi {
   statusBar: StatusBar;
   pipeline: PipelineFacade;
   /**
+   * Test-only: lets integration tests assert on `SecretStorage`/`globalState`
+   * directly (AC-SEC-08 — a provider API key must live in `secrets` and
+   * never in `globalState`). Not a public extension API.
+   */
+  context: vscode.ExtensionContext;
+  /**
    * Only set when `LLM_VOICE_TEST_FAKE_TTS=1` was honoured (dev/test mode,
    * see `docs/testing.md`): the webview never decodes audio under `xvfb`, so
    * integration tests observe playback through this fake instead.
@@ -157,6 +163,9 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
       case "resume":
         void pipelineRef.current?.play();
         break;
+      case "pause":
+        void pipelineRef.current?.pause();
+        break;
       case "stop":
         void pipelineRef.current?.stop();
         break;
@@ -165,6 +174,12 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
         break;
       case "openInbox":
         void pipelineRef.current?.openInbox();
+        break;
+      case "providerStatus":
+        void pipelineRef.current?.providerStatus();
+        break;
+      case "verifyLocalMode":
+        void pipelineRef.current?.verifyLocalMode();
         break;
       default:
         break;
@@ -235,6 +250,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     player,
     statusBar,
     pipeline,
+    context,
     ...(testAudioSink !== undefined ? { audioSink: testAudioSink } : {}),
     ...(ttsProviderOverride !== undefined ? { ttsProvider: ttsProviderOverride } : {})
   };

@@ -25,7 +25,8 @@ export default defineConfig({
         // time); `notifications.ts` takes `vscode.window.show*Message` as an
         // injected parameter instead of importing it — both S5.3 (CdC §52,
         // §81), both testable in plain Node like everything else here.
-        "src/ui/notifications.ts"
+        "src/ui/notifications.ts",
+        "src/claude/**/*.ts"
       ],
       // Everything below imports `vscode` (directly or by re-exporting a
       // module that does) and therefore cannot run under plain-Node vitest —
@@ -34,7 +35,12 @@ export default defineConfig({
       exclude: [
         "src/playback/WebviewAudioSink.ts",
         "src/pipeline/Pipeline.ts",
-        "src/profiles/ProfileRepository.ts"
+        "src/profiles/ProfileRepository.ts",
+        "src/claude/GlobalStateReadStore.ts",
+        "src/claude/InboxQuickPick.ts",
+        "src/claude/InboxTreeProvider.ts",
+        "src/claude/InboxContentProvider.ts",
+        "src/claude/ClaudeHookCommand.ts"
       ],
       thresholds: {
         lines: 80

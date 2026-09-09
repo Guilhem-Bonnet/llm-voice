@@ -12,6 +12,16 @@
  * how verbose `debug` gets — `debug` only adds *more* fields, never *less*
  * redaction.
  *
+ * Two independent layers, not a duplicate of each other: `redact()` drops
+ * whole fields by name (works even for a secret this logger has never seen
+ * before) and runs on structured `meta` only; `trackSecret()` + the pure
+ * `redactSecrets` from `../core/redact.js` (AC-SEC-07/08, S5.2) substitute
+ * every occurrence of a *known* secret value (an API key entered via `Set
+ * Provider API Key`) anywhere in the final line, including free-text
+ * `message` strings a field-name check can't reach. Applied last, after
+ * `formatLine`, so it also catches a secret value that ended up inside
+ * `meta`.
+ *
  * `Logger`/`redact` take a duck-typed `LogSink` and only ever `import type`
  * `vscode` (erased at compile time), so both stay unit-testable in plain
  * Node — the same discipline as `src/core/*` and `src/net/EgressGuard.ts`
@@ -19,6 +29,7 @@
  */
 
 import type * as vscodeTypes from "vscode";
+import { redactSecrets } from "../core/redact.js";
 
 export type LogLevel = "error" | "warn" | "info" | "debug";
 
@@ -125,6 +136,8 @@ export interface LogSink {
 
 export class Logger {
   private level: LogLevel;
+  /** Values `redactSecrets` (`../core/redact.js`) substitutes out of every line (AC-SEC-07/08). */
+  private readonly knownSecrets = new Set<string>();
 
   constructor(
     private readonly sink: LogSink,
@@ -139,6 +152,19 @@ export class Logger {
 
   getLevel(): LogLevel {
     return this.level;
+  }
+
+  /**
+   * Registers a value (e.g. an API key just entered via `Set Provider API
+   * Key`, S5.2) for redaction in every log line from now on — defence in
+   * depth alongside `redact()`'s field-name dropping, for a secret that
+   * leaks into a free-text `message` or an unlisted field. A no-op for an
+   * empty string (never treated as "redact everything").
+   */
+  trackSecret(value: string): void {
+    if (value.length > 0) {
+      this.knownSecrets.add(value);
+    }
   }
 
   error(message: string, meta?: Record<string, unknown>): void {
@@ -161,7 +187,7 @@ export class Logger {
     if (LEVEL_RANK[level] > LEVEL_RANK[this.level]) {
       return;
     }
-    const line = formatLine(message, meta);
+    const line = redactSecrets(formatLine(message, meta), [...this.knownSecrets]);
     const native = this.sink[level];
     if (typeof native === "function") {
       native.call(this.sink, line);

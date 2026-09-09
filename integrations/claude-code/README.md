@@ -39,8 +39,16 @@ Hook"** retire uniquement cette entrée. Aucune édition silencieuse de
 
 ## Emplacement de l'inbox
 
-Par défaut : `~/.llm-voice/inbox/`. Surchargeable via la variable
-d'environnement `LLM_VOICE_INBOX`. Chaque fichier déposé respecte le schéma
+Résolu dans cet ordre : réglage `llmVoice.claude.inboxPath` (extension) >
+variable d'environnement `LLM_VOICE_INBOX` > `~/.llm-voice/inbox/` (ADR-004).
+Chaque fichier déposé respecte le schéma
 `{schemaVersion, provider, sessionId, capturedAt, cwd, title?, message}` et
 est écrit de façon atomique (fichier temporaire puis renommage) avec les
 permissions `0600`.
+
+## Autres agents (Codex, Gemini CLI, …)
+
+Le hook Claude Code n'est qu'une des façons d'alimenter l'inbox (ADR-007) :
+tout outil capable de lancer une commande peut utiliser la CLI ouverte
+[`integrations/cli/llm-voice-inbox.js`](../cli/llm-voice-inbox.js) — voir
+[`integrations/cli/README.md`](../cli/README.md).

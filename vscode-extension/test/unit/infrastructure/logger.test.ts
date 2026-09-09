@@ -130,4 +130,32 @@ describe("Logger", () => {
     logger.info("hello");
     expect(calls).toEqual([["info", "hello"]]);
   });
+
+  // AC-SEC-07/08 (S5.2 unification): trackSecret + core/redact.ts's
+  // redactSecrets catch a known secret value even in a free-text message
+  // or an unlisted meta field, on top of redact()'s field-name dropping.
+  it("trackSecret redacts a known secret value out of a free-text message", () => {
+    const sink = new RecordingSink();
+    const logger = new Logger(sink, "info");
+    logger.trackSecret("sk-tracked-secret");
+    logger.error(`request failed: Authorization: Bearer sk-tracked-secret`);
+    expect(sink.lines.join("\n")).not.toContain("sk-tracked-secret");
+    expect(sink.lines[0]).toContain("[REDACTED]");
+  });
+
+  it("trackSecret redacts a known secret value out of an unlisted meta field", () => {
+    const sink = new RecordingSink();
+    const logger = new Logger(sink, "info");
+    logger.trackSecret("sk-tracked-secret");
+    logger.info("provider health", { detail: "sk-tracked-secret rejected" });
+    expect(sink.lines.join("\n")).not.toContain("sk-tracked-secret");
+  });
+
+  it("an empty string tracked as a secret never redacts unrelated log lines", () => {
+    const sink = new RecordingSink();
+    const logger = new Logger(sink, "info");
+    logger.trackSecret("");
+    logger.info("hello world");
+    expect(sink.lines).toEqual(["[info] hello world"]);
+  });
 });

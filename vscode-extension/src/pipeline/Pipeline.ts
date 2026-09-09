@@ -22,6 +22,7 @@ import * as vscode from "vscode";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
 import type { VoiceProfile } from "../core/profile.js";
+import { isRemoteProfile } from "../core/profile.schema.js";
 import type { NarratorProvider } from "../core/narration.js";
 import type { ProviderHealth } from "../core/health.js";
 import type { TtsProvider } from "../core/tts.js";
@@ -43,7 +44,8 @@ import {
   verifyLocalMode as computeVerifyLocalMode,
   type EgressGuardHandle,
   type EgressMode,
-  type VerifyLocalModeInputs
+  type VerifyLocalModeInputs,
+  type VerifyLocalModeResult
 } from "../net/index.js";
 import { HighlightController } from "../highlight/HighlightController.js";
 import { PlayerViewProvider } from "../views/player/PlayerViewProvider.js";
@@ -54,9 +56,22 @@ import {
   notifyNarratorUnavailable,
   notifyTtsUnavailable
 } from "../ui/notifications.js";
+import { formatProviderHealthQuickPickItem, titleCaseProviderId } from "../ui/providerStatusText.js";
 import { ClipboardSource, MarkdownDocumentSource, TextSelectionSource, readCaptureRange } from "../sources/index.js";
-import { ProfileRepository } from "../profiles/index.js";
-import { createTtsProvider, InMemoryProviderRegistry, presetKindForProviderId } from "../tts/index.js";
+import {
+  ProfileRepository,
+  apiKeySecretKey,
+  collectRemoteProviderIds,
+  formatProfileQuickPickItem,
+  type BySourceSetting
+} from "../profiles/index.js";
+import {
+  createTtsProvider,
+  presetKindForProviderId,
+  probeHealth,
+  TtsProviderRegistry,
+  type HealthCheckable
+} from "../tts/index.js";
 import { createNarratorProvider } from "../narrator/index.js";
 import type { Logger } from "../infrastructure/logger.js";
 import type { PipelineFacade } from "../commands/PipelineFacade.js";
@@ -67,6 +82,19 @@ import {
   type NarratorSettings,
   type TtsSettings
 } from "./resolveProviderConfig.js";
+import type { InboxEntry } from "../core/inbox.js";
+import { ClaudeInboxSource } from "../claude/ClaudeInboxSource.js";
+import { GlobalStateReadStore } from "../claude/GlobalStateReadStore.js";
+import { InboxContentProvider, INBOX_CONTENT_SCHEME, inboxContentUri } from "../claude/InboxContentProvider.js";
+import { InboxRepository } from "../claude/InboxRepository.js";
+import { InboxTreeItem, InboxTreeProvider } from "../claude/InboxTreeProvider.js";
+import { InboxWatcher } from "../claude/InboxWatcher.js";
+import { showInboxQuickPick } from "../claude/InboxQuickPick.js";
+import { resolveInboxPath } from "../claude/resolveInboxPath.js";
+import {
+  installClaudeHook as runInstallClaudeHook,
+  uninstallClaudeHook as runUninstallClaudeHook
+} from "../claude/ClaudeHookCommand.js";
 
 /** Default `llmVoice.tts.readyTimeoutMs` (CdC §51's "Loading" health status):
  *  how long `start()` waits for a still-warming-up TTS server before
@@ -74,6 +102,24 @@ import {
 const DEFAULT_READY_TIMEOUT_MS = 30_000;
 /** Polling interval while `start()` waits on a `"Loading"` provider. */
 const READY_POLL_INTERVAL_MS = 500;
+
+/**
+ * Mirrors `package.json#llmVoice.testVoice.text`'s default (CdC §50's French
+ * example) — duplicated rather than read back from `package.json` at
+ * runtime, same tradeoff as `narrator.model`'s `qwen2.5:7b` default just
+ * above it.
+ */
+const DEFAULT_TEST_VOICE_TEXT =
+  "Bonjour. Voici un exemple de ma voix. Nous allons maintenant examiner un concept technique " +
+  "et voir comment l'expliquer clairement.";
+
+/** `LLM Voice: Provider Status` (CdC §51) reuses a probe for 30s before re-querying providers. */
+const HEALTH_CACHE_TTL_MS = 30_000;
+
+interface ProviderHealthEntry {
+  label: string;
+  health: ProviderHealth;
+}
 
 const DEFAULT_MARKDOWN_POLICY: MarkdownPolicy = {
   headings: "read",
@@ -155,12 +201,22 @@ export class Pipeline implements PipelineFacade {
   private readonly narratorProviderOverride: NarratorProvider | undefined;
 
   private readonly egress: EgressGuardHandle;
-  private readonly registry = new InMemoryProviderRegistry<TtsProvider>();
-  private readonly narratorRegistry = new InMemoryProviderRegistry<NarratorProvider>();
+  private readonly registry = new TtsProviderRegistry<TtsProvider>();
+  private readonly narratorRegistry = new TtsProviderRegistry<NarratorProvider>();
   private readonly diskCache: DiskAudioCache;
   private readonly profiles: ProfileRepository;
   private readonly controller: PlaybackController;
   private readonly sources: readonly SourceAdapter[];
+
+  // ADR-003/ADR-004/ADR-007/ADR-011 (S5.1): the open inbox. `inboxTreeView`
+  // and `inboxContentProviderRegistration` are `undefined` until they are
+  // registered in the constructor below; kept as fields so `dispose()` can
+  // tear them down deterministically.
+  private readonly inboxRepository: InboxRepository;
+  private readonly inboxWatcher: InboxWatcher;
+  private readonly inboxTreeProvider: InboxTreeProvider;
+  private inboxTreeView: vscode.TreeView<InboxTreeItem> | undefined;
+  private inboxContentProviderRegistration: vscode.Disposable | undefined;
 
   private currentUri: vscode.Uri | undefined;
   private currentProfileLabel = "—";
@@ -168,6 +224,8 @@ export class Pipeline implements PipelineFacade {
   private captureAbort: AbortController | undefined;
   /** CdC §52 "une seule notification par session par type" (anti-spam); reset in `start()`. */
   private readonly notificationGate = new NotificationGate();
+  private cachedLocalModeResult: VerifyLocalModeResult | undefined;
+  private healthCache: { entries: readonly ProviderHealthEntry[]; expiresAt: number } | undefined;
   /**
    * Set once "Read without narration" is chosen (CdC §52); every session
    * built after that point starts pre-forced to faithful reading, so the
@@ -213,13 +271,29 @@ export class Pipeline implements PipelineFacade {
 
     this.profiles = new ProfileRepository(this.context.globalStorageUri.fsPath, this.context.globalState);
 
-    this.sources = [new MarkdownDocumentSource(), new TextSelectionSource(), new ClipboardSource()];
+    this.inboxRepository = new InboxRepository({
+      directory: this.inboxDirectory(),
+      readState: new GlobalStateReadStore(this.context.globalState),
+      onWarning: (rejection) =>
+        this.output.warn("inbox entry ignored", { fileName: rejection.fileName, reason: rejection.reason })
+    });
+    this.inboxWatcher = new InboxWatcher({ directory: this.inboxRepository.directory });
+    this.inboxTreeProvider = new InboxTreeProvider(() => this.inboxRepository.list());
+    this.setupInbox();
+
+    this.sources = [
+      new MarkdownDocumentSource(),
+      new TextSelectionSource(),
+      new ClipboardSource(),
+      new ClaudeInboxSource(this.inboxRepository)
+    ];
 
     this.controller = new PlaybackController({
       cache: this.diskCache,
       onChunkError: (info) => this.handleChunkError(info),
       maxRetries: this.audioMaxRetries(),
-      timeoutMs: this.ttsTimeoutMs()
+      timeoutMs: this.ttsTimeoutMs(),
+      prefetchChunks: this.audioPrefetchChunks()
     });
     this.controller.onChunkChange((change) => {
       if (this.currentUri !== undefined) {
@@ -235,6 +309,17 @@ export class Pipeline implements PipelineFacade {
       this.pushPlayerState();
     });
     this.controller.onProgress(() => this.pushPlayerState());
+
+    // Recomputes the 🔒/☁ badge at startup and whenever a relevant setting
+    // changes (ADR-010/ADR-011: never a stale green from before the user
+    // flipped `privacy.localOnly` or edited a provider `baseUrl`).
+    this.context.subscriptions.push(
+      vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration("llmVoice")) {
+          void this.refreshLocalModeBadge();
+        }
+      })
+    );
 
     void this.initStatusBar();
   }
@@ -267,16 +352,44 @@ export class Pipeline implements PipelineFacade {
     return this.controller.getCurrentIndex();
   }
 
+  /**
+   * S5.1 (AC-12..15): a fresh disk scan, exactly what `openInbox()`/the Tree
+   * View read — no index, ADR-004. Not part of `PipelineFacade`; only
+   * `ExtensionTestApi` (dev/test mode) casts to reach it.
+   */
+  async listInboxEntriesForTest(): Promise<readonly InboxEntry[]> {
+    return this.inboxRepository.list();
+  }
+
+  /** S5.1 (AC-15): which profile the last `start()`/`startInternal()` call actually resolved. */
+  getCurrentProfileLabelForTest(): string {
+    return this.currentProfileLabel;
+  }
+
   // ------------------------------------------------------------- lifecycle
 
   dispose(): void {
     this.controller.dispose();
     this.captureAbort?.abort();
+    this.inboxWatcher.dispose();
+    this.inboxTreeProvider.dispose();
+    this.inboxTreeView?.dispose();
+    this.inboxContentProviderRegistration?.dispose();
   }
 
   // ---------------------------------------------------------------- start
 
   async start(captureContext: CaptureContext): Promise<void> {
+    return this.startInternal(captureContext);
+  }
+
+  /**
+   * `doc.sourceType` (S5.1/S5.2) resolves the per-source default profile
+   * via `llmVoice.profiles.bySource` (CdC §47, `resolveDefaultProfileId`)
+   * — e.g. a Claude Code inbox message defaults to "Résumé LLM" — falling
+   * back to the last-selected profile, then the collection default.
+   */
+  private async startInternal(captureContext: CaptureContext): Promise<void> {
     this.lastCaptureContext = captureContext;
     this.captureAbort?.abort();
     const abort = new AbortController();
@@ -291,7 +404,7 @@ export class Pipeline implements PipelineFacade {
       }
 
       const doc = await source.capture(captureContext, abort.signal);
-      const profile = await this.profiles.getSelected();
+      const profile = await this.profiles.getSelected(doc.sourceType, this.bySourceSettings());
       this.currentProfileLabel = profile.label;
       const segments = await this.buildSegments(doc, profile);
 
@@ -422,26 +535,258 @@ export class Pipeline implements PipelineFacade {
     const profiles = await this.profiles.list();
     const selected = await this.profiles.getSelected();
     const picked = await vscode.window.showQuickPick(
-      profiles.map((profile) => ({
-        label: profile.id === selected.id ? `$(check) ${profile.label}` : profile.label,
-        ...(profile.description !== undefined ? { description: profile.description } : {}),
-        id: profile.id
-      })),
+      profiles.map((profile) => formatProfileQuickPickItem(profile, profile.id === selected.id)),
       { placeHolder: "LLM Voice : choisir un profil" }
     );
     if (picked === undefined) {
       return;
     }
-    await this.profiles.select(picked.id);
-    const next = profiles.find((profile) => profile.id === picked.id);
-    if (next !== undefined) {
-      this.currentProfileLabel = next.label;
-      this.statusBar.update(this.statusBarModel(this.controller.getState()));
+    await this.selectProfileById(picked.id);
+  }
+
+  /** Non-interactive selection (CdC §47); also what `selectProfile`'s Quick Pick calls into. */
+  async selectProfileById(id: string): Promise<void> {
+    const profiles = await this.profiles.list();
+    const next = profiles.find((profile) => profile.id === id);
+    if (next === undefined) {
+      throw new Error(`LLM Voice : profil inconnu « ${id} ».`);
     }
+    await this.profiles.select(id);
+    this.currentProfileLabel = next.label;
+    await this.refreshLocalModeBadge();
   }
 
   async openProfiles(): Promise<void> {
     await this.profiles.openInEditor();
+  }
+
+  async duplicateProfile(): Promise<void> {
+    const picked = await this.pickProfile("LLM Voice : dupliquer quel profil ?");
+    if (picked === undefined) {
+      return;
+    }
+    const copy = await this.duplicateProfileById(picked.id);
+    void vscode.window.showInformationMessage(`LLM Voice : profil « ${copy.label} » créé.`);
+  }
+
+  /** Test-castable, non-interactive counterpart (`ProfileRepository.duplicate`). */
+  async duplicateProfileById(id: string): Promise<VoiceProfile> {
+    return this.profiles.duplicate(id);
+  }
+
+  async deleteProfile(): Promise<void> {
+    const picked = await this.pickProfile("LLM Voice : supprimer quel profil ?");
+    if (picked === undefined) {
+      return;
+    }
+    const confirm = await vscode.window.showWarningMessage(
+      `LLM Voice : supprimer le profil « ${picked.label} » ?`,
+      { modal: true },
+      "Supprimer"
+    );
+    if (confirm !== "Supprimer") {
+      return;
+    }
+    await this.deleteProfileById(picked.id);
+    void vscode.window.showInformationMessage("LLM Voice : profil supprimé.");
+  }
+
+  async deleteProfileById(id: string): Promise<void> {
+    await this.profiles.delete(id);
+  }
+
+  async setDefaultProfile(): Promise<void> {
+    const picked = await this.pickProfile("LLM Voice : profil par défaut");
+    if (picked === undefined) {
+      return;
+    }
+    await this.setDefaultProfileById(picked.id);
+    void vscode.window.showInformationMessage("LLM Voice : profil par défaut mis à jour.");
+  }
+
+  async setDefaultProfileById(id: string): Promise<void> {
+    await this.profiles.setDefault(id);
+  }
+
+  async importProfile(): Promise<void> {
+    const uris = await vscode.window.showOpenDialog({
+      canSelectMany: false,
+      filters: { JSON: ["json"] },
+      openLabel: "Importer"
+    });
+    const uri = uris?.[0];
+    if (uri === undefined) {
+      return;
+    }
+    try {
+      const bytes = await vscode.workspace.fs.readFile(uri);
+      const imported = await this.importProfileFromJson(Buffer.from(bytes).toString("utf8"));
+      if (isRemoteProfile(imported)) {
+        void vscode.window.showWarningMessage(
+          `LLM Voice : « ${imported.label} » pointe vers un provider distant (☁ Remote provider, AC-SEC-05).`
+        );
+      }
+      void vscode.window.showInformationMessage(`LLM Voice : profil « ${imported.label} » importé.`);
+    } catch (error) {
+      void vscode.window.showErrorMessage(`LLM Voice : import impossible — ${messageOf(error)}`);
+    }
+  }
+
+  /** Validates against `VoiceProfileSchema` before touching `profiles.json` (AC-SEC-05). */
+  async importProfileFromJson(json: string): Promise<VoiceProfile> {
+    return this.profiles.import(json);
+  }
+
+  async exportProfile(): Promise<void> {
+    const picked = await this.pickProfile("LLM Voice : exporter quel profil ?");
+    if (picked === undefined) {
+      return;
+    }
+    const json = await this.exportProfileToJson(picked.id);
+    const uri = await vscode.window.showSaveDialog({
+      filters: { JSON: ["json"] },
+      defaultUri: vscode.Uri.file(`${picked.id}.json`)
+    });
+    if (uri === undefined) {
+      return;
+    }
+    await vscode.workspace.fs.writeFile(uri, Buffer.from(json, "utf8"));
+    void vscode.window.showInformationMessage(`LLM Voice : profil exporté vers ${uri.fsPath}.`);
+  }
+
+  async exportProfileToJson(id: string): Promise<string> {
+    return this.profiles.export(id);
+  }
+
+  private async pickProfile(
+    placeHolder: string
+  ): Promise<{ id: string; label: string } | undefined> {
+    const profiles = await this.profiles.list();
+    return vscode.window.showQuickPick(
+      profiles.map((profile) => formatProfileQuickPickItem(profile, false)),
+      { placeHolder }
+    );
+  }
+
+  /** `LLM Voice: Test Voice` (CdC §50): faithful reading of a short reference text via the pipeline. */
+  async testVoice(): Promise<void> {
+    try {
+      const profile = await this.profiles.getSelected();
+      const text = vscode.workspace
+        .getConfiguration("llmVoice")
+        .get<string>("testVoice.text", DEFAULT_TEST_VOICE_TEXT);
+      const segments: SourceSegment[] = [
+        { id: "test-voice", type: "sentence", rawText: text, spokenText: text }
+      ];
+      // Forces faithful reading regardless of `profile.mode` — Test Voice is
+      // about the TTS engine's voice/speed/exaggeration, not the narrator.
+      const build = await buildSession(segments, profile, undefined, {});
+      const tts = await this.ttsFor(profile);
+      const sink = this.sinkOverride ?? this.player.audioSink;
+      this.currentProfileLabel = profile.label;
+      this.player.reveal();
+      await this.controller.start({ segments: build.segments, profile, tts, sink, sealed: true });
+    } catch (error) {
+      this.output.error("testVoice failed", { error: messageOf(error) });
+      void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
+    }
+  }
+
+  /** `LLM Voice: Provider Status` (CdC §51). */
+  async providerStatus(): Promise<void> {
+    const entries = await this.probeProviderHealth();
+    const items = entries.map(({ label, health }) => formatProviderHealthQuickPickItem(label, health));
+    await vscode.window.showQuickPick(items, { placeHolder: "LLM Voice : santé des providers" });
+  }
+
+  /**
+   * Probes the current profile's TTS (always) and narrator (when bound)
+   * providers, reusing the result for `HEALTH_CACHE_TTL_MS` unless `force`
+   * (the command itself always forces a fresh probe — "rafraîchi à
+   * l'ouverture", CdC §51 — the cache exists for cheaper, more frequent
+   * callers such as a future status-bar poll).
+   */
+  private async probeProviderHealth(force = true): Promise<readonly ProviderHealthEntry[]> {
+    const now = Date.now();
+    if (!force && this.healthCache !== undefined && this.healthCache.expiresAt > now) {
+      return this.healthCache.entries;
+    }
+    const profile = await this.profiles.getSelected();
+    const resolvedTts = resolveTtsConfig(profile.tts, this.ttsSettings());
+    const tts = await this.ttsFor(profile);
+    const providers: { label: string; provider: HealthCheckable }[] = [
+      { label: titleCaseProviderId(resolvedTts.providerId), provider: tts }
+    ];
+    if (profile.narrator !== undefined) {
+      const resolvedNarrator = resolveNarratorConfig(profile.narrator, this.narratorSettings());
+      const narrator = await this.narratorFor(profile);
+      if (resolvedNarrator !== undefined && narrator !== undefined) {
+        providers.push({ label: titleCaseProviderId(resolvedNarrator.providerId), provider: narrator });
+      }
+    }
+    const healths = await probeHealth(providers.map((entry) => entry.provider));
+    const entries: ProviderHealthEntry[] = providers.map((entry, index) => ({
+      label: entry.label,
+      health: healths[index] as ProviderHealth
+    }));
+    this.healthCache = { entries, expiresAt: now + HEALTH_CACHE_TTL_MS };
+    return entries;
+  }
+
+  /** Test hook: last `probeProviderHealth` result, without re-probing. */
+  getCachedProviderHealth(): readonly ProviderHealthEntry[] | undefined {
+    return this.healthCache?.entries;
+  }
+
+  // ---------------------------------------------------------------- secrets
+
+  /** `LLM Voice: Set Provider API Key` (AC-17). */
+  async setProviderApiKey(): Promise<void> {
+    const providerId = await this.pickRemoteProviderId("LLM Voice : provider distant");
+    if (providerId === undefined) {
+      return;
+    }
+    const value = await vscode.window.showInputBox({
+      prompt: `Clé API pour « ${providerId} »`,
+      password: true,
+      ignoreFocusOut: true
+    });
+    if (value === undefined || value.length === 0) {
+      return;
+    }
+    await this.setProviderApiKeyValue(providerId, value);
+    void vscode.window.showInformationMessage(`LLM Voice : clé API enregistrée pour « ${providerId} ».`);
+  }
+
+  /** Non-interactive: stores directly in `SecretStorage`, never `globalState` (AC-SEC-08). */
+  async setProviderApiKeyValue(providerId: string, value: string): Promise<void> {
+    this.output.trackSecret(value);
+    await this.context.secrets.store(apiKeySecretKey(providerId), value);
+  }
+
+  /** `LLM Voice: Clear Provider API Key` (AC-17). */
+  async clearProviderApiKey(): Promise<void> {
+    const providerId = await this.pickRemoteProviderId("LLM Voice : effacer la clé de quel provider ?");
+    if (providerId === undefined) {
+      return;
+    }
+    await this.clearProviderApiKeyValue(providerId);
+    void vscode.window.showInformationMessage(`LLM Voice : clé API effacée pour « ${providerId} ».`);
+  }
+
+  async clearProviderApiKeyValue(providerId: string): Promise<void> {
+    await this.context.secrets.delete(apiKeySecretKey(providerId));
+  }
+
+  private async pickRemoteProviderId(placeHolder: string): Promise<string | undefined> {
+    const profiles = await this.profiles.list();
+    const candidates = collectRemoteProviderIds(profiles);
+    return vscode.window.showQuickPick(candidates, { placeHolder });
+  }
+
+  /** `llmVoice.profiles.bySource` (CdC §47). */
+  private bySourceSettings(): BySourceSetting {
+    return vscode.workspace.getConfiguration("llmVoice").get<BySourceSetting>("profiles.bySource", {});
   }
 
   // ------------------------------------------------------------------ misc
@@ -453,6 +798,25 @@ export class Pipeline implements PipelineFacade {
 
   async verifyLocalMode(): Promise<void> {
     const profile = await this.profiles.getSelected();
+    const result = await this.computeLocalModeResult(profile);
+    this.statusBar.update(this.statusBarModel(this.controller.getState()));
+
+    const items = result.checks.map((check) => ({
+      label: `${check.status === "ok" ? "$(check)" : check.status === "warn" ? "$(warning)" : check.status === "unverifiable" ? "$(question)" : "$(error)"} ${check.label}`,
+      detail: check.detail
+    }));
+    await vscode.window.showQuickPick(items, {
+      placeHolder: result.badge === "local" ? "$(lock) Mode local vérifié" : "$(warning) Mode local non vérifié"
+    });
+  }
+
+  /**
+   * The ten ADR-010 checks for `profile`, cached in `cachedLocalModeResult`
+   * for the status bar badge (`statusBarModel`) — computed at startup and on
+   * every relevant configuration change (`refreshLocalModeBadge`), and
+   * whenever `verifyLocalMode()`/`selectProfileById` run.
+   */
+  private async computeLocalModeResult(profile: VoiceProfile): Promise<VerifyLocalModeResult> {
     const resolvedTts = resolveTtsConfig(profile.tts, this.ttsSettings());
     const resolvedNarrator = resolveNarratorConfig(profile.narrator, this.narratorSettings());
     const inputs: VerifyLocalModeInputs = {
@@ -468,36 +832,150 @@ export class Pipeline implements PipelineFacade {
       productionDependencies: Object.keys(packageJson.dependencies ?? {})
     };
     const result = computeVerifyLocalMode(inputs);
-    this.statusBar.update({ ...this.statusBarModel(this.controller.getState()), isLocalOnly: result.badge === "local" });
-
-    const items = result.checks.map((check) => ({
-      label: `${check.status === "ok" ? "$(check)" : check.status === "warn" ? "$(warning)" : check.status === "unverifiable" ? "$(question)" : "$(error)"} ${check.label}`,
-      detail: check.detail
-    }));
-    await vscode.window.showQuickPick(items, {
-      placeHolder: result.badge === "local" ? "$(lock) Mode local vérifié" : "$(warning) Mode local non vérifié"
-    });
+    this.cachedLocalModeResult = result;
+    return result;
   }
 
+  /** Recomputes the 🔒/☁ badge without opening the `Verify Local Mode` Quick Pick. */
+  private async refreshLocalModeBadge(): Promise<void> {
+    try {
+      const profile = await this.profiles.getSelected();
+      this.currentProfileLabel = profile.label;
+      await this.computeLocalModeResult(profile);
+    } catch (error) {
+      this.output.error("failed to refresh local mode badge", { error: messageOf(error) });
+    }
+    this.statusBar.update(this.statusBarModel(this.controller.getState()));
+  }
+
+  // ------------------------------------------------------------ inbox (S5.1)
+
+  /** `minimal` layout's entry point (ADR-011): Quick Pick over the inbox. */
   async openInbox(): Promise<void> {
-    await this.notWired("l'inbox (story ultérieure)");
+    await showInboxQuickPick(
+      () => this.inboxRepository.list(),
+      {
+        speak: async (entry) => this.speakInboxEntry(entry),
+        openFull: async (entry) => this.openInboxFullResponse(entry),
+        remove: async (entry) => {
+          await this.inboxRepository.remove(entry.id);
+          await this.refreshInbox();
+        },
+        toggleRead: async (entry) => {
+          await this.inboxRepository.markRead(entry.id, !entry.read);
+          await this.refreshInbox();
+        },
+        selectProfile: async () => this.selectProfile()
+      }
+    );
   }
 
+  /** CdC §47's per-source default profile, bound to `llmVoice.profiles.bySource`. */
   async speakLatestClaudeResponse(): Promise<void> {
-    await this.notWired("la lecture de la dernière réponse Claude (story ultérieure)");
+    const entries = await this.inboxRepository.list();
+    const latest = entries.find((entry) => entry.message.provider === "claude-code");
+    if (latest === undefined) {
+      void vscode.window.showInformationMessage("LLM Voice : aucune réponse Claude Code capturée pour le moment.");
+      return;
+    }
+    await this.speakInboxEntry(latest);
   }
 
   async installClaudeHook(): Promise<void> {
-    await this.notWired("l'installation du hook Claude Code (story ultérieure)");
+    await runInstallClaudeHook(this.context.extensionUri);
+  }
+
+  async uninstallClaudeHook(): Promise<void> {
+    await runUninstallClaudeHook();
+  }
+
+  /** Speaks one inbox entry (Quick Pick/Tree/`speakLatestClaudeResponse`), marking it read first — zero autoplay: only ever reached from a command the user triggered. */
+  private async speakInboxEntry(entry: InboxEntry): Promise<void> {
+    await this.inboxRepository.markRead(entry.id, true);
+    await this.refreshInbox();
+    await this.startInternal({ scope: "inbox-message", inboxMessageId: entry.id });
+  }
+
+  private async openInboxFullResponse(entry: InboxEntry): Promise<void> {
+    const document = await vscode.workspace.openTextDocument(inboxContentUri(entry.id));
+    await vscode.window.showTextDocument(document, { preview: true });
+    await this.inboxRepository.markRead(entry.id, true);
+    await this.refreshInbox();
+  }
+
+  /** `llmVoice.claude.inboxPath` > `LLM_VOICE_INBOX` > `~/.llm-voice/inbox/` (ADR-004). */
+  private inboxDirectory(): string {
+    const settingValue = vscode.workspace.getConfiguration("llmVoice").get<string>("claude.inboxPath", "");
+    return resolveInboxPath({ settingValue });
+  }
+
+  private async refreshInbox(): Promise<void> {
+    await this.inboxTreeProvider.refresh();
+    if (this.inboxTreeView !== undefined) {
+      const unread = this.inboxTreeProvider.unreadCount;
+      this.inboxTreeView.badge = unread > 0 ? { value: unread, tooltip: `${unread} message(s) non lu(s)` } : undefined;
+    }
+  }
+
+  private inboxEntryFromCommandArg(arg: unknown): InboxEntry | undefined {
+    if (arg instanceof InboxTreeItem) {
+      return arg.entry;
+    }
+    return arg as InboxEntry | undefined;
+  }
+
+  /**
+   * Registers the Tree View (`full` layout, ADR-011), the `llm-voice-inbox:`
+   * content provider, and the `llmVoice.inbox.*` commands; starts the
+   * watcher. `InboxWatcher.onChange` only ever calls `refreshInbox()` — it
+   * never reaches `startInternal`/`PlaybackController` (zero autoplay,
+   * ADR-003).
+   */
+  private setupInbox(): void {
+    const contentProvider = new InboxContentProvider(this.inboxRepository);
+    this.inboxContentProviderRegistration = vscode.workspace.registerTextDocumentContentProvider(
+      INBOX_CONTENT_SCHEME,
+      contentProvider
+    );
+
+    this.inboxTreeView = vscode.window.createTreeView("llmVoice.inboxView", {
+      treeDataProvider: this.inboxTreeProvider
+    });
+
+    this.context.subscriptions.push(
+      vscode.commands.registerCommand("llmVoice.inbox.refresh", () => void this.refreshInbox()),
+      vscode.commands.registerCommand("llmVoice.inbox.speak", (arg?: unknown) => {
+        const entry = this.inboxEntryFromCommandArg(arg);
+        if (entry !== undefined) {
+          void this.speakInboxEntry(entry);
+        }
+      }),
+      vscode.commands.registerCommand("llmVoice.inbox.openFull", (arg?: unknown) => {
+        const entry = this.inboxEntryFromCommandArg(arg);
+        if (entry !== undefined) {
+          void this.openInboxFullResponse(entry);
+        }
+      }),
+      vscode.commands.registerCommand("llmVoice.inbox.delete", (arg?: unknown) => {
+        const entry = this.inboxEntryFromCommandArg(arg);
+        if (entry !== undefined) {
+          void this.inboxRepository.remove(entry.id).then(() => this.refreshInbox());
+        }
+      }),
+      vscode.commands.registerCommand("llmVoice.inbox.markRead", (arg?: unknown) => {
+        const entry = this.inboxEntryFromCommandArg(arg);
+        if (entry !== undefined) {
+          void this.inboxRepository.markRead(entry.id, !entry.read).then(() => this.refreshInbox());
+        }
+      })
+    );
+
+    this.inboxWatcher.onChange(() => void this.refreshInbox());
+    this.inboxWatcher.start();
+    void this.refreshInbox();
   }
 
   // --------------------------------------------------------------- internals
-
-  private async notWired(feature: string): Promise<void> {
-    const message = `LLM Voice : ${feature} n'est pas encore câblée.`;
-    this.output.info(message);
-    void vscode.window.showInformationMessage(message);
-  }
 
   private async ttsFor(profile: VoiceProfile): Promise<TtsProvider> {
     if (this.ttsProviderOverride !== undefined) {
@@ -520,6 +998,9 @@ export class Pipeline implements PipelineFacade {
     }
     const apiKey =
       profile.tts.apiKeyRef !== undefined ? await this.context.secrets.get(profile.tts.apiKeyRef) : undefined;
+    if (apiKey !== undefined) {
+      this.output.trackSecret(apiKey);
+    }
     // ADR-005/D9: `providerId` picks the class (Chatterbox/Kokoro get their
     // engine-specific parameters, CdC §28), never anything but `baseUrl` +
     // an id string — `presetKindForProviderId` is the single place that maps
@@ -592,6 +1073,9 @@ export class Pipeline implements PipelineFacade {
       profile.narrator?.apiKeyRef !== undefined
         ? await this.context.secrets.get(profile.narrator.apiKeyRef)
         : undefined;
+    if (apiKey !== undefined) {
+      this.output.trackSecret(apiKey);
+    }
     const provider = createNarratorProvider({
       id: key,
       providerId: resolved.providerId,
@@ -650,6 +1134,11 @@ export class Pipeline implements PipelineFacade {
   /** `llmVoice.audio.maxRetries` (default 2, CdC §52 "Chunk TTS invalide"). */
   private audioMaxRetries(): number {
     return vscode.workspace.getConfiguration("llmVoice").get<number>("audio.maxRetries", 2);
+  }
+
+  /** `llmVoice.audio.prefetchChunks` (CdC §32/§48): chunks synthesised ahead of playback. */
+  private audioPrefetchChunks(): number {
+    return vscode.workspace.getConfiguration("llmVoice").get<number>("audio.prefetchChunks", 2);
   }
 
   /**
@@ -761,21 +1250,17 @@ export class Pipeline implements PipelineFacade {
   }
 
   private async initStatusBar(): Promise<void> {
-    try {
-      const profile = await this.profiles.getSelected();
-      this.currentProfileLabel = profile.label;
-      this.statusBar.update(this.statusBarModel("idle"));
-    } catch (error) {
-      this.output.error("failed to load default profile", { error: messageOf(error) });
-    }
+    await this.refreshLocalModeBadge();
   }
 
   private statusBarModel(state: string): StatusBarViewModel {
+    const remoteCheck = this.cachedLocalModeResult?.checks.find((check) => check.id === 1 || check.id === 2);
     return {
       state: toStatusBarState(state),
       profileLabel: this.currentProfileLabel,
       positionMs: this.controller.getPositionMs(),
-      isLocalOnly: this.egressMode() === "local"
+      isLocalOnly: this.cachedLocalModeResult?.badge === "local",
+      isRemoteProvider: remoteCheck?.status === "fail"
     };
   }
 

@@ -32,6 +32,18 @@ describe("formatStatusBarText", () => {
     );
   });
 
+  it("renders $(cloud) when a remote provider is active and local mode isn't verified", () => {
+    expect(formatStatusBarText({ ...base, isLocalOnly: false, isRemoteProvider: true })).toBe(
+      "$(cloud) Professeur technique"
+    );
+  });
+
+  it("prefers $(lock) over $(cloud) when both are somehow true", () => {
+    expect(formatStatusBarText({ ...base, isLocalOnly: true, isRemoteProvider: true })).toBe(
+      "$(lock) Professeur technique"
+    );
+  });
+
   it("renders the playing text with elapsed time (ADR-011)", () => {
     expect(
       formatStatusBarText({ ...base, state: "playing", positionMs: 192000 })
