@@ -41,30 +41,50 @@ function activeEditorContext(): Pick<CaptureContext, "uri" | "languageId"> {
 export function registerCommands(deps: CommandDependencies): vscode.Disposable[] {
   const { pipeline, highlight, player } = deps;
 
+  const runCapture = async (
+    scope: CaptureScope,
+    extra: Partial<CaptureContext> = {}
+  ): Promise<void> => {
+    const context: CaptureContext = {
+      scope,
+      ...activeEditorContext(),
+      ...extra
+    };
+    player.reveal();
+    await pipeline.start(context);
+  };
+
   const startCapture = (
     scope: CaptureScope,
     buildExtra: () => Partial<CaptureContext> = () => ({})
   ) => {
     return async (): Promise<void> => {
-      const context: CaptureContext = {
-        scope,
-        ...activeEditorContext(),
-        ...buildExtra()
-      };
-      player.reveal();
-      await pipeline.start(context);
+      await runCapture(scope, buildExtra());
     };
   };
 
   return [
     vscode.commands.registerCommand("llmVoice.speakDocument", startCapture("document")),
-    vscode.commands.registerCommand(
-      "llmVoice.speakSelection",
-      startCapture("selection", () => {
-        const editor = vscode.window.activeTextEditor;
-        return editor ? { selection: selectionToSourceRange(editor.selection) } : {};
-      })
-    ),
+    vscode.commands.registerCommand("llmVoice.speakSelection", async () => {
+      const editor = vscode.window.activeTextEditor;
+      // No silent no-op (S7.3): an empty selection used to build a
+      // zero-width `SourceRange` that always ended up matching zero
+      // segments — `startInternal` messages that ("rien à lire pour cette
+      // sélection") but only *after* opening the player and briefly showing
+      // "preparing". Catching it here, before capture even starts, offers
+      // the document instead of just reporting the empty result.
+      if (editor === undefined || editor.selection.isEmpty) {
+        const choice = await vscode.window.showInformationMessage(
+          "LLM Voice : aucune sélection. Lire le document entier ?",
+          "Lire le document"
+        );
+        if (choice === "Lire le document") {
+          await runCapture("document");
+        }
+        return;
+      }
+      await runCapture("selection", { selection: selectionToSourceRange(editor.selection) });
+    }),
     vscode.commands.registerCommand(
       "llmVoice.speakFromCursor",
       startCapture("from-cursor", () => {
@@ -90,6 +110,7 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
       await pipeline.start(context);
     }),
     vscode.commands.registerCommand("llmVoice.play", () => pipeline.play()),
+    vscode.commands.registerCommand("llmVoice.playPause", () => pipeline.playPause()),
     vscode.commands.registerCommand("llmVoice.pause", () => pipeline.pause()),
     vscode.commands.registerCommand("llmVoice.stop", () => pipeline.stop()),
     vscode.commands.registerCommand("llmVoice.previousSegment", () => pipeline.previousSegment()),
@@ -110,8 +131,36 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.speakLatestClaudeResponse", () =>
       pipeline.speakLatestClaudeResponse()
     ),
-    vscode.commands.registerCommand("llmVoice.clearHighlight", () => highlight.clear()),
-    vscode.commands.registerCommand("llmVoice.clearAudioCache", () => pipeline.clearAudioCache()),
+    vscode.commands.registerCommand("llmVoice.clearHighlight", () => {
+      // No silent no-op (S7.3): only the *active* editor is checked — good
+      // enough to answer "was there anything visibly highlighted here?"
+      // without adding a query surface to `HighlightController` (owned by
+      // the parallel highlight story).
+      const editor = vscode.window.activeTextEditor;
+      const ranges = editor ? highlight.getRanges(editor.document.uri) : undefined;
+      const hadHighlight = ranges !== undefined && (ranges.current.length > 0 || ranges.stale.length > 0);
+      highlight.clear();
+      if (!hadHighlight) {
+        void vscode.window.showInformationMessage("LLM Voice : aucun surlignage à effacer.");
+      }
+    }),
+    vscode.commands.registerCommand("llmVoice.clearAudioCache", async () => {
+      // Confirmation lives here, not in `Pipeline.clearAudioCache()`: that
+      // method is also called directly, non-interactively, by integration
+      // tests resetting the disk cache between cases (a confirm dialog
+      // there would hit test-electron's `DialogService`, which refuses
+      // modals under test and throws). `Pipeline.clearAudioCache()` still
+      // reports "déjà vide"/the freed space either way.
+      const confirmed = await vscode.window.showWarningMessage(
+        "LLM Voice : vider le cache audio ?",
+        { modal: true },
+        "Vider le cache"
+      );
+      if (confirmed !== "Vider le cache") {
+        return;
+      }
+      await pipeline.clearAudioCache();
+    }),
     vscode.commands.registerCommand("llmVoice.verifyLocalMode", () => pipeline.verifyLocalMode()),
     vscode.commands.registerCommand("llmVoice.installClaudeHook", () => pipeline.installClaudeHook()),
     vscode.commands.registerCommand("llmVoice.uninstallClaudeHook", () => pipeline.uninstallClaudeHook())

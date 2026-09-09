@@ -63,24 +63,33 @@
         "category": "LLM Voice"
       },
       {
+        "command": "llmVoice.playPause",
+        "title": "LLM Voice: Play/Pause",
+        "category": "LLM Voice"
+      },
+      {
         "command": "llmVoice.pause",
         "title": "LLM Voice: Pause",
-        "category": "LLM Voice"
+        "category": "LLM Voice",
+        "enablement": "llmVoice.state == 'playing'"
       },
       {
         "command": "llmVoice.stop",
         "title": "LLM Voice: Stop",
-        "category": "LLM Voice"
+        "category": "LLM Voice",
+        "enablement": "llmVoice.state != 'idle'"
       },
       {
         "command": "llmVoice.previousSegment",
         "title": "LLM Voice: Previous Segment",
-        "category": "LLM Voice"
+        "category": "LLM Voice",
+        "enablement": "llmVoice.state != 'idle'"
       },
       {
         "command": "llmVoice.nextSegment",
         "title": "LLM Voice: Next Segment",
-        "category": "LLM Voice"
+        "category": "LLM Voice",
+        "enablement": "llmVoice.state != 'idle'"
       },
       {
         "command": "llmVoice.selectProfile",
@@ -336,32 +345,38 @@
     "keybindings": [
       {
         "key": "ctrl+alt+v d",
-        "command": "llmVoice.speakDocument"
+        "command": "llmVoice.speakDocument",
+        "when": "editorTextFocus && !terminalFocus"
       },
       {
         "key": "ctrl+alt+v s",
         "command": "llmVoice.speakSelection",
-        "when": "editorHasSelection"
+        "when": "editorTextFocus && editorHasSelection && !terminalFocus"
       },
       {
         "key": "ctrl+alt+v c",
-        "command": "llmVoice.speakClipboard"
+        "command": "llmVoice.speakClipboard",
+        "when": "!terminalFocus"
       },
       {
         "key": "ctrl+alt+v space",
-        "command": "llmVoice.play"
+        "command": "llmVoice.playPause",
+        "when": "!terminalFocus"
       },
       {
         "key": "ctrl+alt+v x",
-        "command": "llmVoice.stop"
+        "command": "llmVoice.stop",
+        "when": "!terminalFocus"
       },
       {
         "key": "ctrl+alt+v n",
-        "command": "llmVoice.nextSegment"
+        "command": "llmVoice.nextSegment",
+        "when": "!terminalFocus"
       },
       {
         "key": "ctrl+alt+v p",
-        "command": "llmVoice.previousSegment"
+        "command": "llmVoice.previousSegment",
+        "when": "!terminalFocus"
       }
     ],
     "configuration": {

@@ -21,6 +21,7 @@ import * as path from "node:path";
 import * as vscode from "vscode";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
+import type { PlaybackState } from "../core/playback.js";
 import type { VoiceProfile } from "../core/profile.js";
 import { isRemoteProfile } from "../core/profile.schema.js";
 import type { NarratorProvider } from "../core/narration.js";
@@ -56,7 +57,8 @@ import {
   NotificationGate,
   notifyChunkInvalid,
   notifyNarratorUnavailable,
-  notifyTtsUnavailable
+  notifyTtsUnavailable,
+  type TtsUnavailableChoice
 } from "../ui/notifications.js";
 import { formatProviderHealthQuickPickItem, titleCaseProviderId } from "../ui/providerStatusText.js";
 import { ClipboardSource, MarkdownDocumentSource, TextSelectionSource, readCaptureRange } from "../sources/index.js";
@@ -78,6 +80,7 @@ import {
 import { createNarratorProvider } from "../narrator/index.js";
 import type { Logger } from "../infrastructure/logger.js";
 import type { PipelineFacade } from "../commands/PipelineFacade.js";
+import { decidePlay, decidePlayPause, type PlayDecision } from "../commands/playDecision.js";
 import { plainTextSegments, rangesOverlap } from "./textSegments.js";
 import {
   resolveNarratorConfig,
@@ -119,6 +122,15 @@ const DEFAULT_TEST_VOICE_TEXT =
 /** `LLM Voice: Provider Status` (CdC §51) reuses a probe for 30s before re-querying providers. */
 const HEALTH_CACHE_TTL_MS = 30_000;
 
+/**
+ * S7.3's "TTS indisponible" dialog, "Choisir une voix" button: opened only
+ * when `llmVoice.setupVoice` (a parallel onboarding story's command) is not
+ * registered — checked at runtime via `vscode.commands.getCommands()`
+ * rather than assumed, so this pipeline never depends on that story landing
+ * first.
+ */
+const TTS_SETUP_DOCS_URL = "https://github.com/Guilhem-Bonnet/llm-voice/blob/main/vscode-extension/docs/providers.md";
+
 interface ProviderHealthEntry {
   label: string;
   health: ProviderHealth;
@@ -135,6 +147,14 @@ const DEFAULT_MARKDOWN_POLICY: MarkdownPolicy = {
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** `LLM Voice: Clear Audio Cache` (S7.3): human-sized freed-space figure, MB above 1 MiB, KB below. */
+function formatCacheBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  }
+  return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
 }
 
 /** Resolves after `ms`, or immediately if/when `signal` aborts — used by `waitForTtsReady`'s poll loop. */
@@ -317,12 +337,16 @@ export class Pipeline implements PipelineFacade {
     });
     this.controller.onStateChange((change) => {
       this.statusBar.update(this.statusBarModel(change.state));
+      this.updatePlaybackStateContext(change.state);
       if (change.state === "stopped" && this.currentUri !== undefined) {
         this.highlight.clear(this.currentUri);
       }
       this.pushPlayerState();
     });
     this.controller.onProgress(() => this.pushPlayerState());
+    // S7.3: seeds `llmVoice.state` at startup (`idle`, `PlaybackController`'s
+    // initial state); `onStateChange` above keeps it in sync from then on.
+    this.updatePlaybackStateContext(this.controller.getState());
 
     // Recomputes the 🔒/☁ badge at startup and whenever a relevant setting
     // changes (ADR-010/ADR-011: never a stale green from before the user
@@ -524,26 +548,136 @@ export class Pipeline implements PipelineFacade {
 
   // -------------------------------------------------------------- control
 
+  /**
+   * `LLM Voice: Play` (S7.3 — fixes the 0.1.0 field bug: this used to call
+   * `controller.resume()` unconditionally, a silent no-op whenever
+   * `state !== "paused"`, most commonly because no session had ever
+   * started). Resumes when paused, starts reading the active editor
+   * (selection if non-empty, else the whole document) when there is none,
+   * and does nothing while already playing/loading — see `decidePlay`.
+   */
   async play(): Promise<void> {
-    this.controller.resume();
+    await this.applyPlayDecision(decidePlay(this.playDecisionInput()));
   }
 
+  /**
+   * `Ctrl+Alt+V Space` (ADR-011 "ctrl+alt+v space = Play/Pause"): a genuine
+   * toggle, unlike `play()` — pauses a playing session instead of no-op'ing.
+   */
+  async playPause(): Promise<void> {
+    await this.applyPlayDecision(decidePlayPause(this.playDecisionInput()));
+  }
+
+  private playDecisionInput(): { state: PlaybackState; hasActiveEditor: boolean; hasNonEmptySelection: boolean } {
+    const editor = vscode.window.activeTextEditor;
+    return {
+      state: this.controller.getState(),
+      hasActiveEditor: editor !== undefined,
+      hasNonEmptySelection: editor !== undefined && !editor.selection.isEmpty
+    };
+  }
+
+  private async applyPlayDecision(decision: PlayDecision): Promise<void> {
+    switch (decision.kind) {
+      case "noop":
+        return;
+      case "pause":
+        this.controller.pause();
+        return;
+      case "resume":
+        this.controller.resume();
+        return;
+      case "startDocument":
+        await this.startFromActiveEditor(false);
+        return;
+      case "startSelection":
+        await this.startFromActiveEditor(true);
+        return;
+      case "noEditor": {
+        const choice = await vscode.window.showInformationMessage(
+          "LLM Voice : aucun document ouvert à lire.",
+          "Ouvrir un document"
+        );
+        if (choice === "Ouvrir un document") {
+          void vscode.commands.executeCommand("workbench.action.files.openFile");
+        }
+        return;
+      }
+      default:
+        // Exhaustiveness guard: a new `PlayDecision.kind` must be handled above.
+        throw new Error(`LLM Voice : décision Play inattendue « ${(decision as { kind: string }).kind} ».`);
+    }
+  }
+
+  /** Builds a `CaptureContext` from the active editor for `play()`/`playPause()`'s "smart start". */
+  private async startFromActiveEditor(useSelection: boolean): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (editor === undefined) {
+      // Raced shut between `playDecisionInput()` and here (editor closed
+      // meanwhile) — same message as the "noEditor" decision, no throw.
+      void vscode.window.showInformationMessage("LLM Voice : aucun document ouvert à lire.");
+      return;
+    }
+    const context: CaptureContext = useSelection
+      ? {
+          scope: "selection",
+          uri: editor.document.uri.toString(),
+          languageId: editor.document.languageId,
+          selection: {
+            startLine: editor.selection.start.line,
+            startColumn: editor.selection.start.character,
+            endLine: editor.selection.end.line,
+            endColumn: editor.selection.end.character
+          }
+        }
+      : {
+          scope: "document",
+          uri: editor.document.uri.toString(),
+          languageId: editor.document.languageId
+        };
+    await this.startInternal(context);
+  }
+
+  /**
+   * S7.3: no silent no-op — `pause()` on a session that is not `playing`
+   * (idle, already paused, stopped, loading…) used to be an unexplained
+   * do-nothing (`PlaybackController.pause()`'s own guard).
+   */
   async pause(): Promise<void> {
+    if (this.controller.getState() !== "playing") {
+      void vscode.window.showInformationMessage("LLM Voice : rien n'est en cours de lecture.");
+      return;
+    }
     this.controller.pause();
   }
 
+  /** S7.3: same "no silent no-op" treatment as `pause()`. */
   async stop(): Promise<void> {
+    if (this.controller.getState() === "idle") {
+      void vscode.window.showInformationMessage("LLM Voice : rien à arrêter.");
+      return;
+    }
     this.controller.stop();
     if (this.currentUri !== undefined) {
       this.highlight.clear(this.currentUri);
     }
   }
 
+  /** S7.3: same "no silent no-op" treatment as `pause()`. */
   async previousSegment(): Promise<void> {
+    if (this.controller.getState() === "idle") {
+      void vscode.window.showInformationMessage("LLM Voice : aucune lecture en cours.");
+      return;
+    }
     await this.controller.previous();
   }
 
+  /** S7.3: same "no silent no-op" treatment as `pause()`. */
   async nextSegment(): Promise<void> {
+    if (this.controller.getState() === "idle") {
+      void vscode.window.showInformationMessage("LLM Voice : aucune lecture en cours.");
+      return;
+    }
     await this.controller.next();
   }
 
@@ -810,9 +944,30 @@ export class Pipeline implements PipelineFacade {
 
   // ------------------------------------------------------------------ misc
 
+  /**
+   * S7.3: reports the space actually freed instead of a generic "vidé" —
+   * computed from `DiskAudioCache.size()` *before* the clear, since
+   * `clear()` itself leaves nothing to measure afterwards.
+   *
+   * Deliberately *not* interactive (no confirm dialog) at this layer: the
+   * `llmVoice.clearAudioCache` command (`src/commands/index.ts`) confirms
+   * before calling this, but `PipelineFacade.clearAudioCache()` is also
+   * called directly, non-interactively, by integration tests that reset the
+   * disk cache between cases (e.g. `test/integration-chunk-invalid`) — a
+   * confirm dialog here would hit VS Code test-electron's `DialogService`,
+   * which refuses to render modals under test and throws instead of
+   * resolving.
+   */
   async clearAudioCache(): Promise<void> {
+    const bytesBefore = await this.diskCache.size();
+    if (bytesBefore === 0) {
+      void vscode.window.showInformationMessage("LLM Voice : le cache audio est déjà vide.");
+      return;
+    }
     await this.diskCache.clear();
-    void vscode.window.showInformationMessage("LLM Voice : cache audio vidé.");
+    void vscode.window.showInformationMessage(
+      `LLM Voice : cache audio vidé (${formatCacheBytes(bytesBefore)} libérés).`
+    );
   }
 
   async verifyLocalMode(): Promise<void> {
@@ -1236,14 +1391,7 @@ export class Pipeline implements PipelineFacade {
         this.notificationGate.markShown("ttsUnavailable");
         void notifyTtsUnavailable((message, ...items) =>
           vscode.window.showErrorMessage(message, ...items)
-        ).then((choice) => {
-          if (choice === "retry") {
-            this.notificationGate.clear("ttsUnavailable");
-            this.controller.retryCurrentChunk();
-          } else if (choice === "openSettings") {
-            void vscode.commands.executeCommand("workbench.action.openSettings", "llmVoice.tts");
-          }
-        });
+        ).then((choice) => this.handleTtsUnavailableChoice(choice));
       }
       return "stop";
     }
@@ -1258,6 +1406,34 @@ export class Pipeline implements PipelineFacade {
       (message, ...items) => vscode.window.showErrorMessage(message, ...items),
       this.audioMaxRetries()
     );
+  }
+
+  /**
+   * S7.3: "Choisir une voix" runs `llmVoice.setupVoice` when that command is
+   * registered (a parallel onboarding story) — checked with
+   * `vscode.commands.getCommands()` rather than assumed, so this file never
+   * depends on that story merging first — and falls back to the provider
+   * docs otherwise. "Réessayer" keeps CdC §52's "sans recréer la session"
+   * behaviour (`retryCurrentChunk`, only the failed chunk).
+   */
+  private async handleTtsUnavailableChoice(choice: TtsUnavailableChoice): Promise<void> {
+    if (choice === "retry") {
+      this.notificationGate.clear("ttsUnavailable");
+      this.controller.retryCurrentChunk();
+      return;
+    }
+    if (choice === "openSettings") {
+      void vscode.commands.executeCommand("workbench.action.openSettings", "llmVoice.tts");
+      return;
+    }
+    if (choice === "setupVoice") {
+      const commands = await vscode.commands.getCommands(true);
+      if (commands.includes("llmVoice.setupVoice")) {
+        await vscode.commands.executeCommand("llmVoice.setupVoice");
+      } else {
+        await vscode.env.openExternal(vscode.Uri.parse(TTS_SETUP_DOCS_URL));
+      }
+    }
   }
 
   /**
@@ -1415,6 +1591,16 @@ export class Pipeline implements PipelineFacade {
 
   private async initStatusBar(): Promise<void> {
     await this.refreshLocalModeBadge();
+  }
+
+  /**
+   * S7.3: mirrors `PlaybackController`'s state into the `llmVoice.state`
+   * `when`-clause context key (`package.json#contributes.commands[].enablement`
+   * greys out Pause/Stop/Next/Previous in the Command Palette instead of
+   * leaving them silently do nothing).
+   */
+  private updatePlaybackStateContext(state: PlaybackState): void {
+    void vscode.commands.executeCommand("setContext", "llmVoice.state", state);
   }
 
   private statusBarModel(state: string): StatusBarViewModel {
