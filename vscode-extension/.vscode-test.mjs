@@ -1,4 +1,7 @@
 import { defineConfig } from "@vscode/test-cli";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const common = {
   version: "stable",
@@ -8,6 +11,16 @@ const common = {
   }
 };
 
+// S5.1: `Pipeline`'s `InboxRepository` resolves its directory once, at
+// activation (`llmVoice.claude.inboxPath` > `LLM_VOICE_INBOX` > default) —
+// without this override every integration run would create/read
+// `~/.llm-voice/inbox/` on the machine running the tests. One directory per
+// `vscode-test` profile (shared by every `*.test.ts` file that profile
+// loads, same as `--user-data-dir` above); `test/integration/inbox.test.ts`
+// only ever asserts on *deltas* it creates itself for exactly this reason.
+const inboxDirFakeTts = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-fake-tts-"));
+const inboxDirRealProvider = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-real-provider-"));
+
 export default defineConfig([
   {
     ...common,
@@ -16,7 +29,7 @@ export default defineConfig([
     // FakeAudioSink for the whole run (docs/testing.md) — `context.extensionMode`
     // is never `Production` under test-electron, so `extension.ts` honours it.
     files: "out/test/integration/**/*.test.js",
-    env: { LLM_VOICE_TEST_FAKE_TTS: "1" },
+    env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirFakeTts },
     // Own `--user-data-dir` (own `globalStorageUri`, own `DiskAudioCache`
     // root): the audio cache key only depends on the *profile's declared*
     // `tts.providerId` ("openai-compatible"), not on which `TtsProvider`
@@ -49,7 +62,7 @@ export default defineConfig([
     // imported ... using require()" — `vitest`'s `describe`/`it`/`test`
     // have no meaning under mocha.
     files: "out/test/integration-real/tts-unavailable.test.js",
-    env: { LLM_VOICE_TEST_FAKE_TTS: undefined },
+    env: { LLM_VOICE_TEST_FAKE_TTS: undefined, LLM_VOICE_INBOX: inboxDirRealProvider },
     // See the comment on the `fake-tts` profile above: a *different* cache
     // directory is what actually forces this run to hit the network.
     // See the comment on the `fake-tts` profile above re: the socket path length.

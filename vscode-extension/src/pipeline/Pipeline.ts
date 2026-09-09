@@ -59,6 +59,19 @@ import {
   type NarratorSettings,
   type TtsSettings
 } from "./resolveProviderConfig.js";
+import type { InboxEntry } from "../core/inbox.js";
+import { ClaudeInboxSource } from "../claude/ClaudeInboxSource.js";
+import { GlobalStateReadStore } from "../claude/GlobalStateReadStore.js";
+import { InboxContentProvider, INBOX_CONTENT_SCHEME, inboxContentUri } from "../claude/InboxContentProvider.js";
+import { InboxRepository } from "../claude/InboxRepository.js";
+import { InboxTreeItem, InboxTreeProvider } from "../claude/InboxTreeProvider.js";
+import { InboxWatcher } from "../claude/InboxWatcher.js";
+import { showInboxQuickPick } from "../claude/InboxQuickPick.js";
+import { resolveInboxPath } from "../claude/resolveInboxPath.js";
+import {
+  installClaudeHook as runInstallClaudeHook,
+  uninstallClaudeHook as runUninstallClaudeHook
+} from "../claude/ClaudeHookCommand.js";
 
 const ERROR_TTS_UNAVAILABLE = "LLM Voice: TTS unavailable";
 const ERROR_NARRATOR_UNAVAILABLE = "LLM Voice: Narrator unavailable";
@@ -131,6 +144,16 @@ export class Pipeline implements PipelineFacade {
   private readonly controller: PlaybackController;
   private readonly sources: readonly SourceAdapter[];
 
+  // ADR-003/ADR-004/ADR-007/ADR-011 (S5.1): the open inbox. `inboxTreeView`
+  // and `inboxContentProviderRegistration` are `undefined` until they are
+  // registered in the constructor below; kept as fields so `dispose()` can
+  // tear them down deterministically.
+  private readonly inboxRepository: InboxRepository;
+  private readonly inboxWatcher: InboxWatcher;
+  private readonly inboxTreeProvider: InboxTreeProvider;
+  private inboxTreeView: vscode.TreeView<InboxTreeItem> | undefined;
+  private inboxContentProviderRegistration: vscode.Disposable | undefined;
+
   private currentUri: vscode.Uri | undefined;
   private currentProfileLabel = "—";
   private lastCaptureContext: CaptureContext | undefined;
@@ -174,7 +197,22 @@ export class Pipeline implements PipelineFacade {
 
     this.profiles = new ProfileRepository(this.context.globalStorageUri.fsPath, this.context.globalState);
 
-    this.sources = [new MarkdownDocumentSource(), new TextSelectionSource(), new ClipboardSource()];
+    this.inboxRepository = new InboxRepository({
+      directory: this.inboxDirectory(),
+      readState: new GlobalStateReadStore(this.context.globalState),
+      onWarning: (rejection) =>
+        this.output.appendLine(`[inbox] ignored ${rejection.fileName} (${rejection.reason})`)
+    });
+    this.inboxWatcher = new InboxWatcher({ directory: this.inboxRepository.directory });
+    this.inboxTreeProvider = new InboxTreeProvider(() => this.inboxRepository.list());
+    this.setupInbox();
+
+    this.sources = [
+      new MarkdownDocumentSource(),
+      new TextSelectionSource(),
+      new ClipboardSource(),
+      new ClaudeInboxSource(this.inboxRepository)
+    ];
 
     this.controller = new PlaybackController({
       cache: this.diskCache,
@@ -226,16 +264,46 @@ export class Pipeline implements PipelineFacade {
     return this.controller.getCurrentIndex();
   }
 
+  /**
+   * S5.1 (AC-12..15): a fresh disk scan, exactly what `openInbox()`/the Tree
+   * View read — no index, ADR-004. Not part of `PipelineFacade`; only
+   * `ExtensionTestApi` (dev/test mode) casts to reach it.
+   */
+  async listInboxEntriesForTest(): Promise<readonly InboxEntry[]> {
+    return this.inboxRepository.list();
+  }
+
+  /** S5.1 (AC-15): which profile the last `start()`/`startInternal()` call actually resolved. */
+  getCurrentProfileLabelForTest(): string {
+    return this.currentProfileLabel;
+  }
+
   // ------------------------------------------------------------- lifecycle
 
   dispose(): void {
     this.controller.dispose();
     this.captureAbort?.abort();
+    this.inboxWatcher.dispose();
+    this.inboxTreeProvider.dispose();
+    this.inboxTreeView?.dispose();
+    this.inboxContentProviderRegistration?.dispose();
   }
 
   // ---------------------------------------------------------------- start
 
   async start(captureContext: CaptureContext): Promise<void> {
+    return this.startInternal(captureContext);
+  }
+
+  /**
+   * `profileOverrideId` (S5.1, `speakLatestClaudeResponse`) bypasses the
+   * persisted "last selected profile" for a single call — e.g. CdC §47's
+   * per-source default profile — without mutating `ProfileRepository`'s
+   * `select()` state, which every other entry point still reads from.
+   * Falls back to the normally selected profile if the id does not resolve
+   * to a known profile (deleted/renamed since the setting was written).
+   */
+  private async startInternal(captureContext: CaptureContext, profileOverrideId?: string): Promise<void> {
     this.lastCaptureContext = captureContext;
     this.captureAbort?.abort();
     const abort = new AbortController();
@@ -250,7 +318,10 @@ export class Pipeline implements PipelineFacade {
       }
 
       const doc = await source.capture(captureContext, abort.signal);
-      const profile = await this.profiles.getSelected();
+      const profile =
+        profileOverrideId !== undefined
+          ? ((await this.profileById(profileOverrideId)) ?? (await this.profiles.getSelected()))
+          : await this.profiles.getSelected();
       this.currentProfileLabel = profile.label;
       const segments = await this.buildSegments(doc, profile);
 
@@ -390,25 +461,147 @@ export class Pipeline implements PipelineFacade {
     });
   }
 
+  // ------------------------------------------------------------ inbox (S5.1)
+
+  /** `minimal` layout's entry point (ADR-011): Quick Pick over the inbox. */
   async openInbox(): Promise<void> {
-    await this.notWired("l'inbox (story ultérieure)");
+    await showInboxQuickPick(
+      () => this.inboxRepository.list(),
+      {
+        speak: async (entry) => this.speakInboxEntry(entry),
+        openFull: async (entry) => this.openInboxFullResponse(entry),
+        remove: async (entry) => {
+          await this.inboxRepository.remove(entry.id);
+          await this.refreshInbox();
+        },
+        toggleRead: async (entry) => {
+          await this.inboxRepository.markRead(entry.id, !entry.read);
+          await this.refreshInbox();
+        },
+        selectProfile: async () => this.selectProfile()
+      }
+    );
   }
 
+  /** CdC §47's per-source default profile, bound to `llmVoice.profiles.bySource`. */
   async speakLatestClaudeResponse(): Promise<void> {
-    await this.notWired("la lecture de la dernière réponse Claude (story ultérieure)");
+    const entries = await this.inboxRepository.list();
+    const latest = entries.find((entry) => entry.message.provider === "claude-code");
+    if (latest === undefined) {
+      void vscode.window.showInformationMessage("LLM Voice : aucune réponse Claude Code capturée pour le moment.");
+      return;
+    }
+    await this.speakInboxEntry(latest, this.profileIdForSource(latest.message.provider));
   }
 
   async installClaudeHook(): Promise<void> {
-    await this.notWired("l'installation du hook Claude Code (story ultérieure)");
+    await runInstallClaudeHook(this.context.extensionUri);
+  }
+
+  async uninstallClaudeHook(): Promise<void> {
+    await runUninstallClaudeHook();
+  }
+
+  /** Speaks one inbox entry (Quick Pick/Tree/`speakLatestClaudeResponse`), marking it read first — zero autoplay: only ever reached from a command the user triggered. */
+  private async speakInboxEntry(entry: InboxEntry, profileOverrideId?: string): Promise<void> {
+    await this.inboxRepository.markRead(entry.id, true);
+    await this.refreshInbox();
+    await this.startInternal({ scope: "inbox-message", inboxMessageId: entry.id }, profileOverrideId);
+  }
+
+  private async openInboxFullResponse(entry: InboxEntry): Promise<void> {
+    const document = await vscode.workspace.openTextDocument(inboxContentUri(entry.id));
+    await vscode.window.showTextDocument(document, { preview: true });
+    await this.inboxRepository.markRead(entry.id, true);
+    await this.refreshInbox();
+  }
+
+  /** `llmVoice.profiles.bySource` (CdC §47); `undefined` means "keep the currently selected profile". */
+  private profileIdForSource(provider: string): string | undefined {
+    const map = vscode.workspace
+      .getConfiguration("llmVoice")
+      .get<Record<string, string>>("profiles.bySource", { "claude-code": "llm-summary" });
+    return map[provider];
+  }
+
+  private async profileById(id: string): Promise<VoiceProfile | undefined> {
+    const profiles = await this.profiles.list();
+    return profiles.find((profile) => profile.id === id);
+  }
+
+  /** `llmVoice.claude.inboxPath` > `LLM_VOICE_INBOX` > `~/.llm-voice/inbox/` (ADR-004). */
+  private inboxDirectory(): string {
+    const settingValue = vscode.workspace.getConfiguration("llmVoice").get<string>("claude.inboxPath", "");
+    return resolveInboxPath({ settingValue });
+  }
+
+  private async refreshInbox(): Promise<void> {
+    await this.inboxTreeProvider.refresh();
+    if (this.inboxTreeView !== undefined) {
+      const unread = this.inboxTreeProvider.unreadCount;
+      this.inboxTreeView.badge = unread > 0 ? { value: unread, tooltip: `${unread} message(s) non lu(s)` } : undefined;
+    }
+  }
+
+  private inboxEntryFromCommandArg(arg: unknown): InboxEntry | undefined {
+    if (arg instanceof InboxTreeItem) {
+      return arg.entry;
+    }
+    return arg as InboxEntry | undefined;
+  }
+
+  /**
+   * Registers the Tree View (`full` layout, ADR-011), the `llm-voice-inbox:`
+   * content provider, and the `llmVoice.inbox.*` commands; starts the
+   * watcher. `InboxWatcher.onChange` only ever calls `refreshInbox()` — it
+   * never reaches `startInternal`/`PlaybackController` (zero autoplay,
+   * ADR-003).
+   */
+  private setupInbox(): void {
+    const contentProvider = new InboxContentProvider(this.inboxRepository);
+    this.inboxContentProviderRegistration = vscode.workspace.registerTextDocumentContentProvider(
+      INBOX_CONTENT_SCHEME,
+      contentProvider
+    );
+
+    this.inboxTreeView = vscode.window.createTreeView("llmVoice.inboxView", {
+      treeDataProvider: this.inboxTreeProvider
+    });
+
+    this.context.subscriptions.push(
+      vscode.commands.registerCommand("llmVoice.inbox.refresh", () => void this.refreshInbox()),
+      vscode.commands.registerCommand("llmVoice.inbox.speak", (arg?: unknown) => {
+        const entry = this.inboxEntryFromCommandArg(arg);
+        if (entry !== undefined) {
+          void this.speakInboxEntry(entry);
+        }
+      }),
+      vscode.commands.registerCommand("llmVoice.inbox.openFull", (arg?: unknown) => {
+        const entry = this.inboxEntryFromCommandArg(arg);
+        if (entry !== undefined) {
+          void this.openInboxFullResponse(entry);
+        }
+      }),
+      vscode.commands.registerCommand("llmVoice.inbox.delete", (arg?: unknown) => {
+        const entry = this.inboxEntryFromCommandArg(arg);
+        if (entry !== undefined) {
+          void this.inboxRepository.remove(entry.id).then(() => this.refreshInbox());
+        }
+      }),
+      vscode.commands.registerCommand("llmVoice.inbox.markRead", (arg?: unknown) => {
+        const entry = this.inboxEntryFromCommandArg(arg);
+        if (entry !== undefined) {
+          void this.inboxRepository.markRead(entry.id, !entry.read).then(() => this.refreshInbox());
+        }
+      })
+    );
+
+    this.inboxWatcher.onChange(() => void this.refreshInbox());
+    this.inboxWatcher.start();
+    void this.refreshInbox();
   }
 
   // --------------------------------------------------------------- internals
-
-  private async notWired(feature: string): Promise<void> {
-    const message = `LLM Voice : ${feature} n'est pas encore câblée.`;
-    this.output.appendLine(message);
-    void vscode.window.showInformationMessage(message);
-  }
 
   private async ttsFor(profile: VoiceProfile): Promise<TtsProvider> {
     if (this.ttsProviderOverride !== undefined) {
