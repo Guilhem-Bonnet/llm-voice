@@ -38,24 +38,47 @@ export interface ClaudeSettingsJson {
   [key: string]: unknown;
 }
 
-function asSettings(json: unknown): ClaudeSettingsJson {
-  if (json === null || json === undefined || typeof json !== "object" || Array.isArray(json)) {
-    return {};
-  }
-  return json as ClaudeSettingsJson;
+/** True for a JSON value we are willing to treat as a settings document. */
+export function isSettingsObject(json: unknown): json is ClaudeSettingsJson {
+  return json !== null && json !== undefined && typeof json === "object" && !Array.isArray(json);
 }
 
-function isOurs(hook: ClaudeHookCommandEntry): boolean {
-  return typeof hook.command === "string" && hook.command.includes(HOOK_RECOGNITION_SUBSTRING);
+function asSettings(json: unknown): ClaudeSettingsJson {
+  return isSettingsObject(json) ? json : {};
+}
+
+/**
+ * `hooks.Stop` belongs to the user and to whatever other tooling writes
+ * there: every shape below is something a third party can legitimately
+ * (or accidentally) leave in the file, and none of it may crash
+ * `install`/`uninstall` (S6.1 audit F-05). Before this, a `Stop` group with
+ * no `hooks` key — a real shape Claude Code tolerates — threw a TypeError
+ * out of `addHookEntry` and took the whole install command down.
+ */
+function hooksOf(group: unknown): ClaudeHookCommandEntry[] {
+  if (group === null || typeof group !== "object" || Array.isArray(group)) {
+    return [];
+  }
+  const hooks = (group as ClaudeHookMatcherGroup).hooks;
+  return Array.isArray(hooks) ? hooks : [];
+}
+
+function groupsOf(json: unknown): unknown[] {
+  const stop = asSettings(json).hooks?.Stop;
+  return Array.isArray(stop) ? stop : [];
+}
+
+function isOurs(hook: unknown): boolean {
+  if (hook === null || typeof hook !== "object") {
+    return false;
+  }
+  const command = (hook as ClaudeHookCommandEntry).command;
+  return typeof command === "string" && command.includes(HOOK_RECOGNITION_SUBSTRING);
 }
 
 /** True if any `Stop` hook entry (matched by substring) is already present. */
 export function containsHookEntry(json: unknown): boolean {
-  const stopGroups = asSettings(json).hooks?.Stop;
-  if (!Array.isArray(stopGroups)) {
-    return false;
-  }
-  return stopGroups.some((group) => Array.isArray(group.hooks) && group.hooks.some(isOurs));
+  return groupsOf(json).some((group) => hooksOf(group).some(isOurs));
 }
 
 export interface AddHookEntryOptions {
@@ -72,7 +95,10 @@ export interface AddHookEntryOptions {
 export function addHookEntry(json: unknown, command: string, options: AddHookEntryOptions = {}): ClaudeSettingsJson {
   const settings = asSettings(json);
   const hooks: ClaudeSettingsHooks = { ...(settings.hooks ?? {}) };
-  const stopGroups: ClaudeHookMatcherGroup[] = Array.isArray(hooks.Stop) ? hooks.Stop.map((group) => ({ ...group, hooks: [...group.hooks] })) : [];
+  const stopGroups: ClaudeHookMatcherGroup[] = groupsOf(json).map((group) => ({
+    ...(group !== null && typeof group === "object" && !Array.isArray(group) ? group : {}),
+    hooks: [...hooksOf(group)]
+  }));
 
   if (stopGroups.some((group) => group.hooks.some(isOurs))) {
     return { ...settings, hooks: { ...hooks, Stop: stopGroups } };
@@ -101,10 +127,12 @@ export function removeHookEntry(json: unknown): ClaudeSettingsJson {
     return settings;
   }
 
-  const filteredGroups = settings.hooks.Stop.map((group) => ({
-    ...group,
-    hooks: (Array.isArray(group.hooks) ? group.hooks : []).filter((hook) => !isOurs(hook))
-  })).filter((group) => group.hooks.length > 0);
+  const filteredGroups = groupsOf(json)
+    .map((group) => ({
+      ...(group !== null && typeof group === "object" && !Array.isArray(group) ? group : {}),
+      hooks: hooksOf(group).filter((hook) => !isOurs(hook))
+    }))
+    .filter((group) => group.hooks.length > 0);
 
   const hooks: ClaudeSettingsHooks = { ...settings.hooks };
   if (filteredGroups.length > 0) {
