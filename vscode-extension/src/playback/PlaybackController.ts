@@ -133,7 +133,8 @@ export class PlaybackController {
       ...(options.maxRetries !== undefined ? { maxRetries: options.maxRetries } : {}),
       ...(options.retryBackoffMs !== undefined ? { retryBackoffMs: options.retryBackoffMs } : {}),
       ...(options.retryJitterMs !== undefined ? { retryJitterMs: options.retryJitterMs } : {}),
-      ...(options.random !== undefined ? { random: options.random } : {})
+      ...(options.random !== undefined ? { random: options.random } : {}),
+      ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {})
     };
     this.onChunkError = options.onChunkError ?? (() => "skip");
     this.previousThresholdMs =
@@ -286,6 +287,27 @@ export class PlaybackController {
     const goBack =
       this.positionMs < this.previousThresholdMs && this.currentIndex > 0;
     await this.playIndex(goBack ? this.currentIndex - 1 : this.currentIndex);
+  }
+
+  /**
+   * CdC §52 "Retry relance le même chunk sans recréer la session": re-attempts
+   * synthesis of the chunk currently in `error` (`AudioQueue.retry`, its own
+   * fresh `maxRetries` budget), without tearing down the session — unlike a
+   * fresh `Pipeline.start()`, every already-`ready` chunk, the cache and the
+   * queue are left exactly as they were. A no-op if the current chunk is not
+   * `error` (stale click after `next()`/`Skip` already moved the cursor, or
+   * the session ended).
+   */
+  retryCurrentChunk(): void {
+    if (this.disposed || this.session === undefined) {
+      return;
+    }
+    const chunk = this.currentChunk();
+    if (chunk === undefined || chunk.status !== "error") {
+      return;
+    }
+    this.session.queue.retry(this.currentIndex);
+    void this.playIndex(this.currentIndex);
   }
 
   /**

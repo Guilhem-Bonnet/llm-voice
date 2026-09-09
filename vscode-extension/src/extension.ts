@@ -10,11 +10,18 @@ import { Pipeline } from "./pipeline/Pipeline.js";
 import type { AudioSink } from "./playback/index.js";
 import type { TtsProvider } from "./core/tts.js";
 import type { PlayerUserAction } from "./core/playback.js";
+import { createLogger, parseLogLevel, type Logger } from "./infrastructure/logger.js";
 // Type-only: erased at compile time, never pulls `test/fakes/*` into the
 // bundle (see `requireTestFixture` below for the runtime-safe counterpart).
 import type { FakeAudioSink } from "../test/fakes/FakeAudioSink.js";
 
 let outputChannel: vscode.OutputChannel | undefined;
+let logger: Logger | undefined;
+
+/** `llmVoice.log.level` (default `info`, CdC §81). */
+function readLogLevel(): ReturnType<typeof parseLogLevel> {
+  return parseLogLevel(vscode.workspace.getConfiguration("llmVoice").get<string>("log.level"));
+}
 
 /**
  * Surface returned by `activate()` so integration tests can reach internal
@@ -79,8 +86,21 @@ function requireTestFixture<T>(context: vscode.ExtensionContext, fileName: strin
 }
 
 export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
-  outputChannel = vscode.window.createOutputChannel("LLM Voice");
+  // `{ log: true }` (available since VS Code 1.74) returns a
+  // `LogOutputChannel`: native `error`/`warn`/`info`/`debug` methods with
+  // VS Code's own timestamp/colouring — `Logger` uses them when present and
+  // falls back to `appendLine` otherwise (see `src/infrastructure/logger.ts`).
+  outputChannel = vscode.window.createOutputChannel("LLM Voice", { log: true });
   context.subscriptions.push(outputChannel);
+  const log = createLogger(outputChannel, readLogLevel());
+  logger = log;
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("llmVoice.log.level")) {
+        log.setLevel(readLogLevel());
+      }
+    })
+  );
 
   const player = new PlayerViewProvider(context.extensionUri, context.globalStorageUri);
   context.subscriptions.push(
@@ -105,22 +125,29 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
 
   if (isTestFakeTtsEnabled(context)) {
     try {
-      const ttsModule = requireTestFixture<{ FakeTtsProvider: new () => TtsProvider }>(
-        context,
-        "FakeTtsProvider.js"
-      );
+      const ttsModule = requireTestFixture<{
+        FakeTtsProvider: new (options?: { failFromNth?: number }) => TtsProvider;
+      }>(context, "FakeTtsProvider.js");
       const sinkModule = requireTestFixture<{ FakeAudioSink: new () => FakeAudioSink }>(
         context,
         "FakeAudioSink.js"
       );
       testAudioSink = new sinkModule.FakeAudioSink();
       sinkOverride = testAudioSink;
-      ttsProviderOverride = new ttsModule.FakeTtsProvider();
-      outputChannel.appendLine(
-        "LLM Voice: LLM_VOICE_TEST_FAKE_TTS=1 — using FakeTtsProvider + FakeAudioSink (docs/testing.md)."
+      // S5.3/AC-16 "chunk invalide" integration test only: deterministically
+      // fails every chunk from the Nth call onward (never a race on
+      // `failEveryNth`'s modulo) so it reaches the "later chunk" Skip/Stop
+      // path instead of the first-chunk "TTS unavailable" one. Same
+      // dev/test-mode + explicit env-var gate as `LLM_VOICE_TEST_FAKE_TTS`
+      // itself — never reachable from a packaged install.
+      const failFromNthRaw = process.env.LLM_VOICE_TEST_FAKE_TTS_FAIL_FROM;
+      const failFromNth = failFromNthRaw !== undefined ? Number(failFromNthRaw) : undefined;
+      ttsProviderOverride = new ttsModule.FakeTtsProvider(
+        failFromNth !== undefined && Number.isFinite(failFromNth) ? { failFromNth } : undefined
       );
+      log.info("LLM_VOICE_TEST_FAKE_TTS=1 — using FakeTtsProvider + FakeAudioSink (docs/testing.md).");
     } catch (error) {
-      outputChannel.appendLine(`LLM Voice: failed to load test fixtures: ${String(error)}`);
+      log.error("failed to load test fixtures", { error: String(error) });
     }
   }
 
@@ -165,7 +192,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
 
   const pipeline = new Pipeline({
     context,
-    output: outputChannel,
+    output: log,
     highlight,
     player,
     statusBar,
@@ -216,7 +243,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     context.subscriptions.push(disposable);
   }
 
-  outputChannel.appendLine("LLM Voice extension activated.");
+  log.info("LLM Voice extension activated.");
 
   return {
     highlight,
@@ -230,5 +257,5 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
 }
 
 export function deactivate(): void {
-  outputChannel?.appendLine("LLM Voice extension deactivated.");
+  logger?.info("LLM Voice extension deactivated.");
 }

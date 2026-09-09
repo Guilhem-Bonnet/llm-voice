@@ -20,6 +20,12 @@ export default defineConfig({
         "src/pipeline/**/*.ts",
         "src/narrator/**/*.ts",
         "src/profiles/defaults*.ts",
+        "src/infrastructure/**/*.ts",
+        // `Logger`/`redact` only `import type` `vscode` (erased at compile
+        // time); `notifications.ts` takes `vscode.window.show*Message` as an
+        // injected parameter instead of importing it — both S5.3 (CdC §52,
+        // §81), both testable in plain Node like everything else here.
+        "src/ui/notifications.ts",
         "src/claude/**/*.ts"
       ],
       // Everything below imports `vscode` (directly or by re-exporting a
