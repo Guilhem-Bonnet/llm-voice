@@ -96,6 +96,15 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.nextSegment", () => pipeline.nextSegment()),
     vscode.commands.registerCommand("llmVoice.selectProfile", () => pipeline.selectProfile()),
     vscode.commands.registerCommand("llmVoice.openProfiles", () => pipeline.openProfiles()),
+    vscode.commands.registerCommand("llmVoice.duplicateProfile", () => pipeline.duplicateProfile()),
+    vscode.commands.registerCommand("llmVoice.deleteProfile", () => pipeline.deleteProfile()),
+    vscode.commands.registerCommand("llmVoice.importProfile", () => pipeline.importProfile()),
+    vscode.commands.registerCommand("llmVoice.exportProfile", () => pipeline.exportProfile()),
+    vscode.commands.registerCommand("llmVoice.setDefaultProfile", () => pipeline.setDefaultProfile()),
+    vscode.commands.registerCommand("llmVoice.testVoice", () => pipeline.testVoice()),
+    vscode.commands.registerCommand("llmVoice.providerStatus", () => pipeline.providerStatus()),
+    vscode.commands.registerCommand("llmVoice.setProviderApiKey", () => pipeline.setProviderApiKey()),
+    vscode.commands.registerCommand("llmVoice.clearProviderApiKey", () => pipeline.clearProviderApiKey()),
     vscode.commands.registerCommand("llmVoice.openInbox", () => pipeline.openInbox()),
     vscode.commands.registerCommand("llmVoice.speakLatestClaudeResponse", () =>
       pipeline.speakLatestClaudeResponse()

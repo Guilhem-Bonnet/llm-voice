@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "defaultProfileId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profiles": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "faithful",
+              "narrated"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "minLength": 2
+          },
+          "tts": {
+            "type": "object",
+            "properties": {
+              "providerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "baseUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "voice": {
+                "type": "string",
+                "minLength": 1
+              },
+              "format": {
+                "type": "string",
+                "minLength": 1
+              },
+              "apiKeyRef": {
+                "type": "string",
+                "minLength": 1
+              },
+              "parameters": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "referenceAudio": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "narrator": {
+            "type": "object",
+            "properties": {
+              "providerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "baseUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "apiKeyRef": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "chunking": {
+            "type": "object",
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "sentence",
+                  "block"
+                ]
+              },
+              "maxSentences": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "prefetchChunks": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10
+              }
+            },
+            "required": [
+              "unit",
+              "maxSentences",
+              "prefetchChunks"
+            ],
+            "additionalProperties": false
+          },
+          "playback": {
+            "type": "object",
+            "properties": {
+              "rate": {
+                "type": "number",
+                "minimum": 0.5,
+                "maximum": 3
+              },
+              "volume": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "rate",
+              "volume"
+            ],
+            "additionalProperties": false
+          },
+          "description": {
+            "type": "string"
+          },
+          "style": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "mode",
+          "language",
+          "tts",
+          "chunking",
+          "playback"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "defaultProfileId",
+    "profiles"
+  ],
+  "additionalProperties": false,
+  "title": "LLM Voice — profiles.json",
+  "description": "Generated from src/core/profile.schema.ts (ProfileCollectionSchema); do not edit by hand."
+}

@@ -44,6 +44,15 @@
       { "command": "llmVoice.nextSegment", "title": "LLM Voice: Next Segment", "category": "LLM Voice" },
       { "command": "llmVoice.selectProfile", "title": "LLM Voice: Select Profile", "category": "LLM Voice" },
       { "command": "llmVoice.openProfiles", "title": "LLM Voice: Open Profiles", "category": "LLM Voice" },
+      { "command": "llmVoice.duplicateProfile", "title": "LLM Voice: Duplicate Profile", "category": "LLM Voice" },
+      { "command": "llmVoice.deleteProfile", "title": "LLM Voice: Delete Profile", "category": "LLM Voice" },
+      { "command": "llmVoice.importProfile", "title": "LLM Voice: Import Profile", "category": "LLM Voice" },
+      { "command": "llmVoice.exportProfile", "title": "LLM Voice: Export Profile", "category": "LLM Voice" },
+      { "command": "llmVoice.setDefaultProfile", "title": "LLM Voice: Set Default Profile", "category": "LLM Voice" },
+      { "command": "llmVoice.testVoice", "title": "LLM Voice: Test Voice", "category": "LLM Voice" },
+      { "command": "llmVoice.providerStatus", "title": "LLM Voice: Provider Status", "category": "LLM Voice" },
+      { "command": "llmVoice.setProviderApiKey", "title": "LLM Voice: Set Provider API Key", "category": "LLM Voice" },
+      { "command": "llmVoice.clearProviderApiKey", "title": "LLM Voice: Clear Provider API Key", "category": "LLM Voice" },
       { "command": "llmVoice.openInbox", "title": "LLM Voice: Open Inbox", "category": "LLM Voice" },
       { "command": "llmVoice.speakLatestClaudeResponse", "title": "LLM Voice: Speak Latest Claude Response", "category": "LLM Voice" },
       { "command": "llmVoice.clearHighlight", "title": "LLM Voice: Clear Highlight", "category": "LLM Voice" },
@@ -103,6 +112,23 @@
           "type": "string",
           "default": "",
           "description": "Identifiant du profil utilisé par défaut pour une nouvelle session de lecture."
+        },
+        "llmVoice.profiles.bySource": {
+          "type": "object",
+          "default": {},
+          "description": "Profil par défaut selon la source de capture (CdC §47) : markdown, text (sélection), clipboard, claude-code. Une source non renseignée utilise le dernier profil sélectionné.",
+          "properties": {
+            "markdown": { "type": "string", "description": "Profil par défaut pour un document Markdown." },
+            "text": { "type": "string", "description": "Profil par défaut pour une sélection de texte." },
+            "clipboard": { "type": "string", "description": "Profil par défaut pour le presse-papiers." },
+            "claude-code": { "type": "string", "description": "Profil par défaut pour l'inbox Claude Code." }
+          },
+          "additionalProperties": false
+        },
+        "llmVoice.testVoice.text": {
+          "type": "string",
+          "default": "Bonjour. Voici un exemple de ma voix. Nous allons maintenant examiner un concept technique et voir comment l'expliquer clairement.",
+          "description": "Texte de référence lu par « LLM Voice: Test Voice » (CdC §50)."
         },
         "llmVoice.tts.baseUrl": {
           "type": "string",
@@ -209,6 +235,7 @@
     "bundle": "node scripts/esbuild.mjs",
     "generate:icon": "node scripts/generate-icon.mjs",
     "generate:profile-schema": "node scripts/generate-profile-schema.mjs",
+    "gen:schema": "npm run generate:profile-schema",
     "build": "npm run compile && npm run generate:profile-schema && npm run bundle",
     "test:integration": "npm run build && vscode-test",
     "package": "npm run generate:icon && npm run build && vsce package --no-dependencies -o llm-voice.vsix",

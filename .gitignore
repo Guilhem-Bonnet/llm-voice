@@ -16,8 +16,12 @@ npm-debug.log*
 out/
 dist/
 *.vsix
-# Generated from src/core/profile.schema.ts (npm run generate:profile-schema)
-vscode-extension/schemas/
+# vscode-extension/schemas/profile-collection.schema.json is committed
+# (S5.2): `contributes.jsonValidation` in package.json references it by a
+# relative path a fresh checkout must resolve without a build step first,
+# and `test/unit/schemas/profile-collection.schema.test.ts` fails CI if it
+# drifts from `src/core/profile.schema.ts` — regenerate with `npm run
+# gen:schema` (alias of `generate:profile-schema`) and commit the result.
 
 # --- Tests ---
 .vscode-test/
