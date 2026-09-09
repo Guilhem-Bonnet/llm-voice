@@ -69,9 +69,17 @@
     } catch {
       return;
     }
-    const isTrustedHttps =
-      url.protocol === "https:" &&
-      (url.hostname.endsWith(".vscode-cdn.net") || url.hostname.includes("vscode-webview"));
+    // Suffix match, never `includes()` (S6.1 audit F-12): `hostname.includes(
+    // "vscode-webview")` also accepts `https://vscode-webview.evil.example/`.
+    // Only a real VS Code webview-resource host, or a `blob:` URL this page
+    // itself created, may be assigned to `audio.src`.
+    const host = url.hostname.toLowerCase();
+    const isWebviewResourceHost =
+      host === "vscode-cdn.net" ||
+      host.endsWith(".vscode-cdn.net") ||
+      host === "vscode-webview.net" ||
+      host.endsWith(".vscode-webview.net");
+    const isTrustedHttps = url.protocol === "https:" && isWebviewResourceHost;
     if (!isTrustedHttps && url.protocol !== "blob:") {
       return;
     }
@@ -116,8 +124,14 @@
       case "state": {
         const state = message.state;
         setState(state.state);
-        titleEl.textContent = state.title;
-        profileEl.textContent = state.profile;
+        // `textContent` only — never an HTML-parsing sink. `state.title` is
+        // derived from the first line of a Claude response or a document
+        // heading, i.e. untrusted text that routinely contains `<`, `&`,
+        // backticks and ANSI escapes (AC-SEC-02). A static test in
+        // `test/unit/security/webview-injection.test.ts` forbids every such
+        // sink anywhere under `media/`.
+        titleEl.textContent = typeof state.title === "string" ? state.title : "";
+        profileEl.textContent = typeof state.profile === "string" ? state.profile : "";
         break;
       }
       default:

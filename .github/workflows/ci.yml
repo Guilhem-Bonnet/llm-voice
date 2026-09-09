@@ -101,6 +101,8 @@ jobs:
           cache: npm
           cache-dependency-path: vscode-extension/package-lock.json
       - run: npm ci
+      - run: npm run check:vsix
+      - run: npm run check:licenses
       - run: npm run package
       - uses: actions/upload-artifact@v4
         with:

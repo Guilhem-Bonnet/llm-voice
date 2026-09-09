@@ -7,7 +7,7 @@
 
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { addHookEntry, containsHookEntry, removeHookEntry } from "./hookEntry.js";
+import { addHookEntry, containsHookEntry, isSettingsObject, removeHookEntry } from "./hookEntry.js";
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && "code" in error;
@@ -29,11 +29,32 @@ async function readRaw(filePath: string): Promise<string | undefined> {
   }
 }
 
+/**
+ * `{}` for a missing/blank file; otherwise the parsed JSON. Throws on
+ * malformed JSON *on purpose* — `settings.json` belongs to the user, and
+ * overwriting a file we could not read would silently discard whatever was
+ * in it. `ClaudeHookCommand` turns the throw into a message telling the
+ * user to fix the file.
+ */
 function parseOrEmpty(raw: string | undefined): unknown {
   if (raw === undefined || raw.trim().length === 0) {
     return {};
   }
   return JSON.parse(raw);
+}
+
+/**
+ * Same reasoning one step further (S6.1 audit F-06): valid JSON that is not
+ * an object (an array, a bare string, `null`) is *not* a settings document,
+ * and `addHookEntry` would have returned a fresh object — writing it back
+ * would replace the file's entire content with our hook. Refuse instead.
+ */
+function assertWritableSettings(filePath: string, json: unknown): void {
+  if (!isSettingsObject(json)) {
+    throw new Error(
+      `LLM Voice : ${filePath} ne contient pas un objet JSON — installation annulée pour ne pas écraser son contenu.`
+    );
+  }
 }
 
 export interface SettingsFileRef {
@@ -70,10 +91,12 @@ export async function findExistingHook(files: readonly SettingsFileRef[]): Promi
 async function writeAtomicWithBackup(filePath: string, nextJson: unknown, previousRaw: string | undefined): Promise<void> {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   if (previousRaw !== undefined) {
-    await fs.writeFile(`${filePath}.bak`, previousRaw, "utf8");
+    // 0600: `settings.json` can carry env values and tokens for other tools;
+    // our backup copy must not be more readable than the original.
+    await fs.writeFile(`${filePath}.bak`, previousRaw, { encoding: "utf8", mode: 0o600 });
   }
   const tmp = `${filePath}.tmp-${process.pid}-${Date.now()}`;
-  await fs.writeFile(tmp, `${JSON.stringify(nextJson, null, 2)}\n`, "utf8");
+  await fs.writeFile(tmp, `${JSON.stringify(nextJson, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
   await fs.rename(tmp, filePath);
 }
 
@@ -86,6 +109,7 @@ async function writeAtomicWithBackup(filePath: string, nextJson: unknown, previo
 export async function writeHookInstalled(targetPath: string, command: string): Promise<void> {
   const previousRaw = await readRaw(targetPath);
   const json = parseOrEmpty(previousRaw);
+  assertWritableSettings(targetPath, json);
   const next = addHookEntry(json, command);
   await writeAtomicWithBackup(targetPath, next, previousRaw);
 }
@@ -94,6 +118,7 @@ export async function writeHookInstalled(targetPath: string, command: string): P
 export async function writeHookUninstalled(targetPath: string): Promise<void> {
   const previousRaw = await readRaw(targetPath);
   const json = parseOrEmpty(previousRaw);
+  assertWritableSettings(targetPath, json);
   const next = removeHookEntry(json);
   await writeAtomicWithBackup(targetPath, next, previousRaw);
 }

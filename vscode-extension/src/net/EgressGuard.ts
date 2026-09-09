@@ -28,7 +28,8 @@ export type EgressDenialReason =
   | "tls-required"
   | "dns-resolution-failed"
   | "dns-rebinding"
-  | "cross-host-redirect";
+  | "cross-host-redirect"
+  | "unsupported-protocol";
 
 /** Thrown by `assertAllowed`/`fetch` when a destination is refused. Carries
  *  only host-level information — never a URL path, query string, body or
@@ -73,6 +74,8 @@ export interface EgressGuardOptions {
   strictLocal: boolean;
   resolve?: EgressResolver;
   logger?: (event: EgressLogEvent) => void;
+  /** Injectable `fetch` (tests). Defaults to the global one. */
+  fetchImpl?: typeof fetch;
 }
 
 /** The object returned by `createEgressGuard`. */
@@ -92,6 +95,16 @@ export interface EgressGuardHandle {
 }
 
 const IPV4_LOOPBACK = /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+/** IPv4-mapped IPv6 form of a 127.0.0.0/8 address (`::ffff:127.0.0.1`). */
+const IPV6_MAPPED_IPV4_LOOPBACK = /^::ffff:127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+/**
+ * Only these two schemes ever leave the Extension Host. Without this
+ * allowlist `file://localhost/etc/passwd` passes the loopback branch below
+ * (its hostname *is* `localhost`) and `data:`/`blob:` URLs reach `fetch`
+ * with an empty hostname — neither is a destination this guard can reason
+ * about, so both are refused before anything else happens (S6.1 audit).
+ */
+const ALLOWED_PROTOCOLS: ReadonlySet<string> = new Set(["http:", "https:"]);
 
 function stripBrackets(hostname: string): string {
   return hostname.startsWith("[") && hostname.endsWith("]") ? hostname.slice(1, -1) : hostname;
@@ -123,7 +136,13 @@ function isLoopbackAddress(address: string): boolean {
   if (normalized === "::1" || normalized === "0:0:0:0:0:0:0:1") {
     return true;
   }
-  return normalized === "::ffff:127.0.0.1";
+  return IPV6_MAPPED_IPV4_LOOPBACK.test(normalized);
+}
+
+/** Wraps an IPv6 literal in brackets so it can be used as a URL hostname. */
+function toUrlHost(address: string): string {
+  const bare = stripBrackets(address);
+  return bare.includes(":") ? `[${bare}]` : bare;
 }
 
 async function defaultResolve(host: string): Promise<string[]> {
@@ -141,6 +160,7 @@ export function createEgressGuard(options: EgressGuardOptions): EgressGuardHandl
   const trustedHosts = new Set(options.trustedHosts.map((host) => host.toLowerCase()));
   const resolve = options.resolve ?? defaultResolve;
   const log = options.logger ?? ((): void => {});
+  const doFetch = options.fetchImpl ?? fetch;
 
   function classify(url: URL): EgressClassification {
     const hostname = url.hostname.toLowerCase();
@@ -161,9 +181,16 @@ export function createEgressGuard(options: EgressGuardOptions): EgressGuardHandl
     log(event);
   }
 
-  async function assertAllowed(url: URL, method = "GET"): Promise<void> {
+  /** Returns the IP the caller must actually connect to, when the
+   *  destination was validated by DNS resolution (loopback branch). */
+  async function assertAllowed(url: URL, method = "GET"): Promise<string | undefined> {
     const effectiveMode: EgressMode = options.strictLocal ? "local" : options.mode;
     const hostname = url.hostname.toLowerCase();
+
+    if (!ALLOWED_PROTOCOLS.has(url.protocol)) {
+      emit(url, method, "deny", "unsupported-protocol");
+      throw new EgressDeniedError("unsupported-protocol", hostname, []);
+    }
 
     if (isLexicallyLoopback(hostname)) {
       // Anti DNS-rebinding (D10): never trust the name, even "localhost" —
@@ -180,7 +207,10 @@ export function createEgressGuard(options: EgressGuardOptions): EgressGuardHandl
         throw new EgressDeniedError("dns-rebinding", hostname, resolvedIps);
       }
       emit(url, method, "allow");
-      return;
+      // Anti-TOCTOU (S6.1 audit): the caller connects to *this* address, not
+      // to the name — `fetch` would otherwise resolve `hostname` a second
+      // time and a rebinding resolver could answer a public IP in between.
+      return resolvedIps[0];
     }
 
     if (effectiveMode === "local") {
@@ -201,7 +231,7 @@ export function createEgressGuard(options: EgressGuardOptions): EgressGuardHandl
         throw new EgressDeniedError("tls-required", hostname, []);
       }
       emit(url, method, "allow");
-      return;
+      return undefined;
     }
 
     // effectiveMode === "open": no host restriction, but a declared trusted
@@ -212,22 +242,43 @@ export function createEgressGuard(options: EgressGuardOptions): EgressGuardHandl
       throw new EgressDeniedError("tls-required", hostname, []);
     }
     emit(url, method, "allow");
+    return undefined;
   }
 
   async function guardedFetch(input: string | URL, init: RequestInit = {}): Promise<Response> {
     const url = input instanceof URL ? input : new URL(input);
     const method = init.method ?? "GET";
-    await assertAllowed(url, method);
+    const pinnedIp = await assertAllowed(url, method);
 
-    const response = await fetch(url, { ...init, redirect: "manual" });
+    // The URL actually dialled. When DNS validated the destination we dial
+    // the resolved *address*, never the name again (D10 anti-rebinding: two
+    // resolutions are two different answers to an attacker-controlled
+    // resolver). Loopback servers do not do virtual hosting, so dropping
+    // the name costs nothing here.
+    const target = new URL(url.href);
+    if (pinnedIp !== undefined) {
+      target.hostname = toUrlHost(pinnedIp);
+    }
+
+    const response = await doFetch(target, { ...init, redirect: "manual" });
 
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       if (location !== null) {
-        const target = new URL(location, url);
-        if (target.hostname.toLowerCase() !== url.hostname.toLowerCase()) {
+        let redirectTarget: URL;
+        try {
+          redirectTarget = new URL(location, url);
+        } catch {
           emit(url, method, "deny", "cross-host-redirect");
-          throw new EgressDeniedError("cross-host-redirect", target.hostname, []);
+          throw new EgressDeniedError("cross-host-redirect", "", []);
+        }
+        if (!ALLOWED_PROTOCOLS.has(redirectTarget.protocol)) {
+          emit(url, method, "deny", "unsupported-protocol");
+          throw new EgressDeniedError("unsupported-protocol", redirectTarget.hostname, []);
+        }
+        if (redirectTarget.hostname.toLowerCase() !== url.hostname.toLowerCase()) {
+          emit(url, method, "deny", "cross-host-redirect");
+          throw new EgressDeniedError("cross-host-redirect", redirectTarget.hostname, []);
         }
       }
     }
@@ -236,7 +287,9 @@ export function createEgressGuard(options: EgressGuardOptions): EgressGuardHandl
   }
 
   return {
-    assertAllowed: (url: URL) => assertAllowed(url),
+    assertAllowed: async (url: URL): Promise<void> => {
+      await assertAllowed(url);
+    },
     fetch: guardedFetch,
     classify
   };

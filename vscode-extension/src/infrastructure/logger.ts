@@ -29,7 +29,7 @@
  */
 
 import type * as vscodeTypes from "vscode";
-import { redactSecrets } from "../core/redact.js";
+import { redactSecretPatterns, redactSecrets } from "../core/redact.js";
 
 export type LogLevel = "error" | "warn" | "info" | "debug";
 
@@ -187,7 +187,12 @@ export class Logger {
     if (LEVEL_RANK[level] > LEVEL_RANK[this.level]) {
       return;
     }
-    const line = redactSecrets(formatLine(message, meta), [...this.knownSecrets]);
+    // Three passes, narrowest first: field names (`redact`, inside
+    // `formatLine`), then known values, then known *shapes* — the last one
+    // is what catches a key that never went through `trackSecret` (in a
+    // `baseUrl`'s userinfo segment, an echoed header, an uncaught
+    // exception's message). S6.1 audit F-08.
+    const line = redactSecretPatterns(redactSecrets(formatLine(message, meta), [...this.knownSecrets]));
     const native = this.sink[level];
     if (typeof native === "function") {
       native.call(this.sink, line);
