@@ -98,8 +98,39 @@ body {
 }
 
 #welcome {
+  padding: 4px 0 8px;
+}
+
+#welcome-text {
+  margin: 0 0 6px;
   color: var(--vscode-descriptionForeground);
-  padding: 8px 0;
+}
+
+#welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.welcome-button {
+  appearance: none;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 4px;
+  background-color: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
+  cursor: pointer;
+  padding: 3px 8px;
+  font-size: var(--vscode-font-size);
+  font-family: var(--vscode-font-family);
+}
+
+.welcome-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
+}
+
+.welcome-button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
 }
 
 body[data-state="idle"] #transport,

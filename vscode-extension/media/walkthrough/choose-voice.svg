@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" role="img" aria-label="Trois niveaux de voix : système, Piper, Chatterbox">
+  <rect x="20" y="30" width="110" height="170" rx="14" fill="#2B2F38"/>
+  <rect x="145" y="30" width="110" height="170" rx="14" fill="#20486B"/>
+  <rect x="270" y="30" width="110" height="170" rx="14" fill="#0E6B57"/>
+
+  <!-- System voice: speaker icon -->
+  <g transform="translate(58,70)">
+    <path d="M0 20 L16 20 L34 4 L34 56 L16 40 L0 40 Z" fill="#D7DBE3"/>
+    <path d="M42 12 Q54 30 42 48" stroke="#D7DBE3" stroke-width="5" fill="none" stroke-linecap="round"/>
+  </g>
+  <text x="75" y="160" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#F3F4F6">Système</text>
+  <text x="75" y="180" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#AAB2C0">aucune installation</text>
+
+  <!-- Piper: download arrow -->
+  <g transform="translate(183,68)">
+    <path d="M17 0 L17 34 M4 22 L17 38 L30 22" stroke="#BFE0FF" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="0" y="46" width="34" height="8" rx="4" fill="#BFE0FF"/>
+  </g>
+  <text x="200" y="160" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#F3F4F6">Piper</text>
+  <text x="200" y="180" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9FC6E8">~60 Mo, local</text>
+
+  <!-- Chatterbox: waveform + sparkle -->
+  <g transform="translate(305,74)">
+    <rect x="0" y="14" width="4" height="20" rx="2" fill="#BFF3E3"/>
+    <rect x="8" y="4" width="4" height="40" rx="2" fill="#BFF3E3"/>
+    <rect x="16" y="10" width="4" height="28" rx="2" fill="#BFF3E3"/>
+    <rect x="24" y="0" width="4" height="48" rx="2" fill="#BFF3E3"/>
+    <rect x="32" y="16" width="4" height="16" rx="2" fill="#BFF3E3"/>
+  </g>
+  <text x="325" y="160" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#F3F4F6">Chatterbox</text>
+  <text x="325" y="180" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#9FE3CD">Docker requis</text>
+</svg>

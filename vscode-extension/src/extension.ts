@@ -11,6 +11,8 @@ import type { AudioSink } from "./playback/index.js";
 import type { TtsProvider } from "./core/tts.js";
 import type { PlayerUserAction } from "./core/playback.js";
 import { createLogger, parseLogLevel, type Logger } from "./infrastructure/logger.js";
+import { setupVoice } from "./onboarding/SetupVoice.js";
+import { openWalkthroughExample, openWalkthroughOnFirstActivation } from "./onboarding/Walkthrough.js";
 // Type-only: erased at compile time, never pulls `test/fakes/*` into the
 // bundle (see `requireTestFixture` below for the runtime-safe counterpart).
 import type { FakeAudioSink } from "../test/fakes/FakeAudioSink.js";
@@ -190,6 +192,15 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     vscode.commands.registerCommand(statusBarMenuCommand, () => statusBar.openMenu())
   );
 
+  // S7.2 (onboarding): registered here rather than `commands/index.ts` so
+  // this story never has to depend on that file's ownership by S7.1/S7.3.
+  context.subscriptions.push(
+    vscode.commands.registerCommand("llmVoice.setupVoice", () => setupVoice())
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("llmVoice.walkthroughOpenExample", () => openWalkthroughExample(context))
+  );
+
   const pipeline = new Pipeline({
     context,
     output: log,
@@ -225,6 +236,12 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
         case "selectProfile":
           void pipeline.selectProfile();
           break;
+        case "setupVoice":
+          void vscode.commands.executeCommand("llmVoice.setupVoice");
+          break;
+        case "speakCurrentDocument":
+          void vscode.commands.executeCommand("llmVoice.speakDocument");
+          break;
         default:
           break;
       }
@@ -244,6 +261,10 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   }
 
   log.info("LLM Voice extension activated.");
+
+  // First activation only (`globalState`, never again) — never under
+  // `vscode-test` (`ExtensionMode.Test`), see `Walkthrough.ts`.
+  void openWalkthroughOnFirstActivation(context);
 
   return {
     highlight,

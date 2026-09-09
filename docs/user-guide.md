@@ -6,6 +6,39 @@ de voix configurables. Voir `docs/install-linux.md` (installation détaillée
 des serveurs), `docs/providers.md` (choix d'un moteur TTS/narrateur) et
 `docs/voices.md` (clonage de voix).
 
+## Première utilisation
+
+Dès l'installation, un parcours guidé (**Démarrer avec LLM Voice**) s'ouvre
+automatiquement une seule fois, jamais ensuite (relançable via la palette de
+commandes → **Welcome: Open Walkthrough**). Il correspond exactement à ce
+qui suit :
+
+1. **Choisir une voix** — `LLM Voice: Setup Voice` propose trois niveaux
+   honnêtes, sans jamais bloquer sur « Chatterbox n'est pas installé » :
+   - **Voix système** : disponible tout de suite, qualité correcte, rien à
+     installer.
+   - **Voix locale Piper** : meilleure qualité, un téléchargement unique
+     d'environ 60 Mo, 100 % local ensuite.
+   - **Chatterbox** : la meilleure qualité (clonage de voix), nécessite
+     Docker — la commande à lancer (`docker compose -f
+     deploy/docker-compose.tts.yml up -d chatterbox`) est proposée avec un
+     bouton « Copier la commande » et un lien vers la documentation.
+2. **Lire un document** — ouvrir un fichier `.md` (l'extension livre un
+   exemple pour tester sans avoir le vôtre sous la main) puis
+   `Ctrl+Alt+V` **puis** `D` (ou palette de commandes → **LLM Voice: Speak
+   Document**). Le segment en cours est surligné, les contrôles de lecture
+   apparaissent dans le mini-player.
+3. **Choisir un profil** — `LLM Voice: Select Profile` (voir « Profils »
+   ci-dessous).
+4. **Optionnel : connecter Claude Code** — `LLM Voice: Install Claude Hook`
+   capture automatiquement les réponses dans une inbox dédiée (voir « Inbox
+   Claude Code » ci-dessous).
+
+Le player (vue « LLM Voice », Panel) et l'inbox affichent un texte d'accueil
+avec des boutons d'action tant qu'ils sont vides — jamais un panneau vide
+sans indication. Sur tout document Markdown, un bouton haut-parleur dans le
+titre de l'éditeur lance directement **Speak Document**.
+
 ## Installation rapide
 
 1. Installer VS Code ≥ 1.95, puis l'extension (`.vsix`, `docs/install-linux.md`

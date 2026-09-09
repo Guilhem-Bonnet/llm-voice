@@ -29,9 +29,15 @@ interface QuickPickItemWithChoice extends vscode.QuickPickItem {
 /** Single status bar item; the only one contributed by this extension (CdC §8). */
 export class StatusBar implements vscode.Disposable {
   private readonly item: vscode.StatusBarItem;
+  // S7.2: visible from the very first tick of activation, before any
+  // session or profile resolution — "LLM Voice" rather than a bare "—" so
+  // there is something to notice and click on an otherwise-empty install
+  // (real user report on 0.1.0: "j'ai trouvé le bouton en cherchant un peu
+  // partout"). `Pipeline.initStatusBar()`/playback state changes overwrite
+  // this shortly after with the resolved profile label.
   private model: StatusBarViewModel = {
     state: "idle",
-    profileLabel: "—",
+    profileLabel: "LLM Voice",
     isLocalOnly: false
   };
 

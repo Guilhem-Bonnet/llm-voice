@@ -79,7 +79,11 @@ export type PlayerUserAction =
   | "stop"
   | "next"
   | "prev"
-  | "selectProfile";
+  | "selectProfile"
+  // S7.2: the empty-player welcome buttons (ADR-011's "never shown empty"
+  // link becomes two real actions instead of a dead end).
+  | "setupVoice"
+  | "speakCurrentDocument";
 
 /** Commands sent Extension Host → Webview (D4). */
 export type ExtensionToWebviewMessage =

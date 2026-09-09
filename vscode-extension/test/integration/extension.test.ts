@@ -21,7 +21,9 @@ const EXPECTED_COMMANDS = [
   "llmVoice.clearHighlight",
   "llmVoice.clearAudioCache",
   "llmVoice.verifyLocalMode",
-  "llmVoice.installClaudeHook"
+  "llmVoice.installClaudeHook",
+  "llmVoice.setupVoice",
+  "llmVoice.walkthroughOpenExample"
 ];
 
 async function waitFor(

@@ -63,7 +63,13 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
   <title>LLM Voice Player</title>
 </head>
 <body data-state="idle">
-  <p id="welcome">Aucune lecture en cours&hellip;</p>
+  <div id="welcome">
+    <p id="welcome-text">Aucune lecture en cours&hellip;</p>
+    <div id="welcome-actions" role="group" aria-label="Démarrer une lecture">
+      <button id="btn-setup-voice" class="welcome-button" type="button">Choisir une voix</button>
+      <button id="btn-speak-current" class="welcome-button" type="button">Lire le document actuel</button>
+    </div>
+  </div>
 
   <div id="title-line" class="line">
     <span id="title"></span>

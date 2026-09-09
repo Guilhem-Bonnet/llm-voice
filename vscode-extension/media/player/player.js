@@ -21,6 +21,11 @@
     stop: document.getElementById("btn-stop")
   };
 
+  const welcomeButtons = {
+    setupVoice: document.getElementById("btn-setup-voice"),
+    speakCurrent: document.getElementById("btn-speak-current")
+  };
+
   let currentChunkId = null;
   let lastTimeUpdatePostMs = 0;
   const TIMEUPDATE_THROTTLE_MS = 250;
@@ -186,6 +191,14 @@
   buttons.playPause.addEventListener("click", () => {
     post({ type: "userAction", action: audio.paused ? "play" : "pause" });
   });
+
+  // Empty-player welcome actions (S7.2): only visible in the idle state
+  // (`body[data-state="idle"]`, see player.css), so these never compete
+  // with the transport buttons.
+  welcomeButtons.setupVoice.addEventListener("click", () => post({ type: "userAction", action: "setupVoice" }));
+  welcomeButtons.speakCurrent.addEventListener("click", () =>
+    post({ type: "userAction", action: "speakCurrentDocument" })
+  );
 
   post({ type: "ready" });
 })();
