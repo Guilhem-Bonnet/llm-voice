@@ -996,11 +996,7 @@ export class Pipeline implements PipelineFacade {
     if (existing !== undefined) {
       return existing;
     }
-    const apiKey =
-      profile.tts.apiKeyRef !== undefined ? await this.context.secrets.get(profile.tts.apiKeyRef) : undefined;
-    if (apiKey !== undefined) {
-      this.output.trackSecret(apiKey);
-    }
+    const apiKey = await this.resolveApiKey(profile.tts.apiKeyRef, resolved.providerId);
     // ADR-005/D9: `providerId` picks the class (Chatterbox/Kokoro get their
     // engine-specific parameters, CdC §28), never anything but `baseUrl` +
     // an id string — `presetKindForProviderId` is the single place that maps
@@ -1017,6 +1013,38 @@ export class Pipeline implements PipelineFacade {
     );
     this.registry.register(provider);
     return provider;
+  }
+
+  /**
+   * Reads the API key a profile's `apiKeyRef` names — but only the one key
+   * that profile is entitled to (S6.1 audit F-01, AC-SEC-08).
+   *
+   * `apiKeyRef` is profile data, and a profile can be *imported* from an
+   * untrusted file (AC-SEC-05). Passing it straight to
+   * `SecretStorage.get()` let an imported profile name any key in the
+   * extension's namespace — e.g. `llmVoice.apiKey.openai` — and have its
+   * value sent as a `Bearer` token to that same profile's own `baseUrl`.
+   * The ref must now equal `apiKeySecretKey(providerId)` for the provider
+   * the profile actually resolves to; anything else is ignored (and
+   * reported at `warn`, with the ref name only — never a value).
+   */
+  private async resolveApiKey(apiKeyRef: string | undefined, providerId: string): Promise<string | undefined> {
+    if (apiKeyRef === undefined) {
+      return undefined;
+    }
+    const expected = apiKeySecretKey(providerId);
+    if (apiKeyRef !== expected) {
+      this.output.warn("Profile apiKeyRef ignored: it does not match the resolved provider", {
+        apiKeyRef,
+        expected
+      });
+      return undefined;
+    }
+    const apiKey = await this.context.secrets.get(apiKeyRef);
+    if (apiKey !== undefined) {
+      this.output.trackSecret(apiKey);
+    }
+    return apiKey;
   }
 
   /**
@@ -1069,13 +1097,7 @@ export class Pipeline implements PipelineFacade {
     if (existing !== undefined) {
       return existing;
     }
-    const apiKey =
-      profile.narrator?.apiKeyRef !== undefined
-        ? await this.context.secrets.get(profile.narrator.apiKeyRef)
-        : undefined;
-    if (apiKey !== undefined) {
-      this.output.trackSecret(apiKey);
-    }
+    const apiKey = await this.resolveApiKey(profile.narrator?.apiKeyRef, resolved.providerId);
     const provider = createNarratorProvider({
       id: key,
       providerId: resolved.providerId,
