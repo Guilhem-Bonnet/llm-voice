@@ -129,6 +129,33 @@ describe("DiskAudioCache (ADR-004)", () => {
     expect(sidecar["bytes"]).toBe(4);
   });
 
+  it("getMeta() restores format/durationMs/providerId for AudioQueue's cache-hit path (S6.2)", async () => {
+    const cache = new DiskAudioCache({ root });
+    await cache.put("abcdef", bytes(4), { format: "wav", durationMs: 987, providerId: "chatterbox" });
+
+    const meta = await cache.getMeta("abcdef");
+
+    expect(meta).toEqual({ format: "wav", durationMs: 987, providerId: "chatterbox" });
+  });
+
+  it("getMeta() survives the AudioQueue cache-hit sequence: get() then put(key, bytes, {providerId})", async () => {
+    const cache = new DiskAudioCache({ root });
+    await cache.put("abcdef", bytes(4), { format: "wav", durationMs: 987, providerId: "chatterbox" });
+
+    // Mirrors AudioQueue.run()'s cache-hit branch exactly.
+    const cached = await cache.get("abcdef");
+    await cache.put("abcdef", cached as Uint8Array, { providerId: "chatterbox" });
+    const meta = await cache.getMeta("abcdef");
+
+    expect(meta?.format).toBe("wav");
+    expect(meta?.durationMs).toBe(987);
+  });
+
+  it("getMeta() returns undefined for an unknown key", async () => {
+    const cache = new DiskAudioCache({ root });
+    expect(await cache.getMeta("missing")).toBeUndefined();
+  });
+
   it("touch() (an existing key) keeps prior meta when a later put() omits it", async () => {
     const cache = new DiskAudioCache({ root });
     await cache.put("k", bytes(4), { format: "wav", providerId: "kokoro" });

@@ -23,6 +23,7 @@ interface PolicyOverrides {
   maxSentencesPerChunk?: number;
   markdown?: Partial<MarkdownPolicy>;
   lang?: string;
+  firstChunkSentences?: number;
 }
 
 function policy(overrides: PolicyOverrides = {}): SegmentationPolicy {
@@ -30,7 +31,8 @@ function policy(overrides: PolicyOverrides = {}): SegmentationPolicy {
     mode: overrides.mode ?? "sentence",
     maxSentencesPerChunk: overrides.maxSentencesPerChunk ?? 3,
     lang: overrides.lang ?? "fr",
-    markdown: { ...READ_ALL_MARKDOWN_POLICY, ...overrides.markdown }
+    markdown: { ...READ_ALL_MARKDOWN_POLICY, ...overrides.markdown },
+    ...(overrides.firstChunkSentences !== undefined ? { firstChunkSentences: overrides.firstChunkSentences } : {})
   };
 }
 
@@ -189,5 +191,46 @@ describe("segment — sourceRange mapping (ADR-006)", () => {
     const segments = segment(blocks, policy({ mode: "sentence", maxSentencesPerChunk: 1 }));
     expect(segments).toHaveLength(1);
     expect(segments[0]?.sourceRange).toEqual(blocks[0]?.sourceRange);
+  });
+});
+
+describe("segment — firstChunkSentences (S6.2, CdC §63)", () => {
+  it("caps only the very first chunk of the document, later groups stay at maxSentencesPerChunk", async () => {
+    const blocks = await parseMarkdown("Un. Deux. Trois. Quatre. Cinq. Six.");
+    const segments = segment(blocks, policy({ mode: "sentence", maxSentencesPerChunk: 3, firstChunkSentences: 1 }));
+    expect(segments.map((s) => s.rawText)).toEqual(["Un.", "Deux. Trois. Quatre.", "Cinq. Six."]);
+  });
+
+  it("is a no-op across block boundaries: only the document's first group is short", async () => {
+    const blocks = await parseMarkdown("Un. Deux.\n\nTrois. Quatre.");
+    const segments = segment(blocks, policy({ mode: "sentence", maxSentencesPerChunk: 2, firstChunkSentences: 1 }));
+    expect(segments.map((s) => s.rawText)).toEqual(["Un.", "Deux.", "Trois. Quatre."]);
+  });
+
+  it("does nothing when firstChunkSentences >= maxSentencesPerChunk", async () => {
+    const blocks = await parseMarkdown("Un. Deux. Trois. Quatre.");
+    const segments = segment(blocks, policy({ mode: "sentence", maxSentencesPerChunk: 2, firstChunkSentences: 2 }));
+    expect(segments.map((s) => s.rawText)).toEqual(["Un. Deux.", "Trois. Quatre."]);
+  });
+
+  it("does nothing when the policy omits firstChunkSentences", async () => {
+    const blocks = await parseMarkdown("Un. Deux. Trois. Quatre.");
+    const segments = segment(blocks, policy({ mode: "sentence", maxSentencesPerChunk: 2 }));
+    expect(segments.map((s) => s.rawText)).toEqual(["Un. Deux.", "Trois. Quatre."]);
+  });
+
+  it("falls through to normal grouping when the whole first block already fits under the cap", async () => {
+    const blocks = await parseMarkdown("Un seul.\n\nDeux. Trois. Quatre.");
+    const segments = segment(blocks, policy({ mode: "sentence", maxSentencesPerChunk: 2, firstChunkSentences: 3 }));
+    expect(segments.map((s) => s.rawText)).toEqual(["Un seul.", "Deux. Trois.", "Quatre."]);
+  });
+
+  it("has no effect on a non-sentence-mode block (heading is still its own single segment)", async () => {
+    const blocks = await parseMarkdown("# Titre\n\nUn. Deux. Trois.");
+    const segments = segment(blocks, policy({ mode: "sentence", maxSentencesPerChunk: 3, firstChunkSentences: 1 }));
+    expect(segments[0]?.type).toBe("heading");
+    // The heading consumed the "first chunk" slot; the paragraph after it
+    // groups normally at maxSentencesPerChunk.
+    expect(segments.slice(1).map((s) => s.rawText)).toEqual(["Un. Deux. Trois."]);
   });
 });

@@ -32,9 +32,11 @@ import { segment } from "../parser/Segmenter.js";
 import {
   buildSession,
   DiskAudioCache,
+  PerformanceStats,
   PlaybackController,
   type AudioSink,
   type ChunkErrorDecision,
+  type ChunkTimingEvent,
   type NarrationWarning,
   type PlaybackErrorInfo,
   type SessionBuild
@@ -70,6 +72,7 @@ import {
   presetKindForProviderId,
   probeHealth,
   TtsProviderRegistry,
+  warmupProvider,
   type HealthCheckable
 } from "../tts/index.js";
 import { createNarratorProvider } from "../narrator/index.js";
@@ -153,12 +156,13 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-function segmentationPolicyFor(profile: VoiceProfile): SegmentationPolicy {
+function segmentationPolicyFor(profile: VoiceProfile, firstChunkSentences: number): SegmentationPolicy {
   return {
     mode: profile.chunking.unit,
     maxSentencesPerChunk: profile.chunking.maxSentences,
     markdown: DEFAULT_MARKDOWN_POLICY,
-    lang: profile.language
+    lang: profile.language,
+    firstChunkSentences
   };
 }
 
@@ -236,6 +240,14 @@ export class Pipeline implements PipelineFacade {
   private narrationDisabledForSession = false;
   private currentSessionBuild: SessionBuild | undefined;
 
+  // ------------------------------------------------------- S6.2 (perf/latency)
+  /** Counters behind `LLM Voice: Show Performance Report`; reset every `start()`. */
+  private readonly perf = new PerformanceStats();
+  /** `Date.now()` of the current session's `controller.start()` call, for TTFA. */
+  private ttfaStartedAt: number | undefined;
+  /** Provider ids already warmed up this VS Code session (`llmVoice.tts.warmup`) — at most once each. */
+  private readonly warmedProviderIds = new Set<string>();
+
   constructor(options: PipelineOptions) {
     this.context = options.context;
     this.output = options.output;
@@ -293,9 +305,11 @@ export class Pipeline implements PipelineFacade {
       onChunkError: (info) => this.handleChunkError(info),
       maxRetries: this.audioMaxRetries(),
       timeoutMs: this.ttsTimeoutMs(),
-      prefetchChunks: this.audioPrefetchChunks()
+      prefetchChunks: this.audioPrefetchChunks(),
+      onChunkTiming: (event) => this.handleChunkTiming(event)
     });
     this.controller.onChunkChange((change) => {
+      this.recordTtfaOnce();
       if (this.currentUri !== undefined) {
         this.highlight.show(this.currentUri, change.chunk.sourceRanges);
       }
@@ -434,6 +448,7 @@ export class Pipeline implements PipelineFacade {
       this.currentUri = doc.uri !== undefined ? vscode.Uri.parse(doc.uri) : undefined;
       this.player.reveal();
 
+      this.beginPerfSession();
       await this.controller.start({
         segments: build.segments,
         profile,
@@ -496,7 +511,10 @@ export class Pipeline implements PipelineFacade {
     const captureRange = readCaptureRange(doc.metadata);
     const all =
       doc.sourceType === "markdown"
-        ? segment(await parseMarkdown(doc.rawText, doc.uri), segmentationPolicyFor(profile))
+        ? segment(
+            await parseMarkdown(doc.rawText, doc.uri),
+            segmentationPolicyFor(profile, this.audioFirstChunkSentences())
+          )
         : plainTextSegments(doc.rawText);
     if (captureRange === undefined) {
       return all;
@@ -685,6 +703,7 @@ export class Pipeline implements PipelineFacade {
       const sink = this.sinkOverride ?? this.player.audioSink;
       this.currentProfileLabel = profile.label;
       this.player.reveal();
+      this.beginPerfSession();
       await this.controller.start({ segments: build.segments, profile, tts, sink, sealed: true });
     } catch (error) {
       this.output.error("testVoice failed", { error: messageOf(error) });
@@ -1012,6 +1031,11 @@ export class Pipeline implements PipelineFacade {
       }
     );
     this.registry.register(provider);
+    // S6.2: warm up this brand-new instance in the background, once — never
+    // for `existing` above, so a document already read once this session
+    // never re-pays this even though `warmedProviderIds` alone would already
+    // make it a no-op (this early return also skips the `Set` lookup).
+    this.warmupIfEnabled(provider, key, profile.language, profile.tts.voice);
     return provider;
   }
 
@@ -1164,6 +1188,26 @@ export class Pipeline implements PipelineFacade {
   }
 
   /**
+   * `llmVoice.audio.firstChunkSentences` (S6.2, CdC §63): sentences in the
+   * very first chunk of a document, capped below `profile.chunking.maxSentences`
+   * so playback starts sooner without shrinking every later chunk's prosody.
+   * Default `1` — measured on the reference machine (`docs/performance.md`),
+   * a single sentence is the shortest unit that still sounds natural.
+   */
+  private audioFirstChunkSentences(): number {
+    return vscode.workspace.getConfiguration("llmVoice").get<number>("audio.firstChunkSentences", 1);
+  }
+
+  /**
+   * `llmVoice.tts.warmup` (S6.2, default `true`): absorbs a still-cold TTS
+   * engine's first-inference cost on a throwaway phrase instead of the
+   * user's real first chunk. See `src/tts/warmup.ts`'s file header.
+   */
+  private ttsWarmupEnabled(): boolean {
+    return vscode.workspace.getConfiguration("llmVoice").get<boolean>("tts.warmup", true);
+  }
+
+  /**
    * CdC §52's three synthesis-failure surfaces, all reached through
    * `PlaybackController`'s single `onChunkError` callback:
    *  - `origin !== "synthesis"` (a playback/decode failure) always skips —
@@ -1229,6 +1273,104 @@ export class Pipeline implements PipelineFacade {
    * and every future `start()` call — this document or the next — to skip
    * the narrator entirely) until "Retry" explicitly clears it again.
    */
+  // ------------------------------------------------------- S6.2 (perf/latency)
+
+  /**
+   * `AudioQueue.onChunkTiming` (S6.2): folds every sample into `this.perf`
+   * and mirrors it to the debug log — timings and counts only, never
+   * `spokenText`/audio (CdC §81), safe at `debug` level.
+   */
+  private handleChunkTiming(event: ChunkTimingEvent): void {
+    this.perf.recordChunk(event);
+    this.output.debug("chunk timing", {
+      index: event.index,
+      cacheHit: event.cacheHit,
+      ready: event.ready,
+      queueSize: event.queueSize,
+      ...(event.synthesisMs !== undefined ? { synthesisMs: event.synthesisMs } : {})
+    });
+  }
+
+  /**
+   * Time-to-first-audio (CdC §63): `this.ttfaStartedAt` is armed right before
+   * `controller.start()`/`testVoice()`'s own `controller.start()` and
+   * consumed by the *first* `PlaybackController.onChunkChange` that fires
+   * after it — exactly the moment the first chunk starts playing — never by
+   * a later chunk change within the same session (`undefined` after the
+   * first call makes every later call in the session a no-op).
+   */
+  private recordTtfaOnce(): void {
+    if (this.ttfaStartedAt === undefined) {
+      return;
+    }
+    const ttfaMs = Date.now() - this.ttfaStartedAt;
+    this.ttfaStartedAt = undefined;
+    this.perf.recordTtfa(ttfaMs);
+    this.output.debug("ttfa", { ttfaMs });
+  }
+
+  /** Resets the session's performance counters and arms the TTFA clock (S6.2). */
+  private beginPerfSession(): void {
+    this.perf.reset();
+    this.ttfaStartedAt = Date.now();
+  }
+
+  /**
+   * `llmVoice.tts.warmup` (S6.2, default `true`): fires `warmupProvider`
+   * at most once per resolved provider instance, in the background — never
+   * awaited by the caller, so it cannot delay the `Speak` that triggered it.
+   * Errors are logged at `debug` (never surfaced to the user: warmup is
+   * purely a latency optimisation, not a correctness requirement — the
+   * normal `waitForTtsReady`/`AudioQueue` retry path is what reports a
+   * genuinely broken provider).
+   */
+  private warmupIfEnabled(tts: TtsProvider, providerId: string, language: string, voice: string | undefined): void {
+    if (!this.ttsWarmupEnabled() || this.warmedProviderIds.has(providerId)) {
+      return;
+    }
+    this.warmedProviderIds.add(providerId);
+    void warmupProvider(tts, { language, ...(voice !== undefined ? { voice } : {}) }).then((result) => {
+      this.output.debug("tts warmup", {
+        providerId: result.providerId,
+        ok: result.ok,
+        totalMs: result.totalMs,
+        ...(result.healthMs !== undefined ? { healthMs: result.healthMs } : {}),
+        ...(result.synthesisMs !== undefined ? { synthesisMs: result.synthesisMs } : {}),
+        ...(result.error !== undefined ? { error: result.error } : {})
+      });
+    });
+  }
+
+  /** `LLM Voice: Show Performance Report` (S6.2): stats of the current/last session. */
+  async performanceReport(): Promise<void> {
+    const snap = this.perf.snapshot();
+    const items: vscode.QuickPickItem[] = [
+      {
+        label: snap.ttfaMs !== undefined ? `$(watch) TTFA : ${snap.ttfaMs} ms` : "$(watch) TTFA : n/a",
+        description: "Délai avant le premier son (CdC §63)"
+      },
+      {
+        label: `$(list-unordered) Chunks : ${snap.chunkCount} (cache ${snap.cacheHits}, synthèse ${snap.cacheMisses}, erreurs ${snap.errors})`
+      },
+      {
+        label:
+          snap.avgSynthesisMs !== undefined
+            ? `$(zap) Synthèse moyenne : ${snap.avgSynthesisMs} ms/chunk`
+            : "$(zap) Synthèse moyenne : n/a",
+        description: "Hors cache hits"
+      },
+      {
+        label: `$(server-process) File d'attente (dernière) : ${snap.lastQueueSize ?? "n/a"}`
+      }
+    ];
+    await vscode.window.showQuickPick(items, { placeHolder: "LLM Voice : rapport de performance (session courante)" });
+  }
+
+  /** Test hook: last computed snapshot, without a Quick Pick (S6.2). */
+  getPerformanceSnapshotForTest(): ReturnType<PerformanceStats["snapshot"]> {
+    return this.perf.snapshot();
+  }
+
   private handleNarratorWarning(warning: NarrationWarning): void {
     this.output.warn("narration group degraded, reading faithfully", {
       groupIndex: warning.groupIndex,

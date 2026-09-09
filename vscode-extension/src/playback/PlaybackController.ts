@@ -134,7 +134,8 @@ export class PlaybackController {
       ...(options.retryBackoffMs !== undefined ? { retryBackoffMs: options.retryBackoffMs } : {}),
       ...(options.retryJitterMs !== undefined ? { retryJitterMs: options.retryJitterMs } : {}),
       ...(options.random !== undefined ? { random: options.random } : {}),
-      ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {})
+      ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
+      ...(options.onChunkTiming !== undefined ? { onChunkTiming: options.onChunkTiming } : {})
     };
     this.onChunkError = options.onChunkError ?? (() => "skip");
     this.previousThresholdMs =

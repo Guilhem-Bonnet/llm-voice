@@ -7,7 +7,7 @@
  */
 
 import type { SourceRange, SourceSegment, SourceSegmentType } from "../core/source.js";
-import { splitSentences } from "./SentenceSplitter.js";
+import { splitSentences, type SentenceWithOffset } from "./SentenceSplitter.js";
 import { normalize } from "./SpokenTextNormalizer.js";
 import type { SegmentationPolicy, SourceBlock, TableContent } from "./types.js";
 
@@ -83,6 +83,12 @@ class IdGenerator {
   }
 }
 
+/** Mutable, single-document state threaded through `segmentBlock`/`segmentSentences` (S6.2). */
+interface SegmenterState {
+  /** True once the document has produced its first segment(s) — the short-first-chunk window has closed. */
+  firstConsumed: boolean;
+}
+
 function buildSegment(
   id: string,
   type: SourceSegmentType,
@@ -104,12 +110,42 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
   return chunks;
 }
 
-function segmentSentences(block: SourceBlock, policy: SegmentationPolicy, ids: IdGenerator): SourceSegment[] {
+/**
+ * Groups `sentences` into chunks of `policy.maxSentencesPerChunk`, except the
+ * very first group of the whole document (`!state.firstConsumed`), which is
+ * capped at `policy.firstChunkSentences` when that is smaller (CdC §63,
+ * S6.2's "premier chunk court"). A no-op — same grouping as before — once
+ * this document has already produced its first chunk, or when the policy
+ * does not set `firstChunkSentences`, or when it is not actually smaller.
+ */
+function groupSentences(
+  sentences: readonly SentenceWithOffset[],
+  policy: SegmentationPolicy,
+  state: SegmenterState
+): SentenceWithOffset[][] {
+  const first = policy.firstChunkSentences;
+  if (state.firstConsumed || first === undefined || first >= policy.maxSentencesPerChunk || first < 1) {
+    return chunk(sentences, policy.maxSentencesPerChunk);
+  }
+  if (first >= sentences.length) {
+    // The whole first block already fits under the short-first-chunk cap:
+    // nothing to split off, fall through to the normal grouping.
+    return chunk(sentences, policy.maxSentencesPerChunk);
+  }
+  return [sentences.slice(0, first), ...chunk(sentences.slice(first), policy.maxSentencesPerChunk)];
+}
+
+function segmentSentences(
+  block: SourceBlock,
+  policy: SegmentationPolicy,
+  ids: IdGenerator,
+  state: SegmenterState
+): SourceSegment[] {
   const sentences = splitSentences(block.text, policy.lang);
   if (sentences.length === 0) {
     return [];
   }
-  const groups = chunk(sentences, policy.maxSentencesPerChunk);
+  const groups = groupSentences(sentences, policy, state);
   return groups.map((group) => {
     const rawText = group.map((sentence) => sentence.text).join(" ");
     const range = group
@@ -119,7 +155,12 @@ function segmentSentences(block: SourceBlock, policy: SegmentationPolicy, ids: I
   });
 }
 
-function segmentBlock(block: SourceBlock, policy: SegmentationPolicy, ids: IdGenerator): SourceSegment[] {
+function segmentBlock(
+  block: SourceBlock,
+  policy: SegmentationPolicy,
+  ids: IdGenerator,
+  state: SegmenterState
+): SourceSegment[] {
   const { markdown } = policy;
 
   switch (block.type) {
@@ -178,17 +219,28 @@ function segmentBlock(block: SourceBlock, policy: SegmentationPolicy, ids: IdGen
           buildSegment(ids.next(), "paragraph", block.sourceRange, block.text, normalize(block.text, policy.lang))
         ];
       }
-      return segmentSentences(block, policy, ids);
+      return segmentSentences(block, policy, ids, state);
     }
   }
 }
 
-/** Splits parsed `blocks` into `SourceSegment`s according to `policy` (CdC §14, §33). */
+/**
+ * Splits parsed `blocks` into `SourceSegment`s according to `policy` (CdC
+ * §14, §33). `policy.firstChunkSentences` (S6.2) shrinks only the very first
+ * sentence-mode group across the whole `blocks` array — `state` here is what
+ * tracks "has the document produced its first chunk yet" across block
+ * boundaries.
+ */
 export function segment(blocks: readonly SourceBlock[], policy: SegmentationPolicy): SourceSegment[] {
   const ids = new IdGenerator();
+  const state: SegmenterState = { firstConsumed: false };
   const segments: SourceSegment[] = [];
   for (const block of blocks) {
-    segments.push(...segmentBlock(block, policy, ids));
+    const produced = segmentBlock(block, policy, ids, state);
+    if (produced.length > 0) {
+      state.firstConsumed = true;
+    }
+    segments.push(...produced);
   }
   return segments;
 }
