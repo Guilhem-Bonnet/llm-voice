@@ -3,22 +3,15 @@
  * 0.1.0 install ("il me dit que Chatterbox n'est pas installé") with an
  * honest three-way choice instead of a single hard-coded provider.
  *
- * The first two entries delegate to `llmVoice.installLocalVoice` (story
- * S7.1, a parallel branch): this command is written so it never depends on
- * S7.1 landing first — if the command isn't registered yet, it falls back
- * to a plain "available after update" message instead of throwing.
+ * The Quick Pick is the only `vscode`-specific part of this file; the
+ * decision logic behind each tier (`handleVoiceTier`, `handleVoiceTier.ts`)
+ * takes every `vscode` call as an injected parameter and is unit-tested
+ * there in plain Node.
  */
 
 import * as vscode from "vscode";
-import {
-  CHATTERBOX_COMPOSE_COMMAND,
-  CHATTERBOX_DOCS_URL,
-  INSTALL_LOCAL_VOICE_COMMAND,
-  NOT_YET_AVAILABLE_MESSAGE,
-  VOICE_TIER_OPTIONS,
-  type VoiceTier,
-  type VoiceTierOption
-} from "./voiceTiers.js";
+import { handleVoiceTier, type VoiceTierActions } from "./handleVoiceTier.js";
+import { VOICE_TIER_OPTIONS, type VoiceTier, type VoiceTierOption } from "./voiceTiers.js";
 
 type VoiceTierQuickPickItem = vscode.QuickPickItem & { tier: VoiceTier };
 
@@ -31,44 +24,13 @@ function toQuickPickItem(option: VoiceTierOption): VoiceTierQuickPickItem {
   };
 }
 
-async function delegateToInstallLocalVoice(tier: "system" | "piper"): Promise<void> {
-  const registered = await vscode.commands.getCommands(true);
-  if (!registered.includes(INSTALL_LOCAL_VOICE_COMMAND)) {
-    void vscode.window.showInformationMessage(NOT_YET_AVAILABLE_MESSAGE);
-    return;
-  }
-  await vscode.commands.executeCommand(INSTALL_LOCAL_VOICE_COMMAND, { tier });
-}
-
-async function handleChatterbox(): Promise<void> {
-  const copyCommand = "Copier la commande";
-  const openDocs = "Ouvrir la documentation";
-  const choice = await vscode.window.showInformationMessage(
-    "Chatterbox offre la meilleure qualité de voix (clonage inclus) mais nécessite Docker. " +
-      `Démarrez le service localement :\n\n${CHATTERBOX_COMPOSE_COMMAND}`,
-    { modal: true },
-    copyCommand,
-    openDocs
-  );
-  if (choice === copyCommand) {
-    await vscode.env.clipboard.writeText(CHATTERBOX_COMPOSE_COMMAND);
-    void vscode.window.showInformationMessage("LLM Voice : commande copiée dans le presse-papiers.");
-  } else if (choice === openDocs) {
-    await vscode.env.openExternal(vscode.Uri.parse(CHATTERBOX_DOCS_URL));
-  }
-}
-
-async function handleTier(tier: VoiceTier): Promise<void> {
-  switch (tier) {
-    case "system":
-    case "piper":
-      await delegateToInstallLocalVoice(tier);
-      return;
-    case "chatterbox":
-      await handleChatterbox();
-      return;
-  }
-}
+const REAL_ACTIONS: VoiceTierActions = {
+  showMessage: (message, options, ...items) =>
+    vscode.window.showInformationMessage(message, options, ...items),
+  executeCommand: (command) => vscode.commands.executeCommand(command),
+  openExternal: (url) => vscode.env.openExternal(vscode.Uri.parse(url)),
+  writeClipboardText: (text) => vscode.env.clipboard.writeText(text)
+};
 
 /** Registered as `llmVoice.setupVoice` (`extension.ts` — not `commands/index.ts`, S7.2's own file). */
 export async function setupVoice(): Promise<void> {
@@ -81,5 +43,5 @@ export async function setupVoice(): Promise<void> {
   if (picked === undefined) {
     return;
   }
-  await handleTier(picked.tier);
+  await handleVoiceTier(picked.tier, REAL_ACTIONS);
 }

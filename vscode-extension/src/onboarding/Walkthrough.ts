@@ -5,6 +5,7 @@
  */
 
 import * as vscode from "vscode";
+import { shouldOpenWalkthroughOnActivation } from "./shouldOpenWalkthrough.js";
 
 const WALKTHROUGH_ID = "llmVoice.gettingStarted";
 /** `globalState` flag: the walkthrough opens automatically once, ever — never again after that. */
@@ -34,10 +35,9 @@ export async function openWalkthroughExample(context: vscode.ExtensionContext): 
  * focus or hang any of the existing xvfb integration suite.
  */
 export async function openWalkthroughOnFirstActivation(context: vscode.ExtensionContext): Promise<void> {
-  if (context.extensionMode === vscode.ExtensionMode.Test) {
-    return;
-  }
-  if (context.globalState.get<boolean>(WALKTHROUGH_SHOWN_KEY, false)) {
+  const alreadyShown = context.globalState.get<boolean>(WALKTHROUGH_SHOWN_KEY, false);
+  const isTestMode = context.extensionMode === vscode.ExtensionMode.Test;
+  if (!shouldOpenWalkthroughOnActivation({ isTestMode, alreadyShown })) {
     return;
   }
   await context.globalState.update(WALKTHROUGH_SHOWN_KEY, true);

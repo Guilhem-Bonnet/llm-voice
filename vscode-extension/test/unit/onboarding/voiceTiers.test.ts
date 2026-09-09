@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   CHATTERBOX_COMPOSE_COMMAND,
   CHATTERBOX_DOCS_URL,
-  INSTALL_LOCAL_VOICE_COMMAND,
-  NOT_YET_AVAILABLE_MESSAGE,
+  INSTALL_PIPER_VOICE_COMMAND,
+  SYSTEM_VOICE_READY_MESSAGE,
   PIPER_VOICE_SIZE_LABEL,
   VOICE_TIER_OPTIONS
 } from "../../../src/onboarding/voiceTiers.js";
@@ -49,11 +49,11 @@ describe("Chatterbox instructions", () => {
 });
 
 describe("S7.1 delegation constants", () => {
-  it("names the command SetupVoice delegates to for system/piper", () => {
-    expect(INSTALL_LOCAL_VOICE_COMMAND).toBe("llmVoice.installLocalVoice");
+  it("names the real command SetupVoice delegates to for the piper tier", () => {
+    expect(INSTALL_PIPER_VOICE_COMMAND).toBe("llmVoice.installPiperVoice");
   });
 
-  it("has a non-empty, user-facing fallback message", () => {
-    expect(NOT_YET_AVAILABLE_MESSAGE.length).toBeGreaterThan(0);
+  it("has a non-empty, user-facing 'nothing to install' message for the system tier", () => {
+    expect(SYSTEM_VOICE_READY_MESSAGE.length).toBeGreaterThan(0);
   });
 });

@@ -53,9 +53,16 @@ export const CHATTERBOX_COMPOSE_COMMAND = "docker compose -f deploy/docker-compo
 export const CHATTERBOX_DOCS_URL =
   "https://github.com/Guilhem-Bonnet/llm-voice/blob/main/docs/install-linux.md";
 
-/** Shown when a story-S7.1 command this one delegates to isn't registered yet. */
-export const NOT_YET_AVAILABLE_MESSAGE =
-  "LLM Voice : cette option sera disponible après mise à jour de l'extension.";
+/** Shown for the "system" tier: `SystemTtsProvider` (S7.1) already works with no setup. */
+export const SYSTEM_VOICE_READY_MESSAGE =
+  "LLM Voice : la voix système est déjà prête — aucune installation nécessaire.";
 
-/** Command S7.1 is expected to register for both the "system" and "piper" tiers. */
-export const INSTALL_LOCAL_VOICE_COMMAND = "llmVoice.installLocalVoice";
+/**
+ * `llmVoice.installPiperVoice` (S7.1, `src/commands/index.ts` — registered
+ * unconditionally, both PRs land together): the real command the "piper"
+ * tier delegates to. Fixed real value, not a tier-parameterised command —
+ * S7.1 shipped one Piper-install command with no arguments, not a generic
+ * "install this tier" entry point, so "system" never calls it (it has
+ * nothing to install, see `SYSTEM_VOICE_READY_MESSAGE` above).
+ */
+export const INSTALL_PIPER_VOICE_COMMAND = "llmVoice.installPiperVoice";
