@@ -15,3 +15,4 @@ export * from "./profile.schema.js";
 export * from "./health.js";
 export * from "./inbox.js";
 export * from "./inbox.schema.js";
+export * from "./redact.js";

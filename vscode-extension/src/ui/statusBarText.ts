@@ -20,6 +20,13 @@ export interface StatusBarViewModel {
   positionMs?: number;
   /** True when the active profile is verified local-only (ADR-009 niveau 1). */
   isLocalOnly: boolean;
+  /**
+   * True when the active profile's TTS or narrator endpoint resolves off
+   * loopback (`verifyLocalMode`'s checks 1/2) but `isLocalOnly` is false —
+   * drives the `$(cloud)` idle badge, additive to ADR-011's original
+   * `$(lock)`/`$(unmute)` pair.
+   */
+  isRemoteProvider?: boolean;
 }
 
 export function formatTime(ms: number): string {
@@ -34,7 +41,10 @@ export function formatStatusBarText(vm: StatusBarViewModel): string {
   const time = formatTime(vm.positionMs ?? 0);
   switch (vm.state) {
     case "idle":
-      return vm.isLocalOnly ? `$(lock) ${vm.profileLabel}` : `$(unmute) ${vm.profileLabel}`;
+      if (vm.isLocalOnly) {
+        return `$(lock) ${vm.profileLabel}`;
+      }
+      return vm.isRemoteProvider === true ? `$(cloud) ${vm.profileLabel}` : `$(unmute) ${vm.profileLabel}`;
     case "preparing":
       return `$(sync~spin) ${vm.profileLabel}`;
     case "buffering":
