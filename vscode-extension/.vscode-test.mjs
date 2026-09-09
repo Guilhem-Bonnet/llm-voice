@@ -54,5 +54,21 @@ export default defineConfig([
     // directory is what actually forces this run to hit the network.
     // See the comment on the `fake-tts` profile above re: the socket path length.
     launchArgs: ["--user-data-dir=.vscode-test/real-provider"]
+  },
+  {
+    ...common,
+    label: "chunk-invalid-fake-tts",
+    // S5.3/AC-16: chunk 0 (call #1) always succeeds, every later chunk fails
+    // for good (`FakeTtsProvider({ failFromNth: 2 })`) — deterministically
+    // reaches `Pipeline.handleChunkError`'s "later chunk" branch (CdC §52
+    // "Chunk TTS invalide") after `AudioQueue`'s `maxRetries`, never the
+    // first-chunk "TTS unavailable" one `tts-unavailable.test.ts` covers.
+    // Own directory, not `test/integration/**`: the "fake-tts" profile above
+    // globs that whole tree with a *non*-failing `FakeTtsProvider` — a
+    // shared file would run under both, failing there.
+    files: "out/test/integration-chunk-invalid/**/*.test.js",
+    env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_TEST_FAKE_TTS_FAIL_FROM: "2" },
+    // See the comment on the `fake-tts` profile above re: separate cache/socket path.
+    launchArgs: ["--user-data-dir=.vscode-test/chunk-invalid"]
   }
 ]);

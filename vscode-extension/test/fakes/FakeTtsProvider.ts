@@ -26,6 +26,15 @@ export interface FakeTtsProviderOptions {
   sampleRate?: number;
   /** When set, every Nth call (1-indexed) throws a simulated failure. */
   failEveryNth?: number;
+  /**
+   * When set, every call from this 1-indexed call number onward throws —
+   * unlike `failEveryNth`, a chunk never recovers on retry. Used by S5.3's
+   * "chunk invalide après maxRetries" integration test (AC-16): chunk 0
+   * (call #1) succeeds, every later chunk fails for good, deterministically
+   * reaching the `PlaybackController`/`Pipeline` "later chunk" Skip/Stop
+   * path instead of the first-chunk "TTS unavailable" one.
+   */
+  failFromNth?: number;
   /** Artificial latency (ms) applied before each response, abortable. */
   latencyMs?: number;
   /** Voices exposed by getCapabilities()/listVoices(). */
@@ -49,6 +58,7 @@ export class FakeTtsProvider implements TtsProvider {
   private readonly msPerWord: number;
   private readonly sampleRate: number;
   private readonly failEveryNth: number | undefined;
+  private readonly failFromNth: number | undefined;
   private readonly latencyMs: number;
   private readonly voices: Voice[];
   private callCount = 0;
@@ -57,6 +67,7 @@ export class FakeTtsProvider implements TtsProvider {
     this.msPerWord = options.msPerWord ?? 60;
     this.sampleRate = options.sampleRate ?? 16000;
     this.failEveryNth = options.failEveryNth;
+    this.failFromNth = options.failFromNth;
     this.latencyMs = options.latencyMs ?? 0;
     this.voices = options.voices ?? [{ id: "fake-voice", label: "Fake Voice", language: "fr" }];
   }
@@ -90,6 +101,9 @@ export class FakeTtsProvider implements TtsProvider {
   }
 
   private maybeFail(callIndex: number): void {
+    if (this.failFromNth !== undefined && callIndex >= this.failFromNth) {
+      throw new Error(`FakeTtsProvider: simulated permanent failure on request #${callIndex}`);
+    }
     if (this.failEveryNth && this.failEveryNth > 0 && callIndex % this.failEveryNth === 0) {
       throw new Error(`FakeTtsProvider: simulated failure on request #${callIndex}`);
     }

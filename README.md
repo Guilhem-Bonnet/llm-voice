@@ -18,37 +18,39 @@ compatible OpenAI).
 
 ## Essayer en 2 minutes
 
-Le slice vertical (S3.5) câble la chaîne complète — source → segmentation →
-synthèse → lecteur → surlignage — sans encore dépendre d'un vrai serveur TTS :
+Voir [`docs/user-guide.md`](./docs/user-guide.md) pour le guide complet
+(installation, premier « Speak Document », profils, erreurs courantes,
+mode local). En bref :
 
 1. Ouvrir `vscode-extension/` dans VS Code, `npm ci`, puis **F5** (Run
    Extension) : une nouvelle fenêtre VS Code s'ouvre avec l'extension activée
    en mode développement.
 2. Ouvrir un fichier `.md` (`vscode-extension/test/fixtures/markdown/short.md`
    par exemple) et lancer **LLM Voice: Speak Document** (palette de commandes).
-3. Sans serveur TTS local, la commande affiche proprement « LLM Voice: TTS
-   unavailable » (Retry / Open provider settings) plutôt que de planter — le
-   provider réel (`OpenAICompatibleTtsProvider`) attend un serveur compatible
-   OpenAI sur `http://127.0.0.1:8004` (Chatterbox en phase 4).
-4. Pour entendre une lecture complète dès aujourd'hui (sans GPU), lancer avec
+3. Sans serveur TTS local, la commande affiche proprement « Chatterbox is
+   unavailable. » (Retry / Open provider settings) plutôt que de planter —
+   voir `docs/install-linux.md` et `docs/providers.md` pour installer
+   Chatterbox (recommandé) ou Kokoro (léger, sans GPU) en local.
+4. Pour entendre une lecture complète sans GPU, lancer avec
    `LLM_VOICE_TEST_FAKE_TTS=1` dans l'environnement avant **F5** : l'extension
    bascule alors sur `FakeTtsProvider` (audio silencieux généré localement) —
    voir `vscode-extension/docs/testing.md`. C'est aussi le mode utilisé par la
    suite d'intégration (`npm run test:integration`).
-5. Chatterbox réel en phase 4 : `docker run -p 8004:8004 ...` (à venir),
-   pointé par le profil actif (**LLM Voice: Select Profile** /
-   **LLM Voice: Open Profiles**).
 
 ## État du projet
 
-Phase 3 (S3.5) — le slice vertical est câblé : sources (document/sélection/
-presse-papiers), profils par défaut (CdC §19), pipeline
-source→segmentation→synthèse→lecteur→surlignage, cache disque LRU, bundling
-esbuild pour un VSIX installable. Le provider TTS réel (Chatterbox) et le
-narrateur (Ollama) restent à intégrer en phase 4. Voir le cahier des charges
-complet et les décisions de cadrage :
+Phase 5 en cours. Phases 3-4 livrées : slice vertical (sources, profils,
+pipeline source→segmentation→synthèse→lecteur→surlignage, cache disque LRU),
+providers TTS réels (`ChatterboxProvider`, `KokoroProvider`,
+`OpenAICompatibleTtsProvider`, `EgressGuard`/D10, `Verify Local Mode`) et
+narrateur (`OllamaNarrator`, `OpenAICompatibleNarrator`, mode dégradé
+ADR-005). Phase 5 : gestion d'erreurs UX (CdC §52), Output Channel avec
+journalisation redigée (CdC §81, AC-SEC-07), timeouts/anti-spam, guide
+utilisateur. Voir le cahier des charges complet et les décisions de cadrage :
 
 - [`cahier-des-charges.md`](./cahier-des-charges.md)
+- [`docs/user-guide.md`](./docs/user-guide.md)
+- [`docs/adr/`](./docs/adr/) — décisions d'architecture (ADR-001..011)
 - [`_grimoire-output/planning-artifacts/`](./_grimoire-output/planning-artifacts/)
 
 ## Structure du repo

@@ -406,6 +406,91 @@ describe("AudioQueue", () => {
     expect(cache.isPinned(keyFor(3))).toBe(true);
   });
 
+  it("aborts a request that exceeds timeoutMs, retries, then eventually succeeds (S5.3 résilience)", async () => {
+    // 1000ms of latency, 50ms timeout: the first two attempts always time
+    // out; on retry 2, the provider is told to answer instantly instead.
+    const tts = new RecordingTtsProvider(new FakeTtsProvider({ latencyMs: 1000 }));
+    const fast = new RecordingTtsProvider(new FakeTtsProvider({ latencyMs: 0 }));
+    let calls = 0;
+    const combined: TtsProvider = {
+      id: "fake-tts",
+      health: () => tts.health(),
+      getCapabilities: () => tts.getCapabilities(),
+      synthesize: (request, signal) => {
+        calls += 1;
+        return calls <= 2 ? tts.synthesize(request, signal) : fast.synthesize(request, signal);
+      }
+    };
+    const queue = new AudioQueue(
+      { tts: combined, cache: new InMemoryAudioCache() },
+      { timeoutMs: 50, retryBackoffMs: [0, 0], retryJitterMs: 0 }
+    );
+    queue.reset(chunks(1));
+
+    const resultPromise = queue.waitFor(0);
+    // Attempt 1: times out at 50ms, aborting the 1000ms-latency call.
+    await vi.advanceTimersByTimeAsync(50);
+    // Attempt 2 (retry, backoff 0): also times out at +50ms.
+    await vi.advanceTimersByTimeAsync(50);
+    // Attempt 3 (retry, backoff 0): answers instantly, no timeout needed.
+    await vi.advanceTimersByTimeAsync(0);
+
+    const chunk = await resultPromise;
+    expect(chunk.status).toBe("ready");
+    expect(calls).toBe(3);
+  });
+
+  it("does not touch the job's own signal when only the timeout fires: cancelAll() still reverts a genuinely cancelled chunk to pending", async () => {
+    const tts = new RecordingTtsProvider(new FakeTtsProvider({ latencyMs: 30 }));
+    const queue = new AudioQueue(
+      { tts, cache: new InMemoryAudioCache() },
+      { timeoutMs: 10_000 } // Far longer than the 30ms latency: never fires.
+    );
+    queue.reset(chunks(1));
+
+    queue.setCursor(0);
+    await vi.advanceTimersByTimeAsync(5);
+    queue.cancelAll();
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(tts.signals[0]?.aborted).toBe(true);
+    expect(queue.chunks[0]?.status).toBe("pending");
+  });
+
+  it("retry() re-arms an errored chunk with a fresh maxRetries budget, without touching any other chunk (CdC §52 'Retry sans recréer la session')", async () => {
+    const tts = new RecordingTtsProvider(new FakeTtsProvider({ failEveryNth: 1 }));
+    const queue = new AudioQueue(
+      { tts, cache: new InMemoryAudioCache() },
+      // prefetchChunks: 0 keeps chunk 1 entirely out of the synthesis window
+      // (never attempted), so it stays untouched proof of "retry() only
+      // affects the one chunk it targets".
+      { retryBackoffMs: [0, 0], retryJitterMs: 0, prefetchChunks: 0 }
+    );
+    queue.reset(chunks(2));
+
+    const first = queue.waitFor(0);
+    await vi.advanceTimersByTimeAsync(0);
+    expect((await first).status).toBe("error");
+    expect(tts.callCount).toBe(3); // first attempt + 2 retries, exhausted
+
+    // A stale retry() on a chunk that never failed is a no-op: it stays
+    // "pending" (out of the prefetch window, `pump()` never touches it).
+    queue.retry(1);
+    expect(queue.chunks[1]?.status).toBe("pending");
+    expect(tts.callCount).toBe(3); // unchanged: retry(1) synthesised nothing
+
+    // retry(0) re-arms it and `pump()` (called synchronously inside retry())
+    // immediately starts a fresh attempt — it is "generating", not
+    // "pending", the instant retry() returns.
+    queue.retry(0);
+    expect(queue.chunks[0]?.status).toBe("generating");
+    const retried = queue.waitFor(0);
+    await vi.advanceTimersByTimeAsync(0);
+    // Same forced-failure provider: retry() re-arms a fresh 1 + 2 budget.
+    expect((await retried).status).toBe("error");
+    expect(tts.callCount).toBe(6);
+  });
+
   it("unpins every remaining key on reset() and dispose()", async () => {
     const tts = new RecordingTtsProvider(new FakeTtsProvider({ latencyMs: 10 }));
     const cache = new InMemoryAudioCache();

@@ -74,6 +74,18 @@ export interface AudioQueueOptions {
   retryJitterMs?: number;
   /** Injectable RNG for deterministic jitter assertions; defaults to `Math.random`. */
   random?: () => number;
+  /**
+   * Per-request timeout (`llmVoice.tts.timeoutMs`, default 60000, S5.3):
+   * combined with the job's own `AbortSignal` (Stop, cursor move) into a
+   * single signal passed to `TtsProvider.synthesize`. A timeout aborts that
+   * *derived* signal only — the job's own signal, and therefore
+   * `AudioQueue.cancelAll()`'s guarantee that a genuinely cancelled chunk
+   * reverts to `pending` instead of `error`, is untouched: a timeout is a
+   * failure like any other and goes through the normal retry/backoff path.
+   * `undefined` (the default) never wraps the signal, matching every
+   * existing test that does not pass this option.
+   */
+  timeoutMs?: number;
 }
 
 /** Everything the queue needs injected; none of it touches `vscode`. */
@@ -105,6 +117,7 @@ export class AudioQueue {
   private readonly retryBackoffMs: readonly number[];
   private readonly retryJitterMs: number;
   private readonly random: () => number;
+  private readonly timeoutMs: number | undefined;
 
   private items: AudioChunk[] = [];
   private readonly jobs = new Map<number, JobState>();
@@ -130,6 +143,7 @@ export class AudioQueue {
     this.retryBackoffMs = options.retryBackoffMs ?? DEFAULT_RETRY_BACKOFF_MS;
     this.retryJitterMs = Math.max(0, options.retryJitterMs ?? DEFAULT_RETRY_JITTER_MS);
     this.random = options.random ?? Math.random;
+    this.timeoutMs = options.timeoutMs;
   }
 
   /** Chunks currently queued, in playback order. */
@@ -212,6 +226,26 @@ export class AudioQueue {
         this.settleWaiters(index, chunk);
       }
     }
+  }
+
+  /**
+   * Re-arms a chunk that ended in `error` for a fresh synthesis attempt,
+   * with its own `maxRetries` budget again (CdC §52's "Retry relance le
+   * même chunk sans recréer la session") — unlike `reset()`, every other
+   * chunk (and its cache/pin state) is left exactly as it was. A no-op for
+   * any status other than `error`: a stale click after the cursor already
+   * moved past this chunk must not resurrect it.
+   */
+  retry(index: number): void {
+    const chunk = this.items[index];
+    if (chunk === undefined || chunk.status !== "error") {
+      return;
+    }
+    chunk.status = "pending";
+    delete chunk.error;
+    this.jobs.delete(index);
+    this.suspended = false;
+    this.pump();
   }
 
   /** Idempotent teardown: cancels everything and refuses further work. */
@@ -344,7 +378,13 @@ export class AudioQueue {
         return;
       }
 
-      const result = await this.tts.synthesize(this.requestFor(chunk), signal);
+      const deadline = this.withTimeout(signal);
+      let result;
+      try {
+        result = await this.tts.synthesize(this.requestFor(chunk), deadline.signal);
+      } finally {
+        deadline.cleanup();
+      }
       if (signal.aborted) {
         this.revertToPending(chunk);
         return;
@@ -379,6 +419,39 @@ export class AudioQueue {
       }
       this.pump();
     }
+  }
+
+  /**
+   * Combines a job's own `signal` (Stop, cursor move — `cancelAll()`) with
+   * `this.timeoutMs` into one derived `AbortSignal` for `synthesize()`
+   * (CdC §52/résilience, S5.3). `undefined` → no timeout, the job's own
+   * signal is reused as-is (every pre-S5.3 test relies on this). A fired
+   * timeout only aborts the *derived* signal, not the job's own `signal`:
+   * `run()`'s post-await `signal.aborted` check — which decides "cancelled,
+   * revert to pending" vs "failed, retry" — is therefore unaffected by a
+   * timeout, which always falls through to the normal retry/backoff path.
+   */
+  private withTimeout(signal: AbortSignal): { signal: AbortSignal; cleanup: () => void } {
+    if (this.timeoutMs === undefined) {
+      return { signal, cleanup: () => {} };
+    }
+    const controller = new AbortController();
+    if (signal.aborted) {
+      controller.abort();
+    }
+    const onAbort = (): void => controller.abort();
+    signal.addEventListener("abort", onAbort, { once: true });
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    if (typeof (timer as unknown as { unref?: () => void }).unref === "function") {
+      (timer as unknown as { unref: () => void }).unref();
+    }
+    return {
+      signal: controller.signal,
+      cleanup: (): void => {
+        clearTimeout(timer);
+        signal.removeEventListener("abort", onAbort);
+      }
+    };
   }
 
   /** A cancelled job is not a failed job: the chunk stays synthesisable. */

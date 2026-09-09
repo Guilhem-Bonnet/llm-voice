@@ -130,6 +130,30 @@
           "default": "qwen2.5:7b",
           "description": "Nom du modèle utilisé par le provider de narration (défaut : qwen2.5:7b, un compromis raisonnable taille/fiabilité en sortie structurée avec Ollama, CdC §21)."
         },
+        "llmVoice.narrator.timeoutMs": {
+          "type": "number",
+          "default": 60000,
+          "minimum": 1000,
+          "description": "Délai maximal (ms) d'une requête de narration avant annulation, combiné au signal utilisateur (Stop). CdC §52/résilience."
+        },
+        "llmVoice.tts.timeoutMs": {
+          "type": "number",
+          "default": 60000,
+          "minimum": 1000,
+          "description": "Délai maximal (ms) d'une requête de synthèse vocale avant annulation, combiné au signal utilisateur (Stop). CdC §52/résilience."
+        },
+        "llmVoice.tts.readyTimeoutMs": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 0,
+          "description": "Délai maximal (ms) d'attente d'un provider TTS en statut « Loading » (CdC §51) avant la première synthèse, plutôt que d'échouer immédiatement. 0 = aucune attente."
+        },
+        "llmVoice.audio.maxRetries": {
+          "type": "number",
+          "default": 2,
+          "minimum": 0,
+          "description": "Nombre de nouvelles tentatives avant qu'un chunk audio invalide déclenche le choix Skip / Stop (CdC §52)."
+        },
         "llmVoice.audio.prefetchChunks": {
           "type": "number",
           "default": 2,
@@ -195,6 +219,12 @@
           "type": "boolean",
           "default": false,
           "description": "Active la télémétrie d'usage. Désactivée par défaut."
+        },
+        "llmVoice.log.level": {
+          "type": "string",
+          "enum": ["error", "warn", "info", "debug"],
+          "default": "info",
+          "description": "Niveau de journalisation de l'Output Channel « LLM Voice » (CdC §81). Aucun niveau ne journalise de clé API, contenu de document, réponse Claude ou audio (AC-SEC-07)."
         }
       }
     }

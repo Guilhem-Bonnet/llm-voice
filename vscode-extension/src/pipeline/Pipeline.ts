@@ -23,6 +23,7 @@ import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
 import type { VoiceProfile } from "../core/profile.js";
 import type { NarratorProvider } from "../core/narration.js";
+import type { ProviderHealth } from "../core/health.js";
 import type { TtsProvider } from "../core/tts.js";
 import type { MarkdownPolicy, SegmentationPolicy } from "../parser/types.js";
 import { parseMarkdown } from "../parser/MarkdownParser.js";
@@ -47,10 +48,17 @@ import {
 import { HighlightController } from "../highlight/HighlightController.js";
 import { PlayerViewProvider } from "../views/player/PlayerViewProvider.js";
 import { StatusBar, type StatusBarPlaybackState, type StatusBarViewModel } from "../ui/StatusBar.js";
+import {
+  NotificationGate,
+  notifyChunkInvalid,
+  notifyNarratorUnavailable,
+  notifyTtsUnavailable
+} from "../ui/notifications.js";
 import { ClipboardSource, MarkdownDocumentSource, TextSelectionSource, readCaptureRange } from "../sources/index.js";
 import { ProfileRepository } from "../profiles/index.js";
 import { createTtsProvider, InMemoryProviderRegistry, presetKindForProviderId } from "../tts/index.js";
 import { createNarratorProvider } from "../narrator/index.js";
+import type { Logger } from "../infrastructure/logger.js";
 import type { PipelineFacade } from "../commands/PipelineFacade.js";
 import { plainTextSegments, rangesOverlap } from "./textSegments.js";
 import {
@@ -60,8 +68,12 @@ import {
   type TtsSettings
 } from "./resolveProviderConfig.js";
 
-const ERROR_TTS_UNAVAILABLE = "LLM Voice: TTS unavailable";
-const ERROR_NARRATOR_UNAVAILABLE = "LLM Voice: Narrator unavailable";
+/** Default `llmVoice.tts.readyTimeoutMs` (CdC §51's "Loading" health status):
+ *  how long `start()` waits for a still-warming-up TTS server before
+ *  attempting the first synthesis anyway, instead of failing immediately. */
+const DEFAULT_READY_TIMEOUT_MS = 30_000;
+/** Polling interval while `start()` waits on a `"Loading"` provider. */
+const READY_POLL_INTERVAL_MS = 500;
 
 const DEFAULT_MARKDOWN_POLICY: MarkdownPolicy = {
   headings: "read",
@@ -74,6 +86,25 @@ const DEFAULT_MARKDOWN_POLICY: MarkdownPolicy = {
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** Resolves after `ms`, or immediately if/when `signal` aborts — used by `waitForTtsReady`'s poll loop. */
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      resolve();
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
 }
 
 function segmentationPolicyFor(profile: VoiceProfile): SegmentationPolicy {
@@ -101,7 +132,7 @@ function toStatusBarState(state: string): StatusBarPlaybackState {
 
 export interface PipelineOptions {
   context: vscode.ExtensionContext;
-  output: vscode.OutputChannel;
+  output: Logger;
   highlight: HighlightController;
   player: PlayerViewProvider;
   statusBar: StatusBar;
@@ -115,7 +146,7 @@ export interface PipelineOptions {
 
 export class Pipeline implements PipelineFacade {
   private readonly context: vscode.ExtensionContext;
-  private readonly output: vscode.OutputChannel;
+  private readonly output: Logger;
   private readonly highlight: HighlightController;
   private readonly player: PlayerViewProvider;
   private readonly statusBar: StatusBar;
@@ -135,7 +166,8 @@ export class Pipeline implements PipelineFacade {
   private currentProfileLabel = "—";
   private lastCaptureContext: CaptureContext | undefined;
   private captureAbort: AbortController | undefined;
-  private narratorWarningShown = false;
+  /** CdC §52 "une seule notification par session par type" (anti-spam); reset in `start()`. */
+  private readonly notificationGate = new NotificationGate();
   /**
    * Set once "Read without narration" is chosen (CdC §52); every session
    * built after that point starts pre-forced to faithful reading, so the
@@ -160,10 +192,17 @@ export class Pipeline implements PipelineFacade {
       mode: this.egressMode(),
       trustedHosts: this.trustedHosts(),
       strictLocal: process.env.LLM_VOICE_STRICT_LOCAL === "1",
+      // D10: host + path only, never a body/header — `event` is already
+      // shaped that way (`EgressLogEvent`), so no extra redaction is needed
+      // beyond what `Logger` does for every other field.
       logger: (event) => {
-        this.output.appendLine(
-          `[egress] ${event.decision} ${event.method} ${event.host}${event.path}${event.reason ? ` (${event.reason})` : ""}`
-        );
+        this.output.debug("egress", {
+          decision: event.decision,
+          method: event.method,
+          host: event.host,
+          path: event.path,
+          ...(event.reason !== undefined ? { reason: event.reason } : {})
+        });
       }
     });
 
@@ -178,7 +217,9 @@ export class Pipeline implements PipelineFacade {
 
     this.controller = new PlaybackController({
       cache: this.diskCache,
-      onChunkError: (info) => this.handleChunkError(info)
+      onChunkError: (info) => this.handleChunkError(info),
+      maxRetries: this.audioMaxRetries(),
+      timeoutMs: this.ttsTimeoutMs()
     });
     this.controller.onChunkChange((change) => {
       if (this.currentUri !== undefined) {
@@ -240,7 +281,7 @@ export class Pipeline implements PipelineFacade {
     this.captureAbort?.abort();
     const abort = new AbortController();
     this.captureAbort = abort;
-    this.narratorWarningShown = false;
+    this.notificationGate.reset();
 
     try {
       const source = this.sources.find((candidate) => candidate.canCapture(captureContext));
@@ -272,6 +313,9 @@ export class Pipeline implements PipelineFacade {
       });
       this.currentSessionBuild = build;
       const tts = await this.ttsFor(profile);
+      // CdC §51 "Loading": a still-warming-up TTS server gets a grace period
+      // instead of an immediate failure on the very first synthesis.
+      await this.waitForTtsReady(tts, abort.signal);
       const sink = this.sinkOverride ?? this.player.audioSink;
 
       this.currentUri = doc.uri !== undefined ? vscode.Uri.parse(doc.uri) : undefined;
@@ -285,8 +329,53 @@ export class Pipeline implements PipelineFacade {
         sealed: true
       });
     } catch (error) {
-      this.output.appendLine(`[pipeline] start failed: ${messageOf(error)}`);
+      this.output.error("start failed", { error: messageOf(error) });
       void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
+    }
+  }
+
+  /**
+   * CdC §51 "Loading" health status: polls `tts.health()` until it stops
+   * reporting `degraded`/`"loading"` or `llmVoice.tts.readyTimeoutMs` (default
+   * 30000) elapses, instead of letting the very first synthesis fail while
+   * the server is still warming up (e.g. Chatterbox loading its model onto
+   * the GPU). Always returns rather than throws: a provider that stays
+   * `unreachable`, or whose `health()` itself rejects, is left to the normal
+   * synthesis-failure path (`handleChunkError`) to report.
+   */
+  private async waitForTtsReady(tts: TtsProvider, signal: AbortSignal): Promise<void> {
+    const timeoutMs = this.ttsReadyTimeoutMs();
+    if (timeoutMs <= 0) {
+      return;
+    }
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      if (signal.aborted) {
+        return;
+      }
+      let health: ProviderHealth;
+      try {
+        health = await tts.health(signal);
+      } catch (error) {
+        this.output.debug("TTS readiness probe failed, proceeding to synthesis", {
+          providerId: tts.id,
+          error: messageOf(error)
+        });
+        return;
+      }
+      const loading = health.status === "degraded" && health.detail === "loading";
+      if (!loading) {
+        return;
+      }
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        this.output.warn("TTS still loading after readyTimeoutMs, attempting synthesis anyway", {
+          providerId: tts.id,
+          readyTimeoutMs: timeoutMs
+        });
+        return;
+      }
+      await sleep(Math.min(READY_POLL_INTERVAL_MS, remaining), signal);
     }
   }
 
@@ -406,7 +495,7 @@ export class Pipeline implements PipelineFacade {
 
   private async notWired(feature: string): Promise<void> {
     const message = `LLM Voice : ${feature} n'est pas encore câblée.`;
-    this.output.appendLine(message);
+    this.output.info(message);
     void vscode.window.showInformationMessage(message);
   }
 
@@ -509,6 +598,7 @@ export class Pipeline implements PipelineFacade {
       baseUrl: resolved.baseUrl,
       model: resolved.model,
       egress: this.egress,
+      timeoutMs: this.narratorTimeoutMs(),
       ...(profile.narrator?.temperature !== undefined ? { temperature: profile.narrator.temperature } : {}),
       ...(apiKey !== undefined ? { apiKey } : {})
     });
@@ -542,31 +632,85 @@ export class Pipeline implements PipelineFacade {
     };
   }
 
+  /** `llmVoice.tts.timeoutMs` (default 60000, S5.3): combined with the job's own signal in `AudioQueue`. */
+  private ttsTimeoutMs(): number {
+    return vscode.workspace.getConfiguration("llmVoice").get<number>("tts.timeoutMs", 60_000);
+  }
+
+  /** `llmVoice.tts.readyTimeoutMs` (default 30000, S5.3): see `waitForTtsReady`. */
+  private ttsReadyTimeoutMs(): number {
+    return vscode.workspace.getConfiguration("llmVoice").get<number>("tts.readyTimeoutMs", DEFAULT_READY_TIMEOUT_MS);
+  }
+
+  /** `llmVoice.narrator.timeoutMs` (default 60000, S5.3): forwarded to `createNarratorProvider`. */
+  private narratorTimeoutMs(): number {
+    return vscode.workspace.getConfiguration("llmVoice").get<number>("narrator.timeoutMs", 60_000);
+  }
+
+  /** `llmVoice.audio.maxRetries` (default 2, CdC §52 "Chunk TTS invalide"). */
+  private audioMaxRetries(): number {
+    return vscode.workspace.getConfiguration("llmVoice").get<number>("audio.maxRetries", 2);
+  }
+
+  /**
+   * CdC §52's three synthesis-failure surfaces, all reached through
+   * `PlaybackController`'s single `onChunkError` callback:
+   *  - `origin !== "synthesis"` (a playback/decode failure) always skips —
+   *    unchanged from before S5.3, no dialog fits a broken audio *file*.
+   *  - the session's *first* chunk (`index === 0`) failing after
+   *    `AudioQueue`'s retries means the provider itself is unreachable
+   *    ("TTS indisponible"): `notifyTtsUnavailable`, and its `Retry` re-runs
+   *    only that chunk (`PlaybackController.retryCurrentChunk`, CdC §52
+   *    "sans recréer la session") rather than a full `start()`.
+   *  - any *later* chunk failing after retries, with earlier chunks having
+   *    already played, means this one chunk specifically is bad ("Chunk TTS
+   *    invalide"): `notifyChunkInvalid` — Skip or Stop, no Retry button.
+   * Both dialogs are gated to once per session by `notificationGate` (CdC
+   * §52 anti-spam); "Retry" re-arms `ttsUnavailable` so a second genuine
+   * failure still prompts again instead of silently stopping.
+   */
   private async handleChunkError(info: PlaybackErrorInfo): Promise<ChunkErrorDecision> {
-    this.output.appendLine(`[pipeline] chunk ${info.chunk.id} failed (${info.origin}): ${info.message}`);
+    this.output.warn("chunk failed", { chunkId: info.chunk.id, origin: info.origin, index: info.index });
     if (info.origin !== "synthesis") {
       return "skip";
     }
     this.statusBar.update({ ...this.statusBarModel("error") });
-    void vscode.window.showErrorMessage(ERROR_TTS_UNAVAILABLE, "Retry", "Open provider settings").then((choice) => {
-      if (choice === "Retry") {
-        const context = this.lastCaptureContext;
-        if (context !== undefined) {
-          void this.start(context);
-        }
-      } else if (choice === "Open provider settings") {
-        void vscode.commands.executeCommand("workbench.action.openSettings", "llmVoice.tts");
+
+    if (info.index === 0) {
+      if (this.notificationGate.shouldNotify("ttsUnavailable")) {
+        this.notificationGate.markShown("ttsUnavailable");
+        void notifyTtsUnavailable((message, ...items) =>
+          vscode.window.showErrorMessage(message, ...items)
+        ).then((choice) => {
+          if (choice === "retry") {
+            this.notificationGate.clear("ttsUnavailable");
+            this.controller.retryCurrentChunk();
+          } else if (choice === "openSettings") {
+            void vscode.commands.executeCommand("workbench.action.openSettings", "llmVoice.tts");
+          }
+        });
       }
-    });
-    return "stop";
+      return "stop";
+    }
+
+    if (!this.notificationGate.shouldNotify("chunkInvalid")) {
+      // Anti-spam already showed this dialog once this session: default to
+      // the safe choice (pause) rather than silently skip more audio.
+      return "stop";
+    }
+    this.notificationGate.markShown("chunkInvalid");
+    return notifyChunkInvalid(
+      (message, ...items) => vscode.window.showErrorMessage(message, ...items),
+      this.audioMaxRetries()
+    );
   }
 
   /**
    * CdC §52 "Narrator indisponible" : Retry / Read without narration /
    * Cancel. `SessionFactory` already keeps playing faithfully for every
    * degraded group on its own (ADR-005's mode dégradé), so this is purely
-   * notification + the three choices — shown once per session (guarded by
-   * `narratorWarningShown`, reset in `start()`) so a long document that
+   * notification + the three choices — shown once per session
+   * (`notificationGate`, reset in `start()`) so a long document that
    * degrades on several groups does not stack dialogs.
    *
    * "Read without narration" sets `narrationDisabledForSession` (forcing
@@ -575,31 +719,33 @@ export class Pipeline implements PipelineFacade {
    * the narrator entirely) until "Retry" explicitly clears it again.
    */
   private handleNarratorWarning(warning: NarrationWarning): void {
-    this.output.appendLine(
-      `[pipeline] narration group ${warning.groupIndex} degraded (${warning.reason}), reading faithfully`
-    );
-    if (this.narratorWarningShown) {
+    this.output.warn("narration group degraded, reading faithfully", {
+      groupIndex: warning.groupIndex,
+      reason: warning.reason
+    });
+    if (!this.notificationGate.shouldNotify("narratorUnavailable")) {
       return;
     }
-    this.narratorWarningShown = true;
-    void vscode.window
-      .showWarningMessage(ERROR_NARRATOR_UNAVAILABLE, "Retry", "Read without narration", "Cancel")
-      .then((choice) => {
-        if (choice === "Retry") {
-          this.narrationDisabledForSession = false;
-          const context = this.lastCaptureContext;
-          if (context !== undefined) {
-            void this.start(context);
-          }
-        } else if (choice === "Read without narration") {
-          this.narrationDisabledForSession = true;
-          this.currentSessionBuild?.forceFaithful();
-        } else if (choice === "Cancel") {
-          void this.stop();
+    this.notificationGate.markShown("narratorUnavailable");
+    void notifyNarratorUnavailable((message, ...items) =>
+      vscode.window.showWarningMessage(message, ...items)
+    ).then((choice) => {
+      if (choice === "retry") {
+        this.notificationGate.clear("narratorUnavailable");
+        this.narrationDisabledForSession = false;
+        const context = this.lastCaptureContext;
+        if (context !== undefined) {
+          void this.start(context);
         }
-        // Dismissed (no choice): no-op — playback is already reading the
-        // degraded groups faithfully; only this group falls back.
-      });
+      } else if (choice === "readWithoutNarration") {
+        this.narrationDisabledForSession = true;
+        this.currentSessionBuild?.forceFaithful();
+      } else if (choice === "cancel") {
+        void this.stop();
+      }
+      // Dismissed: no-op — playback is already reading the degraded groups
+      // faithfully; only this group falls back.
+    });
   }
 
   private egressMode(): EgressMode {
@@ -620,7 +766,7 @@ export class Pipeline implements PipelineFacade {
       this.currentProfileLabel = profile.label;
       this.statusBar.update(this.statusBarModel("idle"));
     } catch (error) {
-      this.output.appendLine(`[pipeline] failed to load default profile: ${messageOf(error)}`);
+      this.output.error("failed to load default profile", { error: messageOf(error) });
     }
   }
 
