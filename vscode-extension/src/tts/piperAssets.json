@@ -1,0 +1,72 @@
+{
+  "_comment": [
+    "ADR-009 niveau 1b: sources et sommes SHA-256 attendues pour",
+    "`PiperSetup` (LLM Voice: Install Local Voice (Piper)). Chaque champ",
+    "sha256/sizeBytes ci-dessous a été calculé en téléchargeant réellement",
+    "chaque fichier le 2026-09-09 (`sha256sum <fichier>`, `stat -c%s <fichier>`)",
+    "— pas de valeur inventée. Pour régénérer après une nouvelle version:",
+    "  1. Mettre à jour `piperVersion` (tag GitHub rhasspy/piper) et/ou",
+    "     `voiceRevision` (commit/branche HuggingFace rhasspy/piper-voices).",
+    "  2. Télécharger chaque `url` ci-dessous.",
+    "  3. `sha256sum <fichier>` pour chaque binaire/voix, coller la valeur.",
+    "  4. `stat -c%s <fichier>` (ou `wc -c`) pour `sizeBytes`, coller la valeur.",
+    "  5. Aucune autre partie du code ne doit changer: `PiperSetup` lit ce",
+    "     fichier au runtime, il n'y a pas de somme dupliquée ailleurs."
+  ],
+  "piperVersion": "2023.11.14-2",
+  "piperSourceUrl": "https://github.com/rhasspy/piper",
+  "piperLicense": "MIT",
+  "voiceId": "fr_FR-siwis-medium",
+  "voiceRevision": "main",
+  "voiceSourceUrl": "https://huggingface.co/rhasspy/piper-voices",
+  "voiceLicense": "CC0-1.0 (poids du modèle, dépôt rhasspy/piper-voices) — voir docs/providers.md pour le détail par voix",
+  "binaries": {
+    "linux-x64": {
+      "url": "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz",
+      "sha256": "a50cb45f355b7af1f6d758c1b360717877ba0a398cc8cbe6d2a7a3a26e225992",
+      "sizeBytes": 26460462,
+      "archiveFormat": "tar.gz",
+      "binaryPathInArchive": "piper/piper"
+    },
+    "linux-arm64": {
+      "url": "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_aarch64.tar.gz",
+      "sha256": "fea0fd2d87c54dbc7078d0f878289f404bd4d6eea6e7444a77835d1537ab88eb",
+      "sizeBytes": 26004717,
+      "archiveFormat": "tar.gz",
+      "binaryPathInArchive": "piper/piper"
+    },
+    "darwin-x64": {
+      "url": "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_macos_x64.tar.gz",
+      "sha256": "ced85c0a3df13945b1e623b878a48fdc2854d5c485b4b67f62857cf551deaf8b",
+      "sizeBytes": 19146927,
+      "archiveFormat": "tar.gz",
+      "binaryPathInArchive": "piper/piper"
+    },
+    "darwin-arm64": {
+      "url": "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_macos_aarch64.tar.gz",
+      "sha256": "6b1eb03b3735946cb35216e063e7eebcc33a6bbf5dd96ec0217959bf1cdcb0cc",
+      "sizeBytes": 19146957,
+      "archiveFormat": "tar.gz",
+      "binaryPathInArchive": "piper/piper"
+    },
+    "win32-x64": {
+      "url": "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip",
+      "sha256": "f3c58906402b24f3a96d92145f58acba6d86c9b5db896d207f78dc80811efcea",
+      "sizeBytes": 22477236,
+      "archiveFormat": "zip",
+      "binaryPathInArchive": "piper/piper.exe"
+    }
+  },
+  "voice": {
+    "model": {
+      "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx",
+      "sha256": "641d1ab097da2b81128c076810edb052b385decc8be3381814802a64a73baf99",
+      "sizeBytes": 63201294
+    },
+    "config": {
+      "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx.json",
+      "sha256": "39479916c2db192b5ac9764daddd0c744d83e023ad890c6976c0633ae4df8959",
+      "sizeBytes": 4875
+    }
+  }
+}
