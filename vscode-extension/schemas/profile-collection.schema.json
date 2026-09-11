@@ -159,6 +159,72 @@
           },
           "style": {
             "type": "string"
+          },
+          "markdownPolicy": {
+            "type": "object",
+            "properties": {
+              "headings": {
+                "type": "string",
+                "enum": [
+                  "read",
+                  "skip"
+                ]
+              },
+              "links": {
+                "type": "string",
+                "enum": [
+                  "labelOnly"
+                ]
+              },
+              "images": {
+                "type": "string",
+                "enum": [
+                  "altText",
+                  "skip"
+                ]
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "skip",
+                  "read",
+                  "explain",
+                  "summarize"
+                ]
+              },
+              "tables": {
+                "type": "string",
+                "enum": [
+                  "skip",
+                  "read",
+                  "summarize"
+                ]
+              },
+              "frontmatter": {
+                "type": "string",
+                "enum": [
+                  "skip",
+                  "read"
+                ]
+              }
+            },
+            "required": [
+              "headings",
+              "links",
+              "images",
+              "code",
+              "tables",
+              "frontmatter"
+            ],
+            "additionalProperties": false
+          },
+          "syncMode": {
+            "type": "string",
+            "enum": [
+              "highlight-scroll",
+              "highlight",
+              "off"
+            ]
           }
         },
         "required": [

@@ -28,6 +28,19 @@ export const PlaybackDefaultsSchema = z.object({
   volume: z.number().min(0).max(1)
 });
 
+/** Mirrors `MarkdownPolicy` (`src/parser/types.ts`, CdC §13) for the profile editor (S8.2). */
+export const MarkdownPolicySchema = z.object({
+  headings: z.enum(["read", "skip"]),
+  links: z.enum(["labelOnly"]),
+  images: z.enum(["altText", "skip"]),
+  code: z.enum(["skip", "read", "explain", "summarize"]),
+  tables: z.enum(["skip", "read", "summarize"]),
+  frontmatter: z.enum(["skip", "read"])
+});
+
+/** Mirrors `SyncMode` (CdC §49 "Highlight behavior"). */
+export const SyncModeSchema = z.enum(["highlight-scroll", "highlight", "off"]);
+
 /** Absolute http(s) URL; anything else is rejected before the egress guard. */
 const HttpUrlSchema = z
   .string()
@@ -113,7 +126,9 @@ export const VoiceProfileSchema = z.object({
   chunking: ChunkingOptionsSchema,
   playback: PlaybackDefaultsSchema,
   description: z.string().optional(),
-  style: z.string().optional()
+  style: z.string().optional(),
+  markdownPolicy: MarkdownPolicySchema.optional(),
+  syncMode: SyncModeSchema.optional()
 });
 
 /** The whole `profiles.json` document. */

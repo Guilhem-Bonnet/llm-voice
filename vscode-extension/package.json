@@ -225,6 +225,21 @@
         "category": "LLM Voice"
       },
       {
+        "command": "llmVoice.browseVoices",
+        "title": "LLM Voice: Browse Voices",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.useOwnVoice",
+        "title": "LLM Voice: Use My Own Voice",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.editProfile",
+        "title": "LLM Voice: Edit Profile",
+        "category": "LLM Voice"
+      },
+      {
         "command": "llmVoice.statusBar.openMenu",
         "title": "LLM Voice: Status Bar Menu",
         "category": "LLM Voice"
