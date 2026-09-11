@@ -35,10 +35,10 @@ describe("buildProfileEditorHtml", () => {
 
   it("has exactly one script, carrying the nonce, no inline body", () => {
     const html = buildProfileEditorHtml(inputs);
-    const scripts = [...html.matchAll(/<script\b[^>]*>/g)];
+    const scripts = [...html.matchAll(/<script\b[^>]*>/gi)];
     expect(scripts).toHaveLength(1);
     expect(scripts[0]?.[0]).toContain('nonce="NONCE"');
-    expect(html).not.toMatch(/<script[^>]*>[^<]+<\/script>/);
+    expect(html).not.toMatch(/<script[^>]*>[^<]+<\/script>/i);
   });
 
   it("interpolates nothing but the nonce and the two URIs — no profile data can reach it", () => {
