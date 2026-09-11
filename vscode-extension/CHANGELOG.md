@@ -7,6 +7,10 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), et
 ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/) à
 partir de la version `0.1.0`.
 
+Ce fichier est la seule source de vérité (voir `CONTRIBUTING.md`) ; le
+`CHANGELOG.md` à la racine du dépôt en est une copie générée par
+`npm run sync:changelog`, à ne jamais éditer directement.
+
 ## [Unreleased]
 
 **S8.2 — le parcours de découverte de voix devient autonome : plus besoin d'un agent pour choisir la bonne voix (CdC §72, version 0.2).**
@@ -16,11 +20,15 @@ partir de la version `0.1.0`.
 - **`LLM Voice: Browse Voices`** (CdC §72) : Quick Pick listant les voix du provider actif (`listVoices()`), bouton d'écoute immédiate par voix (synthèse + lecture sans quitter la liste), langue affichée quand connue, avertissement visible sur une voix anglophone détectée pour un profil non anglophone (`isEnglishVoice`) — le piège documenté dans `docs/voices.md` (cinq itérations d'écoute avant S4.3). Sélectionner une voix l'applique et la sauvegarde sur le profil courant. Fonctionne avec Chatterbox, Kokoro, Piper et la voix système.
 - **`LLM Voice: Use My Own Voice`** (CdC §55) : assistant en trois étapes — consentement explicite, choix d'un fichier existant ou enregistrement (commande adaptée à la plateforme : `pw-record`/`arecord` sous Linux, `ffmpeg -f avfoundation` sous macOS, `ffmpeg -f dshow` sous Windows, copiée dans le presse-papiers, surveillance de l'apparition du fichier), validation par lecture d'en-tête WAV (durée, mono/stéréo, niveau non silencieux), conversion 24 kHz mono via `ffmpeg` si disponible, copie dans `globalStorageUri/voices/`. Rien ne quitte la machine. Test immédiat de la voix clonée.
 - **`LLM Voice: Edit Profile`** (CdC §49) : webview sécurisée (nonce, CSP stricte, `localResourceRoots` minimal, aucune donnée de profil interpolée dans le HTML) pour éditer nom, langue, narrateur (modèle, prompt), provider TTS et voix (bouton « Parcourir les voix »), vitesse, réglages avancés du provider générés depuis `getCapabilities()` (ADR-005 — jamais codés en dur), politique Markdown, mode de synchronisation éditeur. Bouton « Tester » sans sauvegarder. Sauvegarde validée par `VoiceProfileSchema` (Zod) avec messages d'erreur en clair. Actions Dupliquer et Supprimer.
-- **`VoiceProfile.markdownPolicy`/`syncMode`** (optionnels, rétrocompatibles) : un profil peut désormais porter sa propre politique Markdown (§13) et son comportement de surlignage éditeur (`"highlight-scroll"` par défaut, `"highlight"` sans auto-scroll, `"off"`).
+- **`VoiceProfile.markdown`/`synchronization.mode`** (optionnels, rétrocompatibles) : un profil peut désormais porter sa propre politique Markdown (§13) et son comportement de surlignage éditeur (`"highlight-scroll"` par défaut, `"highlight"` sans auto-scroll, `"off"`) — noms alignés sur l'exemple du cahier des charges §18.
 
 ### Fixed
 
 - **`OpenAICompatibleTtsProvider.listVoices()`** ne comprenait pas la forme réelle de `/v1/audio/voices` du serveur communautaire Chatterbox-TTS-Server (`{"voices": ["Abigail.wav", ...]}`, de simples noms de fichiers) : chaque voix ressortait avec `id`/`label` à `undefined`, rendant le navigateur de voix inutilisable en pratique. Vérifié en direct contre `localhost:8004`.
+
+### Changed
+
+- **Renommage `VoiceProfile.markdownPolicy` → `markdown`, `syncMode` → `synchronization.mode`** : la première implémentation de l'éditeur de profils avait inventé ces deux noms ; le cahier des charges §18 nomme ces blocs `markdown` et `synchronization.mode` verbatim, et le schéma suit maintenant cet exemple à la lettre. Un `profiles.json` écrit avant ce renommage continue de charger sans intervention : `VoiceProfileSchema` migre les anciens noms vers les nouveaux au chargement (`profile.schema.ts`, testé par `test/unit/profiles/profileForm.test.ts` et `test/integration/syncModeAndMarkdownPolicy.test.ts`).
 
 ## [0.1.1] - 2026-09-09
 

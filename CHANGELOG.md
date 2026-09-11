@@ -7,6 +7,51 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), et
 ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/) à
 partir de la version `0.1.0`.
 
+Ce fichier est la seule source de vérité (voir `CONTRIBUTING.md`) ; le
+`CHANGELOG.md` à la racine du dépôt en est une copie générée par
+`npm run sync:changelog`, à ne jamais éditer directement.
+
+## [Unreleased]
+
+**S8.2 — le parcours de découverte de voix devient autonome : plus besoin d'un agent pour choisir la bonne voix (CdC §72, version 0.2).**
+
+### Added
+
+- **`LLM Voice: Browse Voices`** (CdC §72) : Quick Pick listant les voix du provider actif (`listVoices()`), bouton d'écoute immédiate par voix (synthèse + lecture sans quitter la liste), langue affichée quand connue, avertissement visible sur une voix anglophone détectée pour un profil non anglophone (`isEnglishVoice`) — le piège documenté dans `docs/voices.md` (cinq itérations d'écoute avant S4.3). Sélectionner une voix l'applique et la sauvegarde sur le profil courant. Fonctionne avec Chatterbox, Kokoro, Piper et la voix système.
+- **`LLM Voice: Use My Own Voice`** (CdC §55) : assistant en trois étapes — consentement explicite, choix d'un fichier existant ou enregistrement (commande adaptée à la plateforme : `pw-record`/`arecord` sous Linux, `ffmpeg -f avfoundation` sous macOS, `ffmpeg -f dshow` sous Windows, copiée dans le presse-papiers, surveillance de l'apparition du fichier), validation par lecture d'en-tête WAV (durée, mono/stéréo, niveau non silencieux), conversion 24 kHz mono via `ffmpeg` si disponible, copie dans `globalStorageUri/voices/`. Rien ne quitte la machine. Test immédiat de la voix clonée.
+- **`LLM Voice: Edit Profile`** (CdC §49) : webview sécurisée (nonce, CSP stricte, `localResourceRoots` minimal, aucune donnée de profil interpolée dans le HTML) pour éditer nom, langue, narrateur (modèle, prompt), provider TTS et voix (bouton « Parcourir les voix »), vitesse, réglages avancés du provider générés depuis `getCapabilities()` (ADR-005 — jamais codés en dur), politique Markdown, mode de synchronisation éditeur. Bouton « Tester » sans sauvegarder. Sauvegarde validée par `VoiceProfileSchema` (Zod) avec messages d'erreur en clair. Actions Dupliquer et Supprimer.
+- **`VoiceProfile.markdown`/`synchronization.mode`** (optionnels, rétrocompatibles) : un profil peut désormais porter sa propre politique Markdown (§13) et son comportement de surlignage éditeur (`"highlight-scroll"` par défaut, `"highlight"` sans auto-scroll, `"off"`) — noms alignés sur l'exemple du cahier des charges §18.
+
+### Fixed
+
+- **`OpenAICompatibleTtsProvider.listVoices()`** ne comprenait pas la forme réelle de `/v1/audio/voices` du serveur communautaire Chatterbox-TTS-Server (`{"voices": ["Abigail.wav", ...]}`, de simples noms de fichiers) : chaque voix ressortait avec `id`/`label` à `undefined`, rendant le navigateur de voix inutilisable en pratique. Vérifié en direct contre `localhost:8004`.
+
+### Changed
+
+- **Renommage `VoiceProfile.markdownPolicy` → `markdown`, `syncMode` → `synchronization.mode`** : la première implémentation de l'éditeur de profils avait inventé ces deux noms ; le cahier des charges §18 nomme ces blocs `markdown` et `synchronization.mode` verbatim, et le schéma suit maintenant cet exemple à la lettre. Un `profiles.json` écrit avant ce renommage continue de charger sans intervention : `VoiceProfileSchema` migre les anciens noms vers les nouveaux au chargement (`profile.schema.ts`, testé par `test/unit/profiles/profileForm.test.ts` et `test/integration/syncModeAndMarkdownPolicy.test.ts`).
+
+## [0.1.1] - 2026-09-09
+
+**Corrige le problème remonté sur la 0.1.0 : un utilisateur non technique installe le VSIX et entend du son immédiatement, sans configurer ni installer quoi que ce soit.**
+
+### Added
+
+- **Voix système sans installation** (S7.1, ADR-009 niveau 1b) : `SystemTtsProvider` synthétise via un binaire déjà présent sur la machine (espeak-ng, `say` sur macOS, SAPI via PowerShell sur Windows) — aucun serveur, aucune configuration. Devient le profil par défaut au premier lancement (« Voix système (aucune installation) »).
+- **Installation guidée de Piper** (S7.1) : commande `LLM Voice: Install Local Voice (Piper)`, téléchargement du binaire et de la voix `fr_FR-siwis-medium` vérifié par SHA-256, consentement explicite avant tout octet réseau, hôtes limités à GitHub Releases/Hugging Face, refusé sous `LLM_VOICE_STRICT_LOCAL=1`.
+- **Sélection automatique du provider TTS** (`llmVoice.tts.provider: "auto"`, nouveau défaut) : Chatterbox si disponible, sinon Piper local, sinon la voix système — un choix explicite (profil ou setting) n'est jamais recouvert.
+- **Parcours de découverte** (S7.2) : « Démarrer avec LLM Voice » s'ouvre automatiquement une seule fois à la première activation, jamais ensuite ; document Markdown d'exemple embarqué pour l'essayer sans fichier personnel.
+- **`LLM Voice: Setup Voice`** : choix honnête entre trois niveaux de qualité (voix système / Piper local / Chatterbox), plus jamais bloqué sur « Chatterbox n'est pas installé ».
+- **README de l'extension**, vues d'accueil (`viewsWelcome`) pour le lecteur et l'inbox vides, bouton haut-parleur dans la barre de titre de l'éditeur (Markdown uniquement).
+- **`Ctrl+Alt+V Espace`** (`llmVoice.playPause`) : vraie bascule Play/Pause, distincte de `llmVoice.play`.
+- **Contexte `llmVoice.state`** : les commandes sans effet dans l'état courant (Pause/Stop/segment suivant-précédent) sont grisées dans la palette.
+
+### Fixed
+
+- **Play sans session active** démarre désormais la lecture du document (ou de la sélection) au lieu de ne rien faire silencieusement.
+- **Commandes muettes** : les 30 commandes de la palette produisent toujours un effet visible ou un message explicite, jamais un clic sans effet observable.
+- **Message d'erreur sans issue** : « Chatterbox is unavailable » remplacé par un message actionnable proposant de choisir une voix (assistant de configuration) ou de consulter les réglages, plus jamais un cul-de-sac.
+- **README/CHANGELOG/LICENSE absents du VSIX** : le paquet publié embarque désormais la documentation utilisateur et les media du parcours de découverte.
+
 ## [0.1.0] - 2026-09-09
 
 **Extension VS Code pour narration vocale locale de documents Markdown et réponses d'agents LLM via TTS local (Chatterbox, Kokoro) et narrateur optionnel (Ollama, llama.cpp).**
