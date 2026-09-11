@@ -73,11 +73,16 @@ import {
   ChatterboxProvider,
   CHATTERBOX_LOCAL_PRESET,
   createTtsProvider,
+  fallbackMessageFor,
+  formatAutoVoiceInstallPrompt,
+  INSTALL_VOICE_ACTION_LABEL,
   installPiperVoice as runPiperInstall,
+  nextActionFor,
   OpenAICompatibleTtsProvider,
   PIPER_LOCAL_PRESET,
   presetKindForProviderId,
   probeHealth,
+  shouldOfferAutoVoiceInstall,
   TtsProviderRegistry,
   warmupProvider,
   type HealthCheckable,
@@ -287,6 +292,14 @@ export class Pipeline implements PipelineFacade {
    */
   private narrationDisabledForSession = false;
   private currentSessionBuild: SessionBuild | undefined;
+  /**
+   * S8.3: once the user declines (or a download fails) the one-action
+   * auto-install prompt, `ensureVoiceReady` stops re-asking for the rest of
+   * this VS Code session — `Setup Voice`/`llmVoice.installPiperVoice`
+   * remain one command away regardless. Never reset on success (nothing to
+   * decline anymore once a voice is installed).
+   */
+  private voiceInstallDeclinedThisSession = false;
 
   // ------------------------------------------------------- S6.2 (perf/latency)
   /** Counters behind `LLM Voice: Show Performance Report`; reset every `start()`. */
@@ -477,6 +490,16 @@ export class Pipeline implements PipelineFacade {
       const profile = await this.profiles.getSelected(doc.sourceType, this.bySourceSettings());
       this.currentProfileLabel = profile.label;
       this.currentSyncMode = profile.synchronization?.mode ?? "highlight-scroll";
+
+      // S8.3 (no Docker by default): a fresh install with no local engine
+      // at all gets exactly one action ("Installer la voix française")
+      // instead of building a session that is guaranteed to fail its first
+      // chunk. `"retry"` re-runs this whole method once the voice is
+      // installed — the original request is transparently resumed.
+      if ((await this.ensureVoiceReady(profile, abort.signal)) === "retry") {
+        return this.startInternal(captureContext);
+      }
+
       const segments = await this.buildSegments(doc, profile);
 
       if (segments.length === 0) {
@@ -1348,7 +1371,7 @@ export class Pipeline implements PipelineFacade {
       // waiting out HEALTH_CACHE_TTL_MS.
       this.autoTtsCache = undefined;
       void vscode.window.showInformationMessage(
-        "LLM Voice : voix Piper installée. Utilisée automatiquement si aucun serveur Chatterbox n'est détecté (llmVoice.tts.provider = auto)."
+        "LLM Voice : voix Piper installée et utilisée automatiquement pour la lecture (llmVoice.tts.provider = auto)."
       );
       return;
     }
@@ -1363,6 +1386,110 @@ export class Pipeline implements PipelineFacade {
     }
     this.output.error("piper install failed", { error: outcome.message });
     void vscode.window.showErrorMessage(`LLM Voice : installation de Piper impossible — ${outcome.message}`);
+  }
+
+  /**
+   * S8.3 (no Docker by default, ADR-009 amendment): runs once per
+   * `startInternal` call, *before* building a session. `"proceed"` covers
+   * every ordinary case — an explicit/remote/Chatterbox-already-running
+   * provider, or a `system` provider that already has an engine
+   * (`espeak-ng`, `say`, SAPI, or a previously-installed Piper) — so a
+   * machine with `espeak-ng` on `PATH` never sees this prompt at all.
+   * `"retry"` means the voice was just installed and `startInternal`
+   * should re-run from the top to pick it up.
+   */
+  private async ensureVoiceReady(profile: VoiceProfile, signal: AbortSignal): Promise<"proceed" | "retry"> {
+    if (this.voiceInstallDeclinedThisSession) {
+      return "proceed";
+    }
+    const resolved = await this.resolveTtsProviderConfig(profile);
+    if (presetKindForProviderId(resolved.providerId) !== "system") {
+      return "proceed";
+    }
+    const tts = await this.ttsFor(profile);
+    const health = await tts.health(signal).catch(
+      (error): ProviderHealth => ({
+        providerId: tts.id,
+        status: "unreachable",
+        checkedAt: Date.now(),
+        detail: messageOf(error)
+      })
+    );
+    if (!shouldOfferAutoVoiceInstall(resolved.providerId, health)) {
+      return "proceed";
+    }
+    const resumed = await this.offerAutoVoiceInstall(signal);
+    if (!resumed) {
+      this.voiceInstallDeclinedThisSession = true;
+      return "proceed";
+    }
+    return "retry";
+  }
+
+  /**
+   * The one dialog behind `ensureVoiceReady`'s auto-install: names the real
+   * download size (`formatAutoVoiceInstallPrompt`, from the same
+   * `PiperInstallConsentDetails` `installPiperVoice` uses) and exactly one
+   * button (`INSTALL_VOICE_ACTION_LABEL`) — declining is simply not
+   * clicking it, no second dialog. `true` only when
+   * `outcome.status === "installed"` (`nextActionFor`).
+   */
+  private async offerAutoVoiceInstall(signal: AbortSignal): Promise<boolean> {
+    const outcome = await vscode.window.withProgress<PiperInstallOutcome>(
+      { location: vscode.ProgressLocation.Notification, title: "LLM Voice : voix française (Piper)", cancellable: true },
+      async (progress, token) => {
+        const controller = new AbortController();
+        const forwardAbort = (): void => controller.abort();
+        signal.addEventListener("abort", forwardAbort);
+        token.onCancellationRequested(() => controller.abort());
+        let lastPercent = 0;
+        try {
+          return await runPiperInstall({
+            installDir: this.piperInstallDir(),
+            signal: controller.signal,
+            prompt: { confirm: (details) => this.confirmAutoVoiceInstall(details) },
+            progress: {
+              report: (info) => {
+                const percent = Math.round(info.fraction * 100);
+                progress.report({ message: info.message, increment: percent - lastPercent });
+                lastPercent = percent;
+              }
+            },
+            onLog: (event) =>
+              this.output.debug("auto voice install", {
+                host: event.host,
+                decision: event.decision,
+                ...(event.reason !== undefined ? { reason: event.reason } : {})
+              })
+          });
+        } finally {
+          signal.removeEventListener("abort", forwardAbort);
+        }
+      }
+    );
+    if (nextActionFor(outcome) === "resumed") {
+      this.autoTtsCache = undefined;
+      return true;
+    }
+    if (outcome.status === "failed") {
+      this.output.error("auto voice install failed", { error: outcome.message });
+    }
+    if (outcome.status !== "declined") {
+      // A dismissed prompt is not worth a second dialog (the whole point of
+      // this flow is *one* action); an unsupported platform or a genuine
+      // download failure is.
+      void vscode.window.showWarningMessage(fallbackMessageFor(outcome));
+    }
+    return false;
+  }
+
+  /** The one-button consent dialog itself — real sizes, never assumed. */
+  private async confirmAutoVoiceInstall(details: PiperInstallConsentDetails): Promise<boolean> {
+    const choice = await vscode.window.showInformationMessage(
+      formatAutoVoiceInstallPrompt(details),
+      INSTALL_VOICE_ACTION_LABEL
+    );
+    return choice === INSTALL_VOICE_ACTION_LABEL;
   }
 
   /** Speaks one inbox entry (Quick Pick/Tree/`speakLatestClaudeResponse`), marking it read first — zero autoplay: only ever reached from a command the user triggered. */

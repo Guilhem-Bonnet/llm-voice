@@ -18,17 +18,19 @@
 2. **Ouvrez** un fichier `.md`.
 3. Appuyez sur **`Ctrl+Alt+V` puis `D`** (ou palette de commandes → **LLM Voice: Speak Document**).
 
-C'est tout — la voix du système démarre immédiatement, sans rien installer. La
-palette de commandes (`Ctrl+Shift+P` → **LLM Voice: Setup Voice**) propose
-ensuite deux options de meilleure qualité si vous le souhaitez.
+C'est tout — la voix démarre immédiatement, sans Docker, sans Python, sans
+terminal. Si aucune voix locale n'est encore installée, une seule notification
+propose de télécharger la voix française autonome (~60 Mo, une fois) ; en cas
+de refus ou hors ligne, la voix système de votre OS prend le relais
+honnêtement — jamais d'erreur sans solution.
 
 ## Trois niveaux de voix
 
 | Niveau | Qualité | Installation |
 |---|---|---|
 | **Voix système** | Correcte | Aucune — utilise la synthèse vocale de votre OS |
-| **Piper** (local) | Meilleure | Téléchargement d'un modèle (~60 Mo), 100 % local |
-| **Chatterbox** (local) | Meilleure, clonage de voix | Nécessite Docker (`deploy/docker-compose.tts.yml`) |
+| **Voix française autonome (Piper, recommandé)** | Meilleure, 100 % locale | Téléchargement automatique au premier `Speak` (~60 Mo, une fois) — aucun Docker, aucun serveur |
+| **Qualité maximale (avancé)** | Meilleure, clonage de voix | Nécessite Docker (`deploy/docker-compose.tts.yml`) — pour qui le veut, jamais par défaut |
 
 **LLM Voice: Setup Voice** détecte ce qui est disponible et vous guide — jamais
 besoin de deviner un port ou une variable d'environnement.
@@ -70,4 +72,6 @@ texte copié.
 - [Signaler un problème](https://github.com/Guilhem-Bonnet/llm-voice/issues)
 - [Changelog](https://github.com/Guilhem-Bonnet/llm-voice/blob/main/vscode-extension/CHANGELOG.md)
 
-MIT — voix par défaut : Chatterbox Multilingual V3 (Resemble AI, MIT).
+MIT — voix locale autonome par défaut : Piper (rhasspy, MIT) + voix française
+`fr_FR-siwis-medium` (CC0) ; Chatterbox Multilingual V3 (Resemble AI, MIT)
+reste disponible pour qui active le niveau « Qualité maximale ».

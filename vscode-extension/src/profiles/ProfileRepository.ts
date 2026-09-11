@@ -234,6 +234,29 @@ export class ProfileRepository {
     // of timing.
     const tmp = `${this.filePath}.tmp-${process.pid}-${Date.now()}-${randomBytes(4).toString("hex")}`;
     await fs.writeFile(tmp, `${JSON.stringify(collection, null, 2)}\n`, "utf8");
-    await fs.rename(tmp, this.filePath);
+    await renameWithRetry(tmp, this.filePath);
+  }
+}
+
+/**
+ * Windows can transiently hold a brief exclusive handle on the destination
+ * of a rename (AV/indexer scan, a previous `load()`'s read not yet
+ * released), which surfaces as `EPERM`/`EBUSY` even though nothing in this
+ * process still has the file open — the retry is the fix, not a real
+ * conflict to resolve. Linux/macOS `rename(2)` never raises these for a
+ * same-volume replace, so the loop is a no-op there.
+ */
+async function renameWithRetry(tmp: string, dest: string, attempts = 5, delayMs = 25): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await fs.rename(tmp, dest);
+      return;
+    } catch (error) {
+      const retryable = isNodeError(error) && (error.code === "EPERM" || error.code === "EBUSY");
+      if (!retryable || attempt >= attempts) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+    }
   }
 }

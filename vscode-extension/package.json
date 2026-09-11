@@ -665,7 +665,7 @@
           {
             "id": "chooseVoice",
             "title": "Choisir une voix",
-            "description": "LLM Voice fonctionne dès l'installation avec la voix de votre système, sans rien installer. Deux niveaux de meilleure qualité sont disponibles en option : Piper (local, léger) et Chatterbox (local, clonage de voix, nécessite Docker).\n[Choisir une voix](command:llmVoice.setupVoice)",
+            "description": "LLM Voice fonctionne dès l'installation avec la voix de votre système, sans rien installer. Si aucune voix locale n'est encore installée, le premier « Speak » propose de télécharger la voix française autonome (~60 Mo, une fois, aucun Docker). Le niveau « Qualité maximale » (clonage de voix) reste disponible en option, mais nécessite Docker.\n[Choisir une voix](command:llmVoice.setupVoice)",
             "media": {
               "image": "media/walkthrough/choose-voice.svg",
               "altText": "Trois niveaux de voix : système, Piper, Chatterbox"

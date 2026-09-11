@@ -30,6 +30,18 @@ describe("VOICE_TIER_OPTIONS", () => {
     expect(chatterbox?.detail.toLowerCase()).toContain("docker");
   });
 
+  it("S8.3: labels chatterbox as an explicit advanced/Docker-only entry, never the default", () => {
+    const chatterbox = VOICE_TIER_OPTIONS.find((option) => option.tier === "chatterbox");
+    expect(chatterbox?.label).toContain("avancé — nécessite Docker");
+  });
+
+  it("S8.3: recommends the self-contained Piper tier as the no-Docker default", () => {
+    const piper = VOICE_TIER_OPTIONS.find((option) => option.tier === "piper");
+    expect(piper?.label.toLowerCase()).toContain("recommandé");
+    expect(piper?.detail.toLowerCase()).toContain("aucun docker");
+    expect(piper?.detail.toLowerCase()).not.toContain("chatterbox");
+  });
+
   it("every label uses a codicon, never an emoji (ADR-011 theming)", () => {
     for (const option of VOICE_TIER_OPTIONS) {
       expect(option.label).toMatch(/^\$\([a-z-]+\)\s/);
