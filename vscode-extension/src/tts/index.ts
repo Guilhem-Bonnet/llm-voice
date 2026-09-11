@@ -12,6 +12,7 @@ export * from "./ChatterboxProvider.js";
 export * from "./KokoroProvider.js";
 export * from "./SystemTtsProvider.js";
 export * from "./PiperSetup.js";
+export * from "./AutoVoiceInstall.js";
 export * from "./presets.js";
 export * from "./ProviderRegistry.js";
 export * from "./warmup.js";

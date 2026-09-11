@@ -119,6 +119,19 @@ export default defineConfig([
   },
   {
     ...common,
+    label: "system-no-engine",
+    // S8.3: the real "fresh install, zero local engine at all" case —
+    // *without* the fake TTS, `PATH` stripped of `espeak-ng`/`say`/`piper`,
+    // and a brand-new `--user-data-dir` (so `PiperSetup` never finds a
+    // prior install either). Proves `Pipeline.ensureVoiceReady`'s one-action
+    // prompt path never leaves the user with an unhandled rejection or a
+    // hang, whichever way the prompt is answered (`no-voice-available.test.ts`).
+    files: "out/test/integration-no-engine/**/*.test.js",
+    env: { LLM_VOICE_TEST_FAKE_TTS: undefined, PATH: "/nonexistent-on-purpose" },
+    launchArgs: ["--user-data-dir=.vscode-test/system-no-engine"]
+  },
+  {
+    ...common,
     label: "integration-security",
     // S6.1 audit (AC-SEC-02/05/08): the attack tests that need a *real* VS
     // Code — the CSP a live webview actually serves, `localResourceRoots` as
