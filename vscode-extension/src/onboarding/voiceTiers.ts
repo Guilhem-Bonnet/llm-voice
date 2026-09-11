@@ -22,9 +22,13 @@ export const PIPER_VOICE_SIZE_LABEL = "~60 Mo";
 
 /**
  * Three entries, in the order the story asks for: what works right now,
- * what's better with a small download, what's best but needs Docker. No
- * entry claims more than it delivers — the whole point of this command is
- * to replace "Chatterbox n'est pas installé" with an honest choice.
+ * the self-contained default (a small one-time download, no Docker, no
+ * server), and the advanced tier that needs Docker. No entry claims more
+ * than it delivers — the whole point of this command is to replace
+ * "Chatterbox n'est pas installé" with an honest choice (S8.3: Chatterbox
+ * is never the default and never named to a user who hasn't configured
+ * it — it only appears here, behind its own explicit, clearly-labelled
+ * "advanced" entry).
  */
 export const VOICE_TIER_OPTIONS: readonly VoiceTierOption[] = [
   {
@@ -35,14 +39,15 @@ export const VOICE_TIER_OPTIONS: readonly VoiceTierOption[] = [
   },
   {
     tier: "piper",
-    label: "$(cloud-download) Voix locale Piper",
-    description: `Meilleure qualité — téléchargement de ${PIPER_VOICE_SIZE_LABEL}`,
-    detail: "Modèle Piper (fr_FR-siwis-medium) téléchargé une seule fois, puis exécuté 100 % en local."
+    label: "$(cloud-download) Voix française autonome (recommandé)",
+    description: `Meilleure qualité, 100 % locale — téléchargement de ${PIPER_VOICE_SIZE_LABEL}`,
+    detail:
+      "Modèle Piper (fr_FR-siwis-medium) téléchargé une seule fois, puis exécuté 100 % en local — aucun Docker, aucun serveur, aucun terminal."
   },
   {
     tier: "chatterbox",
-    label: "$(rocket) Chatterbox",
-    description: "Meilleure qualité, clonage de voix — nécessite Docker",
+    label: "$(rocket) Qualité maximale (avancé — nécessite Docker)",
+    description: "Clonage de voix, la plus naturelle — nécessite Docker",
     detail: "Démarre un service Chatterbox local via Docker Compose. La voix la plus naturelle, au prix d'une installation Docker."
   }
 ];

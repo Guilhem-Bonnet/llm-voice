@@ -13,16 +13,23 @@ automatiquement une seule fois, jamais ensuite (relançable via la palette de
 commandes → **Welcome: Open Walkthrough**). Il correspond exactement à ce
 qui suit :
 
-1. **Choisir une voix** — `LLM Voice: Setup Voice` propose trois niveaux
-   honnêtes, sans jamais bloquer sur « Chatterbox n'est pas installé » :
+1. **Choisir une voix** — rien à faire : le premier `Speak` fonctionne déjà
+   (voix système), et s'il n'y a encore aucune voix locale, une seule
+   notification propose « Installer la voix française » (~60 Mo, une fois) ;
+   accepter télécharge, vérifie et enchaîne automatiquement sur la lecture
+   demandée. `LLM Voice: Setup Voice` reste disponible pour choisir
+   explicitement, à tout moment, entre trois niveaux honnêtes — jamais un
+   blocage sur « Chatterbox n'est pas installé » :
    - **Voix système** : disponible tout de suite, qualité correcte, rien à
      installer.
-   - **Voix locale Piper** : meilleure qualité, un téléchargement unique
-     d'environ 60 Mo, 100 % local ensuite.
-   - **Chatterbox** : la meilleure qualité (clonage de voix), nécessite
-     Docker — la commande à lancer (`docker compose -f
-     deploy/docker-compose.tts.yml up -d chatterbox`) est proposée avec un
-     bouton « Copier la commande » et un lien vers la documentation.
+   - **Voix française autonome (Piper, recommandé)** : meilleure qualité,
+     100 % locale, un téléchargement unique d'environ 60 Mo — aucun Docker,
+     aucun serveur, aucun terminal.
+   - **Qualité maximale (avancé — nécessite Docker)** : clonage de voix, la
+     plus naturelle, au prix d'une installation Docker — la commande à
+     lancer (`docker compose -f deploy/docker-compose.tts.yml up -d
+     chatterbox`) est proposée avec un bouton « Copier la commande » et un
+     lien vers la documentation ; jamais proposée par défaut.
 2. **Lire un document** — ouvrir un fichier `.md` (l'extension livre un
    exemple pour tester sans avoir le vôtre sous la main) puis
    `Ctrl+Alt+V` **puis** `D` (ou palette de commandes → **LLM Voice: Speak
@@ -43,8 +50,10 @@ titre de l'éditeur lance directement **Speak Document**.
 
 1. Installer VS Code ≥ 1.95, puis l'extension (`.vsix`, `docs/install-linux.md`
    §1 pour les caveats Flatpak/Snap).
-2. Installer et démarrer un serveur TTS local — Chatterbox (recommandé,
-   `docker-compose.tts.yml`) ou Kokoro (léger, sans GPU) : `docs/providers.md`.
+2. C'est tout — le premier `Speak` fonctionne sans rien installer de plus
+   (voix système, puis proposition automatique de la voix française
+   autonome). Docker/un serveur TTS ne sont utiles que pour le niveau
+   « Qualité maximale » (`docs/providers.md`), jamais requis par défaut.
 3. (Optionnel) Installer Ollama pour la narration transformée (résumé,
    pédagogie) : `docs/install-linux.md` §2.
 4. Aucune clé, aucun compte requis en usage 100 % local — le badge

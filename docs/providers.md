@@ -13,11 +13,20 @@ codée en dur dans un profil.
 | `piper-local`       | `OpenAICompatibleTtsProvider`   | `5000`            | 1b             | non     |
 | `openai-compatible` | `OpenAICompatibleTtsProvider`   | (aucun défaut)    | 2 / 3          | oui     |
 
-`llmVoice.tts.provider` (défaut `chatterbox`) et `llmVoice.tts.baseUrl`
-(défaut `http://127.0.0.1:8004`) sont le repli quand un profil ne fixe pas
+`llmVoice.tts.provider` (défaut **`auto`**, S7.1/S8.3 — jamais `chatterbox`)
+et `llmVoice.tts.baseUrl` sont le repli quand un profil ne fixe pas
 `tts.providerId`/`tts.baseUrl` (`resolveTtsConfig`). Le niveau 2/3 (clé d'API)
 lit la clé via `context.secrets` (`profile.tts.apiKeyRef`), jamais en clair
 dans `profiles.json` ni les logs (D10).
+
+**`"auto"` (`Pipeline.autoSelectTts`, ADR-009 amendé S8.3) : Chatterbox →
+Piper local (serveur, rarement présent) → `SystemTtsProvider`** — Chatterbox
+n'est essayé (et préféré) que si son `health()` répond déjà (le service
+Docker tourne) ; sinon la résolution retombe sur `SystemTtsProvider`
+(ci-dessous), qui n'a jamais besoin d'un serveur. Concrètement, sur une
+machine fraîchement installée (aucun Docker, aucun serveur lancé), `"auto"`
+résout systématiquement vers `SystemTtsProvider` — jamais vers Chatterbox par
+défaut.
 
 ## Chatterbox (CdC §24-25, §28, §55)
 
@@ -91,9 +100,34 @@ hors périmètre S4.2.
 ## Kokoro (CdC §27) / Piper (ADR-009 niveau 1b)
 
 Kokoro (82 M paramètres) : un seul knob réel, `speed` ; voix française par
-défaut `ff_siwis` (seul voicepack FR documenté). Piper n'a pas de classe
-dédiée : un wrapper HTTP compatible OpenAI (`piper-tts-http-server` ou
-équivalent) suffit, d'où `OpenAICompatibleTtsProvider` nu sur le port `5000`.
+défaut `ff_siwis` (seul voicepack FR documenté) — **cette classe parle à un
+serveur Kokoro local** (`localhost:8880`, à démarrer soi-même), ce n'est pas
+la même chose que le paquet npm `kokoro-js` (évalué et rejeté pour S8.3, voir
+plus bas). Le preset `piper-local` (`OpenAICompatibleTtsProvider` nu sur le
+port `5000`) suppose un wrapper HTTP compatible OpenAI devant Piper
+(`piper-tts-http-server` ou équivalent) — personne ne le démarre par défaut ;
+en pratique c'est **`SystemTtsProvider`** (ci-dessous) qui fournit Piper sans
+aucun serveur.
+
+### `SystemTtsProvider` — la voix locale par défaut, sans Docker (S7.1/S8.3)
+
+`SystemTtsProvider` (`src/tts/SystemTtsProvider.ts`) synthétise en invoquant
+directement un binaire local — jamais de serveur, jamais de `fetch`. Ordre de
+détection Linux : Piper (si installé via `PiperSetup`) → `espeak-ng`. macOS :
+`say`. Windows : SAPI via PowerShell.
+
+`PiperSetup`/`installPiperVoice` (`src/tts/PiperSetup.ts`) télécharge le
+binaire `rhasspy/piper` réel (GitHub Releases) et la voix française
+`fr_FR-siwis-medium` (Hugging Face, ~60 Mo au total), vérifiés SHA-256
+(`AssetDownloader`), et les installe sous `globalStorageUri/piper/`.
+
+**S8.3 : ce téléchargement n'est plus une étape optionnelle à trouver.** Au
+premier `Speak` sans aucun moteur système (`health().status === "unreachable"`,
+`AutoVoiceInstall.ts`), `Pipeline.ensureVoiceReady` propose une seule action
+("Installer la voix française") avec la taille réelle affichée ; accepter
+télécharge, vérifie et enchaîne automatiquement sur la lecture demandée —
+refuser ou échouer (hors ligne) retombe honnêtement sur la voix système sans
+jamais mentionner Chatterbox.
 
 ## Santé et statut (CdC §51)
 
@@ -103,6 +137,23 @@ dédiée : un wrapper HTTP compatible OpenAI (`piper-tts-http-server` ou
 `● Ready / ● Loading / ● Offline / ● Error`. `TtsProviderRegistry.healthAll()`
 sonde tous les providers enregistrés en parallèle et ne laisse jamais un
 provider hors ligne faire planter l'extension.
+
+## Alternative évaluée et rejetée (S8.3) : `kokoro-js` in-process
+
+Avant de retenir Piper comme moteur autonome par défaut, `kokoro-js`
+(Kokoro-82M via transformers.js/onnxruntime, Apache-2.0) a été installé et
+testé réellement (2026-09-11) : `npm i kokoro-js` réussit sans compilation
+native, mais `node_modules` pèse **737 Mo** (`onnxruntime-node` 536 Mo à lui
+seul) et tire `sharp` (traitement d'image, inutile ici) avec **3
+vulnérabilités "high" sans correctif** (`npm audit`, CVE libvips/libheif). Le
+modèle par défaut documenté par le paquet
+(`onnx-community/Kokoro-82M-v1.0-ONNX`) **ne propose aucune voix française** :
+demander `voice: "ff_siwis"` (le fichier d'embedding existe pourtant dans le
+paquet npm) échoue avec `Voice "ff_siwis" not found` — seules 28 voix
+anglaises (`en-us`/`en-gb`) sont exposées par cette conversion ONNX. Rejeté :
+ni le poids, ni la sécurité, ni surtout le support français ne sont au
+rendez-vous aujourd'hui. Piper (`SystemTtsProvider`, ci-dessus) reste le
+moteur autonome par défaut.
 
 ## Ajouter un provider
 
