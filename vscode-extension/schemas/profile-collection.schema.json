@@ -160,7 +160,7 @@
           "style": {
             "type": "string"
           },
-          "markdownPolicy": {
+          "markdown": {
             "type": "object",
             "properties": {
               "headings": {
@@ -218,13 +218,22 @@
             ],
             "additionalProperties": false
           },
-          "syncMode": {
-            "type": "string",
-            "enum": [
-              "highlight-scroll",
-              "highlight",
-              "off"
-            ]
+          "synchronization": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "highlight-scroll",
+                  "highlight",
+                  "off"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [

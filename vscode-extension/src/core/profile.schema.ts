@@ -41,6 +41,11 @@ export const MarkdownPolicySchema = z.object({
 /** Mirrors `SyncMode` (CdC §49 "Highlight behavior"). */
 export const SyncModeSchema = z.enum(["highlight-scroll", "highlight", "off"]);
 
+/** Mirrors `SynchronizationSettings` (CdC §18 names this block `synchronization`). */
+export const SynchronizationSettingsSchema = z.object({
+  mode: SyncModeSchema
+});
+
 /** Absolute http(s) URL; anything else is rejected before the egress guard. */
 const HttpUrlSchema = z
   .string()
@@ -115,8 +120,7 @@ export const NarratorBindingSchema = z.object({
   apiKeyRef: ApiKeyRefSchema.optional()
 });
 
-/** Full profile schema, also exported as the JSON Schema attached to profiles.json. */
-export const VoiceProfileSchema = z.object({
+const VoiceProfileObjectSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   mode: NarrationModeSchema,
@@ -127,9 +131,40 @@ export const VoiceProfileSchema = z.object({
   playback: PlaybackDefaultsSchema,
   description: z.string().optional(),
   style: z.string().optional(),
-  markdownPolicy: MarkdownPolicySchema.optional(),
-  syncMode: SyncModeSchema.optional()
+  markdown: MarkdownPolicySchema.optional(),
+  synchronization: SynchronizationSettingsSchema.optional()
 });
+
+/**
+ * Rename migration (CdC §18 alignment): pre-migration builds stored
+ * `markdownPolicy`/`syncMode` at the top level; the cahier des charges
+ * names these blocks `markdown`/`synchronization.mode`. A `profiles.json`
+ * written before the rename must keep loading — this preprocesses the raw
+ * value so the legacy keys land on the new ones. The new key wins if a
+ * profile somehow carries both; the legacy keys are always dropped so they
+ * never round-trip back to disk on the next write.
+ */
+function migrateLegacyProfileShape(value: unknown): unknown {
+  if (typeof value !== "object" || value === null) {
+    return value;
+  }
+  const record = value as Record<string, unknown>;
+  if (!("markdownPolicy" in record) && !("syncMode" in record)) {
+    return value;
+  }
+  const { markdownPolicy, syncMode, ...rest } = record;
+  const migrated: Record<string, unknown> = { ...rest };
+  if (migrated["markdown"] === undefined && markdownPolicy !== undefined) {
+    migrated["markdown"] = markdownPolicy;
+  }
+  if (migrated["synchronization"] === undefined && syncMode !== undefined) {
+    migrated["synchronization"] = { mode: syncMode };
+  }
+  return migrated;
+}
+
+/** Full profile schema, also exported as the JSON Schema attached to profiles.json. */
+export const VoiceProfileSchema = z.preprocess(migrateLegacyProfileShape, VoiceProfileObjectSchema);
 
 /** The whole `profiles.json` document. */
 export const ProfileCollectionSchema = z.object({

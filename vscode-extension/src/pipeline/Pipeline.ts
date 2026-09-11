@@ -22,7 +22,7 @@ import * as vscode from "vscode";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
 import type { PlaybackState } from "../core/playback.js";
-import type { VoiceProfile } from "../core/profile.js";
+import type { SyncMode, VoiceProfile } from "../core/profile.js";
 import { isRemoteProfile } from "../core/profile.schema.js";
 import type { NarratorProvider } from "../core/narration.js";
 import type { ProviderHealth } from "../core/health.js";
@@ -198,7 +198,7 @@ function segmentationPolicyFor(profile: VoiceProfile, firstChunkSentences: numbe
     maxSentencesPerChunk: profile.chunking.maxSentences,
     // S8.2 profile editor: a profile can now carry its own Markdown policy
     // (CdC §13/§49); an existing profile without one keeps the 0.1 default.
-    markdown: profile.markdownPolicy ?? DEFAULT_MARKDOWN_POLICY,
+    markdown: profile.markdown ?? DEFAULT_MARKDOWN_POLICY,
     lang: profile.language,
     firstChunkSentences
   };
@@ -262,8 +262,8 @@ export class Pipeline implements PipelineFacade {
 
   private currentUri: vscode.Uri | undefined;
   private currentProfileLabel = "—";
-  /** S8.2: `profile.syncMode` for the session in progress, `"highlight-scroll"` (0.1 behaviour) until a session sets it. */
-  private currentSyncMode: VoiceProfile["syncMode"] = "highlight-scroll";
+  /** S8.2: `profile.synchronization.mode` for the session in progress, `"highlight-scroll"` (0.1 behaviour) until a session sets it. */
+  private currentSyncMode: SyncMode = "highlight-scroll";
   private lastCaptureContext: CaptureContext | undefined;
   private captureAbort: AbortController | undefined;
   /** CdC §52 "une seule notification par session par type" (anti-spam); reset in `start()`. */
@@ -476,7 +476,7 @@ export class Pipeline implements PipelineFacade {
       const doc = await source.capture(captureContext, abort.signal);
       const profile = await this.profiles.getSelected(doc.sourceType, this.bySourceSettings());
       this.currentProfileLabel = profile.label;
-      this.currentSyncMode = profile.syncMode ?? "highlight-scroll";
+      this.currentSyncMode = profile.synchronization?.mode ?? "highlight-scroll";
       const segments = await this.buildSegments(doc, profile);
 
       if (segments.length === 0) {

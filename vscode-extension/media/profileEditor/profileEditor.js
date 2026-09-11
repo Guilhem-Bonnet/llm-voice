@@ -134,11 +134,11 @@
     fields.ttsBaseUrl.value = textOf(profile.tts && profile.tts.baseUrl);
     fields.ttsVoice.value = textOf(profile.tts && profile.tts.voice);
     fields.speed.value = String(numberOr(profile.playback && profile.playback.rate, 1));
-    const md = profile.markdownPolicy || {};
+    const md = profile.markdown || {};
     fields.markdownCode.value = textOf(md.code) || "skip";
     fields.markdownImages.value = textOf(md.images) || "skip";
     fields.markdownTables.value = textOf(md.tables) || "summarize";
-    fields.syncMode.value = textOf(profile.syncMode) || "highlight-scroll";
+    fields.syncMode.value = textOf(profile.synchronization && profile.synchronization.mode) || "highlight-scroll";
     voiceWarning.hidden = true;
     voiceWarning.textContent = "";
     parameterValues = { ...(profile.tts && profile.tts.parameters) };
@@ -168,7 +168,7 @@
         ...base.playback,
         rate: Number(fields.speed.value)
       },
-      markdownPolicy: {
+      markdown: {
         headings: "read",
         links: "labelOnly",
         images: fields.markdownImages.value,
@@ -176,7 +176,9 @@
         tables: fields.markdownTables.value,
         frontmatter: "skip"
       },
-      syncMode: fields.syncMode.value
+      synchronization: {
+        mode: fields.syncMode.value
+      }
     };
     if (narratorProvider) {
       profile.narrator = {

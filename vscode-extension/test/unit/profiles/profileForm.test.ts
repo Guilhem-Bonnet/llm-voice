@@ -22,7 +22,24 @@ describe("validateProfileFormData", () => {
     }
   });
 
-  it("accepts optional markdownPolicy/syncMode fields", () => {
+  it("accepts optional markdown/synchronization fields (CdC §18 names)", () => {
+    const profile = {
+      ...validProfile(),
+      markdown: {
+        headings: "read",
+        links: "labelOnly",
+        images: "skip",
+        code: "skip",
+        tables: "summarize",
+        frontmatter: "skip"
+      },
+      synchronization: { mode: "highlight" }
+    };
+    const result = validateProfileFormData(profile);
+    expect(result.ok).toBe(true);
+  });
+
+  it("migrates legacy markdownPolicy/syncMode field names transparently (pre-rename profiles.json)", () => {
     const profile = {
       ...validProfile(),
       markdownPolicy: {
@@ -37,6 +54,12 @@ describe("validateProfileFormData", () => {
     };
     const result = validateProfileFormData(profile);
     expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.profile.markdown?.code).toBe("skip");
+      expect(result.profile.synchronization?.mode).toBe("highlight");
+      expect(result.profile).not.toHaveProperty("markdownPolicy");
+      expect(result.profile).not.toHaveProperty("syncMode");
+    }
   });
 
   it("rejects a profile missing required fields, with a readable message", () => {

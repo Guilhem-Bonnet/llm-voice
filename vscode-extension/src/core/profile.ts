@@ -80,6 +80,11 @@ export interface NarratorBinding {
  */
 export type SyncMode = "highlight-scroll" | "highlight" | "off";
 
+/** Wraps `SyncMode` under `synchronization.mode` (CdC §18 names this block `synchronization`, not a bare `syncMode`). */
+export interface SynchronizationSettings {
+  mode: SyncMode;
+}
+
 /** A named, user-editable reading configuration (CdC §18). */
 export interface VoiceProfile {
   id: string;
@@ -100,14 +105,19 @@ export interface VoiceProfile {
    */
   style?: string;
   /**
-   * Per-profile Markdown reading policy (CdC §13, §49). Optional and
-   * additive: an existing profile without it keeps using
-   * `Pipeline`'s `DEFAULT_MARKDOWN_POLICY` (`segmentationPolicyFor`),
-   * exactly like before this field existed.
+   * Per-profile Markdown reading policy (CdC §13, §18, §49). Named
+   * `markdown` — matching the cahier des charges §18 example verbatim —
+   * not `markdownPolicy`. Optional and additive: an existing profile
+   * without it keeps using `Pipeline`'s `DEFAULT_MARKDOWN_POLICY`
+   * (`segmentationPolicyFor`), exactly like before this field existed.
    */
-  markdownPolicy?: MarkdownPolicy;
-  /** Editor highlight/auto-scroll behaviour (CdC §49). Optional, defaults to `"highlight-scroll"`. */
-  syncMode?: SyncMode;
+  markdown?: MarkdownPolicy;
+  /**
+   * Editor highlight/auto-scroll behaviour (CdC §18 `synchronization`,
+   * §49). Optional, `mode` defaults to `"highlight-scroll"` when the whole
+   * block is omitted.
+   */
+  synchronization?: SynchronizationSettings;
 }
 
 /** The `profiles.json` document, versioned for future migrations. */

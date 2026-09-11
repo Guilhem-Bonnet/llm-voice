@@ -55,9 +55,13 @@ vitesse (`playback.rate`), réglages avancés générés depuis
 `TtsProvider.getCapabilities().parameters` (ADR-005 — jamais codés en dur,
 donc expressivité/poids de guidage apparaissent pour Chatterbox sans champ
 dédié), politique Markdown (code, liens, images, tableaux —
-`profile.markdownPolicy`, optionnel, défaut CdC §13 si absent), mode de
-synchronisation éditeur (`profile.syncMode` : `highlight-scroll` par défaut,
-`highlight` sans auto-scroll, `off`). Un bouton « Tester » lit la phrase de
+`profile.markdown`, optionnel, défaut CdC §13 si absent, nommé comme
+l'exemple CdC §18 — pas `markdownPolicy`), mode de synchronisation éditeur
+(`profile.synchronization.mode` : `highlight-scroll` par défaut, `highlight`
+sans auto-scroll, `off` — pas un `syncMode` de premier niveau ; un
+`profiles.json` écrit avant ce renommage est migré automatiquement au
+chargement, `VoiceProfileSchema` accepte encore les deux anciens noms).
+Un bouton « Tester » lit la phrase de
 référence avec les réglages courants sans sauvegarder. La sauvegarde est
 validée par `VoiceProfileSchema` (Zod) ; toute violation s'affiche en clair
 sans toucher `profiles.json`. Aucune valeur de profil n'est jamais
