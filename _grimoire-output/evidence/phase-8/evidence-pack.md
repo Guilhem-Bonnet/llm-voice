@@ -15,8 +15,8 @@ Retour utilisateur du 2026-09-11 : « le fait que Docker manque est un souci car
 
 | Evidence | Location | Produced by | Result |
 |---|---|---|---|
-| PR #48 voix autonome par défaut | merge `ed5eb39` | backend-engineer (Sonnet) | Piper retenu après rejet argumenté du moteur intégré |
-| PR #49 navigateur de voix, ma voix, éditeur de profils | merge `c345e9a` | backend-engineer + art-director (Sonnet) | 3 commandes ; bug réel corrigé : `listVoices()` renvoyait des identifiants vides |
+| PR #48 voix autonome par défaut | merge `ed5eb39` | backend-engineer (Sonnet) | Piper retenu après rejet argumenté du moteur intégré ; correction bloquante trouvée en revue : erreur de permission Windows sur le renommage atomique des profils |
+| PR #49 navigateur de voix, ma voix, éditeur de profils | merge `c345e9a` | backend-engineer + art-director (Sonnet) | 3 commandes ; bug réel corrigé : `listVoices()` renvoyait des identifiants vides ; champs réalignés sur le cahier des charges avec migration testée ; 2 alertes CodeQL corrigées |
 | PR #47 dette d'outillage | merge `89c2a0c` | pipeline-architect (Sonnet) | vitest 5, eslint 10, actions v7 ; 8 PR Dependabot fermées |
 | Revue | `_grimoire-output/team-build/test-reports/phase-8-sentinel-review.md` | Sentinel (Sonnet) | verdict AC-07 argumenté |
 | Ticket de suivi | issue #50 | concierge | test d'acceptation instable à stabiliser |
@@ -37,6 +37,8 @@ Chatterbox rétrogradé en option avancée explicitement marquée « nécessite 
 | Packaging | VSIX 24 fichiers, 306,7 Ko |
 | Vulnérabilités dev | 10 → 4 ; `npm audit --omit=dev` = 0 |
 | Écoute réelle | voix Piper française jouée à l'utilisateur (facteur temps réel 0,038) |
+| E2E réel | 11/11 tests contre Ollama et Chatterbox |
+| Traçabilité | 27 critères couverts, 0 partiel, 0 non couvert |
 
 ## Deviations and accepted risks
 
