@@ -227,7 +227,14 @@
       {
         "command": "llmVoice.browseVoices",
         "title": "LLM Voice: Browse Voices",
-        "category": "LLM Voice"
+        "category": "LLM Voice",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "llmVoice.openSettings",
+        "title": "LLM Voice: Open Settings",
+        "category": "LLM Voice",
+        "icon": "$(gear)"
       },
       {
         "command": "llmVoice.useOwnVoice",
@@ -273,6 +280,36 @@
         "title": "LLM Voice: Toggle Inbox Message Read",
         "category": "LLM Voice",
         "icon": "$(check)"
+      },
+      {
+        "command": "llmVoice.profilesView.new",
+        "title": "LLM Voice: New Profile",
+        "category": "LLM Voice",
+        "icon": "$(add)"
+      },
+      {
+        "command": "llmVoice.profilesView.activate",
+        "title": "LLM Voice: Activate Profile",
+        "category": "LLM Voice",
+        "icon": "$(check)"
+      },
+      {
+        "command": "llmVoice.profilesView.edit",
+        "title": "LLM Voice: Edit Profile",
+        "category": "LLM Voice",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "llmVoice.profilesView.duplicate",
+        "title": "LLM Voice: Duplicate Profile",
+        "category": "LLM Voice",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "llmVoice.profilesView.delete",
+        "title": "LLM Voice: Delete Profile",
+        "category": "LLM Voice",
+        "icon": "$(trash)"
       }
     ],
     "viewsContainers": {
@@ -285,9 +322,9 @@
       ],
       "activitybar": [
         {
-          "id": "llm-voice-explorer",
+          "id": "llmVoice",
           "title": "LLM Voice",
-          "icon": "media/player-icon.svg"
+          "icon": "media/activity-icon.svg"
         }
       ]
     },
@@ -299,10 +336,21 @@
           "name": "Player"
         }
       ],
-      "llm-voice-explorer": [
+      "llmVoice": [
+        {
+          "type": "webview",
+          "id": "llmVoice.playerView",
+          "name": "Lecture en cours",
+          "when": "config.llmVoice.ui.layout == full"
+        },
         {
           "id": "llmVoice.inboxView",
           "name": "Inbox",
+          "when": "config.llmVoice.ui.layout == full"
+        },
+        {
+          "id": "llmVoice.profilesView",
+          "name": "Profils",
           "when": "config.llmVoice.ui.layout == full"
         }
       ]
@@ -311,6 +359,10 @@
       {
         "view": "llmVoice.player",
         "contents": "Aucune lecture en cours.\n[Choisir une voix](command:llmVoice.setupVoice)\n[Lire le document actuel](command:llmVoice.speakDocument)"
+      },
+      {
+        "view": "llmVoice.playerView",
+        "contents": "Aucune lecture en cours.\n[Lire le document actuel](command:llmVoice.speakDocument)\n[Choisir une voix](command:llmVoice.setupVoice)"
       },
       {
         "view": "llmVoice.inboxView",
@@ -347,6 +399,22 @@
         },
         {
           "command": "llmVoice.inbox.markRead",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.profilesView.activate",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.profilesView.edit",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.profilesView.duplicate",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.profilesView.delete",
           "when": "false"
         }
       ],
@@ -391,6 +459,26 @@
           "command": "llmVoice.inbox.refresh",
           "when": "view == llmVoice.inboxView",
           "group": "navigation"
+        },
+        {
+          "command": "llmVoice.speakDocument",
+          "when": "view == llmVoice.playerView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "llmVoice.browseVoices",
+          "when": "view == llmVoice.playerView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "llmVoice.openSettings",
+          "when": "view == llmVoice.playerView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "llmVoice.profilesView.new",
+          "when": "view == llmVoice.profilesView",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -412,6 +500,26 @@
         {
           "command": "llmVoice.inbox.delete",
           "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry",
+          "group": "inline@4"
+        },
+        {
+          "command": "llmVoice.profilesView.activate",
+          "when": "view == llmVoice.profilesView && viewItem == llmVoiceProfileEntry",
+          "group": "inline@1"
+        },
+        {
+          "command": "llmVoice.profilesView.edit",
+          "when": "view == llmVoice.profilesView && viewItem == llmVoiceProfileEntry",
+          "group": "inline@2"
+        },
+        {
+          "command": "llmVoice.profilesView.duplicate",
+          "when": "view == llmVoice.profilesView && viewItem == llmVoiceProfileEntry",
+          "group": "inline@3"
+        },
+        {
+          "command": "llmVoice.profilesView.delete",
+          "when": "view == llmVoice.profilesView && viewItem == llmVoiceProfileEntry",
           "group": "inline@4"
         }
       ]
@@ -635,8 +743,8 @@
             "minimal",
             "full"
           ],
-          "default": "minimal",
-          "description": "`minimal` (défaut) : status bar + Panel + CodeLens. `full` : View Container complet (ADR-011)."
+          "default": "full",
+          "description": "`full` (défaut depuis la révision du 2026-09-12) : icône dédiée dans la barre d'activité + View Container complet (Lecture en cours, Inbox, Profils), point d'entrée principal. `minimal` : status bar + Panel + CodeLens uniquement, pour qui préfère le lecteur dans le panneau (ADR-011)."
         },
         "llmVoice.privacy.telemetryEnabled": {
           "type": "boolean",
@@ -660,7 +768,7 @@
       {
         "id": "llmVoice.gettingStarted",
         "title": "Démarrer avec LLM Voice",
-        "description": "Lisez vos documents Markdown et les réponses de vos agents LLM à voix haute, 100 % en local — quatre étapes pour être opérationnel.",
+        "description": "Lisez vos documents Markdown et les réponses de vos agents LLM à voix haute, 100 % en local — quatre étapes pour être opérationnel. Point de départ : l'icône LLM Voice de la barre d'activité (ou le raccourci Ctrl+Alt+V).",
         "steps": [
           {
             "id": "chooseVoice",
@@ -677,7 +785,7 @@
           {
             "id": "readDocument",
             "title": "Lire un document",
-            "description": "Ouvrez un fichier Markdown et lancez la lecture : le segment en cours de lecture est surligné dans l'éditeur, et les contrôles de lecture apparaissent dans le mini-player.\n[Ouvrir l'exemple et lire](command:llmVoice.walkthroughOpenExample)",
+            "description": "Ouvrez un fichier Markdown et lancez la lecture : le segment en cours de lecture est surligné dans l'éditeur, et les contrôles de lecture apparaissent dans « Lecture en cours » (icône LLM Voice de la barre d'activité).\n[Ouvrir l'exemple et lire](command:llmVoice.walkthroughOpenExample)",
             "media": {
               "image": "media/walkthrough/read-document.svg",
               "altText": "Un document Markdown lu à voix haute, segment surligné"

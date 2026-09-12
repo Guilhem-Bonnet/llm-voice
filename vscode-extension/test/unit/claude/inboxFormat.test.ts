@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRelativeTime, inboxProviderIcon } from "../../../src/claude/inboxFormat.js";
+import { computeInboxBadge, formatRelativeTime, inboxProviderIcon } from "../../../src/claude/inboxFormat.js";
 
 describe("inboxProviderIcon", () => {
   it("returns a distinct codicon for known providers, generic otherwise", () => {
@@ -28,5 +28,19 @@ describe("formatRelativeTime", () => {
 
   it("days", () => {
     expect(formatRelativeTime(now - 2 * 86_400_000, now)).toBe("il y a 2 j");
+  });
+});
+
+describe("computeInboxBadge", () => {
+  it("returns undefined when everything is read (badge cleared)", () => {
+    expect(computeInboxBadge(0)).toBeUndefined();
+  });
+
+  it("returns a value + French tooltip for one unread message", () => {
+    expect(computeInboxBadge(1)).toEqual({ value: 1, tooltip: "1 message(s) non lu(s)" });
+  });
+
+  it("returns a value + French tooltip for several unread messages", () => {
+    expect(computeInboxBadge(7)).toEqual({ value: 7, tooltip: "7 message(s) non lu(s)" });
   });
 });

@@ -91,3 +91,90 @@ compacte.
   `"minimal"` (défaut) ne monte que status bar + Panel + CodeLens.
 - Accessibilité : test automatisé de présence des `aria-label` sur les
   cinq boutons du mini-player.
+
+## Révision du 2026-09-12
+
+### Statut
+
+Accepté (2026-09-12). Révise la section « Décision » ci-dessus ; ne
+réécrit pas l'historique.
+
+### Contexte
+
+Retour utilisateur après test réel de la disposition `minimal` (0.1) :
+« le raccourci `ctrl+alt+v` n'est pas intuitif en procédure de démarrage,
+je préfère avoir une fenêtre dédiée à l'outil dans VS Code, comme Claude
+avec son chat ou GitFlow avec sa vue de flow ». Le pari initial de cette
+ADR — un chord clavier + Quick Picks comme point d'entrée principal,
+`minimal` par défaut — supposait une découvrabilité suffisante via le
+parcours guidé et le CodeLens. En usage réel, un raccourci à deux touches
+sans rappel visuel permanent ne suffit pas : l'utilisateur cherche un
+point d'entrée cliquable et persistant, exactement ce que les guidelines
+citées en Contexte (« Views... keep the number to a minimum ») avaient fait
+écarter par défaut.
+
+### Décision
+
+- **`llmVoice.ui.layout` : `"full"` (nouveau défaut) | `"minimal"`.** Le
+  View Container complet (CdC §6) devient le point d'entrée principal ;
+  `minimal` reste disponible pour qui préfère le lecteur dans le Panel
+  (raccourci `ctrl+alt+v` inchangé, toujours actif dans les deux modes).
+- **Icône dédiée dans la barre d'activité** (`media/activity-icon.svg`,
+  24×24, `currentColor`, trait simple — haut-parleur + onde), au même
+  emplacement que le point d'entrée du chat de Claude ou de la vue GitFlow
+  : cliquer dessus ouvre directement la vue `llmVoice`.
+- **Contenu de la vue dédiée, dans l'ordre du CdC §6** :
+  1. **Lecture en cours** — la même `WebviewView` que le mini-player du
+     Panel (`PlayerViewProvider`, non réécrite), enregistrée une seconde
+     fois sous l'id `llmVoice.playerView` pour ce nouveau conteneur ;
+     invite d'une ligne (« Lire le document actuel » / « Choisir une
+     voix ») quand rien ne joue.
+  2. **Inbox** — le même Tree View qu'en `full` avant cette révision
+     (`llmVoice.inboxView`), avec le compteur de non-lus désormais visible
+     en badge sur l'icône du conteneur (`vscode.TreeView.badge`).
+  3. **Profils** — nouveau Tree View (`llmVoice.profilesView`,
+     `ProfilesTreeProvider`) : profil actif marqué (icône `check`),
+     actions au survol (activer, éditer, dupliquer, supprimer), bouton
+     « Nouveau profil » dans le titre de la vue.
+  - **Actions dans la barre de titre** (portées par la vue « Lecture en
+    cours », qui est la première du conteneur) : lire le document actuel,
+    parcourir les voix, réglages.
+- **Découvrabilité au premier lancement** : la vue dédiée s'ouvre une
+  seule fois, en même temps que le parcours guidé
+  (`workbench.view.extension.llmVoice`, même drapeau persistant
+  `globalState` que `openWalkthroughOnFirstActivation` — jamais une
+  deuxième fois sans action de l'utilisateur, CdC §52).
+- Le Panel `minimal` (`llmVoice.player`, status bar, CodeLens) n'est pas
+  retiré : il reste enregistré tel quel, sans condition sur
+  `llmVoice.ui.layout`, pour que la bascule vers `minimal` continue de
+  fonctionner sans recharger de vue.
+
+### Conséquences
+
+- Le View Container complet cesse d'être un mode secondaire opt-in : il
+  devient la disposition par défaut, `minimal` devenant l'option pour qui
+  veut « ne pas prendre de place ». Aucune fonctionnalité perdue dans un
+  sens ou dans l'autre.
+- `PlayerViewProvider`/`InboxTreeProvider` sont réutilisés sans
+  modification ; seul `package.json` (conteneur, vues, menus) et un nouveau
+  `ProfilesTreeProvider` changent la surface UI.
+- Limite connue : `PlayerViewProvider` ne gère qu'un seul `WebviewView`
+  actif à la fois (son unique `WebviewAudioSink`) ; si un utilisateur ouvre
+  simultanément le Panel *et* la vue dédiée, seul le dernier résolu reste
+  connecté aux contrôles. Cas marginal (les deux dispositions ne sont
+  normalement pas ouvertes en même temps) — à corriger si des rapports
+  d'usage le justifient.
+
+### Tests qui prouvent la révision
+
+- Intégration : le conteneur `llmVoice` et ses trois vues sont bien
+  enregistrés (id, ordre, type) ; `llmVoice.ui.layout` vaut `"full"` par
+  défaut ; la vue Profils liste `profiles.json` et marque exactement un
+  profil actif ; le badge de l'inbox se met à jour après un dépôt réel.
+- Unit : construction des lignes de la vue Profils (icône, description,
+  marquage actif) et calcul du badge de non-lus, tous deux vscode-free
+  (`profileTreeItems.ts`, `inboxFormat.ts`).
+- La décision « ouverture unique au premier lancement » réutilise
+  `shouldOpenWalkthroughOnActivation`, déjà couverte par
+  `test/unit/onboarding/Walkthrough.test.ts` (jamais sous
+  `ExtensionMode.Test`, jamais deux fois).

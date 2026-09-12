@@ -1,12 +1,14 @@
 import * as vscode from "vscode";
 import * as path from "node:path";
 import { PlayerViewProvider } from "./views/player/PlayerViewProvider.js";
+import { ProfilesTreeProvider, ProfileTreeItem } from "./views/profiles/ProfilesTreeProvider.js";
 import { HighlightController } from "./highlight/HighlightController.js";
 import { StatusBar } from "./ui/StatusBar.js";
 import { MarkdownSpeakSectionCodeLensProvider } from "./ui/CodeLensProvider.js";
 import { registerCommands } from "./commands/index.js";
 import type { PipelineFacade } from "./commands/PipelineFacade.js";
 import { Pipeline } from "./pipeline/Pipeline.js";
+import { ProfileRepository } from "./profiles/ProfileRepository.js";
 import type { AudioSink } from "./playback/index.js";
 import type { TtsProvider } from "./core/tts.js";
 import type { PlayerUserAction } from "./core/playback.js";
@@ -34,6 +36,8 @@ export interface ExtensionTestApi {
   highlight: HighlightController;
   player: PlayerViewProvider;
   statusBar: StatusBar;
+  /** S9 (ADR-011 revision 2026-09-12): the "Profils" Tree View in the dedicated `llmVoice` container. */
+  profilesTree: ProfilesTreeProvider;
   pipeline: PipelineFacade;
   /**
    * Test-only: lets integration tests assert on `SecretStorage`/`globalState`
@@ -110,7 +114,51 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
       webviewOptions: { retainContextWhenHidden: true }
     })
   );
+  // S9 (ADR-011 revision 2026-09-12): "Lecture en cours", the same player
+  // webview reused as-is (same `PlayerViewProvider`/`buildPlayerHtml`, not
+  // rewritten) under a second view id so it can also live in the dedicated
+  // `llmVoice` container (`full` layout, now the default) alongside the
+  // Panel mini-player (`minimal` layout, still available). `resolveWebviewView`
+  // rebinds `player`'s single `WebviewAudioSink` to whichever of the two
+  // was resolved last — harmless in the normal case (only one layout's view
+  // is ever open at a time), a known, narrow limitation if a user manually
+  // opens both simultaneously.
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider("llmVoice.playerView", player, {
+      webviewOptions: { retainContextWhenHidden: true }
+    })
+  );
   context.subscriptions.push(player);
+
+  // S9: "Profils" Tree View — a read-only `ProfileRepository` instance
+  // (same `globalStorageUri`/`profiles.json` file, re-read on every call)
+  // purely for listing; every mutation below routes through `pipeline`'s
+  // existing `*ById` methods so session state (`currentProfileLabel`, the
+  // status bar) stays the single source of truth.
+  const profilesRepositoryForViews = new ProfileRepository(
+    context.globalStorageUri.fsPath,
+    context.globalState
+  );
+  const profilesTree = new ProfilesTreeProvider(
+    () => profilesRepositoryForViews.list(),
+    () => profilesRepositoryForViews.getSelected().then((profile) => profile.id)
+  );
+  context.subscriptions.push(
+    vscode.window.registerTreeDataProvider("llmVoice.profilesView", profilesTree)
+  );
+  context.subscriptions.push(profilesTree);
+  void profilesTree.refresh();
+  // Keeps the tree in sync with edits made outside its own commands (the
+  // full Profile Editor webview, `Open Profiles`' JSON editor, `Duplicate
+  // Profile`/`Delete Profile` from the palette…).
+  const profilesFileWatcher = vscode.workspace.createFileSystemWatcher(
+    new vscode.RelativePattern(vscode.Uri.file(path.dirname(profilesRepositoryForViews.uri.fsPath)), "profiles.json")
+  );
+  context.subscriptions.push(
+    profilesFileWatcher,
+    profilesFileWatcher.onDidChange(() => void profilesTree.refresh()),
+    profilesFileWatcher.onDidCreate(() => void profilesTree.refresh())
+  );
 
   const highlight = new HighlightController(isHighlightEnabled);
   context.subscriptions.push(highlight);
@@ -256,6 +304,79 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     })
   );
 
+  // S9 (ADR-011 revision 2026-09-12): "Profils" Tree View hover actions +
+  // title button. Registered here rather than `commands/index.ts`, same
+  // reasoning as `llmVoice.setupVoice` above — never depends on that
+  // file's ownership by another story — and they need `pipeline`'s
+  // concrete `*ById` methods (`PipelineFacade` only exposes the
+  // interactive, Quick-Pick-driven ones).
+  function profileIdFromArg(arg: unknown): string | undefined {
+    if (arg instanceof ProfileTreeItem) {
+      return arg.data.id;
+    }
+    return typeof arg === "object" && arg !== null && "id" in arg ? String((arg as { id: unknown }).id) : undefined;
+  }
+  context.subscriptions.push(
+    vscode.commands.registerCommand("llmVoice.profilesView.activate", async (arg?: unknown) => {
+      const id = profileIdFromArg(arg);
+      if (id === undefined) {
+        return;
+      }
+      await pipeline.selectProfileById(id);
+      await profilesTree.refresh();
+    }),
+    vscode.commands.registerCommand("llmVoice.profilesView.edit", async (arg?: unknown) => {
+      const id = profileIdFromArg(arg);
+      if (id === undefined) {
+        return;
+      }
+      await pipeline.openProfileEditorById(id);
+    }),
+    vscode.commands.registerCommand("llmVoice.profilesView.duplicate", async (arg?: unknown) => {
+      const id = profileIdFromArg(arg);
+      if (id === undefined) {
+        return;
+      }
+      const copy = await pipeline.duplicateProfileById(id);
+      await profilesTree.refresh();
+      void vscode.window.showInformationMessage(`LLM Voice : profil « ${copy.label} » créé.`);
+    }),
+    vscode.commands.registerCommand("llmVoice.profilesView.delete", async (arg?: unknown) => {
+      const id = profileIdFromArg(arg);
+      if (id === undefined) {
+        return;
+      }
+      const confirm = await vscode.window.showWarningMessage(
+        "LLM Voice : supprimer ce profil ?",
+        { modal: true },
+        "Supprimer"
+      );
+      if (confirm !== "Supprimer") {
+        return;
+      }
+      try {
+        await pipeline.deleteProfileById(id);
+      } catch (error) {
+        void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+        return;
+      }
+      await profilesTree.refresh();
+    }),
+    // "Nouveau profil" (title button, CdC §6): no blank-profile flow exists
+    // yet, so this duplicates the currently active profile (always valid,
+    // already configured) and opens it in the editor to rename/customize —
+    // same starting point `Duplicate Profile` already gives.
+    vscode.commands.registerCommand("llmVoice.profilesView.new", async () => {
+      const active = await profilesRepositoryForViews.getSelected();
+      const copy = await pipeline.duplicateProfileById(active.id);
+      await profilesTree.refresh();
+      await pipeline.openProfileEditorById(copy.id);
+    }),
+    vscode.commands.registerCommand("llmVoice.openSettings", () =>
+      vscode.commands.executeCommand("workbench.action.openSettings", "@ext:guilhem-bonnet.llm-voice")
+    )
+  );
+
   for (const disposable of registerCommands({ pipeline, highlight, player })) {
     context.subscriptions.push(disposable);
   }
@@ -270,6 +391,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     highlight,
     player,
     statusBar,
+    profilesTree,
     pipeline,
     context,
     ...(testAudioSink !== undefined ? { audioSink: testAudioSink } : {}),

@@ -8,6 +8,7 @@ test/**
 .vscode-test/**
 .vscode-test.mjs
 coverage/**
+.vitest/**
 
 # Sources, intermediate builds and maps: `dist/extension.js` is what ships.
 src/**

@@ -3,26 +3,35 @@
 Écoutez vos documents Markdown et les réponses de vos agents LLM (Claude Code) à voix haute — entièrement en local.
 
 ```
-  📄 votre document               🔊 LLM Voice
-  ┌─────────────────────┐         ┌───────────────────────────┐
-  │ # Titre              │  Ctrl+Alt+V D  │ ⏮  ▶  ⏭  ■   03:12 │
-  │ Un paragraphe ██████ │ ─────────────▶ │ ▬▬▬▬▬▬▬▭▭▭▭▭▭▭▭▭▭▭ │
-  │ ▶ Lire cette section │                │ Professeur ▾   🔒  │
-  └─────────────────────┘         └───────────────────────────┘
-        surlignage synchronisé            mini-player (Panel)
+  ┌──┬──────────────────────────────┐
+  │🔊│ LLM VOICE                     │  ← icône dédiée, barre d'activité
+  │  │ ────────────────────────      │     (point d'entrée par défaut,
+  │  │ LECTURE EN COURS              │      comme le chat de Claude)
+  │  │ Titre — 03:12/18:42            │
+  │  │ ⏮  ▶/⏸  ⏭  ■     Professeur ▾ │
+  │  │ ────────────────────────      │
+  │  │ INBOX          PROFILS        │
+  └──┴──────────────────────────────┘
 ```
 
 ## Démarrage en 30 secondes
 
 1. **Installez** l'extension (déjà fait, vous y êtes).
-2. **Ouvrez** un fichier `.md`.
-3. Appuyez sur **`Ctrl+Alt+V` puis `D`** (ou palette de commandes → **LLM Voice: Speak Document**).
+2. Cliquez sur l'**icône LLM Voice dans la barre d'activité** (à gauche de
+   VS Code) — c'est le point d'entrée principal : lecture en cours, inbox
+   et profils y sont regroupés.
+3. **Ouvrez** un fichier `.md` puis **« Lire le document actuel »** dans la
+   vue, ou le raccourci **`Ctrl+Alt+V` puis `D`** (palette de commandes →
+   **LLM Voice: Speak Document**).
 
 C'est tout — la voix démarre immédiatement, sans Docker, sans Python, sans
 terminal. Si aucune voix locale n'est encore installée, une seule notification
 propose de télécharger la voix française autonome (~60 Mo, une fois) ; en cas
 de refus ou hors ligne, la voix système de votre OS prend le relais
 honnêtement — jamais d'erreur sans solution.
+
+Vous préférez un lecteur discret dans le Panel plutôt que la vue dédiée ?
+Réglage `llmVoice.ui.layout: "minimal"` (voir `docs/adr/ADR-011-ui-layout.md`).
 
 ## Trois niveaux de voix
 
