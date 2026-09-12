@@ -2,7 +2,7 @@
   "name": "llm-voice",
   "displayName": "LLM Voice",
   "description": "Local-first voice narration for Markdown documents and LLM agent output (Claude Code, and more).",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "guilhem-bonnet",
   "license": "MIT",
   "private": true,
