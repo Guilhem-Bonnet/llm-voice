@@ -139,3 +139,9 @@
 - **Décision** : Piper devient le moteur par défaut, installé à la demande sans Docker ni Python (moteur intégré `kokoro-js` rejeté sur preuves : 737 Mo, aucune voix française réelle). Chatterbox reste l'option qualité maximale derrière Docker. Trois nouvelles commandes : parcourir les voix avec écoute, utiliser sa propre voix, éditer un profil en interface graphique.
 - **En attente** : arbitrage utilisateur sur la qualité de la voix Piper par défaut ; retest de la 0.1.1 ; issue #50 (test AC-07 instable).
 - **Agent** : concierge (Marcel)
+
+### [2026-09-12] Vue dédiée dans la barre d'activité, sur demande utilisateur
+- **Contexte** : test réel de la version 0.2. « le raccourci ctrl+alt+v n'est pas intuitif en procédure de démarrage, je préfère avoir une fenêtre dédiée à l'outil dans VS Code, comme Claude avec son chat ou GitFlow avec sa vue ».
+- **Décision** : l'ADR-011 est révisé. Le point d'entrée devient une icône dans la barre d'activité ouvrant une vue dédiée LLM Voice (lecture en cours, inbox, profils, actions), affichée par défaut. Le raccourci en accord et la disposition minimale restent disponibles mais ne sont plus le chemin principal.
+- **Alternative rejetée** : garder la disposition minimale par défaut (mon choix initial, jugé non découvrable à l'usage réel).
+- **Agent** : concierge (Marcel), sur décision de guilhem-bonnet

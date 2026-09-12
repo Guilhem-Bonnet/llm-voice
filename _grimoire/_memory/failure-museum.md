@@ -123,3 +123,10 @@
 **Impact** : une release publique inutilisable pour un nouvel utilisateur, corrigée en 0.1.1.
 **Leçon** : des critères d'acceptation complets ne valent pas un parcours de première utilisation. Le chemin par défaut doit fonctionner sans dépendance externe.
 **Règle instaurée** : chaque release exige un test sur profil neuf, sans service tiers, et une commande d'installation guidée pour toute dépendance externe.
+
+### [2026-09-12] [equipe] WRONG-ASSUMPTION — Aucun test ne partait d'une configuration héritée
+**Ce qui s'est passé** : au premier test manuel de la version 0.2, l'utilisateur a choisi une voix puis obtenu « Aucune voix configurée ». Son `profiles.json`, écrit par une version antérieure, épinglait tous les profils sur un Chatterbox arrêté, et rien ne migrait ce fichier.
+**Cause racine** : les 934 tests automatisés créaient toujours un état neuf. Aucun ne partait d'une configuration existante issue d'une version précédente.
+**Impact** : bug bloquant trouvé en cinq minutes par un humain, invisible pour toute la suite de tests.
+**Leçon** : un utilisateur qui met à jour n'est pas un utilisateur neuf. Le chemin de mise à jour est un cas de test à part entière.
+**Règle instaurée** : toute évolution d'un format de configuration exige une fixture issue de la version précédente et un test de migration idempotent.

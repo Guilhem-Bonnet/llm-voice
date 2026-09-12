@@ -1,4 +1,4 @@
 # Session State
 
-status: phase-8-done-awaiting-voice-arbitration-and-0.2-release
+status: phase-9-done-awaiting-voice-arbitration
 first_run: false
