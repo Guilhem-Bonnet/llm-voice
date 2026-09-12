@@ -77,7 +77,8 @@ function stubUserInteractions(): { calls: RecordedInteraction[]; restore: () => 
     showQuickPick: window.showQuickPick,
     showInputBox: window.showInputBox,
     showOpenDialog: window.showOpenDialog,
-    showSaveDialog: window.showSaveDialog
+    showSaveDialog: window.showSaveDialog,
+    createQuickPick: window.createQuickPick
   };
   window.showInformationMessage = (message: string) => {
     calls.push({ kind: "info", message });
@@ -106,6 +107,42 @@ function stubUserInteractions(): { calls: RecordedInteraction[]; restore: () => 
   window.showSaveDialog = () => {
     calls.push({ kind: "saveDialog" });
     return Promise.resolve(undefined);
+  };
+  // `LLM Voice: Browse Voices` (S8.2) and `LLM Voice: Open Inbox` both drive
+  // `createQuickPick()` directly (per-item/title-bar buttons that
+  // `showQuickPick()` above cannot expose) — unlike every `showQuickPick()`
+  // call, this one actually renders a widget that only resolves on
+  // `onDidHide`/`onDidAccept`. Faking `show()` as an immediate dismissal
+  // keeps the same "every surface resolves as cancelled" contract as the
+  // rest of this stub, instead of these commands alone hanging the sweep
+  // below until mocha's timeout. The property/method surface here is
+  // exactly what `InboxQuickPick.ts`/`Pipeline.pickVoiceForProfile` use —
+  // extend it if a future caller needs more of `vscode.QuickPick`.
+  window.createQuickPick = () => {
+    calls.push({ kind: "quickPick" });
+    const hideHandlers: Array<() => void> = [];
+    const fake = {
+      title: "",
+      placeholder: "",
+      items: [] as unknown[],
+      activeItems: [] as unknown[],
+      selectedItems: [] as unknown[],
+      buttons: [] as unknown[],
+      onDidTriggerButton: () => ({ dispose(): void {} }),
+      onDidTriggerItemButton: () => ({ dispose(): void {} }),
+      onDidAccept: () => ({ dispose(): void {} }),
+      onDidHide: (handler: () => void) => {
+        hideHandlers.push(handler);
+        return { dispose(): void {} };
+      },
+      show: () => {
+        for (const handler of hideHandlers) {
+          handler();
+        }
+      },
+      dispose: () => undefined
+    };
+    return fake;
   };
   return {
     calls,

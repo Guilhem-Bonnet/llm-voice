@@ -159,6 +159,81 @@
           },
           "style": {
             "type": "string"
+          },
+          "markdown": {
+            "type": "object",
+            "properties": {
+              "headings": {
+                "type": "string",
+                "enum": [
+                  "read",
+                  "skip"
+                ]
+              },
+              "links": {
+                "type": "string",
+                "enum": [
+                  "labelOnly"
+                ]
+              },
+              "images": {
+                "type": "string",
+                "enum": [
+                  "altText",
+                  "skip"
+                ]
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "skip",
+                  "read",
+                  "explain",
+                  "summarize"
+                ]
+              },
+              "tables": {
+                "type": "string",
+                "enum": [
+                  "skip",
+                  "read",
+                  "summarize"
+                ]
+              },
+              "frontmatter": {
+                "type": "string",
+                "enum": [
+                  "skip",
+                  "read"
+                ]
+              }
+            },
+            "required": [
+              "headings",
+              "links",
+              "images",
+              "code",
+              "tables",
+              "frontmatter"
+            ],
+            "additionalProperties": false
+          },
+          "synchronization": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "highlight-scroll",
+                  "highlight",
+                  "off"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [

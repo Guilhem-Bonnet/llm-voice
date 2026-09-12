@@ -1,0 +1,119 @@
+/*
+ * Profile editor styling (ADR-011 "theming strict"): every colour comes
+ * from a `--vscode-*` variable, nothing hard-coded, same rule as
+ * `media/player/player.css`.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 12px 16px 24px;
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+fieldset {
+  border: 1px solid var(--vscode-panel-border, transparent);
+  border-radius: 4px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+}
+
+legend {
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+label {
+  display: block;
+  margin: 8px 0 2px;
+  font-size: 0.9em;
+  color: var(--vscode-descriptionForeground);
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  padding: 4px 6px;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+#voice-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+#voice-row input {
+  flex: 1;
+}
+
+#voice-warning {
+  color: var(--vscode-editorWarning-foreground);
+  font-size: 0.9em;
+}
+
+.parameter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.parameter-row label {
+  margin: 0;
+  min-width: 140px;
+}
+
+#actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+button {
+  color: var(--vscode-button-foreground);
+  background-color: var(--vscode-button-background);
+  border: none;
+  border-radius: 2px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+#btn-delete {
+  color: var(--vscode-errorForeground);
+  background-color: var(--vscode-button-secondaryBackground);
+}
+
+#validation-errors {
+  color: var(--vscode-errorForeground);
+}
+
+#validation-errors ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+#test-status {
+  color: var(--vscode-descriptionForeground);
+}

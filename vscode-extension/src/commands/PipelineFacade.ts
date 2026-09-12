@@ -56,6 +56,12 @@ export interface PipelineFacade {
   uninstallClaudeHook(): Promise<void>;
   /** `LLM Voice: Install Local Voice (Piper)` (S7.1, ADR-009 §3). */
   installPiperVoice(): Promise<void>;
+  /** `LLM Voice: Browse Voices` (S8.2, CdC §72). */
+  browseVoices(): Promise<void>;
+  /** `LLM Voice: Use My Own Voice` (S8.2, CdC §55). */
+  useOwnVoice(): Promise<void>;
+  /** `LLM Voice: Edit Profile` (S8.2, CdC §49). */
+  editProfile(): Promise<void>;
 }
 
 const NOT_WIRED_MESSAGE = "LLM Voice : pipeline non câblé (S3.5)";
@@ -169,6 +175,18 @@ export class NotWiredPipeline implements PipelineFacade {
   }
 
   installPiperVoice(): Promise<void> {
+    return this.notWired();
+  }
+
+  browseVoices(): Promise<void> {
+    return this.notWired();
+  }
+
+  useOwnVoice(): Promise<void> {
+    return this.notWired();
+  }
+
+  editProfile(): Promise<void> {
     return this.notWired();
   }
 

@@ -121,6 +121,35 @@ export class ProfileRepository {
   }
 
   /**
+   * `LLM Voice: Browse Voices` / `Use My Own Voice` / the profile editor
+   * (S8.2): the one generic, validated write path for "change this existing
+   * profile's fields" — `duplicate`/`delete`/`import`/`export` above cover
+   * every other kind of edit, none of them "replace profile X in place".
+   * `updater` receives the current profile and returns the next one;
+   * `parseVoiceProfile` re-validates the result before it ever reaches
+   * disk (AC-SEC-05 applies to a hand-built edit exactly like an import),
+   * and the id may not change here — `duplicate`/`import` are what create a
+   * new id.
+   */
+  async update(id: string, updater: (profile: VoiceProfile) => VoiceProfile): Promise<VoiceProfile> {
+    const collection = await this.load();
+    const index = collection.profiles.findIndex((profile) => profile.id === id);
+    if (index === -1) {
+      throw new Error(`LLM Voice : profil inconnu « ${id} ».`);
+    }
+    const current = collection.profiles[index]!;
+    const candidate = updater(current);
+    if (candidate.id !== id) {
+      throw new Error("LLM Voice : l'identifiant d'un profil ne peut pas changer via update().");
+    }
+    const updated = parseVoiceProfile(candidate);
+    const profiles = [...collection.profiles];
+    profiles[index] = updated;
+    await this.write({ ...collection, profiles });
+    return updated;
+  }
+
+  /**
    * `Delete Profile` (CdC §47). Refuses to empty `profiles.json` (a
    * `ProfileCollection` always needs at least one profile — the same
    * invariant `ProfileCollectionSchema.profiles` enforces, `.min(1)`), and
