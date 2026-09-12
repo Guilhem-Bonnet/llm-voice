@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "defaultProfileId": "faithful-local",
+  "profiles": [
+    {
+      "id": "faithful-local",
+      "label": "Lecture fidèle (local)",
+      "mode": "faithful",
+      "language": "fr-FR",
+      "tts": {
+        "providerId": "chatterbox",
+        "baseUrl": "http://localhost:8004",
+        "referenceAudio": "../deploy/tts/reference-audio/fr-female-siwis.wav",
+        "parameters": {
+          "exaggeration": 0.4,
+          "cfg_weight": 0.5,
+          "temperature": 0.6
+        },
+        "format": "wav"
+      },
+      "chunking": {
+        "unit": "sentence",
+        "maxSentences": 3,
+        "prefetchChunks": 2
+      },
+      "playback": {
+        "rate": 1,
+        "volume": 1
+      },
+      "description": "Chatterbox sur la machine locale, aucune sortie réseau."
+    },
+    {
+      "id": "technical-teacher",
+      "label": "Professeur technique",
+      "mode": "narrated",
+      "language": "fr-FR",
+      "tts": {
+        "providerId": "chatterbox",
+        "baseUrl": "http://localhost:8004",
+        "referenceAudio": "../deploy/tts/reference-audio/fr-female-siwis.wav",
+        "parameters": {
+          "exaggeration": 0.4,
+          "cfg_weight": 0.5,
+          "temperature": 0.6
+        },
+        "format": "wav"
+      },
+      "narrator": {
+        "providerId": "ollama",
+        "baseUrl": "http://127.0.0.1:11434"
+      },
+      "chunking": {
+        "unit": "block",
+        "maxSentences": 3,
+        "prefetchChunks": 2
+      },
+      "playback": {
+        "rate": 1,
+        "volume": 1
+      },
+      "description": "Explication orale pédagogique, avec analogies quand elles aident.",
+      "style": "Transforme la section en explication orale pédagogique et naturelle. Ne donne jamais l'impression de lire des notes. Conserve tous les concepts importants. Explique le code plutôt que d'en réciter la syntaxe. Ajoute des analogies lorsqu'elles améliorent réellement la compréhension."
+    },
+    {
+      "id": "llm-summary",
+      "label": "Résumé LLM",
+      "mode": "narrated",
+      "language": "fr-FR",
+      "tts": {
+        "providerId": "chatterbox",
+        "baseUrl": "http://localhost:8004",
+        "referenceAudio": "../deploy/tts/reference-audio/fr-female-siwis.wav",
+        "parameters": {
+          "exaggeration": 0.4,
+          "cfg_weight": 0.5,
+          "temperature": 0.6
+        },
+        "format": "wav"
+      },
+      "narrator": {
+        "providerId": "ollama",
+        "baseUrl": "http://127.0.0.1:11434"
+      },
+      "chunking": {
+        "unit": "block",
+        "maxSentences": 3,
+        "prefetchChunks": 2
+      },
+      "playback": {
+        "rate": 1,
+        "volume": 1
+      },
+      "description": "Résumé oral façon collègue développeur : fait, limites, reste à faire.",
+      "style": "Présente oralement le résultat comme un collègue développeur. Commence par ce qui a été réalisé. Mentionne les problèmes ou limitations. Termine par ce qu'il reste éventuellement à faire. Sois concis et naturel."
+    },
+    {
+      "id": "quick-review",
+      "label": "Révision rapide",
+      "mode": "narrated",
+      "language": "fr-FR",
+      "tts": {
+        "providerId": "chatterbox",
+        "baseUrl": "http://localhost:8004",
+        "referenceAudio": "../deploy/tts/reference-audio/fr-female-siwis.wav",
+        "parameters": {
+          "exaggeration": 0.4,
+          "cfg_weight": 0.5,
+          "temperature": 0.6
+        },
+        "format": "wav"
+      },
+      "narrator": {
+        "providerId": "ollama",
+        "baseUrl": "http://127.0.0.1:11434"
+      },
+      "chunking": {
+        "unit": "block",
+        "maxSentences": 3,
+        "prefetchChunks": 2
+      },
+      "playback": {
+        "rate": 1.1,
+        "volume": 1
+      },
+      "description": "Ne garde que les concepts, pièges et éléments essentiels à retenir.",
+      "style": "Transforme le contenu en révision orale. Conserve uniquement les concepts, pièges et éléments essentiels à retenir."
+    }
+  ]
+}

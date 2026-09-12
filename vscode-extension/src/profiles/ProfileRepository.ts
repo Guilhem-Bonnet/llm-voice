@@ -19,6 +19,7 @@ import { ProfileCollectionSchema, parseVoiceProfile } from "../core/profile.sche
 import type { SourceType } from "../core/source.js";
 import { DEFAULT_PROFILES, SYSTEM_VOICE_PROFILE } from "./defaults.js";
 import { resolveDefaultProfileId, type BySourceSetting } from "./bySource.js";
+import { CURRENT_PROFILE_SCHEMA_VERSION, migrateProfileCollection } from "./migrations.js";
 
 const LAST_SELECTED_KEY = "llmVoice.profiles.lastSelectedId";
 
@@ -44,7 +45,18 @@ export class ProfileRepository {
     return vscode.Uri.file(this.filePath);
   }
 
-  /** Reads `profiles.json`, creating it with the defaults on first launch. */
+  /**
+   * Reads `profiles.json`, creating it with the defaults on first launch.
+   *
+   * Bug fix (voice-selection-not-applied, defect 2): a file still at
+   * `schemaVersion: 1` (written before `"auto"`/the Chatterbox → Piper →
+   * système fallback chain existed) is migrated in place
+   * (`migrateProfileCollection`) and the result persisted immediately —
+   * every *other* read of a `schemaVersion: 1` file (a concurrent
+   * `ProfileRepository` instance, a crash between migrate and write) redoes
+   * the same idempotent migration rather than reading half-migrated state,
+   * since the migration only ever runs against what is actually on disk.
+   */
   async load(): Promise<ProfileCollection> {
     await fs.mkdir(this.globalStorageDir, { recursive: true });
     let raw: string;
@@ -60,7 +72,12 @@ export class ProfileRepository {
     }
     // Throws (SyntaxError or a Zod error) on malformed content: a broken
     // profiles.json must be fixed by the user, never silently replaced.
-    return ProfileCollectionSchema.parse(JSON.parse(raw)) as ProfileCollection;
+    const parsed = ProfileCollectionSchema.parse(JSON.parse(raw)) as ProfileCollection;
+    const { collection, migrated } = migrateProfileCollection(parsed);
+    if (migrated) {
+      await this.write(collection);
+    }
+    return collection;
   }
 
   async list(): Promise<readonly VoiceProfile[]> {
@@ -219,7 +236,7 @@ export class ProfileRepository {
    */
   private defaultCollection(): ProfileCollection {
     return {
-      schemaVersion: 1,
+      schemaVersion: CURRENT_PROFILE_SCHEMA_VERSION,
       defaultProfileId: SYSTEM_VOICE_PROFILE.id,
       profiles: [...DEFAULT_PROFILES]
     };

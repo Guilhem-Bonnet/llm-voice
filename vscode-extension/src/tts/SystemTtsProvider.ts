@@ -16,10 +16,20 @@
  * (ADR-009 §"1b. Local sans installation").
  *
  * Detection order (linux-first-v1.md §3-4):
- *  - **Linux**: Piper (only if both a binary *and* a voice model are found
- *    under `piperInstallDir`, i.e. installed via the `LLM Voice: Install
- *    Local Voice (Piper)` command — a bare `piper` on `PATH` with no known
- *    model is useless here) → `espeak-ng`.
+ *  - **Linux**: Piper → `espeak-ng`. Piper itself is tried two ways, in
+ *    order: (1) the extension's own managed install (`piperInstallDir`,
+ *    `LLM Voice: Install Local Voice (Piper)`); (2) a `piper` binary
+ *    resolved from `PATH` *with* a French `.onnx` voice model discoverable
+ *    in `~/.llm-voice/voices/`, `~/.local/share/piper-voices/`, or the
+ *    binary's own directory (bug fix, voice-selection-not-applied point 1:
+ *    a manually-installed Piper — e.g. via the distro's package manager —
+ *    used to be invisible to this class entirely). Piper deliberately
+ *    outranks `espeak-ng` even when both are found (point 2 of the same
+ *    fix): `espeak-ng`'s voice is noticeably more robotic, so `Pipeline`'s
+ *    `ensureVoiceReady`/`shouldOfferAutoVoiceInstall` (`AutoVoiceInstall.ts`)
+ *    offers the one-action Piper install even when `health()` already
+ *    reports "ok" via `espeak-ng` — never blocking, always falling back to
+ *    `espeak-ng` immediately on a decline or a failed/offline download.
  *  - **macOS**: `say` (ships with every macOS install).
  *  - **Windows**: PowerShell driving `System.Speech.Synthesis.SpeechSynthesizer`
  *    (SAPI), always present on Windows.
@@ -85,6 +95,18 @@ const DEFAULT_SAY_VOICE_FR = "Thomas";
  */
 export const PIPER_VOICE_ID = "fr_FR-siwis-medium";
 
+/**
+ * `true` for a Piper `.onnx` voice model file whose BCP-47-ish prefix is
+ * French — `fr_FR-siwis-medium.onnx`, `fr-FR-upmc-medium.onnx`,
+ * `fr_BE-…`, case-insensitive. Piper's published voices are always named
+ * `<lang>[_<REGION>]-<name>-<quality>.onnx` (`rhasspy/piper-voices`), so the
+ * language is always the very first segment — this does not need to parse
+ * the rest of the filename to answer "is this French".
+ */
+export function isFrenchPiperVoiceFile(fileName: string): boolean {
+  return /^fr[_-]/i.test(fileName) && fileName.toLowerCase().endsWith(".onnx");
+}
+
 export type SystemTtsEngineKind = "piper" | "espeak-ng" | "say" | "sapi";
 
 /** A concrete, already-located engine — the result of `detectEngine()`. */
@@ -123,6 +145,14 @@ export interface SystemTtsProcessRunner {
   readFile(candidate: string): Promise<Buffer>;
   /** Best-effort: never rejects on a missing file (temp cleanup after a failed run). */
   removeFile(candidate: string): Promise<void>;
+  /**
+   * Lists `dir`'s entries (basenames only). Bug fix (voice-selection-not-applied,
+   * point 1): backs `detectPiper`'s search for a French `.onnx` voice model
+   * across every candidate directory (`piperVoiceSearchDirs`) — never
+   * rejects, `[]` for a directory that does not exist or cannot be read,
+   * exactly like every other best-effort probe on this interface.
+   */
+  readdir(dir: string): Promise<string[]>;
   /** Runs `invocation` to completion (exit code 0) or rejects — non-zero exit, spawn error, timeout or abort. */
   run(invocation: SystemTtsInvocation, options: RunOptions): Promise<void>;
   /** Same as `run`, but resolves with captured stdout instead of writing a file (voice listing). */
@@ -141,6 +171,8 @@ export interface SystemTtsProviderOptions {
   runner?: SystemTtsProcessRunner;
   /** Injectable for tests; defaults to `process.env["FLATPAK_ID"] !== undefined`. */
   isFlatpak?: boolean;
+  /** Injectable for tests; defaults to `os.homedir()` — where `detectPiper` looks for `.llm-voice/voices/`. */
+  homeDir?: string;
 }
 
 const SPEED_PARAMETER: readonly TtsParameterDescriptor[] = [
@@ -584,6 +616,13 @@ function createDefaultRunner(platform: NodeJS.Platform, flatpak: boolean): Syste
     async removeFile(candidate: string): Promise<void> {
       await fsp.rm(candidate, { force: true }).catch(() => {});
     },
+    async readdir(dir: string): Promise<string[]> {
+      try {
+        return await fsp.readdir(dir);
+      } catch {
+        return [];
+      }
+    },
     async run(invocation: SystemTtsInvocation, options: RunOptions): Promise<void> {
       await runSpawned(wrapForFlatpak(invocation, flatpak), options, false);
     },
@@ -603,6 +642,7 @@ export class SystemTtsProvider implements TtsProvider {
   private readonly timeoutMs: number;
   private readonly runner: SystemTtsProcessRunner;
   private readonly flatpak: boolean;
+  private readonly homeDir: string;
 
   constructor(options: SystemTtsProviderOptions = {}) {
     this.id = options.id ?? DEFAULT_ID;
@@ -611,6 +651,7 @@ export class SystemTtsProvider implements TtsProvider {
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.flatpak = options.isFlatpak ?? isRunningInFlatpak();
     this.runner = options.runner ?? createDefaultRunner(this.platform, this.flatpak);
+    this.homeDir = options.homeDir ?? os.homedir();
   }
 
   async health(_signal?: AbortSignal): Promise<ProviderHealth> {
@@ -752,8 +793,37 @@ export class SystemTtsProvider implements TtsProvider {
     return espeakPath !== undefined ? { kind: "espeak-ng", binaryPath: espeakPath } : undefined;
   }
 
-  /** Only trusts a Piper install produced by `PiperSetup` (`piperInstallDir`): a bare `piper` on `PATH` with no known model would be undetectable here anyway (which model? which voice id?). */
+  /**
+   * Bug fix (voice-selection-not-applied, point 1): a Piper install
+   * produced by `PiperSetup` (`piperInstallDir`) is still tried first — it
+   * is the one install this class fully controls, `PIPER_VOICE_ID`'s exact
+   * `.onnx` filename included — but a `piper` binary resolved from `PATH`
+   * is now trusted too, provided a French voice model can actually be
+   * found alongside it: `~/.llm-voice/voices/`, `~/.local/share/piper-voices/`
+   * (the two conventional locations a manually-installed Piper's voices
+   * tend to live in) and the resolved binary's own directory. Any one
+   * `.onnx` file whose name is French-tagged (`isFrenchPiperVoiceFile`)
+   * is enough — this class does not need to know the exact voice id in
+   * advance the way the managed install's fixed `PIPER_VOICE_ID` does.
+   */
   private async detectPiper(): Promise<SystemTtsEngine | undefined> {
+    const managed = await this.detectManagedPiper();
+    if (managed !== undefined) {
+      return managed;
+    }
+    const binaryPath = await this.runner.which(this.platform === "win32" ? "piper.exe" : "piper");
+    if (binaryPath === undefined) {
+      return undefined;
+    }
+    const voiceModelPath = await this.findFrenchPiperVoiceModel(binaryPath);
+    if (voiceModelPath === undefined) {
+      return undefined;
+    }
+    return { kind: "piper", binaryPath, voiceModelPath };
+  }
+
+  /** The extension's own managed install (`LLM Voice: Install Local Voice (Piper)`) — unchanged from before this fix. */
+  private async detectManagedPiper(): Promise<SystemTtsEngine | undefined> {
     if (this.piperInstallDir === undefined) {
       return undefined;
     }
@@ -768,6 +838,26 @@ export class SystemTtsProvider implements TtsProvider {
       return undefined;
     }
     return { kind: "piper", binaryPath, voiceModelPath };
+  }
+
+  /** Every directory a manually-installed Piper's voice models might live in, searched in this order. */
+  private piperVoiceSearchDirs(binaryPath: string): string[] {
+    return [
+      path.join(this.homeDir, ".llm-voice", "voices"),
+      path.join(this.homeDir, ".local", "share", "piper-voices"),
+      path.dirname(binaryPath)
+    ];
+  }
+
+  private async findFrenchPiperVoiceModel(binaryPath: string): Promise<string | undefined> {
+    for (const dir of this.piperVoiceSearchDirs(binaryPath)) {
+      const entries = await this.runner.readdir(dir);
+      const match = entries.find(isFrenchPiperVoiceFile);
+      if (match !== undefined) {
+        return path.join(dir, match);
+      }
+    }
+    return undefined;
   }
 
   private async detectSay(): Promise<SystemTtsEngine | undefined> {

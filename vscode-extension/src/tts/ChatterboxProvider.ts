@@ -118,16 +118,35 @@ export interface ChatterboxProviderOptions extends OpenAICompatibleTtsProviderOp
    * `voice_mode: "predefined"`.
    */
   referenceAudioPath?: string;
+  /**
+   * Bug fix (voice-selection-not-applied, defect 3): a `referenceAudio`
+   * that cannot be read *locally* (missing file, unsafe path, symlink
+   * escape, oversized — every check in `readReferenceAudio`) must never
+   * fail an otherwise-healthy synthesis: a stale/imported profile pointing
+   * at a reference sample that no longer exists on this machine (e.g. a
+   * relative path resolved against the wrong root) still has to speak,
+   * falling back to `voice_mode: "predefined"`. Called at most once per
+   * instance with a basename-only message (never the full path — see the
+   * same rationale on `uploadReference`'s own thrown message) so the
+   * caller can surface it (status bar / Output Channel) without leaking a
+   * user-identifying path. A genuine upload failure once the bytes *are*
+   * read (network/HTTP error against a reachable server) is a different,
+   * still-fatal failure — untouched by this hook.
+   */
+  onReferenceAudioWarning?: (message: string) => void;
 }
 
 export class ChatterboxProvider extends OpenAICompatibleTtsProvider {
   private readonly referenceAudioPath: string | undefined;
+  private readonly onReferenceAudioWarning: ((message: string) => void) | undefined;
   private uploadedReferenceFilename: string | undefined;
-  private uploadPromise: Promise<string> | undefined;
+  private uploadResolved = false;
+  private uploadPromise: Promise<string | undefined> | undefined;
 
   constructor(options: ChatterboxProviderOptions) {
     super({ id: DEFAULT_ID, ...options });
     this.referenceAudioPath = options.referenceAudioPath;
+    this.onReferenceAudioWarning = options.onReferenceAudioWarning;
   }
 
   override async health(signal?: AbortSignal): Promise<ProviderHealth> {
@@ -269,18 +288,48 @@ export class ChatterboxProvider extends OpenAICompatibleTtsProvider {
     };
   }
 
-  /** Uploads `referenceAudioPath` at most once (memoised across concurrent callers). */
+  /**
+   * Uploads `referenceAudioPath` at most once (memoised across concurrent
+   * callers, `uploadResolved` rather than an `undefined` filename check —
+   * the local-read-failure fallback below resolves to `undefined` on
+   * purpose, which must still count as "already attempted").
+   */
   private async ensureReferenceUploaded(signal?: AbortSignal): Promise<string | undefined> {
     if (this.referenceAudioPath === undefined) {
       return undefined;
     }
-    if (this.uploadedReferenceFilename !== undefined) {
+    if (this.uploadResolved) {
       return this.uploadedReferenceFilename;
     }
-    this.uploadPromise ??= this.uploadReference(this.referenceAudioPath, signal);
+    this.uploadPromise ??= this.resolveReferenceUpload(this.referenceAudioPath, signal);
     const filename = await this.uploadPromise;
+    this.uploadResolved = true;
     this.uploadedReferenceFilename = filename;
     return filename;
+  }
+
+  /**
+   * Splits the two failure modes `uploadReference` used to conflate: a
+   * `referenceAudio` this process cannot read *locally* falls back to
+   * `voice_mode: "predefined"` (this method's `undefined` return, with a
+   * warning) — an HTTP/network failure once the bytes *were* read still
+   * rejects, unchanged (`synthesize() rejects when the reference upload
+   * fails` below stays green).
+   */
+  private async resolveReferenceUpload(path: string, signal?: AbortSignal): Promise<string | undefined> {
+    let bytes: Buffer;
+    try {
+      bytes = await this.readReferenceAudio(path);
+    } catch (error) {
+      // `basename` only: an absolute path is user-identifying and this
+      // message reaches the Output Channel (CdC §81) / status bar.
+      this.onReferenceAudioWarning?.(
+        `ChatterboxProvider: reference audio "${basename(path)}" unavailable (${messageOf(error)}) — ` +
+          "falling back to a predefined voice."
+      );
+      return undefined;
+    }
+    return this.uploadReferenceBytes(path, bytes, signal);
   }
 
   /**
@@ -329,17 +378,14 @@ export class ChatterboxProvider extends OpenAICompatibleTtsProvider {
     return readFile(filePath);
   }
 
-  /** `POST /upload_reference` (multipart/form-data, `files[]`) — verified in `/openapi.json`. */
-  private async uploadReference(path: string, signal?: AbortSignal): Promise<string> {
+  /**
+   * `POST /upload_reference` (multipart/form-data, `files[]`) — verified in
+   * `/openapi.json`. `bytes` is already read (`resolveReferenceUpload`):
+   * a failure from here on is a genuine upload/network/HTTP error against a
+   * *reachable* server, not a local-file problem, and stays fatal.
+   */
+  private async uploadReferenceBytes(path: string, bytes: Buffer, signal?: AbortSignal): Promise<string> {
     const filename = basename(path);
-    let bytes: Buffer;
-    try {
-      bytes = await this.readReferenceAudio(path);
-    } catch (error) {
-      // `basename` only: an absolute path is user-identifying and this
-      // message reaches the Output Channel (CdC §81).
-      throw new Error(`ChatterboxProvider: cannot read reference audio "${filename}": ${messageOf(error)}`);
-    }
     const form = new FormData();
     form.append("files", new Blob([bytes]), filename);
     // No content-type header here: `fetch` sets `multipart/form-data;
