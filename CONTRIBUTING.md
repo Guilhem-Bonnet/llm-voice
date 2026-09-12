@@ -21,6 +21,17 @@ Merci de votre intérêt pour ce projet. Ce dépôt en est au stade précoce
 - `npm run test:integration --prefix vscode-extension` (nécessite un serveur
   d'affichage ; `xvfb-run -a` sur Linux headless)
 
+## Changelog
+
+`vscode-extension/CHANGELOG.md` est la seule source vérité : c'est le
+fichier que la Marketplace VS Code affiche (onglet « Changelog » du VSIX
+packagé) et il est édité à chaque changement notable, aligné sur les bumps
+de `vscode-extension/package.json#version`. Le `CHANGELOG.md` à la racine du
+dépôt est une **copie générée**, régénérée par
+`npm run sync:changelog --prefix vscode-extension` (déjà enchaînée dans
+`npm run package`) — ne le modifiez jamais à la main, les changements
+seraient écrasés au prochain packaging.
+
 ## Convention de commit
 
 [Conventional Commits](https://www.conventionalcommits.org/) : `feat:`,

@@ -32,8 +32,23 @@ export interface OpenAICompatibleTtsProviderOptions {
   apiKey?: string;
 }
 
+/**
+ * `voices` entries as seen in the wild: `{id, name?, language?}` objects
+ * (the shape this file originally assumed), but the real community
+ * Chatterbox-TTS-Server's `/v1/audio/voices` (verified live, S8.2,
+ * `localhost:8004`) answers `{"status":"ok","voices":["Abigail.wav", ...]}`
+ * — bare filename strings, no object at all. Both are normalised by
+ * `parseVoicesResponse` below; a "Browse Voices" (S8.2, CdC §72) run
+ * against the string form used to silently produce a list of voices with
+ * `id: undefined`, unusable for a preview or a saved `tts.voice`.
+ */
 interface VoicesResponseBody {
-  voices?: Array<{ id: string; name?: string; language?: string }>;
+  voices?: Array<{ id: string; name?: string; language?: string } | string>;
+}
+
+/** `"Abigail.wav"` → `{id: "Abigail.wav", label: "Abigail"}` — `id` keeps the exact string the server expects back as `predefined_voice_id`/`voice`. */
+function voiceFromFilename(filename: string): Voice {
+  return { id: filename, label: filename.replace(/\.[a-z0-9]+$/i, "") };
 }
 
 export function messageOf(error: unknown): string {
@@ -128,11 +143,17 @@ export class OpenAICompatibleTtsProvider implements TtsProvider {
   /** Turns a `/v1/audio/voices` body into `Voice[]`; overridable per engine. */
   protected parseVoicesResponse(body: unknown): Voice[] {
     const voices = (body as VoicesResponseBody | undefined)?.voices ?? [];
-    return voices.map((voice) => ({
-      id: voice.id,
-      label: voice.name ?? voice.id,
-      ...(voice.language !== undefined ? { language: voice.language } : {})
-    }));
+    return voices
+      .map((voice) =>
+        typeof voice === "string"
+          ? voiceFromFilename(voice)
+          : {
+              id: voice.id,
+              label: voice.name ?? voice.id,
+              ...(voice.language !== undefined ? { language: voice.language } : {})
+            }
+      )
+      .filter((voice): voice is Voice => typeof voice.id === "string" && voice.id.length > 0);
   }
 
   async synthesize(request: TtsRequest, signal?: AbortSignal): Promise<AudioResult> {

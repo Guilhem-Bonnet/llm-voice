@@ -3,6 +3,18 @@
 Référence : `_grimoire-output/planning-artifacts/linux-first-v1.md`,
 `local-guarantee-v1.md`, ADR-009, ADR-010.
 
+## 0. Voix par défaut — rien à installer (S7.1/S8.3)
+
+**Après avoir installé le `.vsix`, aucune des étapes ci-dessous n'est
+requise pour obtenir une voix française correcte.** Le premier `LLM Voice:
+Speak Document` utilise la voix système ; s'il n'y en a pas encore
+d'installée, une seule notification propose « Installer la voix française »
+(~60 Mo, une fois, `SystemTtsProvider`/`PiperSetup`) — pas de Docker, pas de
+serveur, pas de terminal. Les sections 3 et 4 ci-dessous décrivent des
+déploiements **Docker** optionnels, réservés à qui veut le niveau « Qualité
+maximale » (clonage de voix) ou héberger un service partagé en équipe —
+jamais nécessaires pour un usage individuel de l'extension.
+
 ## 1. VS Code
 
 | Mode | Réseau/audio | Binaires système (`spd-say`...) |
@@ -33,7 +45,7 @@ Sur Linux (CLI, pas d'app desktop), pas d'auto-update silencieux — contexte
 préférable au client desktop macOS/Windows dont l'auto-update n'est pas
 désactivable à ce jour (local-guarantee-v1.md §4).
 
-## 3. Chatterbox (TTS principal, GPU ROCm)
+## 3. Chatterbox (optionnel — niveau « Qualité maximale », GPU ROCm, Docker)
 
 Voir `deploy/README.md` pour le détail complet (prérequis ROCm/RDNA4,
 `.env`, premier lancement, mode hors-ligne, repli CPU) :
@@ -47,7 +59,12 @@ Machine de référence : AMD RDNA4 (gfx1201), ROCm 7.2+, **pas** de
 fonctionnel : `CHATTERBOX_DEVICE=cpu` (latence bien plus élevée, mais prouve
 la chaîne).
 
-## 4. Piper (niveau 1b, sans installation/GPU)
+## 4. Piper en serveur partagé (optionnel — équipe/entreprise, Docker)
+
+Le `SystemTtsProvider` de l'extension (§0 ci-dessus) installe et exécute
+Piper **sans Docker, sans serveur** pour un usage individuel — cette section
+ne concerne que qui veut exposer Piper comme service partagé (ex. DSI,
+`llmVoice.tts.baseUrl` pointé sur un hôte de confiance) :
 
 ```bash
 docker compose -f deploy/docker-compose.tts.yml --profile light up piper

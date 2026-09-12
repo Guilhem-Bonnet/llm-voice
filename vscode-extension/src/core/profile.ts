@@ -4,6 +4,7 @@
  */
 
 import type { NarrationMode } from "./narration.js";
+import type { MarkdownPolicy } from "../parser/types.js";
 
 /** Chunk granularity: one to three sentences, or one logical block (CdC §33). */
 export type ChunkUnit = "sentence" | "block";
@@ -66,6 +67,24 @@ export interface NarratorBinding {
   apiKeyRef?: string;
 }
 
+/**
+ * How the editor reflects playback progress while a profile is active
+ * (CdC §49 "Highlight behavior", S8.2's profile editor).
+ *
+ *  - `"highlight-scroll"` (default when omitted): highlight the spoken
+ *    segment and auto-scroll it into view (`HighlightController.show`'s
+ *    `reveal = true`, the existing 0.1 behaviour).
+ *  - `"highlight"`: highlight only, no auto-scroll — for reading alongside
+ *    something else without the viewport jumping.
+ *  - `"off"`: no editor decoration at all.
+ */
+export type SyncMode = "highlight-scroll" | "highlight" | "off";
+
+/** Wraps `SyncMode` under `synchronization.mode` (CdC §18 names this block `synchronization`, not a bare `syncMode`). */
+export interface SynchronizationSettings {
+  mode: SyncMode;
+}
+
 /** A named, user-editable reading configuration (CdC §18). */
 export interface VoiceProfile {
   id: string;
@@ -85,6 +104,20 @@ export interface VoiceProfile {
    * profiles without it keep validating and behaving exactly as before.
    */
   style?: string;
+  /**
+   * Per-profile Markdown reading policy (CdC §13, §18, §49). Named
+   * `markdown` — matching the cahier des charges §18 example verbatim —
+   * not `markdownPolicy`. Optional and additive: an existing profile
+   * without it keeps using `Pipeline`'s `DEFAULT_MARKDOWN_POLICY`
+   * (`segmentationPolicyFor`), exactly like before this field existed.
+   */
+  markdown?: MarkdownPolicy;
+  /**
+   * Editor highlight/auto-scroll behaviour (CdC §18 `synchronization`,
+   * §49). Optional, `mode` defaults to `"highlight-scroll"` when the whole
+   * block is omitted.
+   */
+  synchronization?: SynchronizationSettings;
 }
 
 /** The `profiles.json` document, versioned for future migrations. */

@@ -22,11 +22,11 @@ import * as vscode from "vscode";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
 import type { PlaybackState } from "../core/playback.js";
-import type { VoiceProfile } from "../core/profile.js";
+import type { SyncMode, VoiceProfile } from "../core/profile.js";
 import { isRemoteProfile } from "../core/profile.schema.js";
 import type { NarratorProvider } from "../core/narration.js";
 import type { ProviderHealth } from "../core/health.js";
-import type { TtsProvider } from "../core/tts.js";
+import type { TtsParameterDescriptor, TtsProvider, Voice } from "../core/tts.js";
 import type { MarkdownPolicy, SegmentationPolicy } from "../parser/types.js";
 import { parseMarkdown } from "../parser/MarkdownParser.js";
 import { segment } from "../parser/Segmenter.js";
@@ -73,11 +73,16 @@ import {
   ChatterboxProvider,
   CHATTERBOX_LOCAL_PRESET,
   createTtsProvider,
+  fallbackMessageFor,
+  formatAutoVoiceInstallPrompt,
+  INSTALL_VOICE_ACTION_LABEL,
   installPiperVoice as runPiperInstall,
+  nextActionFor,
   OpenAICompatibleTtsProvider,
   PIPER_LOCAL_PRESET,
   presetKindForProviderId,
   probeHealth,
+  shouldOfferAutoVoiceInstall,
   TtsProviderRegistry,
   warmupProvider,
   type HealthCheckable,
@@ -110,6 +115,13 @@ import {
   installClaudeHook as runInstallClaudeHook,
   uninstallClaudeHook as runUninstallClaudeHook
 } from "../claude/ClaudeHookCommand.js";
+import { buildVoiceQuickPickItems, previewButton } from "../profiles/voiceBrowser.js";
+import { useOwnVoice as runUseOwnVoice } from "../onboarding/UseOwnVoice.js";
+import {
+  ProfileEditorPanel,
+  type ProfileEditorDeps,
+  type WebviewToExtensionMessage as ProfileEditorTestMessage
+} from "../views/profileEditor/ProfileEditorPanel.js";
 
 /** Default `llmVoice.tts.readyTimeoutMs` (CdC §51's "Loading" health status):
  *  how long `start()` waits for a still-warming-up TTS server before
@@ -189,7 +201,9 @@ function segmentationPolicyFor(profile: VoiceProfile, firstChunkSentences: numbe
   return {
     mode: profile.chunking.unit,
     maxSentencesPerChunk: profile.chunking.maxSentences,
-    markdown: DEFAULT_MARKDOWN_POLICY,
+    // S8.2 profile editor: a profile can now carry its own Markdown policy
+    // (CdC §13/§49); an existing profile without one keeps the 0.1 default.
+    markdown: profile.markdown ?? DEFAULT_MARKDOWN_POLICY,
     lang: profile.language,
     firstChunkSentences
   };
@@ -253,6 +267,8 @@ export class Pipeline implements PipelineFacade {
 
   private currentUri: vscode.Uri | undefined;
   private currentProfileLabel = "—";
+  /** S8.2: `profile.synchronization.mode` for the session in progress, `"highlight-scroll"` (0.1 behaviour) until a session sets it. */
+  private currentSyncMode: SyncMode = "highlight-scroll";
   private lastCaptureContext: CaptureContext | undefined;
   private captureAbort: AbortController | undefined;
   /** CdC §52 "une seule notification par session par type" (anti-spam); reset in `start()`. */
@@ -276,6 +292,14 @@ export class Pipeline implements PipelineFacade {
    */
   private narrationDisabledForSession = false;
   private currentSessionBuild: SessionBuild | undefined;
+  /**
+   * S8.3: once the user declines (or a download fails) the one-action
+   * auto-install prompt, `ensureVoiceReady` stops re-asking for the rest of
+   * this VS Code session — `Setup Voice`/`llmVoice.installPiperVoice`
+   * remain one command away regardless. Never reset on success (nothing to
+   * decline anymore once a voice is installed).
+   */
+  private voiceInstallDeclinedThisSession = false;
 
   // ------------------------------------------------------- S6.2 (perf/latency)
   /** Counters behind `LLM Voice: Show Performance Report`; reset every `start()`. */
@@ -347,8 +371,12 @@ export class Pipeline implements PipelineFacade {
     });
     this.controller.onChunkChange((change) => {
       this.recordTtfaOnce();
-      if (this.currentUri !== undefined) {
-        this.highlight.show(this.currentUri, change.chunk.sourceRanges);
+      // S8.2 profile editor "Highlight behavior" (CdC §49): `"off"` shows no
+      // decoration at all; `"highlight"` decorates without auto-scrolling
+      // (`reveal = false`); the default, `"highlight-scroll"`, keeps 0.1's
+      // behaviour of both.
+      if (this.currentUri !== undefined && this.currentSyncMode !== "off") {
+        this.highlight.show(this.currentUri, change.chunk.sourceRanges, this.currentSyncMode !== "highlight");
       }
       this.pushPlayerState();
     });
@@ -461,6 +489,17 @@ export class Pipeline implements PipelineFacade {
       const doc = await source.capture(captureContext, abort.signal);
       const profile = await this.profiles.getSelected(doc.sourceType, this.bySourceSettings());
       this.currentProfileLabel = profile.label;
+      this.currentSyncMode = profile.synchronization?.mode ?? "highlight-scroll";
+
+      // S8.3 (no Docker by default): a fresh install with no local engine
+      // at all gets exactly one action ("Installer la voix française")
+      // instead of building a session that is guaranteed to fail its first
+      // chunk. `"retry"` re-runs this whole method once the voice is
+      // installed — the original request is transparently resumed.
+      if ((await this.ensureVoiceReady(profile, abort.signal)) === "retry") {
+        return this.startInternal(captureContext);
+      }
+
       const segments = await this.buildSegments(doc, profile);
 
       if (segments.length === 0) {
@@ -837,29 +876,229 @@ export class Pipeline implements PipelineFacade {
     );
   }
 
+  /**
+   * The reading `LLM Voice: Test Voice` performs, factored out so S8.2's
+   * voice-preview button (`previewVoice`) and the profile editor's "Tester"
+   * button (`ProfileEditorDeps.testProfile`) can reuse it against a
+   * candidate `profile` that may not be (or not yet be) the one saved in
+   * `profiles.json` — unlike `testVoice()` below, this never catches: the
+   * caller decides how to report a failure (a notification here, a
+   * `testResult` webview message there).
+   */
+  private async speakTestText(profile: VoiceProfile): Promise<void> {
+    const text = vscode.workspace
+      .getConfiguration("llmVoice")
+      .get<string>("testVoice.text", DEFAULT_TEST_VOICE_TEXT);
+    const segments: SourceSegment[] = [
+      { id: "test-voice", type: "sentence", rawText: text, spokenText: text }
+    ];
+    // Forces faithful reading regardless of `profile.mode` — Test Voice is
+    // about the TTS engine's voice/speed/exaggeration, not the narrator.
+    const build = await buildSession(segments, profile, undefined, {});
+    const tts = await this.ttsFor(profile);
+    const sink = this.sinkOverride ?? this.player.audioSink;
+    this.currentProfileLabel = profile.label;
+    this.player.reveal();
+    this.beginPerfSession();
+    await this.controller.start({ segments: build.segments, profile, tts, sink, sealed: true });
+  }
+
   /** `LLM Voice: Test Voice` (CdC §50): faithful reading of a short reference text via the pipeline. */
   async testVoice(): Promise<void> {
     try {
       const profile = await this.profiles.getSelected();
-      const text = vscode.workspace
-        .getConfiguration("llmVoice")
-        .get<string>("testVoice.text", DEFAULT_TEST_VOICE_TEXT);
-      const segments: SourceSegment[] = [
-        { id: "test-voice", type: "sentence", rawText: text, spokenText: text }
-      ];
-      // Forces faithful reading regardless of `profile.mode` — Test Voice is
-      // about the TTS engine's voice/speed/exaggeration, not the narrator.
-      const build = await buildSession(segments, profile, undefined, {});
-      const tts = await this.ttsFor(profile);
-      const sink = this.sinkOverride ?? this.player.audioSink;
-      this.currentProfileLabel = profile.label;
-      this.player.reveal();
-      this.beginPerfSession();
-      await this.controller.start({ segments: build.segments, profile, tts, sink, sealed: true });
+      await this.speakTestText(profile);
     } catch (error) {
       this.output.error("testVoice failed", { error: messageOf(error) });
       void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
     }
+  }
+
+  // ------------------------------------------------------- S8.2 voice browser
+
+  /** `LLM Voice: Browse Voices` (CdC §72): applies and saves the picked voice on the current profile. */
+  /** Test-castable, non-interactive counterpart of `browseVoices()` (`ProfileEditorDeps`-free): applies a voice by id without the Quick Pick. */
+  async applyVoiceToProfileById(id: string, voiceId: string): Promise<VoiceProfile> {
+    const updated = await this.profiles.update(id, (current) => ({
+      ...current,
+      tts: { ...current.tts, voice: voiceId }
+    }));
+    this.currentProfileLabel = updated.label;
+    return updated;
+  }
+
+  async browseVoices(): Promise<void> {
+    try {
+      const profile = await this.profiles.getSelected();
+      const picked = await this.pickVoiceForProfile(profile);
+      if (picked === undefined) {
+        return;
+      }
+      const updated = await this.profiles.update(profile.id, (current) => ({
+        ...current,
+        tts: { ...current.tts, voice: picked.id }
+      }));
+      this.currentProfileLabel = updated.label;
+      void vscode.window.showInformationMessage(
+        `LLM Voice : voix « ${picked.label} » appliquée à « ${updated.label} ».`
+      );
+    } catch (error) {
+      void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
+    }
+  }
+
+  /**
+   * Quick Pick over `profile`'s TTS provider's voices, one immediate-preview
+   * button per row (S8.2) — shared by `browseVoices()` (interactive command)
+   * and the profile editor's "Parcourir les voix" (`ProfileEditorDeps.pickVoice`,
+   * which applies the result to its own unsaved form instead of writing to
+   * disk). Resolves to `undefined` when the user cancels or the provider has
+   * no voice list at all.
+   */
+  private async pickVoiceForProfile(profile: VoiceProfile): Promise<Voice | undefined> {
+    const tts = await this.ttsFor(profile);
+    if (tts.listVoices === undefined) {
+      void vscode.window.showInformationMessage("LLM Voice : ce provider ne fournit pas de liste de voix.");
+      return undefined;
+    }
+    let voices: Voice[];
+    try {
+      voices = await tts.listVoices();
+    } catch (error) {
+      void vscode.window.showErrorMessage(`LLM Voice : impossible de lister les voix — ${messageOf(error)}`);
+      return undefined;
+    }
+    if (voices.length === 0) {
+      void vscode.window.showInformationMessage("LLM Voice : aucune voix disponible pour ce provider.");
+      return undefined;
+    }
+
+    return new Promise<Voice | undefined>((resolve) => {
+      const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { voiceId: string }>();
+      quickPick.title = "LLM Voice : parcourir les voix";
+      quickPick.placeholder = "Choisir une voix — bouton lecture pour l'écouter";
+      const rows = buildVoiceQuickPickItems(voices, profile.language, profile.tts.voice);
+      quickPick.items = rows.map((row) => ({
+        label: row.label,
+        description: row.description,
+        voiceId: row.voiceId,
+        buttons: [previewButton()]
+      }));
+      let settled = false;
+      const finish = (voice: Voice | undefined): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        quickPick.dispose();
+        resolve(voice);
+      };
+      quickPick.onDidTriggerItemButton((event) => {
+        const voice = voices.find((candidate) => candidate.id === event.item.voiceId);
+        if (voice !== undefined) {
+          void this.previewVoice(profile, voice.id);
+        }
+      });
+      quickPick.onDidAccept(() => {
+        const selected = quickPick.selectedItems[0];
+        const voice =
+          selected !== undefined ? voices.find((candidate) => candidate.id === selected.voiceId) : undefined;
+        finish(voice);
+      });
+      quickPick.onDidHide(() => finish(undefined));
+      quickPick.show();
+    });
+  }
+
+  /** Plays the test text with `voiceId` substituted, without leaving the Quick Pick and without saving (S8.2). */
+  private async previewVoice(profile: VoiceProfile, voiceId: string): Promise<void> {
+    try {
+      await this.speakTestText({ ...profile, tts: { ...profile.tts, voice: voiceId } });
+    } catch (error) {
+      void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
+    }
+  }
+
+  /** `LLM Voice: Use My Own Voice` (S8.2, CdC §55). */
+  async useOwnVoice(): Promise<void> {
+    await runUseOwnVoice({
+      extensionContext: this.context,
+      applyReferenceAudio: async (absolutePath) => {
+        const profile = await this.profiles.getSelected();
+        const updated = await this.profiles.update(profile.id, (current) => ({
+          ...current,
+          tts: { ...current.tts, referenceAudio: absolutePath }
+        }));
+        this.currentProfileLabel = updated.label;
+      },
+      previewCurrentProfile: async () => {
+        const profile = await this.profiles.getSelected();
+        await this.speakTestText(profile);
+      }
+    });
+  }
+
+  /** `LLM Voice: Edit Profile` (CdC §49): opens the profile editor webview. */
+  async editProfile(): Promise<void> {
+    const picked = await this.pickProfile("LLM Voice : modifier quel profil ?");
+    if (picked === undefined) {
+      return;
+    }
+    await this.openProfileEditorById(picked.id);
+  }
+
+  /** Test-castable, non-interactive counterpart of `editProfile()`: opens the editor without the Quick Pick. */
+  async openProfileEditorById(id: string): Promise<void> {
+    const deps: ProfileEditorDeps = {
+      getProfile: (profileId) => this.getProfileById(profileId),
+      saveProfile: (profileId, next) => this.profiles.update(profileId, () => next),
+      duplicateProfile: (profileId) => this.duplicateProfileById(profileId),
+      deleteProfile: (profileId) => this.deleteProfileById(profileId),
+      testProfile: (profile) => this.speakTestText(profile),
+      listParameters: (profile) => this.ttsParametersFor(profile),
+      pickVoice: (profile) => this.pickVoiceForProfile(profile)
+    };
+    await ProfileEditorPanel.open(deps, this.context.extensionUri, id);
+  }
+
+  /**
+   * Test-only forwarders to `ProfileEditorPanel`'s own test-only statics.
+   *
+   * A test file cannot call `ProfileEditorPanel.testOnlyWebviewFor`/
+   * `testOnlyDispatch` directly: `dist/extension.js` (what `vscode-test`
+   * actually activates, `package.json#main`) is an esbuild bundle, so the
+   * class the running extension uses and the class a test imports from
+   * `out/src/views/profileEditor/ProfileEditorPanel.js` are two separate
+   * module instances with two separate `panels` statics. Routing through
+   * `Pipeline` — itself part of the bundle — reaches the real one. Not a
+   * public extension API.
+   */
+  getProfileEditorHtmlForTest(id: string): string | undefined {
+    return ProfileEditorPanel.testOnlyWebviewFor(id)?.html;
+  }
+
+  async dispatchProfileEditorMessageForTest(id: string, message: ProfileEditorTestMessage): Promise<void> {
+    await ProfileEditorPanel.testOnlyDispatch(id, message);
+  }
+
+  closeProfileEditorForTest(id: string): void {
+    ProfileEditorPanel.testOnlyClose(id);
+  }
+
+  /** Test-castable read of a single profile by id (no Quick Pick). */
+  async getProfileById(id: string): Promise<VoiceProfile> {
+    const profiles = await this.profiles.list();
+    const found = profiles.find((profile) => profile.id === id);
+    if (found === undefined) {
+      throw new Error(`LLM Voice : profil inconnu « ${id} ».`);
+    }
+    return found;
+  }
+
+  private async ttsParametersFor(profile: VoiceProfile): Promise<readonly TtsParameterDescriptor[]> {
+    const tts = await this.ttsFor(profile);
+    const capabilities = await tts.getCapabilities();
+    return capabilities.parameters;
   }
 
   /** `LLM Voice: Provider Status` (CdC §51). */
@@ -1132,7 +1371,7 @@ export class Pipeline implements PipelineFacade {
       // waiting out HEALTH_CACHE_TTL_MS.
       this.autoTtsCache = undefined;
       void vscode.window.showInformationMessage(
-        "LLM Voice : voix Piper installée. Utilisée automatiquement si aucun serveur Chatterbox n'est détecté (llmVoice.tts.provider = auto)."
+        "LLM Voice : voix Piper installée et utilisée automatiquement pour la lecture (llmVoice.tts.provider = auto)."
       );
       return;
     }
@@ -1147,6 +1386,110 @@ export class Pipeline implements PipelineFacade {
     }
     this.output.error("piper install failed", { error: outcome.message });
     void vscode.window.showErrorMessage(`LLM Voice : installation de Piper impossible — ${outcome.message}`);
+  }
+
+  /**
+   * S8.3 (no Docker by default, ADR-009 amendment): runs once per
+   * `startInternal` call, *before* building a session. `"proceed"` covers
+   * every ordinary case — an explicit/remote/Chatterbox-already-running
+   * provider, or a `system` provider that already has an engine
+   * (`espeak-ng`, `say`, SAPI, or a previously-installed Piper) — so a
+   * machine with `espeak-ng` on `PATH` never sees this prompt at all.
+   * `"retry"` means the voice was just installed and `startInternal`
+   * should re-run from the top to pick it up.
+   */
+  private async ensureVoiceReady(profile: VoiceProfile, signal: AbortSignal): Promise<"proceed" | "retry"> {
+    if (this.voiceInstallDeclinedThisSession) {
+      return "proceed";
+    }
+    const resolved = await this.resolveTtsProviderConfig(profile);
+    if (presetKindForProviderId(resolved.providerId) !== "system") {
+      return "proceed";
+    }
+    const tts = await this.ttsFor(profile);
+    const health = await tts.health(signal).catch(
+      (error): ProviderHealth => ({
+        providerId: tts.id,
+        status: "unreachable",
+        checkedAt: Date.now(),
+        detail: messageOf(error)
+      })
+    );
+    if (!shouldOfferAutoVoiceInstall(resolved.providerId, health)) {
+      return "proceed";
+    }
+    const resumed = await this.offerAutoVoiceInstall(signal);
+    if (!resumed) {
+      this.voiceInstallDeclinedThisSession = true;
+      return "proceed";
+    }
+    return "retry";
+  }
+
+  /**
+   * The one dialog behind `ensureVoiceReady`'s auto-install: names the real
+   * download size (`formatAutoVoiceInstallPrompt`, from the same
+   * `PiperInstallConsentDetails` `installPiperVoice` uses) and exactly one
+   * button (`INSTALL_VOICE_ACTION_LABEL`) — declining is simply not
+   * clicking it, no second dialog. `true` only when
+   * `outcome.status === "installed"` (`nextActionFor`).
+   */
+  private async offerAutoVoiceInstall(signal: AbortSignal): Promise<boolean> {
+    const outcome = await vscode.window.withProgress<PiperInstallOutcome>(
+      { location: vscode.ProgressLocation.Notification, title: "LLM Voice : voix française (Piper)", cancellable: true },
+      async (progress, token) => {
+        const controller = new AbortController();
+        const forwardAbort = (): void => controller.abort();
+        signal.addEventListener("abort", forwardAbort);
+        token.onCancellationRequested(() => controller.abort());
+        let lastPercent = 0;
+        try {
+          return await runPiperInstall({
+            installDir: this.piperInstallDir(),
+            signal: controller.signal,
+            prompt: { confirm: (details) => this.confirmAutoVoiceInstall(details) },
+            progress: {
+              report: (info) => {
+                const percent = Math.round(info.fraction * 100);
+                progress.report({ message: info.message, increment: percent - lastPercent });
+                lastPercent = percent;
+              }
+            },
+            onLog: (event) =>
+              this.output.debug("auto voice install", {
+                host: event.host,
+                decision: event.decision,
+                ...(event.reason !== undefined ? { reason: event.reason } : {})
+              })
+          });
+        } finally {
+          signal.removeEventListener("abort", forwardAbort);
+        }
+      }
+    );
+    if (nextActionFor(outcome) === "resumed") {
+      this.autoTtsCache = undefined;
+      return true;
+    }
+    if (outcome.status === "failed") {
+      this.output.error("auto voice install failed", { error: outcome.message });
+    }
+    if (outcome.status !== "declined") {
+      // A dismissed prompt is not worth a second dialog (the whole point of
+      // this flow is *one* action); an unsupported platform or a genuine
+      // download failure is.
+      void vscode.window.showWarningMessage(fallbackMessageFor(outcome));
+    }
+    return false;
+  }
+
+  /** The one-button consent dialog itself — real sizes, never assumed. */
+  private async confirmAutoVoiceInstall(details: PiperInstallConsentDetails): Promise<boolean> {
+    const choice = await vscode.window.showInformationMessage(
+      formatAutoVoiceInstallPrompt(details),
+      INSTALL_VOICE_ACTION_LABEL
+    );
+    return choice === INSTALL_VOICE_ACTION_LABEL;
   }
 
   /** Speaks one inbox entry (Quick Pick/Tree/`speakLatestClaudeResponse`), marking it read first — zero autoplay: only ever reached from a command the user triggered. */

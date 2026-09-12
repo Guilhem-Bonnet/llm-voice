@@ -164,6 +164,9 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.verifyLocalMode", () => pipeline.verifyLocalMode()),
     vscode.commands.registerCommand("llmVoice.installClaudeHook", () => pipeline.installClaudeHook()),
     vscode.commands.registerCommand("llmVoice.uninstallClaudeHook", () => pipeline.uninstallClaudeHook()),
-    vscode.commands.registerCommand("llmVoice.installPiperVoice", () => pipeline.installPiperVoice())
+    vscode.commands.registerCommand("llmVoice.installPiperVoice", () => pipeline.installPiperVoice()),
+    vscode.commands.registerCommand("llmVoice.browseVoices", () => pipeline.browseVoices()),
+    vscode.commands.registerCommand("llmVoice.useOwnVoice", () => pipeline.useOwnVoice()),
+    vscode.commands.registerCommand("llmVoice.editProfile", () => pipeline.editProfile())
   ];
 }
