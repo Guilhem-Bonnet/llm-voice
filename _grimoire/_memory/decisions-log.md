@@ -127,3 +127,15 @@
 - **Décision** : trois niveaux de voix (système sans installation → Piper guidé → Chatterbox), sélection automatique du provider (`llmVoice.tts.provider = "auto"`), parcours de découverte à la première activation, README dans le VSIX, aucune commande silencieuse. Publié en v0.1.1.
 - **Règle instaurée** : toute release passe par un test d'acceptation sur un profil VS Code neuf, sans service tiers démarré.
 - **Agent** : concierge (Marcel)
+
+### [2026-09-11] Zéro Docker : la voie par défaut doit être autonome
+- **Contexte** : retour utilisateur — « le fait que Docker manque est un souci, les utilisateurs grand public ne l'installent pas eux-mêmes, il faut que tout soit autonome ». La 0.1.1 présentait encore Chatterbox/Docker comme la voie de référence.
+- **Décision** : la voie par défaut devient un moteur TTS autonome installé en un clic, sans Docker ni Python (Piper : binaire natif + modèle ONNX téléchargés, ou moteur ONNX intégré au processus de l'extension si l'évaluation est concluante). Chatterbox est rétrogradé en option avancée, clairement marquée « nécessite Docker », jamais proposée comme prérequis. La voix système reste le repli immédiat.
+- **Contrainte acceptée** : la meilleure qualité (Chatterbox + clonage) reste derrière Docker ; c'est un compromis assumé et affiché, pas un défaut caché.
+- **Agent** : concierge (Marcel)
+
+### [2026-09-11] Phase 8 livrée : autonomie sans Docker, confort des voix, outillage à jour
+- **Contexte** : PR #48, #49, #47 mergées ; 919 tests unitaires ; VSIX 307 Ko.
+- **Décision** : Piper devient le moteur par défaut, installé à la demande sans Docker ni Python (moteur intégré `kokoro-js` rejeté sur preuves : 737 Mo, aucune voix française réelle). Chatterbox reste l'option qualité maximale derrière Docker. Trois nouvelles commandes : parcourir les voix avec écoute, utiliser sa propre voix, éditer un profil en interface graphique.
+- **En attente** : arbitrage utilisateur sur la qualité de la voix Piper par défaut ; retest de la 0.1.1 ; issue #50 (test AC-07 instable).
+- **Agent** : concierge (Marcel)
