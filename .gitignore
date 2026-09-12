@@ -28,6 +28,7 @@ vscode-extension/resources/claude-code/
 # --- Tests ---
 .vscode-test/
 coverage/
+.vitest/
 
 # --- Env / secrets ---
 .env

@@ -1612,6 +1612,12 @@ export class Pipeline implements PipelineFacade {
         egress: this.egress,
         ...(apiKey !== undefined ? { apiKey } : {}),
         ...(referenceAudioPath !== undefined ? { referenceAudioPath } : {}),
+        // Bug fix (voice-selection-not-applied, defect 3): a referenceAudio
+        // this process cannot read locally (e.g. a stale profile's relative
+        // path resolved against the wrong root) must not silently kill
+        // synthesis — surfaced in the Output Channel, synthesis falls back
+        // to voice_mode "predefined" (`ChatterboxProvider`'s own doc comment).
+        onReferenceAudioWarning: (message: string) => this.output.warn(message),
         systemPiperInstallDir: this.piperInstallDir()
       }
     );

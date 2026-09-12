@@ -12,14 +12,20 @@
  *
  * `Pipeline` now checks *before* building a session whether the resolved
  * provider is `SystemTtsProvider` with `health().status === "unreachable"`
- * (true only when `SystemTtsProvider` found neither a Piper install nor
- * `espeak-ng`/`say`/SAPI — never true once *any* engine exists, so a
- * user with `espeak-ng` already installed is never interrupted by this at
- * all) and, only then, offers exactly **one** action: install the
- * autonomous French voice (Piper). Accepting resumes the original request
- * automatically; declining or a failed download falls back to one honest,
- * non-modal message — never the old three-branch dialog, never Chatterbox's
- * name (`installOutcomeMessage` below never mentions it).
+ * (`SystemTtsProvider` found no engine at all) **or** `health().endpoint
+ * === "local:espeak-ng"` (bug fix, voice-selection-not-applied point 2:
+ * `SystemTtsProvider` found *only* espeak-ng — Piper must prime over
+ * espeak-ng, so this still counts as "offer the better voice" rather than
+ * "already fine", even though `status` is `"ok"`). `say`/SAPI — already the
+ * best available voice on their platforms — never trigger this, and once
+ * Piper itself is the detected engine (`endpoint: "local:piper"`) neither
+ * does that. Only then does `Pipeline` offer exactly **one** action:
+ * install the autonomous French voice (Piper). Accepting resumes the
+ * original request automatically; declining or a failed download falls
+ * back immediately to whatever `SystemTtsProvider` already found (espeak-ng
+ * included) via one honest, non-modal message — never blocking, never the
+ * old three-branch dialog, never Chatterbox's name (`installOutcomeMessage`
+ * below never mentions it).
  *
  * Every function here is pure — no `vscode` import — exactly the
  * `voiceTiers.ts`/`handleVoiceTier.ts` split this file mirrors, so the
@@ -34,14 +40,30 @@ import type { PiperInstallConsentDetails, PiperInstallOutcome } from "./PiperSet
 export const INSTALL_VOICE_ACTION_LABEL = "Installer la voix française";
 
 /**
- * `true` only when the resolved provider is `SystemTtsProvider`
- * (ADR-009 §"1b") *and* it reports no usable engine at all — the one
- * situation this whole module exists to fix. `resolvedProviderId` is
- * whatever `resolveTtsProviderConfig`/`autoSelectTts` settled on (`"auto"`
- * is never seen here — always already expanded to a concrete id).
+ * `true` when the resolved provider is `SystemTtsProvider` (ADR-009 §"1b")
+ * and either:
+ *  - it reports no usable engine at all (`status: "unreachable"` — the
+ *    original situation this module was written for), or
+ *  - bug fix (voice-selection-not-applied, point 2): it found *only*
+ *    `espeak-ng` (`endpoint: "local:espeak-ng"`) — Piper must prime over
+ *    espeak-ng, so a machine where espeak-ng answers "ok" is still offered
+ *    the one-action Piper install instead of being silently left on the
+ *    noticeably more robotic voice forever. `SystemTtsProvider.detectEngine`
+ *    already tries Piper *before* espeak-ng (its own file header) — reaching
+ *    `"local:espeak-ng"` here means Piper genuinely was not found (or was
+ *    already declined this session, `Pipeline.ensureVoiceReady`'s own
+ *    short-circuit — this function is never even called again then).
+ * Every other "ok"/"degraded" engine (`piper` itself, `say`, `sapi` — the
+ * best already-available voice on their respective platforms) never
+ * triggers this. `resolvedProviderId` is whatever
+ * `resolveTtsProviderConfig`/`autoSelectTts` settled on (`"auto"` is never
+ * seen here — always already expanded to a concrete id).
  */
 export function shouldOfferAutoVoiceInstall(resolvedProviderId: string, health: ProviderHealth): boolean {
-  return presetKindForProviderId(resolvedProviderId) === "system" && health.status === "unreachable";
+  if (presetKindForProviderId(resolvedProviderId) !== "system") {
+    return false;
+  }
+  return health.status === "unreachable" || health.endpoint === "local:espeak-ng";
 }
 
 /**

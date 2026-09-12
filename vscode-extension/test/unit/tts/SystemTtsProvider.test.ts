@@ -49,6 +49,7 @@ function makeWav(dataSize: number, sampleRate = 22050): Uint8Array {
 class FakeRunner implements SystemTtsProcessRunner {
   readonly whichAnswers = new Map<string, string | undefined>();
   readonly existsAnswers = new Map<string, boolean>();
+  readonly dirAnswers = new Map<string, string[]>();
   readonly runCalls: { invocation: SystemTtsInvocation; options: RunOptions }[] = [];
   readonly removedFiles: string[] = [];
   readonly writtenFiles = new Map<string, string>();
@@ -62,6 +63,11 @@ class FakeRunner implements SystemTtsProcessRunner {
 
   async exists(candidate: string): Promise<boolean> {
     return this.existsAnswers.get(candidate) ?? false;
+  }
+
+  /** Mirrors a real `fs.readdir`: `[]` for a directory that does not exist or is empty — never rejects. */
+  async readdir(dir: string): Promise<string[]> {
+    return this.dirAnswers.get(dir) ?? [];
   }
 
   async writeFile(candidate: string, content: string): Promise<void> {
@@ -328,13 +334,90 @@ describe("SystemTtsProvider — detection order and engine selection", () => {
     expect(health.detail).toMatch(/espeak-ng/);
   });
 
-  it("never trusts a bare Piper on PATH without piperInstallDir configured", async () => {
+  it("falls back to espeak-ng for a bare Piper on PATH with no discoverable French voice model anywhere", async () => {
     const runner = new FakeRunner();
     runner.whichAnswers.set("piper", "/usr/bin/piper");
     runner.whichAnswers.set("espeak-ng", "/usr/bin/espeak-ng");
     const provider = new SystemTtsProvider({ platform: "linux", runner, isFlatpak: false });
     const health = await provider.health();
     expect(health.endpoint).toBe("local:espeak-ng");
+  });
+
+  // Bug fix (voice-selection-not-applied): the reported case is a Piper
+  // binary on PATH (`/home/guilhem/.local/bin/piper`) with voice models
+  // under `~/.llm-voice/voices/` — neither ever consulted before this fix
+  // (`detectPiper` only trusted `piperInstallDir`, the extension's own
+  // managed install). Any one French-tagged `.onnx` model is enough.
+  it("bug fix: detects a PATH-resolved Piper binary with a French voice model under ~/.llm-voice/voices/", async () => {
+    const runner = new FakeRunner();
+    runner.whichAnswers.set("piper", "/home/user/.local/bin/piper");
+    runner.whichAnswers.set("espeak-ng", "/usr/bin/espeak-ng");
+    runner.dirAnswers.set("/home/user/.llm-voice/voices", ["fr_FR-upmc-medium.onnx", "fr_FR-upmc-medium.onnx.json"]);
+    const provider = new SystemTtsProvider({
+      platform: "linux",
+      runner,
+      isFlatpak: false,
+      homeDir: "/home/user"
+    });
+
+    const health = await provider.health();
+
+    expect(health.status).toBe("ok");
+    expect(health.endpoint).toBe("local:piper");
+  });
+
+  it("bug fix: also searches ~/.local/share/piper-voices/ and the resolved binary's own directory", async () => {
+    const shareRunner = new FakeRunner();
+    shareRunner.whichAnswers.set("piper", "/home/user/.local/bin/piper");
+    shareRunner.dirAnswers.set("/home/user/.local/share/piper-voices", ["fr_FR-siwis-medium.onnx"]);
+    const shareProvider = new SystemTtsProvider({
+      platform: "linux",
+      runner: shareRunner,
+      isFlatpak: false,
+      homeDir: "/home/user"
+    });
+    expect((await shareProvider.health()).endpoint).toBe("local:piper");
+
+    const binDirRunner = new FakeRunner();
+    binDirRunner.whichAnswers.set("piper", "/opt/piper/piper");
+    binDirRunner.dirAnswers.set("/opt/piper", ["fr_FR-tom-medium.onnx"]);
+    const binDirProvider = new SystemTtsProvider({
+      platform: "linux",
+      runner: binDirRunner,
+      isFlatpak: false,
+      homeDir: "/home/user"
+    });
+    expect((await binDirProvider.health()).endpoint).toBe("local:piper");
+  });
+
+  it("bug fix: a non-French model on PATH is not enough — falls back to espeak-ng", async () => {
+    const runner = new FakeRunner();
+    runner.whichAnswers.set("piper", "/home/user/.local/bin/piper");
+    runner.whichAnswers.set("espeak-ng", "/usr/bin/espeak-ng");
+    runner.dirAnswers.set("/home/user/.llm-voice/voices", ["en_US-lessac-medium.onnx"]);
+    const provider = new SystemTtsProvider({ platform: "linux", runner, isFlatpak: false, homeDir: "/home/user" });
+
+    const health = await provider.health();
+    expect(health.endpoint).toBe("local:espeak-ng");
+  });
+
+  it("bug fix: the extension's own managed install (piperInstallDir) still wins first when it already has a model", async () => {
+    const runner = new FakeRunner();
+    runner.whichAnswers.set("piper", "/home/user/.local/bin/piper");
+    runner.existsAnswers.set("/managed/bin/piper", true);
+    runner.existsAnswers.set("/managed/voices/fr_FR-siwis-medium.onnx", true);
+    runner.dirAnswers.set("/managed/voices", ["fr_FR-siwis-medium.onnx"]);
+    const provider = new SystemTtsProvider({
+      platform: "linux",
+      runner,
+      piperInstallDir: "/managed",
+      isFlatpak: false,
+      homeDir: "/home/user"
+    });
+
+    const health = await provider.health();
+    expect(health.status).toBe("ok");
+    expect(health.endpoint).toBe("local:piper");
   });
 
   it("macOS: detects say", async () => {
