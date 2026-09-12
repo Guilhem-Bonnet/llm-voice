@@ -30,6 +30,28 @@ Ce fichier est la seule source de vérité (voir `CONTRIBUTING.md`) ; le
 
 - **Renommage `VoiceProfile.markdownPolicy` → `markdown`, `syncMode` → `synchronization.mode`** : la première implémentation de l'éditeur de profils avait inventé ces deux noms ; le cahier des charges §18 nomme ces blocs `markdown` et `synchronization.mode` verbatim, et le schéma suit maintenant cet exemple à la lettre. Un `profiles.json` écrit avant ce renommage continue de charger sans intervention : `VoiceProfileSchema` migre les anciens noms vers les nouveaux au chargement (`profile.schema.ts`, testé par `test/unit/profiles/profileForm.test.ts` et `test/integration/syncModeAndMarkdownPolicy.test.ts`).
 
+## [0.2.0] - 2026-09-12
+
+### Added
+
+- Vue dédiée dans la barre d'activité : lecture en cours, inbox et profils réunis, devient le point d'entrée par défaut (révise l'ADR-011).
+- Voix française autonome par défaut : Piper installé à la demande, sans Docker ni Python ; Chatterbox devient une option avancée.
+- Détection de Piper présent dans le `PATH` et priorité sur les voix système.
+- Navigateur de voix avec écoute immédiate, signalement des voix anglophones en contexte français.
+- Assistant « utiliser ma propre voix » comme référence de clonage.
+- Éditeur de profils en interface graphique.
+
+### Fixed
+
+- Le choix de voix n'était jamais appliqué : `providerId` n'était écrit nulle part.
+- Les profils hérités d'une version antérieure n'étaient pas migrés et restaient épinglés sur un provider injoignable.
+- Un fichier de référence audio introuvable faisait échouer toute la synthèse.
+- Isolation des données entre exécutions de tests, à l'origine d'une instabilité intermittente.
+
+### Changed
+
+- Outillage de développement à jour : vitest 5, eslint 10, actions GitHub v7.
+
 ## [0.1.1] - 2026-09-09
 
 **Corrige le problème remonté sur la 0.1.0 : un utilisateur non technique installe le VSIX et entend du son immédiatement, sans configurer ni installer quoi que ce soit.**
