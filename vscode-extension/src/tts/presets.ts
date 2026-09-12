@@ -137,6 +137,14 @@ export interface CreateTtsProviderOptions {
    */
   referenceAudioPath?: string;
   /**
+   * Bug fix (voice-selection-not-applied, defect 3): forwarded to
+   * `ChatterboxProvider`'s own `onReferenceAudioWarning` — called (at most
+   * once per instance) when `referenceAudioPath` cannot be read locally,
+   * so the caller can surface a warning instead of the synthesis silently
+   * failing. `chatterbox` kind only — ignored for every other preset kind.
+   */
+  onReferenceAudioWarning?: (message: string) => void;
+  /**
    * `globalStorageUri/piper` (`kind: "system"` only): where `PiperSetup`
    * installs the optional Piper binary/voice — `SystemTtsProvider` only
    * ever trusts an install found there (its file header). `undefined`
@@ -166,7 +174,10 @@ export function createTtsProvider(
     case "chatterbox":
       return new ChatterboxProvider({
         ...providerOptions,
-        ...(options.referenceAudioPath !== undefined ? { referenceAudioPath: options.referenceAudioPath } : {})
+        ...(options.referenceAudioPath !== undefined ? { referenceAudioPath: options.referenceAudioPath } : {}),
+        ...(options.onReferenceAudioWarning !== undefined
+          ? { onReferenceAudioWarning: options.onReferenceAudioWarning }
+          : {})
       });
     case "kokoro":
       return new KokoroProvider(providerOptions);

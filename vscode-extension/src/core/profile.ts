@@ -120,9 +120,16 @@ export interface VoiceProfile {
   synchronization?: SynchronizationSettings;
 }
 
-/** The `profiles.json` document, versioned for future migrations. */
+/**
+ * The `profiles.json` document, versioned for future migrations.
+ * `1` is the pre-"auto" shape (every non-system default profile explicitly
+ * pinned `providerId: "chatterbox"`); `2` is current
+ * (`src/profiles/migrations.ts`, `CURRENT_PROFILE_SCHEMA_VERSION`) — a
+ * `profiles.json` still at `1` is migrated once, in place, the first time
+ * `ProfileRepository.load()` reads it.
+ */
 export interface ProfileCollection {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   defaultProfileId: string;
   profiles: VoiceProfile[];
 }

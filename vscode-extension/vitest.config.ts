@@ -20,6 +20,10 @@ export default defineConfig({
         "src/pipeline/**/*.ts",
         "src/narrator/**/*.ts",
         "src/profiles/defaults*.ts",
+        // `migrations.ts` only imports `../core/profile.js` (types, erased)
+        // and `../tts/presets.js` (pure data) — no `vscode`, plain-Node
+        // testable exactly like `defaults.ts`.
+        "src/profiles/migrations.ts",
         "src/infrastructure/**/*.ts",
         // `Logger`/`redact` only `import type` `vscode` (erased at compile
         // time); `notifications.ts` takes `vscode.window.show*Message` as an

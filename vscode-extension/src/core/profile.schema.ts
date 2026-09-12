@@ -166,9 +166,14 @@ function migrateLegacyProfileShape(value: unknown): unknown {
 /** Full profile schema, also exported as the JSON Schema attached to profiles.json. */
 export const VoiceProfileSchema = z.preprocess(migrateLegacyProfileShape, VoiceProfileObjectSchema);
 
-/** The whole `profiles.json` document. */
+/**
+ * The whole `profiles.json` document. `schemaVersion` accepts `1` (the
+ * pre-"auto" shape) alongside the current `2` (`src/profiles/migrations.ts`)
+ * — an older file must keep *validating* here; `ProfileRepository.load()` is
+ * what actually migrates it forward, once, on read.
+ */
 export const ProfileCollectionSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.union([z.literal(1), z.literal(2)]),
   defaultProfileId: z.string().min(1),
   profiles: z.array(VoiceProfileSchema).min(1)
 });

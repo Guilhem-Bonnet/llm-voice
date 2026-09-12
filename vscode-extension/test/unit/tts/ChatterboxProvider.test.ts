@@ -118,16 +118,48 @@ describe("ChatterboxProvider (ADR-005/ADR-009, CdC §24-25, §28, §55) — nati
     await expect(provider.synthesize({ text: "Bonjour" })).rejects.toThrow(/upload_reference/);
   });
 
-  it("synthesize() rejects when the reference file cannot be read", async () => {
+  it("falls back to voice_mode 'predefined' and warns, instead of failing synthesis, when the reference file cannot be read (bug: stale profile with an unresolvable referenceAudio must still speak)", async () => {
     server = new MockTtsServer();
     const baseUrl = await server.listen();
+    const warnings: string[] = [];
     const provider = new ChatterboxProvider({
       baseUrl,
       egress: egress(),
-      referenceAudioPath: "/nonexistent/path/does-not-exist.wav"
+      referenceAudioPath: "/nonexistent/path/does-not-exist.wav",
+      onReferenceAudioWarning: (message) => warnings.push(message)
     });
 
-    await expect(provider.synthesize({ text: "Bonjour" })).rejects.toThrow(/reference audio/);
+    const result = await provider.synthesize({ text: "Bonjour", voice: "Emily.wav" });
+
+    expect(result.format).toBe("wav");
+    const ttsRequests = server.requests.filter((request) => request.url === "/tts");
+    expect(ttsRequests).toHaveLength(1);
+    const body = JSON.parse(ttsRequests[0]?.body ?? "{}") as Record<string, unknown>;
+    expect(body["voice_mode"]).toBe("predefined");
+    expect(body["predefined_voice_id"]).toBe("Emily.wav");
+    expect(body).not.toHaveProperty("reference_audio_filename");
+    expect(server.uploadedReferenceFilenames).toHaveLength(0);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/does-not-exist\.wav/);
+  });
+
+  it("only attempts the missing local reference file once across concurrent/subsequent synthesize() calls", async () => {
+    server = new MockTtsServer();
+    const baseUrl = await server.listen();
+    let warningCount = 0;
+    const provider = new ChatterboxProvider({
+      baseUrl,
+      egress: egress(),
+      referenceAudioPath: "/nonexistent/path/does-not-exist.wav",
+      onReferenceAudioWarning: () => {
+        warningCount += 1;
+      }
+    });
+
+    await provider.synthesize({ text: "Bonjour" });
+    await provider.synthesize({ text: "Au revoir" });
+
+    expect(warningCount).toBe(1);
   });
 
   it("synthesize() rejects on a non-2xx /tts response", async () => {
