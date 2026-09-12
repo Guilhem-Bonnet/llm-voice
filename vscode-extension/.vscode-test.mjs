@@ -1,7 +1,8 @@
 import { defineConfig } from "@vscode/test-cli";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const common = {
   version: "stable",
@@ -10,6 +11,22 @@ const common = {
     timeout: 20000
   }
 };
+
+// S9 fix(review): every `--user-data-dir` below used to be a *relative*
+// path ("`.vscode-test/fake-tts`"...). The Electron child process
+// `@vscode/test-electron` spawns does not reliably inherit this script's
+// `process.cwd()` in every environment (sandboxed/xvfb runs observed here
+// resolved it against `$HOME` instead) — two different checkouts of this
+// repo (e.g. two git worktrees run concurrently) can then silently share
+// the *same* real `~/.vscode-test/<profile>/User/globalStorage/...`
+// directory and corrupt each other's `profiles.json` mid-run (a `ZodError`
+// on `schemaVersion` from a profile shape the *other* worktree's code
+// wrote). An absolute path anchored to this file's own directory removes
+// the ambiguity — same fix `prefetchChunksUserDataDir` below already used.
+const testRootDir = dirname(fileURLToPath(import.meta.url));
+function userDataDir(profileName) {
+  return join(testRootDir, ".vscode-test", profileName);
+}
 
 // S5.1: `Pipeline`'s `InboxRepository` resolves its directory once, at
 // activation (`llmVoice.claude.inboxPath` > `LLM_VOICE_INBOX` > default) —
@@ -64,7 +81,7 @@ export default defineConfig([
     // extension host's IPC unix socket path past the 103-char `sockaddr_un`
     // limit ("Error: listen EINVAL", integration (macos-latest) failing in
     // CI while passing locally on Linux).
-    launchArgs: ["--user-data-dir=.vscode-test/fake-tts"]
+    launchArgs: [`--user-data-dir=${userDataDir("fake-tts")}`]
   },
   {
     ...common,
@@ -86,7 +103,7 @@ export default defineConfig([
     // See the comment on the `fake-tts` profile above: a *different* cache
     // directory is what actually forces this run to hit the network.
     // See the comment on the `fake-tts` profile above re: the socket path length.
-    launchArgs: ["--user-data-dir=.vscode-test/real-provider"]
+    launchArgs: [`--user-data-dir=${userDataDir("real-provider")}`]
   },
   {
     ...common,
@@ -102,7 +119,7 @@ export default defineConfig([
     files: "out/test/integration-chunk-invalid/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_TEST_FAKE_TTS_FAIL_FROM: "2" },
     // See the comment on the `fake-tts` profile above re: separate cache/socket path.
-    launchArgs: ["--user-data-dir=.vscode-test/chunk-invalid"]
+    launchArgs: [`--user-data-dir=${userDataDir("chunk-invalid")}`]
   },
   {
     ...common,
@@ -128,7 +145,7 @@ export default defineConfig([
     // hang, whichever way the prompt is answered (`no-voice-available.test.ts`).
     files: "out/test/integration-no-engine/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: undefined, PATH: "/nonexistent-on-purpose" },
-    launchArgs: ["--user-data-dir=.vscode-test/system-no-engine"]
+    launchArgs: [`--user-data-dir=${userDataDir("system-no-engine")}`]
   },
   {
     ...common,
@@ -144,6 +161,6 @@ export default defineConfig([
     // attempt against an absent loopback server would only add noise.
     files: "out/test/integration-security/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirSecurity },
-    launchArgs: ["--user-data-dir=.vscode-test/security"]
+    launchArgs: [`--user-data-dir=${userDataDir("security")}`]
   }
 ]);

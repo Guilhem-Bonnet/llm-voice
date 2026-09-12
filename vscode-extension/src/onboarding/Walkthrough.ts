@@ -33,6 +33,13 @@ export async function openWalkthroughExample(context: vscode.ExtensionContext): 
  * time the extension ever activates (`globalState`, never reset) — and
  * never under `vscode-test` (`ExtensionMode.Test`), so it cannot steal
  * focus or hang any of the existing xvfb integration suite.
+ *
+ * ADR-011 revision (2026-09-12): the dedicated `llmVoice` activity bar view
+ * — the new default entry point (CdC §6) — opens alongside it, under the
+ * exact same one-time gate: designating the icon as "where you start" only
+ * means something the first time; showing it again on every later
+ * activation would be exactly the noise ADR-011 already rejects elsewhere
+ * (CdC §52 "jamais deux fois la même notification").
  */
 export async function openWalkthroughOnFirstActivation(context: vscode.ExtensionContext): Promise<void> {
   const alreadyShown = context.globalState.get<boolean>(WALKTHROUGH_SHOWN_KEY, false);
@@ -41,6 +48,13 @@ export async function openWalkthroughOnFirstActivation(context: vscode.Extension
     return;
   }
   await context.globalState.update(WALKTHROUGH_SHOWN_KEY, true);
+  try {
+    await vscode.commands.executeCommand("workbench.view.extension.llmVoice");
+  } catch {
+    // Best-effort: e.g. `llmVoice.ui.layout` was already switched to
+    // `minimal` before this first activation ever ran (a settings sync
+    // restore) — the container legitimately has no view to reveal.
+  }
   try {
     await vscode.commands.executeCommand(
       "workbench.action.openWalkthrough",

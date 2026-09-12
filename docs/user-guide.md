@@ -8,10 +8,14 @@ des serveurs), `docs/providers.md` (choix d'un moteur TTS/narrateur) et
 
 ## Première utilisation
 
-Dès l'installation, un parcours guidé (**Démarrer avec LLM Voice**) s'ouvre
-automatiquement une seule fois, jamais ensuite (relançable via la palette de
-commandes → **Welcome: Open Walkthrough**). Il correspond exactement à ce
-qui suit :
+Dès l'installation, l'**icône LLM Voice de la barre d'activité** (à gauche de
+VS Code, comme le chat de Claude ou la vue GitFlow) s'ouvre automatiquement
+une seule fois, en même temps qu'un parcours guidé (**Démarrer avec LLM
+Voice**) — jamais ensuite sans action de votre part (icône cliquable à tout
+moment ; parcours relançable via la palette de commandes → **Welcome: Open
+Walkthrough**). C'est le point d'entrée principal de l'extension : cliquer
+dessus ouvre la vue dédiée (lecture en cours, inbox, profils). Le parcours
+correspond exactement à ce qui suit :
 
 1. **Choisir une voix** — rien à faire : le premier `Speak` fonctionne déjà
    (voix système), et s'il n'y a encore aucune voix locale, une seule
@@ -41,10 +45,11 @@ qui suit :
    capture automatiquement les réponses dans une inbox dédiée (voir « Inbox
    Claude Code » ci-dessous).
 
-Le player (vue « LLM Voice », Panel) et l'inbox affichent un texte d'accueil
-avec des boutons d'action tant qu'ils sont vides — jamais un panneau vide
-sans indication. Sur tout document Markdown, un bouton haut-parleur dans le
-titre de l'éditeur lance directement **Speak Document**.
+Le player (« Lecture en cours » dans la vue dédiée, ou vue « LLM Voice » du
+Panel en disposition `minimal`) et l'inbox affichent un texte d'accueil avec
+des boutons d'action tant qu'ils sont vides — jamais un panneau vide sans
+indication. Sur tout document Markdown, un bouton haut-parleur dans le titre
+de l'éditeur lance directement **Speak Document**.
 
 ## Installation rapide
 
@@ -65,8 +70,8 @@ titre de l'éditeur lance directement **Speak Document**.
 2. Palette de commandes → **LLM Voice: Speak Document** (ou raccourci
    `Ctrl+Alt+V D`).
 3. Le segment en cours de lecture est surligné dans l'éditeur ; les contrôles
-   Play/Pause/Stop/Précédent/Suivant sont dans le mini-player (vue « LLM
-   Voice ») et dans le menu de la status bar.
+   Play/Pause/Stop/Précédent/Suivant sont dans « Lecture en cours »
+   (icône LLM Voice de la barre d'activité) et dans le menu de la status bar.
 4. **Speak Selection** (`Ctrl+Alt+V S`) ne lit que le texte sélectionné ;
    **Speak Clipboard** (`Ctrl+Alt+V C`) lit le presse-papiers — utile pour une
    réponse copiée depuis un agent qui n'a pas encore d'inbox câblée (voir plus

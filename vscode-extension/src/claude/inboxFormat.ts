@@ -40,3 +40,14 @@ export function formatRelativeTime(capturedAt: number, now: number = Date.now())
   const days = Math.floor(hours / 24);
   return `il y a ${days} j`;
 }
+
+/** A `vscode.TreeView.badge` shape, without importing `vscode` (ADR-011 revision 2026-09-12: the same badge now also surfaces on the `llmVoice` activity bar icon). */
+export interface InboxBadge {
+  value: number;
+  tooltip: string;
+}
+
+/** `undefined` clears the badge — `TreeView.badge = undefined` is how VS Code hides it once the inbox is fully read. */
+export function computeInboxBadge(unreadCount: number): InboxBadge | undefined {
+  return unreadCount > 0 ? { value: unreadCount, tooltip: `${unreadCount} message(s) non lu(s)` } : undefined;
+}

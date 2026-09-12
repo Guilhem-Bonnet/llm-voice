@@ -108,6 +108,7 @@ import { GlobalStateReadStore } from "../claude/GlobalStateReadStore.js";
 import { InboxContentProvider, INBOX_CONTENT_SCHEME, inboxContentUri } from "../claude/InboxContentProvider.js";
 import { InboxRepository } from "../claude/InboxRepository.js";
 import { InboxTreeItem, InboxTreeProvider } from "../claude/InboxTreeProvider.js";
+import { computeInboxBadge } from "../claude/inboxFormat.js";
 import { InboxWatcher } from "../claude/InboxWatcher.js";
 import { showInboxQuickPick } from "../claude/InboxQuickPick.js";
 import { resolveInboxPath } from "../claude/resolveInboxPath.js";
@@ -447,6 +448,11 @@ export class Pipeline implements PipelineFacade {
   /** S5.1 (AC-15): which profile the last `start()`/`startInternal()` call actually resolved. */
   getCurrentProfileLabelForTest(): string {
     return this.currentProfileLabel;
+  }
+
+  /** S9 (ADR-011 revision 2026-09-12): the unread badge currently shown on `llmVoice.inboxView` (and, transitively, the `llmVoice` activity bar icon). */
+  getInboxBadgeForTest(): { value: number; tooltip: string } | undefined {
+    return this.inboxTreeView?.badge;
   }
 
   // ------------------------------------------------------------- lifecycle
@@ -1515,8 +1521,11 @@ export class Pipeline implements PipelineFacade {
   private async refreshInbox(): Promise<void> {
     await this.inboxTreeProvider.refresh();
     if (this.inboxTreeView !== undefined) {
-      const unread = this.inboxTreeProvider.unreadCount;
-      this.inboxTreeView.badge = unread > 0 ? { value: unread, tooltip: `${unread} message(s) non lu(s)` } : undefined;
+      // ADR-011 revision (2026-09-12): same badge, now pulled from
+      // `inboxFormat.ts` (`computeInboxBadge`) so it is unit-testable —
+      // it also surfaces on the `llmVoice` activity bar icon now that the
+      // inbox view lives in that container by default.
+      this.inboxTreeView.badge = computeInboxBadge(this.inboxTreeProvider.unreadCount);
     }
   }
 
