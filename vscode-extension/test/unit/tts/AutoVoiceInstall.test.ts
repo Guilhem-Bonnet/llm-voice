@@ -36,6 +36,23 @@ describe("shouldOfferAutoVoiceInstall", () => {
     expect(shouldOfferAutoVoiceInstall("system", health("degraded"))).toBe(false);
   });
 
+  it("bug fix: Piper must prime over espeak-ng — offers the install when the only engine found is espeak-ng, even though health is 'ok' (reported case: Chatterbox stopped, Piper on PATH not yet detected as usable, espeak-ng present)", () => {
+    const espeakOnly: ProviderHealth = { providerId: "system", status: "ok", checkedAt: Date.now(), endpoint: "local:espeak-ng" };
+    expect(shouldOfferAutoVoiceInstall("system", espeakOnly)).toBe(true);
+  });
+
+  it("never re-offers once Piper itself is the detected engine — endpoint local:piper is already the goal", () => {
+    const piperFound: ProviderHealth = { providerId: "system", status: "ok", checkedAt: Date.now(), endpoint: "local:piper" };
+    expect(shouldOfferAutoVoiceInstall("system", piperFound)).toBe(false);
+  });
+
+  it("does not offer the espeak-ng-primacy prompt for say/sapi (already the best available voice on their platform)", () => {
+    const say: ProviderHealth = { providerId: "system", status: "ok", checkedAt: Date.now(), endpoint: "local:say" };
+    const sapi: ProviderHealth = { providerId: "system", status: "ok", checkedAt: Date.now(), endpoint: "local:sapi" };
+    expect(shouldOfferAutoVoiceInstall("system", say)).toBe(false);
+    expect(shouldOfferAutoVoiceInstall("system", sapi)).toBe(false);
+  });
+
   it("never offers it for a non-system provider, even if unreachable (S8.3: Chatterbox/remote handle their own health UX)", () => {
     expect(shouldOfferAutoVoiceInstall("chatterbox", health("unreachable"))).toBe(false);
     expect(shouldOfferAutoVoiceInstall("piper-local", health("unreachable"))).toBe(false);
