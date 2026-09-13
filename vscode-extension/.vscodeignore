@@ -42,3 +42,9 @@ docs/**
 **/*.key
 **/*.p12
 **/*.pfx
+
+# Grimoire framework artefacts: the tool-policy hook writes traces into the
+# current working directory, so they appear here whenever npm runs from this
+# folder. They must never ship in a published extension.
+_grimoire-output/**
+_grimoire/**
