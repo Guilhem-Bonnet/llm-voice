@@ -838,7 +838,7 @@
     "sync:changelog": "node scripts/sync-changelog.mjs",
     "build": "npm run compile && npm run generate:profile-schema && npm run copy:claude-integration && npm run bundle",
     "test:integration": "npm run build && vscode-test",
-    "package": "npm run generate:icon && npm run sync:changelog && npm run build && vsce package --no-dependencies -o llm-voice.vsix",
+    "package": "npm run generate:icon && npm run sync:changelog && npm run build && vsce package --no-dependencies -o llm-voice.vsix && node scripts/check-vsix.mjs",
     "vscode:prepublish": "npm run build",
     "check:audit": "npm audit --omit=dev --audit-level=high",
     "check:licenses": "node scripts/check-licenses.mjs",
