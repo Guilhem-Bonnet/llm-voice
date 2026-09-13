@@ -119,9 +119,16 @@ function seedAutoProfile(profileUserDataDir) {
   );
 }
 
-const autoFallbackSucceedsUserDataDir = mkdtempSync(join(tmpdir(), "llm-voice-test-userdata-auto-succeeds-"));
+// fix(review): these two used to be `mkdtempSync(join(tmpdir(), "llm-voice-test-userdata-auto-succeeds-"))` —
+// an OS-tmpdir path long enough, once VS Code appends its own IPC socket
+// filename, to exceed the 103-char `sockaddr_un` limit on the macOS GH
+// Actions runner ("listen EINVAL", confirmed live on this PR's own CI) —
+// the exact issue the short `userDataDir()` helper above already exists to
+// avoid for `fake-tts`. Reusing it here removes the random `mkdtemp` suffix
+// entirely, which is fine: nothing else shares these two profiles.
+const autoFallbackSucceedsUserDataDir = userDataDir("auto-succeeds");
 seedAutoProfile(autoFallbackSucceedsUserDataDir);
-const autoFallbackFailsUserDataDir = mkdtempSync(join(tmpdir(), "llm-voice-test-userdata-auto-fails-"));
+const autoFallbackFailsUserDataDir = userDataDir("auto-fails");
 seedAutoProfile(autoFallbackFailsUserDataDir);
 const inboxDirAutoFallbackSucceeds = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-succeeds-"));
 const inboxDirAutoFallbackFails = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-fails-"));

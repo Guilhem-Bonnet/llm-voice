@@ -29,6 +29,36 @@ const FAKE_ESPEAK_VOICES_TABLE =
   "Pty Language Age/Gender VoiceName          File          Other Languages\n" +
   " 5  fr             M  french               fr\n";
 
+/** One plain name per line — `parseSapiVoices`'s expected `-List` shape. */
+const FAKE_SAPI_VOICES_LIST = "Microsoft Hortense Desktop\n";
+
+/**
+ * `SystemTtsProvider.detectEngine()` (`src/tts/SystemTtsProvider.ts`)
+ * branches on the *real* `os.platform()` the CI runner happens to be —
+ * `win32` never even calls `which("espeak-ng")` (it calls
+ * `which("powershell")`/`which("pwsh")` for SAPI instead), `darwin` calls
+ * `which("say")`. A runner that only answers `espeak-ng` truthily is
+ * therefore only ever "found" on Linux runners — confirmed live: the
+ * Windows leg of this PR's own CI failed with "expected the espeak-ng
+ * fallback to succeed, got state 'error'" because `detectSapi()` never
+ * found a `powershell`/`pwsh` this runner didn't know to answer for.
+ * Answering for all four keeps the fake OS-agnostic, matching what these
+ * tests' own doc comments already claim ("never depends on the real
+ * machine"/"whichever OS runs the suite").
+ */
+const FAKE_SYSTEM_ENGINE_COMMANDS = new Set(["espeak-ng", "say", "powershell", "pwsh"]);
+
+/** Finds the output-path argument regardless of which engine's invocation shape actually arrived (`-w` espeak-ng, `-o` say, `-OutputPath` SAPI). */
+function findOutputPath(args: readonly string[]): string | undefined {
+  for (const flag of ["-w", "-o", "-OutputPath"]) {
+    const index = args.indexOf(flag);
+    if (index !== -1) {
+      return args[index + 1];
+    }
+  }
+  return undefined;
+}
+
 /** Finds nothing at all — deterministic "no local engine anywhere" (case 2, "aucun moyen de parler"). */
 export class NoEngineRunner implements SystemTtsProcessRunner {
   async which(): Promise<string | undefined> {
@@ -54,16 +84,18 @@ export class NoEngineRunner implements SystemTtsProcessRunner {
 }
 
 /**
- * Finds a fake `espeak-ng` only — `which("piper")` always resolves to
- * `undefined`, so `SystemTtsProvider.detectPiper()` never even reaches the
- * voice-model search that a real machine's home directory could otherwise
- * satisfy. Deterministic "fallback available" (case 1).
+ * Finds a fake system engine only — `which("piper")`/`which("piper.exe")`
+ * always resolves to `undefined`, so `SystemTtsProvider.detectPiper()`
+ * never even reaches the voice-model search that a real machine's home
+ * directory could otherwise satisfy. Deterministic "fallback available"
+ * (case 1), on every OS `detectEngine()` might branch to (see
+ * `FAKE_SYSTEM_ENGINE_COMMANDS`'s doc comment above).
  */
 export class EspeakOnlyRunner implements SystemTtsProcessRunner {
-  private static readonly FAKE_BINARY_PATH = "/fake/espeak-ng";
+  private static readonly FAKE_BINARY_PATH = "/fake/system-tts-engine";
 
   async which(command: string): Promise<string | undefined> {
-    return command === "espeak-ng" ? EspeakOnlyRunner.FAKE_BINARY_PATH : undefined;
+    return FAKE_SYSTEM_ENGINE_COMMANDS.has(command) ? EspeakOnlyRunner.FAKE_BINARY_PATH : undefined;
   }
   async exists(): Promise<boolean> {
     return false;
@@ -86,17 +118,25 @@ export class EspeakOnlyRunner implements SystemTtsProcessRunner {
   async readdir(): Promise<string[]> {
     return [];
   }
-  /** Mirrors `buildEspeakInvocation`'s own argv shape (`-w <output.wav>` for synthesis). */
+  /** Mirrors whichever engine's argv shape actually arrived (`-w` espeak-ng, `-o` say, `-OutputPath` SAPI). */
   async run(invocation: SystemTtsInvocation, _options: RunOptions): Promise<void> {
-    const wIndex = invocation.args.indexOf("-w");
-    const outputPath = wIndex !== -1 ? invocation.args[wIndex + 1] : undefined;
+    const outputPath = findOutputPath(invocation.args);
     if (outputPath === undefined) {
-      throw new Error("EspeakOnlyRunner: missing -w output path");
+      throw new Error("EspeakOnlyRunner: could not find an output path in the invocation");
     }
     fs.writeFileSync(outputPath, makeSilentWav(300, 22050));
   }
-  /** `--voices=fr` (voice listing) is the only `capture()` call `SystemTtsProvider` makes for this engine. */
-  async capture(_invocation: SystemTtsInvocation, _options: RunOptions): Promise<string> {
-    return FAKE_ESPEAK_VOICES_TABLE;
+  /**
+   * Voice listing (`SystemTtsProvider.listVoices()`, also reached from
+   * `Pipeline.withDefaultVoice` when a profile names no explicit voice):
+   * espeak-ng's `--voices=fr` table on Linux, SAPI's `-List` (one name per
+   * line, `parseSapiVoices`) on Windows — `say -v '?'` never calls
+   * `capture()` with a flag this fake needs to distinguish, so the
+   * espeak-ng shape is also a harmless default there (`parseSayVoices`
+   * simply matches nothing and returns `[]`, exactly like a real answer it
+   * cannot parse would).
+   */
+  async capture(invocation: SystemTtsInvocation, _options: RunOptions): Promise<string> {
+    return invocation.args.includes("-List") ? FAKE_SAPI_VOICES_LIST : FAKE_ESPEAK_VOICES_TABLE;
   }
 }
