@@ -79,17 +79,19 @@ donc jamais `test/fakes/**`, qui est de toute façon exclu du VSIX par
 tests observent l'état de lecture (`FakeAudioSink.loads`/`.commands`,
 `FakeTtsProvider.requests`) sans dépendre du rendu réel de la Webview.
 
-### Deux profils `.vscode-test.mjs`
+### Profils `.vscode-test.mjs`
 
-`.vscode-test.mjs` définit deux configurations (`@vscode/test-cli` supporte un
-tableau de configs, chacune lançant sa propre instance de VS Code) :
+`.vscode-test.mjs` définit plusieurs configurations (`@vscode/test-cli`
+supporte un tableau de configs, chacune lançant sa propre instance de
+VS Code) :
 
 | Profil | `LLM_VOICE_TEST_FAKE_TTS` | Fichiers | Ce qu'il prouve |
 |---|---|---|---|
 | `fake-tts` | `1` | `out/test/integration/**` | AC-01..06 : session, highlight, pause, stop, Speak Selection — via `FakeTtsProvider` + `FakeAudioSink`. |
-| `real-provider-unavailable` | non défini | `out/test/integration-real/tts-unavailable.test.js` | Le vrai `OpenAICompatibleTtsProvider` + `EgressGuard` (mode `local`) contre le `baseUrl` par défaut du profil (`127.0.0.1:8004`, port fermé en CI) : message d'erreur propre, status bar `error`, aucune exception non gérée. |
+| `tts-auto-fallback-succeeds` | non défini | `out/test/integration-real/tts-fallback-succeeds.test.js` | Chaîne `"auto"` (ADR-009) : Chatterbox et Piper local injoignables (`LLM_VOICE_TEST_AUTO_*_BASE_URL`, ports fermés fixes — jamais un vrai serveur du poste de dev), repli sur `SystemTtsProvider` avec un `espeak-ng` factice isolé sur `PATH` : la lecture réussit, aucune fenêtre d'erreur. Revue coordinateur 2026-09-12 : remplace `real-provider-unavailable`, dont le résultat dépendait de la présence réelle d'un Chatterbox sur la machine. |
+| `tts-auto-fallback-fails` | non défini | `out/test/integration-real/tts-fallback-fails.test.js` | Même chaîne `"auto"`, mais `PATH` dépouillé comme `system-no-engine` : aucun repli nulle part, sur aucune machine — le dialogue « TTS indisponible » apparaît, aucune exception non gérée. |
 
-`npm run test:integration` (= `npm run build && vscode-test`) exécute les deux
+`npm run test:integration` (= `npm run build && vscode-test`) exécute tous les
 profils l'un après l'autre.
 
 ## E2E réel (S4.3) : `npm run test:integration-real`

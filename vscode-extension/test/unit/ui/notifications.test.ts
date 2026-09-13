@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  chooseTtsUnavailableMessage,
+  formatTtsUnavailableDiagnosticMessage,
   NotificationGate,
   notifyChunkInvalid,
   notifyNarratorUnavailable,
@@ -29,6 +31,61 @@ describe("notifyTtsUnavailable (CdC §52 'TTS indisponible', S7.3 actionable wor
     expect(await notifyTtsUnavailable(stub("Voir les réglages"))).toBe("openSettings");
     expect(await notifyTtsUnavailable(stub("Réessayer"))).toBe("retry");
     expect(await notifyTtsUnavailable(stub(undefined))).toBe("dismissed");
+  });
+});
+
+describe("chooseTtsUnavailableMessage (bug fix: voice-selection-not-applied / infinite loop, 2026-09-12)", () => {
+  it("simulates the real user's two consecutive failures: the second message differs from the first and names the cause", () => {
+    // First chunk-0 failure this Pipeline instance has ever shown a dialog
+    // for: no diagnostic yet, the plain actionable message.
+    const firstMessage = chooseTtsUnavailableMessage(false, undefined);
+    expect(firstMessage).toBe(TTS_UNAVAILABLE_MESSAGE);
+
+    // User clicks "Choisir une voix", picks Chatterbox, retries — second
+    // consecutive chunk-0 failure, same or different underlying cause.
+    const secondMessage = chooseTtsUnavailableMessage(true, {
+      providerId: "chatterbox",
+      baseUrl: "http://localhost:8004",
+      errorDetail: "ChatterboxProvider: HTTP 400 from http://localhost:8004/tts"
+    });
+
+    // The bug this test reproduces (fails before the fix): before
+    // `chooseTtsUnavailableMessage` existed, both dialogs used the exact
+    // same `TTS_UNAVAILABLE_MESSAGE` string — indistinguishable from the
+    // user's point of view, "boucle infinie".
+    expect(secondMessage).not.toBe(firstMessage);
+    expect(secondMessage).toContain("chatterbox");
+    expect(secondMessage).toContain("http://localhost:8004");
+    expect(secondMessage).toContain("HTTP 400");
+  });
+
+  it("still falls back to the plain message when no diagnostic is available yet, even on a repeat", () => {
+    expect(chooseTtsUnavailableMessage(true, undefined)).toBe(TTS_UNAVAILABLE_MESSAGE);
+  });
+});
+
+describe("formatTtsUnavailableDiagnosticMessage", () => {
+  it("names the provider, the endpoint and the real error", () => {
+    const message = formatTtsUnavailableDiagnosticMessage({
+      providerId: "piper-local",
+      baseUrl: "http://localhost:5000",
+      errorDetail: "HTTP 422 from http://localhost:5000/v1/audio/speech"
+    });
+    expect(message).toContain("piper-local");
+    expect(message).toContain("http://localhost:5000");
+    expect(message).toContain("HTTP 422");
+    expect(message).not.toBe(TTS_UNAVAILABLE_MESSAGE);
+  });
+
+  it("uses a plain-language endpoint label for the system provider (empty baseUrl)", () => {
+    const message = formatTtsUnavailableDiagnosticMessage({
+      providerId: "system",
+      baseUrl: "",
+      errorDetail: "no local engine found"
+    });
+    expect(message).not.toContain("()");
+    expect(message).toContain("system");
+    expect(message).toContain("no local engine found");
   });
 });
 

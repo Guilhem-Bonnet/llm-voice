@@ -36,6 +36,17 @@ export interface VoiceTierActions {
   executeCommand: (command: string) => PromiseLike<unknown>;
   openExternal: (url: string) => PromiseLike<unknown>;
   writeClipboardText: (text: string) => PromiseLike<void>;
+  /**
+   * Bug fix (voice-selection-not-applied / infinite loop): persists
+   * `ttsBindingForTier(tier)` onto the active profile (`Pipeline.
+   * applyVoiceTierChoice`). Called unconditionally, before any
+   * tier-specific dialog — the choice is made the moment the user picks a
+   * row in `Setup Voice`'s Quick Pick, not once a background install or a
+   * Docker container happens to finish, so it survives even a dismissed
+   * "chatterbox" modal (that dialog is instructions, not a confirmation of
+   * the choice itself).
+   */
+  applyProviderChoice: (tier: VoiceTier) => PromiseLike<void>;
 }
 
 const COPY_COMMAND_LABEL = "Copier la commande";
@@ -59,6 +70,10 @@ async function handleChatterbox(actions: VoiceTierActions): Promise<void> {
 
 /** `handleTier` (`SetupVoice.ts`'s exported name for this): dispatches on the Quick Pick's chosen tier. */
 export async function handleVoiceTier(tier: VoiceTier, actions: VoiceTierActions): Promise<void> {
+  // Bug fix (voice-selection-not-applied / infinite loop): persist the
+  // choice first, unconditionally — see `VoiceTierActions.applyProviderChoice`'s
+  // doc comment for why this must not wait for a tier's own dialog/install.
+  await actions.applyProviderChoice(tier);
   switch (tier) {
     case "system":
       // Nothing to install — `SystemTtsProvider` (S7.1) already works.

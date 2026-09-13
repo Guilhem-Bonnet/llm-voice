@@ -5,8 +5,10 @@ import {
   INSTALL_PIPER_VOICE_COMMAND,
   SYSTEM_VOICE_READY_MESSAGE,
   PIPER_VOICE_SIZE_LABEL,
-  VOICE_TIER_OPTIONS
+  VOICE_TIER_OPTIONS,
+  ttsBindingForTier
 } from "../../../src/onboarding/voiceTiers.js";
+import { CHATTERBOX_LOCAL_PRESET } from "../../../src/tts/presets.js";
 
 describe("VOICE_TIER_OPTIONS", () => {
   it("has exactly three tiers, in the order the S7.2 story asks for", () => {
@@ -57,6 +59,23 @@ describe("Chatterbox instructions", () => {
   it("the docs link is a resolvable https URL", () => {
     expect(() => new URL(CHATTERBOX_DOCS_URL)).not.toThrow();
     expect(CHATTERBOX_DOCS_URL.startsWith("https://")).toBe(true);
+  });
+});
+
+describe("ttsBindingForTier (bug fix: voice-selection-not-applied / infinite loop, 2026-09-12)", () => {
+  it("'system' resolves to a concrete providerId, never left on 'auto'", () => {
+    expect(ttsBindingForTier("system")).toEqual({ providerId: "system" });
+  });
+
+  it("'piper' also resolves to providerId 'system' — SystemTtsProvider is what actually finds the installed Piper engine", () => {
+    expect(ttsBindingForTier("piper")).toEqual({ providerId: "system" });
+  });
+
+  it("'chatterbox' resolves to providerId 'chatterbox' at the real local preset baseUrl", () => {
+    expect(ttsBindingForTier("chatterbox")).toEqual({
+      providerId: "chatterbox",
+      baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl
+    });
   });
 });
 

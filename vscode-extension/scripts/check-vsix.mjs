@@ -42,6 +42,30 @@ const FORBIDDEN = [
   ]
 ];
 
+/**
+ * Bug fix (voice-selection-not-applied / infinite loop investigation,
+ * 2026-09-12, `_grimoire/_memory/shared-context.md`): `FORBIDDEN` above is a
+ * blocklist — anything nobody thought to name a pattern for ships by
+ * default, the exact same "allow-by-default" failure mode `.vscodeignore`
+ * itself has (this file's own header). A stray top-level directory that
+ * matches none of the `FORBIDDEN` predicates (an ops/tooling folder such as
+ * `_grimoire-output/`, a future scratch directory, an editor swap file at
+ * the repository root) would sail through silently.
+ *
+ * `ALLOWED_PREFIXES`/`ALLOWED_EXACT_FILES` add the other half: an explicit
+ * whitelist of what *may* ship, checked in addition to (never instead of)
+ * `FORBIDDEN` above — a file can fail this gate either by matching a
+ * forbidden pattern *or* by matching no allowed one, whichever fires first.
+ * Extending what ships (a new `media/` asset, a new top-level doc) means
+ * adding to this list deliberately, not editing `.vscodeignore` alone.
+ */
+const ALLOWED_PREFIXES = ["media/", "resources/", "schemas/", "dist/"];
+const ALLOWED_EXACT_FILES = ["package.json", "README.md", "LICENSE", "CHANGELOG.md"];
+
+function isWhitelisted(file) {
+  return ALLOWED_EXACT_FILES.includes(file) || ALLOWED_PREFIXES.some((prefix) => file.startsWith(prefix));
+}
+
 /** Files whose absence means the package is broken. */
 const REQUIRED = [
   "package.json",
@@ -78,6 +102,9 @@ for (const file of listed) {
     if (matches(file)) {
       violations.push(`${label}: ${file}`);
     }
+  }
+  if (!isWhitelisted(file)) {
+    violations.push(`not on the shipping whitelist (ALLOWED_PREFIXES/ALLOWED_EXACT_FILES): ${file}`);
   }
 }
 

@@ -14,7 +14,7 @@
 import type { Voice } from "../core/tts.js";
 
 /** First subtag of a BCP-47 tag, lower-cased (`"fr-FR"` → `"fr"`, `"en"` → `"en"`). */
-function primaryLanguageSubtag(tag: string): string {
+export function primaryLanguageSubtag(tag: string): string {
   return tag.split(/[-_]/)[0]!.toLowerCase();
 }
 
@@ -96,4 +96,30 @@ export function buildVoiceQuickPickItems(
     }
     return a.label.localeCompare(b.label);
   });
+}
+
+/**
+ * Bug fix (voice-selection-not-applied / infinite loop, 2026-09-12):
+ * `Pipeline.withDefaultVoice`'s pure decision — a profile with no
+ * `tts.voice` (the common case since `CHATTERBOX_LOCAL_PRESET` stopped
+ * shipping a default reference clone, `presets.ts`'s own doc comment) must
+ * never reach a provider's `synthesize()` in "predefined voice" mode
+ * without one: several community servers (Chatterbox included) reject that
+ * request outright (`HTTP 400`) rather than picking a voice on their own.
+ *
+ * Picks the first voice whose declared language matches `profileLanguage`
+ * (same `primaryLanguageSubtag` comparison as `isEnglishVoice`), falling
+ * back to the very first voice in the list — never `undefined` unless
+ * `voices` itself is empty, so a provider that returns *any* voice always
+ * gets a concrete default instead of a request "vouée à un 400".
+ */
+export function defaultVoiceFor(voices: readonly Voice[], profileLanguage: string): Voice | undefined {
+  if (voices.length === 0) {
+    return undefined;
+  }
+  const wanted = primaryLanguageSubtag(profileLanguage);
+  const matching = voices.find(
+    (voice) => voice.language !== undefined && primaryLanguageSubtag(voice.language) === wanted
+  );
+  return matching ?? voices[0];
 }

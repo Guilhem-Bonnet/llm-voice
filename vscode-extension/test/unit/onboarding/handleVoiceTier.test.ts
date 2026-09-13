@@ -10,17 +10,26 @@ import {
   CHATTERBOX_COMPOSE_COMMAND,
   CHATTERBOX_DOCS_URL,
   INSTALL_PIPER_VOICE_COMMAND,
-  SYSTEM_VOICE_READY_MESSAGE
+  SYSTEM_VOICE_READY_MESSAGE,
+  ttsBindingForTier,
+  type VoiceTier
 } from "../../../src/onboarding/voiceTiers.js";
 
 function fakeActions(showMessageReturns: string | undefined = undefined): VoiceTierActions & {
-  calls: { showMessage: unknown[][]; executeCommand: unknown[][]; openExternal: unknown[][]; writeClipboardText: unknown[][] };
+  calls: {
+    showMessage: unknown[][];
+    executeCommand: unknown[][];
+    openExternal: unknown[][];
+    writeClipboardText: unknown[][];
+    applyProviderChoice: VoiceTier[];
+  };
 } {
   const calls = {
     showMessage: [] as unknown[][],
     executeCommand: [] as unknown[][],
     openExternal: [] as unknown[][],
-    writeClipboardText: [] as unknown[][]
+    writeClipboardText: [] as unknown[][],
+    applyProviderChoice: [] as VoiceTier[]
   };
   return {
     calls,
@@ -39,7 +48,11 @@ function fakeActions(showMessageReturns: string | undefined = undefined): VoiceT
     writeClipboardText: vi.fn((...args: unknown[]) => {
       calls.writeClipboardText.push(args);
       return Promise.resolve(undefined);
-    }) as VoiceTierActions["writeClipboardText"]
+    }) as VoiceTierActions["writeClipboardText"],
+    applyProviderChoice: vi.fn((tier: VoiceTier) => {
+      calls.applyProviderChoice.push(tier);
+      return Promise.resolve(undefined);
+    }) as VoiceTierActions["applyProviderChoice"]
   };
 }
 
@@ -105,5 +118,31 @@ describe("handleVoiceTier", () => {
 
     expect(actions.calls.writeClipboardText).toEqual([]);
     expect(actions.calls.openExternal).toEqual([]);
+  });
+});
+
+describe("handleVoiceTier persists the choice (bug fix: voice-selection-not-applied / infinite loop, 2026-09-12)", () => {
+  // Reproduces the real user's report: before this fix, `grep -rn
+  // "providerId" src/onboarding/*.ts` matched nothing at all — choosing any
+  // tier here never touched `profiles.json`, so the next `Speak` failed
+  // exactly the same way ("Boucle infinie"). `applyProviderChoice` not being
+  // called at all is the pre-fix state these three assertions catch.
+  it("'system': applies ttsBindingForTier('system') to the active profile", async () => {
+    const actions = fakeActions();
+    await handleVoiceTier("system", actions);
+    expect(actions.calls.applyProviderChoice).toEqual(["system"]);
+  });
+
+  it("'piper': applies ttsBindingForTier('piper') before delegating to the S7.1 install command", async () => {
+    const actions = fakeActions();
+    await handleVoiceTier("piper", actions);
+    expect(actions.calls.applyProviderChoice).toEqual(["piper"]);
+    expect(ttsBindingForTier("piper")).toEqual({ providerId: "system" });
+  });
+
+  it("'chatterbox': applies the choice even when the install-instructions dialog is dismissed without a button", async () => {
+    const actions = fakeActions(undefined);
+    await handleVoiceTier("chatterbox", actions);
+    expect(actions.calls.applyProviderChoice).toEqual(["chatterbox"]);
   });
 });

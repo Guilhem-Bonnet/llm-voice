@@ -73,29 +73,37 @@ clé de registre étendue en conséquence). Les appels concurrents au premier
 comme tout autre échec de synthèse — pas de repli silencieux vers une autre
 voix, ce qui surprendrait l'utilisateur sans avertissement.
 
-Le preset `chatterbox-local` (`presets.ts`) référence par défaut la voix
-validée lors du run E2E réel S4.3 (5 candidats écoutés, retenue par
-l'utilisateur) : clonage contre `fr-female-siwis.wav` (*The SIWIS French
-Speech Synthesis Database*, CC BY 4.0, détail dans `docs/voices.md` et
-`deploy/tts/reference-audio/ATTRIBUTION.md`), `exaggeration: 0.4`,
-`cfg_weight: 0.5`, `temperature: 0.6`, `language: "fr"`.
+**Bug fix (voice-selection-not-applied / boucle infinie, 2026-09-12,
+`_grimoire/_memory/shared-context.md`) — ce preset ne référence plus de
+clonage par défaut.** Avant ce correctif, `chatterbox-local` (`presets.ts`)
+référençait par défaut la voix validée lors du run E2E réel S4.3 (5
+candidats écoutés, retenue par l'utilisateur) : clonage contre
+`fr-female-siwis.wav` (*The SIWIS French Speech Synthesis Database*, CC BY
+4.0, détail dans `docs/voices.md` et
+`deploy/tts/reference-audio/ATTRIBUTION.md`), via un chemin **relatif**
+(`../deploy/tts/reference-audio/fr-female-siwis.wav`) résolu contre
+`context.extensionUri` (`Pipeline.ttsFor` → `resolveReferenceAudioPath`).
+Cette forme ne se résout que dans un **checkout du dépôt** — un `.vsix`
+empaqueté n'embarque pas `deploy/` (outillage ops, pas contenu d'extension) —
+donc tout profil par défaut installé depuis un VSIX réel pointait vers un
+fichier inexistant. `ChatterboxProvider` dégradait déjà proprement ce cas
+(repli vers `voice_mode: "predefined"`, defect 3 de ce même correctif), mais
+rien ne fournissait alors de `predefined_voice_id` : le serveur Chatterbox
+communautaire rejette une requête `predefined` sans voix (`HTTP 400`) — la
+cause racine du « LLM Voice : aucune voix configurée » vécu en boucle par un
+utilisateur réel sur la 0.2.0.
 
-**Comment l'extension localise cette référence** (`Pipeline.ttsFor` →
-`resolveReferenceAudioPath`) : un chemin absolu est utilisé tel quel (voix
-enregistrée par l'utilisateur, `docs/voices.md`) ; un chemin relatif — celui
-du preset, `../deploy/tts/reference-audio/fr-female-siwis.wav` — est résolu
-contre `context.extensionUri`. Cette forme relative ne se résout que dans un
-**checkout du dépôt** : `context.extensionUri` y vaut le dossier
-`vscode-extension/`, donc `../deploy/...` atteint bien
-`deploy/tts/reference-audio/` juste à côté (lancement dev `F5`,
-`vscode-test`, scripts E2E réels — tous fonctionnent ainsi). **Limite
-connue** : un `.vsix` empaqueté n'embarque pas `deploy/` (outillage ops, pas
-contenu d'extension — la liste de fichiers de `vsce package` se limite à
-`vscode-extension/`), donc le clonage par défaut n'a alors aucun fichier de
-référence à lire et `synthesize()` échoue proprement (upload → erreur
-fichier introuvable → "TTS unavailable"/Retry, pas de repli silencieux).
-Embarquer la référence *dans* le paquet d'extension est un travail futur,
-hors périmètre S4.2.
+**Tranche retenue** : ne plus livrer de référence de clonage par défaut
+(`CHATTERBOX_LOCAL_PRESET.referenceAudio` est maintenant `undefined`)
+plutôt que d'embarquer l'échantillon dans le paquet. Le clonage de voix
+reste entièrement supporté — `tts.referenceAudio` explicite via l'éditeur de
+profil ou `Use My Own Voice` (S8.2) — ce n'est simplement plus le défaut
+imposé à l'installation. En complément, `Pipeline.withDefaultVoice` résout
+désormais systématiquement une voix concrète depuis `listVoices()` (première
+voix dont la langue correspond au profil, sinon la première) quand
+`tts.voice` n'est pas défini, avant tout appel `synthesize()` — un profil
+sans voix explicite n'atteint donc plus jamais un provider en mode
+« predefined » sans `voice`, qu'il ait ou non de `referenceAudio` configuré.
 
 ## Kokoro (CdC §27) / Piper (ADR-009 niveau 1b)
 

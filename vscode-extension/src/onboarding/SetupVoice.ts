@@ -24,16 +24,30 @@ function toQuickPickItem(option: VoiceTierOption): VoiceTierQuickPickItem {
   };
 }
 
-const REAL_ACTIONS: VoiceTierActions = {
-  showMessage: (message, options, ...items) =>
-    vscode.window.showInformationMessage(message, options, ...items),
-  executeCommand: (command) => vscode.commands.executeCommand(command),
-  openExternal: (url) => vscode.env.openExternal(vscode.Uri.parse(url)),
-  writeClipboardText: (text) => vscode.env.clipboard.writeText(text)
-};
+/**
+ * Bug fix (voice-selection-not-applied / infinite loop): the one side
+ * effect `SetupVoice.ts` cannot itself perform — writing the chosen tier's
+ * `tts` binding onto the active profile requires `ProfileRepository`,
+ * which lives behind `Pipeline` (`extension.ts` wires the real
+ * implementation to `Pipeline.applyVoiceTierChoice`, resolved lazily
+ * through `pipelineRef` since `llmVoice.setupVoice` registers before the
+ * `Pipeline` instance itself exists).
+ */
+export type ApplyProviderChoice = (tier: VoiceTier) => Promise<void>;
+
+function realActions(applyProviderChoice: ApplyProviderChoice): VoiceTierActions {
+  return {
+    showMessage: (message, options, ...items) =>
+      vscode.window.showInformationMessage(message, options, ...items),
+    executeCommand: (command) => vscode.commands.executeCommand(command),
+    openExternal: (url) => vscode.env.openExternal(vscode.Uri.parse(url)),
+    writeClipboardText: (text) => vscode.env.clipboard.writeText(text),
+    applyProviderChoice
+  };
+}
 
 /** Registered as `llmVoice.setupVoice` (`extension.ts` — not `commands/index.ts`, S7.2's own file). */
-export async function setupVoice(): Promise<void> {
+export async function setupVoice(applyProviderChoice: ApplyProviderChoice): Promise<void> {
   const picked = await vscode.window.showQuickPick(VOICE_TIER_OPTIONS.map(toQuickPickItem), {
     title: "LLM Voice : choisir une voix",
     placeHolder: "Quel niveau de qualité vocale voulez-vous utiliser ?",
@@ -43,5 +57,5 @@ export async function setupVoice(): Promise<void> {
   if (picked === undefined) {
     return;
   }
-  await handleVoiceTier(picked.tier, REAL_ACTIONS);
+  await handleVoiceTier(picked.tier, realActions(applyProviderChoice));
 }

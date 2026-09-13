@@ -5,7 +5,7 @@
  * chunk 0 always succeeds and every later chunk fails for good after
  * `AudioQueue`'s `maxRetries` — deterministically reaching
  * `Pipeline.handleChunkError`'s "later chunk" branch (Skip/Stop) instead of
- * the first-chunk "TTS unavailable" one `tts-unavailable.test.ts` covers.
+ * the first-chunk "TTS unavailable" one `tts-fallback-fails.test.ts` covers.
  *
  * `vscode.window.showErrorMessage` is monkey-patched for the duration of
  * each test (restored in `finally`) to stub the button the user would click

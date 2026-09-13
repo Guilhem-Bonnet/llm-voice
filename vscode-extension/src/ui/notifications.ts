@@ -31,6 +31,65 @@ export type ShowMessage = (message: string, ...items: string[]) => PromiseLike<s
  * most common cause of AC-01 chunk-0 failures on a fresh install).
  */
 export const TTS_UNAVAILABLE_MESSAGE = "LLM Voice : aucune voix configurée.";
+
+/**
+ * Bug fix (voice-selection-not-applied / infinite loop, real user report
+ * 2026-09-12): before this fix, `Pipeline.handleChunkError` showed
+ * `TTS_UNAVAILABLE_MESSAGE` — the exact same wording — every single time
+ * chunk 0 failed, including right after the user had just picked a
+ * (different) voice from `Choisir une voix`. Nothing in the message ever
+ * told them *which* provider had just been tried, on what address, or why
+ * it failed — so a second, third, fourth genuinely different failure
+ * looked, to the user, like clicking "Choisir une voix" had done nothing
+ * at all ("Boucle infinie", the reported symptom).
+ *
+ * `formatTtsUnavailableDiagnosticMessage` names all three: the resolved
+ * `providerId`, the endpoint it was reached on (or a plain-language "no
+ * network endpoint" for `system`, whose `baseUrl` is always `""`), and the
+ * real error text from the failed synthesis (`PlaybackErrorInfo.message`,
+ * already captured by `AudioQueue`/`PlaybackController`, never invented
+ * here). `chooseTtsUnavailableMessage` is `Pipeline.handleChunkError`'s one
+ * decision point: the *first* chunk-0 failure this `Pipeline` instance has
+ * ever shown a dialog for still gets the plain, actionable
+ * `TTS_UNAVAILABLE_MESSAGE` (a first-time user needs "here's what to do",
+ * not a diagnostic they cannot yet interpret) — every failure after that
+ * gets the diagnostic wording instead, so two consecutive failures are
+ * never worded identically again.
+ */
+export interface TtsFailureDiagnostic {
+  providerId: string;
+  baseUrl: string;
+  errorDetail: string;
+}
+
+const NO_NETWORK_ENDPOINT_LABEL = "voix locale système, aucune adresse réseau";
+
+export function formatTtsUnavailableDiagnosticMessage(diagnostic: TtsFailureDiagnostic): string {
+  const endpoint = diagnostic.baseUrl.length > 0 ? diagnostic.baseUrl : NO_NETWORK_ENDPOINT_LABEL;
+  return (
+    `LLM Voice : la voix « ${diagnostic.providerId} » (${endpoint}) a échoué — ${diagnostic.errorDetail}. ` +
+    "Choisissez un autre provider ou corrigez celui-ci."
+  );
+}
+
+/**
+ * `seenBefore`: `true` once this `Pipeline` instance has already shown the
+ * generic `TTS_UNAVAILABLE_MESSAGE` at least once (tracked outside
+ * `NotificationGate`, which resets every session — this must survive across
+ * `start()` calls to actually break the loop). `diagnostic` is `undefined`
+ * only when no resolved provider/error is available yet, in which case the
+ * generic message is the only option left.
+ */
+export function chooseTtsUnavailableMessage(
+  seenBefore: boolean,
+  diagnostic: TtsFailureDiagnostic | undefined
+): string {
+  if (seenBefore && diagnostic !== undefined) {
+    return formatTtsUnavailableDiagnosticMessage(diagnostic);
+  }
+  return TTS_UNAVAILABLE_MESSAGE;
+}
+
 export const NARRATOR_UNAVAILABLE_MESSAGE = "LLM Voice: Narrator unavailable";
 
 export const CHOOSE_VOICE_LABEL = "Choisir une voix";
@@ -47,10 +106,19 @@ export type TtsUnavailableChoice = "setupVoice" | "openSettings" | "retry" | "di
  * (re-attempts only the chunk that failed, CdC §52 "sans recréer la
  * session" — kept for a TTS server that is merely down/loading rather than
  * genuinely unconfigured).
+ *
+ * `message` defaults to `TTS_UNAVAILABLE_MESSAGE`, but the caller
+ * (`Pipeline.handleChunkError`) passes `chooseTtsUnavailableMessage`'s
+ * result from the second chunk-0 failure onward (bug fix,
+ * voice-selection-not-applied / infinite loop) — the three buttons stay the
+ * same either way, only the wording changes.
  */
-export async function notifyTtsUnavailable(showErrorMessage: ShowMessage): Promise<TtsUnavailableChoice> {
+export async function notifyTtsUnavailable(
+  showErrorMessage: ShowMessage,
+  message: string = TTS_UNAVAILABLE_MESSAGE
+): Promise<TtsUnavailableChoice> {
   const choice = await showErrorMessage(
-    TTS_UNAVAILABLE_MESSAGE,
+    message,
     CHOOSE_VOICE_LABEL,
     OPEN_TTS_SETTINGS_LABEL,
     RETRY_LABEL
