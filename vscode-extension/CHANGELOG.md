@@ -30,6 +30,17 @@ Ce fichier est la seule source de vérité (voir `CONTRIBUTING.md`) ; le
 
 - **Renommage `VoiceProfile.markdownPolicy` → `markdown`, `syncMode` → `synchronization.mode`** : la première implémentation de l'éditeur de profils avait inventé ces deux noms ; le cahier des charges §18 nomme ces blocs `markdown` et `synchronization.mode` verbatim, et le schéma suit maintenant cet exemple à la lettre. Un `profiles.json` écrit avant ce renommage continue de charger sans intervention : `VoiceProfileSchema` migre les anciens noms vers les nouveaux au chargement (`profile.schema.ts`, testé par `test/unit/profiles/profileForm.test.ts` et `test/integration/syncModeAndMarkdownPolicy.test.ts`).
 
+## [0.2.1] - 2026-09-12
+
+### Fixed
+
+- Boucle sans fin « aucune voix configurée » : le choix de voix n'était jamais écrit dans le profil, si bien que le même message revenait indéfiniment. Le provider choisi est désormais enregistré et visible dans la vue Profils.
+- Deux échecs consécutifs ne produisent plus le même message : le second nomme le provider essayé, son adresse et l'erreur réelle.
+- Les profils par défaut ne référencent plus un fichier audio qui n'était livré dans aucun paquet.
+- Une voix par défaut est résolue avant chaque synthèse, au lieu d'envoyer une requête que le serveur refuse.
+- Les tests d'intégration ne dépendent plus des services présents sur la machine.
+- Le paquet publié est verrouillé par une liste blanche de fichiers.
+
 ## [0.2.0] - 2026-09-12
 
 ### Added
