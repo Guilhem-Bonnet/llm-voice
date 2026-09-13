@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Voice } from "../../../src/core/tts.js";
-import { buildVoiceQuickPickItems, isEnglishVoice, previewButton } from "../../../src/profiles/voiceBrowser.js";
+import {
+  buildVoiceQuickPickItems,
+  defaultVoiceFor,
+  isEnglishVoice,
+  previewButton
+} from "../../../src/profiles/voiceBrowser.js";
 
 describe("isEnglishVoice", () => {
   it("flags a voice declared en-US against a French profile", () => {
@@ -65,6 +70,31 @@ describe("buildVoiceQuickPickItems", () => {
     const items = buildVoiceQuickPickItems(voices, "fr-FR", "b");
     const bravo = items.find((item) => item.voiceId === "b");
     expect(bravo?.label).toContain("$(check)");
+  });
+});
+
+describe("defaultVoiceFor (bug fix: voice-selection-not-applied / infinite loop, no voice must never mean a request 'vouée à un 400')", () => {
+  const voices: Voice[] = [
+    { id: "gianna", label: "Gianna", language: "en-US" },
+    { id: "siwis", label: "Siwis", language: "fr-FR" },
+    { id: "robert", label: "Robert", language: "en-US" }
+  ];
+
+  it("picks the first voice whose language matches the profile's language", () => {
+    expect(defaultVoiceFor(voices, "fr-FR")?.id).toBe("siwis");
+  });
+
+  it("falls back to the very first voice when none match the profile's language", () => {
+    expect(defaultVoiceFor(voices, "de-DE")?.id).toBe("gianna");
+  });
+
+  it("returns undefined only when the provider has no voice at all", () => {
+    expect(defaultVoiceFor([], "fr-FR")).toBeUndefined();
+  });
+
+  it("ignores voices with no declared language when a match exists", () => {
+    const mixed: Voice[] = [{ id: "unknown", label: "Mystery" }, { id: "siwis", label: "Siwis", language: "fr-FR" }];
+    expect(defaultVoiceFor(mixed, "fr-FR")?.id).toBe("siwis");
   });
 });
 

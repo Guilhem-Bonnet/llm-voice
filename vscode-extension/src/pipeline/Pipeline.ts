@@ -54,10 +54,12 @@ import { HighlightController } from "../highlight/HighlightController.js";
 import { PlayerViewProvider } from "../views/player/PlayerViewProvider.js";
 import { StatusBar, type StatusBarPlaybackState, type StatusBarViewModel } from "../ui/StatusBar.js";
 import {
+  chooseTtsUnavailableMessage,
   NotificationGate,
   notifyChunkInvalid,
   notifyNarratorUnavailable,
   notifyTtsUnavailable,
+  type TtsFailureDiagnostic,
   type TtsUnavailableChoice
 } from "../ui/notifications.js";
 import { formatProviderHealthQuickPickItem, titleCaseProviderId } from "../ui/providerStatusText.js";
@@ -116,8 +118,9 @@ import {
   installClaudeHook as runInstallClaudeHook,
   uninstallClaudeHook as runUninstallClaudeHook
 } from "../claude/ClaudeHookCommand.js";
-import { buildVoiceQuickPickItems, previewButton } from "../profiles/voiceBrowser.js";
+import { buildVoiceQuickPickItems, defaultVoiceFor, previewButton } from "../profiles/voiceBrowser.js";
 import { useOwnVoice as runUseOwnVoice } from "../onboarding/UseOwnVoice.js";
+import { ttsBindingForTier, type VoiceTier } from "../onboarding/voiceTiers.js";
 import {
   ProfileEditorPanel,
   type ProfileEditorDeps,
@@ -130,6 +133,13 @@ import {
 const DEFAULT_READY_TIMEOUT_MS = 30_000;
 /** Polling interval while `start()` waits on a `"Loading"` provider. */
 const READY_POLL_INTERVAL_MS = 500;
+/**
+ * Bug fix (voice-selection-not-applied / infinite loop, fix(review)):
+ * bounds `Pipeline.withDefaultVoice`'s `listVoices()` lookup — an
+ * unreachable provider must fail exactly as fast as before this fix added
+ * the lookup (see that method's own doc comment).
+ */
+const DEFAULT_VOICE_LOOKUP_TIMEOUT_MS = 3_000;
 
 /**
  * Mirrors `package.json#llmVoice.testVoice.text`'s default (CdC §50's French
@@ -274,6 +284,23 @@ export class Pipeline implements PipelineFacade {
   private captureAbort: AbortController | undefined;
   /** CdC §52 "une seule notification par session par type" (anti-spam); reset in `start()`. */
   private readonly notificationGate = new NotificationGate();
+  /**
+   * Bug fix (voice-selection-not-applied / infinite loop, 2026-09-12): the
+   * resolved provider actually used by the *current* session's `tts`
+   * instance (`startInternal`/`speakTestText`) — unlike `notificationGate`,
+   * deliberately never reset per session, so `handleChunkError` can tell a
+   * genuinely repeated failure from a first one even across separate
+   * `Speak` attempts (the real user's reported loop spanned several of
+   * them, not one session).
+   */
+  private currentResolvedTts: ResolvedTtsConfig | undefined;
+  /**
+   * `true` once this `Pipeline` instance has shown `TTS_UNAVAILABLE_MESSAGE`
+   * at least once — every chunk-0 failure after that gets
+   * `chooseTtsUnavailableMessage`'s diagnostic wording instead (same fix),
+   * so the user never sees the exact same uninformative dialog twice.
+   */
+  private ttsUnavailableSeenBefore = false;
   private cachedLocalModeResult: VerifyLocalModeResult | undefined;
   private healthCache: { entries: readonly ProviderHealthEntry[]; expiresAt: number } | undefined;
   /**
@@ -526,6 +553,7 @@ export class Pipeline implements PipelineFacade {
       });
       this.currentSessionBuild = build;
       const tts = await this.ttsFor(profile);
+      this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
       // CdC §51 "Loading": a still-warming-up TTS server gets a grace period
       // instead of an immediate failure on the very first synthesis.
       await this.waitForTtsReady(tts, abort.signal);
@@ -535,9 +563,16 @@ export class Pipeline implements PipelineFacade {
       this.player.reveal();
 
       this.beginPerfSession();
+      // Bug fix (voice-selection-not-applied / infinite loop): a profile
+      // with no explicit `tts.voice` must never reach `synthesize()` in a
+      // "predefined voice" mode without one — several servers (Chatterbox
+      // included) reject that outright (HTTP 400) instead of picking a
+      // voice on their own. Never persisted to `profiles.json` — a
+      // session-scoped default only, exactly like `forceFaithful` above.
+      const effectiveProfile = await this.withDefaultVoice(profile, tts, abort.signal);
       await this.controller.start({
         segments: build.segments,
-        profile,
+        profile: effectiveProfile,
         tts,
         sink,
         sealed: true
@@ -902,11 +937,17 @@ export class Pipeline implements PipelineFacade {
     // about the TTS engine's voice/speed/exaggeration, not the narrator.
     const build = await buildSession(segments, profile, undefined, {});
     const tts = await this.ttsFor(profile);
+    this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
     const sink = this.sinkOverride ?? this.player.audioSink;
     this.currentProfileLabel = profile.label;
     this.player.reveal();
     this.beginPerfSession();
-    await this.controller.start({ segments: build.segments, profile, tts, sink, sealed: true });
+    // Bug fix (voice-selection-not-applied / infinite loop): same
+    // session-scoped default-voice fallback as `startInternal` — Test Voice
+    // must not be the one path left able to send a voice-less "predefined"
+    // request.
+    const effectiveProfile = await this.withDefaultVoice(profile, tts);
+    await this.controller.start({ segments: build.segments, profile: effectiveProfile, tts, sink, sealed: true });
   }
 
   /** `LLM Voice: Test Voice` (CdC §50): faithful reading of a short reference text via the pipeline. */
@@ -1752,6 +1793,104 @@ export class Pipeline implements PipelineFacade {
   }
 
   /**
+   * Bug fix (voice-selection-not-applied / infinite loop, 2026-09-12):
+   * resolves a concrete `tts.voice` for `profile` when it does not already
+   * name one, from the resolved provider's own `listVoices()`
+   * (`defaultVoiceFor`: first voice matching `profile.language`, else the
+   * provider's first voice) — never persisted to `profiles.json`, a
+   * session-scoped fallback only, exactly like `SessionBuild.forceFaithful`.
+   *
+   * Safe to apply unconditionally, including when the profile *does* carry
+   * a `referenceAudio` for voice cloning: `ChatterboxProvider` only reads
+   * `request.voice` when cloning did **not** happen (`buildTtsRequestBody`'s
+   * own logic) — a voice cloning session that succeeds simply ignores the
+   * extra field. This is also what makes it correct for the case
+   * `ChatterboxProvider` itself cannot detect ahead of time: a
+   * `referenceAudio` that fails to upload/read falls back to
+   * `voice_mode: "predefined"` *inside* `synthesize()`, after this method
+   * already ran — without this fallback already having supplied a `voice`,
+   * that predefined-mode retry would still have nothing to send and would
+   * still 400.
+   *
+   * fix(review): `tts.listVoices()` (unlike `tts.health()`) does not wrap
+   * its `egress.fetch()` in a try/catch of its own (`ChatterboxProvider`'s
+   * file), so an unreachable/unresponsive provider can leave this call
+   * pending far longer than a closed-port refusal — observed lengthening
+   * the real "TTS unavailable" integration test (closed loopback port)
+   * past its 20s Mocha timeout. Bounded to `DEFAULT_VOICE_LOOKUP_TIMEOUT_MS`
+   * (a provider that cannot even answer this quickly cannot synthesize
+   * either — `handleChunkError`'s existing failure path reports that
+   * exactly as before, just without this lookup adding to the wait) and to
+   * `signal`, so a Stop/new capture during the lookup still cancels it.
+   *
+   * fix(review): builds the bounded signal by hand (`AbortController` +
+   * `setTimeout`, `unref()`'d) rather than `AbortSignal.any`/
+   * `AbortSignal.timeout` — the same manual pattern `AudioQueue.withTimeout`
+   * already uses in this codebase, kept for consistency and because it
+   * needs no assumption about which of those two newer static methods the
+   * extension host's bundled Node actually ships.
+   */
+  private async withDefaultVoice(
+    profile: VoiceProfile,
+    tts: TtsProvider,
+    signal?: AbortSignal
+  ): Promise<VoiceProfile> {
+    if (profile.tts.voice !== undefined || tts.listVoices === undefined) {
+      return profile;
+    }
+    const controller = new AbortController();
+    if (signal?.aborted === true) {
+      controller.abort();
+    }
+    const onAbort = (): void => controller.abort();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    const timer = setTimeout(() => controller.abort(), DEFAULT_VOICE_LOOKUP_TIMEOUT_MS);
+    if (typeof (timer as unknown as { unref?: () => void }).unref === "function") {
+      (timer as unknown as { unref: () => void }).unref();
+    }
+    let voices: Voice[];
+    try {
+      voices = await tts.listVoices(controller.signal);
+    } catch (error) {
+      this.output.debug("default voice lookup failed, proceeding without one", { error: messageOf(error) });
+      return profile;
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+    }
+    const defaultVoice = defaultVoiceFor(voices, profile.language);
+    if (defaultVoice === undefined) {
+      return profile;
+    }
+    return { ...profile, tts: { ...profile.tts, voice: defaultVoice.id } };
+  }
+
+  /**
+   * `LLM Voice: Setup Voice` (S7.2), bug fix (voice-selection-not-applied /
+   * infinite loop, 2026-09-12): applies `ttsBindingForTier(tier)` to the
+   * *active* profile (`ProfileRepository.getSelected`), replacing its
+   * entire `tts` binding — a fresh, clean choice rather than a merge, so a
+   * profile previously stuck on a stale `baseUrl`/`voice` from a different
+   * provider never survives underneath the new one (`browseVoices()`
+   * merges because it only ever changes `voice` on an already-correct
+   * provider; this changes the provider itself). Called by
+   * `extension.ts`'s `llmVoice.setupVoice` wiring — never by
+   * `SetupVoice.ts` directly, which has no `ProfileRepository` access.
+   */
+  async applyVoiceTierChoice(tier: VoiceTier): Promise<void> {
+    const profile = await this.profiles.getSelected();
+    const binding = ttsBindingForTier(tier);
+    const updated = await this.profiles.update(profile.id, (current) => ({
+      ...current,
+      tts: { ...binding }
+    }));
+    this.currentProfileLabel = updated.label;
+    void vscode.window.showInformationMessage(
+      `LLM Voice : voix « ${titleCaseProviderId(binding.providerId)} » appliquée au profil « ${updated.label} ».`
+    );
+  }
+
+  /**
    * Builds (or reuses) the `NarratorProvider` for a `"narrated"` profile.
    * `resolveNarratorConfig` returning `undefined` means the profile carries
    * no narrator binding at all — `SessionFactory` already treats that as
@@ -1881,6 +2020,19 @@ export class Pipeline implements PipelineFacade {
    * Both dialogs are gated to once per session by `notificationGate` (CdC
    * §52 anti-spam); "Retry" re-arms `ttsUnavailable` so a second genuine
    * failure still prompts again instead of silently stopping.
+   *
+   * Bug fix (voice-selection-not-applied / infinite loop, 2026-09-12): the
+   * chunk-0 dialog used to show `TTS_UNAVAILABLE_MESSAGE` — the exact same
+   * wording — every time, including right after the user had just picked a
+   * different voice from that same dialog's "Choisir une voix" button. From
+   * the second time this `Pipeline` instance has ever shown it
+   * (`ttsUnavailableSeenBefore`, deliberately not reset by
+   * `notificationGate.reset()` — the real report spanned several separate
+   * `Speak` attempts, not one session), `chooseTtsUnavailableMessage` swaps
+   * in a diagnostic message naming the resolved provider, its endpoint, and
+   * `info.message` (the real synthesis error, already captured by
+   * `AudioQueue`) — so two consecutive failures are never worded
+   * identically again.
    */
   private async handleChunkError(info: PlaybackErrorInfo): Promise<ChunkErrorDecision> {
     this.output.warn("chunk failed", { chunkId: info.chunk.id, origin: info.origin, index: info.index });
@@ -1892,9 +2044,16 @@ export class Pipeline implements PipelineFacade {
     if (info.index === 0) {
       if (this.notificationGate.shouldNotify("ttsUnavailable")) {
         this.notificationGate.markShown("ttsUnavailable");
-        void notifyTtsUnavailable((message, ...items) =>
-          vscode.window.showErrorMessage(message, ...items)
-        ).then((choice) => this.handleTtsUnavailableChoice(choice));
+        const resolved = this.currentResolvedTts;
+        const diagnostic: TtsFailureDiagnostic | undefined =
+          resolved !== undefined
+            ? { providerId: resolved.providerId, baseUrl: resolved.baseUrl, errorDetail: info.message }
+            : undefined;
+        const message = chooseTtsUnavailableMessage(this.ttsUnavailableSeenBefore, diagnostic);
+        this.ttsUnavailableSeenBefore = true;
+        void notifyTtsUnavailable((msg, ...items) => vscode.window.showErrorMessage(msg, ...items), message).then(
+          (choice) => this.handleTtsUnavailableChoice(choice)
+        );
       }
       return "stop";
     }

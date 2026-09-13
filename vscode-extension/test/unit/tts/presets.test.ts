@@ -26,8 +26,13 @@ describe("TTS provider presets (ADR-009)", () => {
     expect(CHATTERBOX_LOCAL_PRESET.remote).toBe(false);
   });
 
-  it("chatterbox-local defaults to the validated SIWIS French voice clone (CdC §55)", () => {
-    expect(CHATTERBOX_LOCAL_PRESET.referenceAudio).toBe("../deploy/tts/reference-audio/fr-female-siwis.wav");
+  it("chatterbox-local no longer defaults to a reference clone that cannot resolve in a packaged VSIX (bug fix, 2026-09-12)", () => {
+    // `../deploy/tts/reference-audio/...` only ever resolves in a repository
+    // checkout (`Pipeline.resolveReferenceAudioPath`'s doc comment) — a
+    // packaged `.vsix` never bundles `deploy/`, so defaulting to it produced
+    // an unsynthesizable profile on every real install. See this preset's own
+    // doc comment for the full trace of the resulting infinite loop.
+    expect(CHATTERBOX_LOCAL_PRESET.referenceAudio).toBeUndefined();
     expect(CHATTERBOX_LOCAL_PRESET.parameters).toEqual({
       exaggeration: 0.4,
       cfg_weight: 0.5,

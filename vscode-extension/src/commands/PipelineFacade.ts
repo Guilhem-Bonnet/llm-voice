@@ -9,6 +9,7 @@
 
 import * as vscode from "vscode";
 import type { CaptureContext } from "../core/source.js";
+import type { VoiceTier } from "../onboarding/voiceTiers.js";
 
 export interface PipelineFacade {
   /** Captures `source` and starts a new reading session. */
@@ -62,6 +63,15 @@ export interface PipelineFacade {
   useOwnVoice(): Promise<void>;
   /** `LLM Voice: Edit Profile` (S8.2, CdC §49). */
   editProfile(): Promise<void>;
+  /**
+   * `LLM Voice: Setup Voice` (S7.2), bug fix (voice-selection-not-applied /
+   * infinite loop, 2026-09-12): applies the tier the Quick Pick just chose
+   * to the active profile's `tts` binding (`Pipeline.applyVoiceTierChoice`).
+   * `extension.ts` wires the real implementation lazily through
+   * `pipelineRef` — `llmVoice.setupVoice` registers before `Pipeline` itself
+   * exists.
+   */
+  applyVoiceTierChoice(tier: VoiceTier): Promise<void>;
 }
 
 const NOT_WIRED_MESSAGE = "LLM Voice : pipeline non câblé (S3.5)";
@@ -187,6 +197,10 @@ export class NotWiredPipeline implements PipelineFacade {
   }
 
   editProfile(): Promise<void> {
+    return this.notWired();
+  }
+
+  applyVoiceTierChoice(): Promise<void> {
     return this.notWired();
   }
 

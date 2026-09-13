@@ -5,6 +5,8 @@
  * `SetupVoice.ts` is the thin `vscode`-wiring layer on top of this.
  */
 
+import { CHATTERBOX_LOCAL_PRESET } from "../tts/presets.js";
+
 export type VoiceTier = "system" | "piper" | "chatterbox";
 
 export interface VoiceTierOption {
@@ -71,3 +73,51 @@ export const SYSTEM_VOICE_READY_MESSAGE =
  * nothing to install, see `SYSTEM_VOICE_READY_MESSAGE` above).
  */
 export const INSTALL_PIPER_VOICE_COMMAND = "llmVoice.installPiperVoice";
+
+/**
+ * Bug fix (voice-selection-not-applied / infinite loop, real user report
+ * 2026-09-12, `_grimoire/_memory/shared-context.md`): before this fix,
+ * `handleVoiceTier` picked a tier's install path (or showed the "already
+ * ready" message) but never wrote anything to `profiles.json`
+ * (`grep -rn "providerId" src/onboarding/*.ts` returned nothing) — choosing
+ * a voice from `Setup Voice` changed *nothing* about which provider the
+ * active profile actually resolved to, so the very next `Speak` failed
+ * exactly the same way, forever ("Boucle infinie", the reported symptom).
+ *
+ * The concrete `tts` binding each tier resolves to, applied to the active
+ * profile by `Pipeline.applyVoiceTierChoice` right after the Quick Pick
+ * choice (never deferred to "once Docker/the download finishes" — the
+ * choice itself, not its installation outcome, is what a profile must
+ * record, exactly like `browseVoices()`/`applyVoiceToProfileById` already
+ * do for an explicit voice):
+ *
+ *  - `"system"` and `"piper"` both resolve to `providerId: "system"`
+ *    (`SystemTtsProvider`, S7.1) — "piper" only changes *which engine*
+ *    `SystemTtsProvider.detectEngine()` finds on this machine (Piper once
+ *    installed vs. `espeak-ng`/`say`/SAPI), never which provider class the
+ *    profile names; `SystemTtsProvider` needs no `baseUrl`/`voice` at all
+ *    (its own file header — it picks and reports its own engine).
+ *  - `"chatterbox"` resolves to `providerId: "chatterbox"` at
+ *    `CHATTERBOX_LOCAL_PRESET.baseUrl` — set immediately, without waiting
+ *    for the Docker container the user may not have started yet (starting
+ *    it is exactly what the compose command instructs); `voice` is
+ *    deliberately left unset here — `Pipeline.withDefaultVoice` (bug fix,
+ *    same trace) resolves a concrete one from `listVoices()` at synthesis
+ *    time, once the server can actually be asked, rather than this
+ *    offline decision guessing at a voice ID that might not exist on this
+ *    server build.
+ */
+export interface TtsTierBinding {
+  providerId: string;
+  baseUrl?: string;
+}
+
+export function ttsBindingForTier(tier: VoiceTier): TtsTierBinding {
+  switch (tier) {
+    case "system":
+    case "piper":
+      return { providerId: "system" };
+    case "chatterbox":
+      return { providerId: "chatterbox", baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl };
+  }
+}

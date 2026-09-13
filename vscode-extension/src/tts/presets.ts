@@ -47,19 +47,42 @@ export interface TtsProviderPreset {
 
 /**
  * ADR-009 niveau 1: Chatterbox Multilingual V3 on its RDNA4 container
- * default port. Voice-cloned by default (CdC §55) against the SIWIS-derived
- * French reference chosen after listening to 5 candidates on the real S4.3
- * E2E run — a French *predefined* voice does not exist on the community
- * server (`docs/e2e/report-2026-09-08.md`, "Accent français": all 28
- * predefined voices are English samples, and Chatterbox clones the
- * reference's accent, not just its timbre, regardless of `language`).
+ * default port.
+ *
+ * Bug fix (voice-selection-not-applied / infinite loop, 2026-09-12,
+ * `_grimoire/_memory/shared-context.md`): this preset used to default to
+ * voice-cloning against a SIWIS-derived French reference
+ * (`referenceAudio: "../deploy/tts/reference-audio/fr-female-siwis.wav"`).
+ * That path only ever resolves from a *repository checkout*
+ * (`Pipeline.resolveReferenceAudioPath`'s own doc comment) — a packaged
+ * `.vsix` does not bundle `deploy/` (ops tooling, not extension content),
+ * so every install from the Marketplace/a built VSIX shipped a default
+ * profile pointing at a file that exists nowhere on the user's disk.
+ * `ChatterboxProvider` already degrades gracefully when a reference cannot
+ * be read (falls back to `voice_mode: "predefined"`, defect 3's original
+ * fix) — but nothing then supplied a `predefined_voice_id`, so the
+ * fallback request was itself rejected (`HTTP 400`) by the community
+ * server, which is what actually produced the "aucune voix configurée"
+ * loop a real user hit on the 0.2.0 build.
+ *
+ * Fix, tranche taken and justified here rather than shipping the ~2 MB
+ * sample inside every install: **stop defaulting to a reference that
+ * cannot resolve outside dev** — `defaults.ts`/`DEFAULT_PROFILE` mirror
+ * this preset's `referenceAudio` only `if (!== undefined)`, so dropping it
+ * here means a fresh install's Chatterbox-backed profiles use the
+ * predefined-voice path from the start. `Pipeline.withDefaultVoice` (new,
+ * same fix) now guarantees a `tts.voice` is always resolved from
+ * `listVoices()` before synthesis when the profile does not name one, so
+ * "predefined" mode never again reaches the server without a
+ * `predefined_voice_id`. Voice cloning remains fully supported — set
+ * `tts.referenceAudio` explicitly (profile editor, `Use My Own Voice`,
+ * S8.2) — it is simply no longer the unconditional shipped default.
  */
 export const CHATTERBOX_LOCAL_PRESET: TtsProviderPreset = {
   id: "chatterbox-local",
-  label: "Chatterbox (local, voix clonée FR — SIWIS)",
+  label: "Chatterbox (local, voix prédéfinie ou clonée FR)",
   kind: "chatterbox",
   baseUrl: "http://localhost:8004",
-  referenceAudio: "../deploy/tts/reference-audio/fr-female-siwis.wav",
   parameters: { exaggeration: 0.4, cfg_weight: 0.5, temperature: 0.6 },
   remote: false
 };

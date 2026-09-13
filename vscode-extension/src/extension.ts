@@ -242,8 +242,19 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
 
   // S7.2 (onboarding): registered here rather than `commands/index.ts` so
   // this story never has to depend on that file's ownership by S7.1/S7.3.
+  //
+  // Bug fix (voice-selection-not-applied / infinite loop, 2026-09-12):
+  // `setupVoice` now needs `Pipeline.applyVoiceTierChoice` to actually
+  // persist the chosen tier — resolved lazily through `pipelineRef` exactly
+  // like every other command below, since this registration runs *before*
+  // `Pipeline` itself is constructed (`const pipeline = new Pipeline(...)`,
+  // a few lines down).
   context.subscriptions.push(
-    vscode.commands.registerCommand("llmVoice.setupVoice", () => setupVoice())
+    vscode.commands.registerCommand("llmVoice.setupVoice", () =>
+      setupVoice(async (tier) => {
+        await pipelineRef.current?.applyVoiceTierChoice(tier);
+      })
+    )
   );
   context.subscriptions.push(
     vscode.commands.registerCommand("llmVoice.walkthroughOpenExample", () => openWalkthroughExample(context))
