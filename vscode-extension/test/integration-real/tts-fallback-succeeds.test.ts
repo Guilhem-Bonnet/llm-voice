@@ -113,15 +113,34 @@ suite("LLM Voice: 'auto' TTS chain falls back and succeeds (coordinator review, 
       );
       assert.doesNotMatch(api.statusBar.text, /\$\(error\)/, "no error must ever surface for this profile");
 
-      // The one-button "install a better voice" offer is still expected
-      // (Piper outranks espeak-ng, `AutoVoiceInstall.ts`) — declining it
+      // The one-button "install a better voice" offer
+      // (`shouldOfferAutoVoiceInstall`, `AutoVoiceInstall.ts`) only fires
+      // when the resolved engine's `health().endpoint` is exactly
+      // `"local:espeak-ng"` — genuinely platform-dependent, *not* a flake:
+      // `SystemTtsProvider.detectEngine()` only ever reaches espeak-ng on
+      // Linux (`this.platform` outside `darwin`/`win32`); the fake engine
+      // this test injects answers `say` on macOS and `sapi` (PowerShell) on
+      // Windows instead (`EspeakOnlyRunner`'s own doc comment) — both
+      // already sound decent, so `shouldOfferAutoVoiceInstall` correctly
+      // returns `false` there, and offering a Piper install anyway would be
+      // the actual bug. Declining the offer where it *does* fire
       // (`offerAutoVoiceInstall`'s own doc comment: "declining is simply
       // not clicking it, no second dialog") must fall back immediately and
-      // silently: no extra warning, and above all no error — the resolved
-      // "playing" state and the status bar's absence of `$(error)` *are*
-      // what "signale le repli" here, exactly what a user actually sees.
-      assert.equal(infoCalls.length, 1, "exactly one voice-install offer, never repeated");
-      assert.ok(infoCalls[0]!.items.includes(INSTALL_VOICE_ACTION_LABEL));
+      // silently either way: no extra warning, and above all no error — the
+      // resolved "playing" state and the status bar's absence of `$(error)`
+      // *are* what "signale le repli" here, exactly what a user actually
+      // sees, on every OS.
+      const expectVoiceInstallOffer = process.platform === "linux";
+      assert.equal(
+        infoCalls.length,
+        expectVoiceInstallOffer ? 1 : 0,
+        expectVoiceInstallOffer
+          ? "exactly one voice-install offer, never repeated"
+          : "say/SAPI already sound decent (not espeak-ng-quality): no Piper upsell expected on this OS"
+      );
+      if (expectVoiceInstallOffer) {
+        assert.ok(infoCalls[0]!.items.includes(INSTALL_VOICE_ACTION_LABEL));
+      }
       assert.equal(warnCalls.length, 0, "a plain decline must not add a second dialog on top of the offer");
       assert.equal(errorCalls.length, 0, "no error dialog for a resolved fallback");
     } finally {
