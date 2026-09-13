@@ -12,7 +12,7 @@ import type { EgressGuardHandle } from "../net/EgressGuard.js";
 import { ChatterboxProvider } from "./ChatterboxProvider.js";
 import { KokoroProvider, KOKORO_DEFAULT_FR_VOICE } from "./KokoroProvider.js";
 import { OpenAICompatibleTtsProvider } from "./OpenAICompatibleTtsProvider.js";
-import { SystemTtsProvider } from "./SystemTtsProvider.js";
+import { SystemTtsProvider, type SystemTtsProcessRunner } from "./SystemTtsProvider.js";
 
 /** Which concrete class a preset instantiates; never guessed from an id (ADR-005). */
 export type TtsPresetKind = "chatterbox" | "kokoro" | "openai-compatible" | "system";
@@ -175,6 +175,20 @@ export interface CreateTtsProviderOptions {
    * `espeak-ng`/`say`/SAPI).
    */
   systemPiperInstallDir?: string;
+  /**
+   * Test-only (coordinator review, voice-selection-not-applied / infinite
+   * loop fix): replaces `SystemTtsProvider`'s default `child_process`/`fs`
+   * runner (`createDefaultRunner`) entirely — `kind: "system"` only. Manipulating
+   * the extension host's `PATH` to make `SystemTtsProvider` deterministic in
+   * an integration test was verified live not to work (VS Code's own
+   * "resolve shell environment" startup step re-derives `PATH` from the
+   * real login shell regardless of what `.vscode-test.mjs`'s `env` sets);
+   * injecting the runner directly is what actually removes the dependency
+   * on whatever engines happen to be installed on the machine running the
+   * suite. Same `extensionMode !== Production` gate as `ttsProviderOverride`
+   * (`extension.ts`), never reachable from a packaged install.
+   */
+  systemRunner?: SystemTtsProcessRunner;
 }
 
 /**
@@ -209,7 +223,8 @@ export function createTtsProvider(
     case "system":
       return new SystemTtsProvider({
         ...(options.id !== undefined ? { id: options.id } : {}),
-        ...(options.systemPiperInstallDir !== undefined ? { piperInstallDir: options.systemPiperInstallDir } : {})
+        ...(options.systemPiperInstallDir !== undefined ? { piperInstallDir: options.systemPiperInstallDir } : {}),
+        ...(options.systemRunner !== undefined ? { runner: options.systemRunner } : {})
       });
     default: {
       const exhaustive: never = preset.kind;

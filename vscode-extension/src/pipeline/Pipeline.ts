@@ -89,7 +89,8 @@ import {
   warmupProvider,
   type HealthCheckable,
   type PiperInstallConsentDetails,
-  type PiperInstallOutcome
+  type PiperInstallOutcome,
+  type SystemTtsProcessRunner
 } from "../tts/index.js";
 import { createNarratorProvider } from "../narrator/index.js";
 import type { Logger } from "../infrastructure/logger.js";
@@ -246,6 +247,29 @@ export interface PipelineOptions {
   ttsProviderOverride?: TtsProvider;
   /** Test-only: replaces the narrator `createNarratorProvider` would build. */
   narratorProviderOverride?: NarratorProvider;
+  /**
+   * Test-only (bug fix, voice-selection-not-applied / infinite loop review):
+   * overrides `CHATTERBOX_LOCAL_PRESET.baseUrl`/`PIPER_LOCAL_PRESET.baseUrl`
+   * for `autoSelectTts()`'s own health probes — the two are otherwise
+   * hardcoded, by design (ADR-009's zero-config "auto" chain probes a fixed
+   * local address, never a user setting). A real integration test needs a
+   * closed port it actually controls to deterministically prove "provider
+   * unreachable → falls through the chain" regardless of whether a real
+   * Chatterbox/Piper happens to be running on the machine executing the
+   * suite — same rationale, same `extensionMode !== Production` gate
+   * (`extension.ts`) as `ttsProviderOverride` above, never reachable from a
+   * packaged install.
+   */
+  autoChatterboxBaseUrlOverride?: string;
+  autoPiperLocalBaseUrlOverride?: string;
+  /**
+   * Test-only (coordinator review, same trace as the two overrides above):
+   * replaces `SystemTtsProvider`'s process/filesystem runner entirely
+   * (`createTtsProvider`'s `systemRunner` option) whenever the resolved
+   * provider is `"system"` — see `presets.ts`'s own doc comment for why
+   * `PATH` manipulation alone could not make this deterministic.
+   */
+  systemRunnerOverride?: SystemTtsProcessRunner;
 }
 
 export class Pipeline implements PipelineFacade {
@@ -257,6 +281,9 @@ export class Pipeline implements PipelineFacade {
   private readonly sinkOverride: AudioSink | undefined;
   private readonly ttsProviderOverride: TtsProvider | undefined;
   private readonly narratorProviderOverride: NarratorProvider | undefined;
+  private readonly autoChatterboxBaseUrlOverride: string | undefined;
+  private readonly autoPiperLocalBaseUrlOverride: string | undefined;
+  private readonly systemRunnerOverride: SystemTtsProcessRunner | undefined;
 
   private readonly egress: EgressGuardHandle;
   private readonly registry = new TtsProviderRegistry<TtsProvider>();
@@ -346,6 +373,9 @@ export class Pipeline implements PipelineFacade {
     this.sinkOverride = options.sinkOverride;
     this.ttsProviderOverride = options.ttsProviderOverride;
     this.narratorProviderOverride = options.narratorProviderOverride;
+    this.autoChatterboxBaseUrlOverride = options.autoChatterboxBaseUrlOverride;
+    this.autoPiperLocalBaseUrlOverride = options.autoPiperLocalBaseUrlOverride;
+    this.systemRunnerOverride = options.systemRunnerOverride;
 
     this.egress = createEgressGuard({
       mode: this.egressMode(),
@@ -1668,7 +1698,8 @@ export class Pipeline implements PipelineFacade {
         // synthesis — surfaced in the Output Channel, synthesis falls back
         // to voice_mode "predefined" (`ChatterboxProvider`'s own doc comment).
         onReferenceAudioWarning: (message: string) => this.output.warn(message),
-        systemPiperInstallDir: this.piperInstallDir()
+        systemPiperInstallDir: this.piperInstallDir(),
+        ...(this.systemRunnerOverride !== undefined ? { systemRunner: this.systemRunnerOverride } : {})
       }
     );
     this.registry.register(provider);
@@ -1707,20 +1738,22 @@ export class Pipeline implements PipelineFacade {
     if (this.autoTtsCache !== undefined && this.autoTtsCache.expiresAt > now) {
       return this.autoTtsCache.config;
     }
+    const chatterboxBaseUrl = this.autoChatterboxBaseUrlOverride ?? CHATTERBOX_LOCAL_PRESET.baseUrl;
+    const piperLocalBaseUrl = this.autoPiperLocalBaseUrlOverride ?? PIPER_LOCAL_PRESET.baseUrl;
     const chatterboxProbe = new ChatterboxProvider({
       id: "auto-probe-chatterbox",
-      baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl,
+      baseUrl: chatterboxBaseUrl,
       egress: this.egress
     });
     const piperLocalProbe = new OpenAICompatibleTtsProvider({
       id: "auto-probe-piper-local",
-      baseUrl: PIPER_LOCAL_PRESET.baseUrl,
+      baseUrl: piperLocalBaseUrl,
       egress: this.egress
     });
     const config = await selectAutoTtsProvider(
       [
-        { providerId: "chatterbox", baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl, health: (s) => chatterboxProbe.health(s) },
-        { providerId: "piper-local", baseUrl: PIPER_LOCAL_PRESET.baseUrl, health: (s) => piperLocalProbe.health(s) }
+        { providerId: "chatterbox", baseUrl: chatterboxBaseUrl, health: (s) => chatterboxProbe.health(s) },
+        { providerId: "piper-local", baseUrl: piperLocalBaseUrl, health: (s) => piperLocalProbe.health(s) }
       ],
       { providerId: "system", baseUrl: "" }
     );

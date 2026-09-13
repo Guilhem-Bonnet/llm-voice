@@ -36,7 +36,6 @@ function userDataDir(profileName) {
 // loads, same as `--user-data-dir` above); `test/integration/inbox.test.ts`
 // only ever asserts on *deltas* it creates itself for exactly this reason.
 const inboxDirFakeTts = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-fake-tts-"));
-const inboxDirRealProvider = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-real-provider-"));
 const inboxDirPrefetch = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-prefetch-"));
 // S6.1: the security profile writes deliberately hostile inbox entries
 // (script tags, ANSI escapes) and must never see, or be seen by, the
@@ -58,6 +57,75 @@ writeFileSync(
   JSON.stringify({ "llmVoice.audio.prefetchChunks": 0 }, null, 2)
 );
 
+// Bug fix (voice-selection-not-applied / infinite loop, coordinator review):
+// replaces the old `real-provider-unavailable` profile, whose result used to
+// depend on whether a real Chatterbox happened to be reachable at
+// `localhost:8004` on the machine running the suite — green in CI (nothing
+// listens there), red (or green for the wrong reason) on a developer
+// machine with the real service up, exactly the fragility issue #50 closed
+// elsewhere. Both replacement profiles below are isolated from the host
+// machine on every axis `Pipeline.autoSelectTts()`/`SystemTtsProvider`
+// touch:
+//
+//  - `LLM_VOICE_TEST_AUTO_CHATTERBOX_BASE_URL`/`_PIPER_BASE_URL` (test-only
+//    seam, `Pipeline`'s own doc comment) point the "auto" chain's two
+//    network probes at fixed, unusual high loopback ports nothing on a
+//    normal dev/CI machine binds by default — never the real Chatterbox/
+//    Piper-local default ports (`8004`/`5000`) a developer might actually
+//    be running.
+//  - `LLM_VOICE_TEST_SYSTEM_RUNNER` (test-only seam, `presets.ts`'s own doc
+//    comment) replaces `SystemTtsProvider`'s real process/filesystem runner
+//    outright — `"espeak-only"` (fallback succeeds) or `"none"` (fallback
+//    fails). A first attempt at this used `PATH` manipulation instead
+//    (mirroring `system-no-engine` below): verified live *not* to work —
+//    VS Code's own "resolve shell environment" startup step re-derives
+//    `PATH` from the real login shell before the extension host ever sees
+//    it, so a machine with a real `espeak-ng`/`piper` installed (this
+//    repo's own dev machine) found the *real* engine regardless of what
+//    `.vscode-test.mjs` asked for.
+//  - each gets its own brand-new `--user-data-dir` and its own pre-seeded
+//    `profiles.json` naming no explicit `tts.providerId` at all, so it
+//    resolves through `llmVoice.tts.provider`'s own shipped default,
+//    `"auto"`.
+const AUTO_CHATTERBOX_CLOSED_PORT = 47601;
+const AUTO_PIPER_LOCAL_CLOSED_PORT = 47602;
+
+/** One profile, `tts: {}` — no explicit `providerId`/`baseUrl`, resolves to `llmVoice.tts.provider`'s default (`"auto"`). */
+function seedAutoProfile(profileUserDataDir) {
+  const globalStorageDir = join(profileUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice");
+  mkdirSync(globalStorageDir, { recursive: true });
+  writeFileSync(
+    join(globalStorageDir, "profiles.json"),
+    JSON.stringify(
+      {
+        schemaVersion: 2,
+        defaultProfileId: "auto-fallback-test",
+        profiles: [
+          {
+            id: "auto-fallback-test",
+            label: "Auto fallback test",
+            mode: "faithful",
+            language: "fr-FR",
+            tts: {},
+            chunking: { unit: "sentence", maxSentences: 3, prefetchChunks: 2 },
+            playback: { rate: 1, volume: 1 },
+            description: "Test-only profile: providerId deliberately omitted, resolves to 'auto'."
+          }
+        ]
+      },
+      null,
+      2
+    )
+  );
+}
+
+const autoFallbackSucceedsUserDataDir = mkdtempSync(join(tmpdir(), "llm-voice-test-userdata-auto-succeeds-"));
+seedAutoProfile(autoFallbackSucceedsUserDataDir);
+const autoFallbackFailsUserDataDir = mkdtempSync(join(tmpdir(), "llm-voice-test-userdata-auto-fails-"));
+seedAutoProfile(autoFallbackFailsUserDataDir);
+const inboxDirAutoFallbackSucceeds = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-succeeds-"));
+const inboxDirAutoFallbackFails = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-fails-"));
+
 export default defineConfig([
   {
     ...common,
@@ -72,9 +140,10 @@ export default defineConfig([
     // `tts.providerId` ("openai-compatible"), not on which `TtsProvider`
     // instance actually served it (ADR-005's `AudioQueueBinding`, by
     // design — a profile never names a class). Sharing one `.vscode-test`
-    // user-data dir with the `real-provider-unavailable` profile below would
-    // let audio synthesised by `FakeTtsProvider` here satisfy a cache *hit*
-    // there, silently skipping the real network call it exists to exercise.
+    // user-data dir with the `tts-auto-fallback-*` profiles below would let
+    // audio synthesised by `FakeTtsProvider` here satisfy a cache *hit*
+    // there, silently skipping the real network/engine calls they exist to
+    // exercise.
     // fix(review): kept short — on the macOS GH Actions runner the checkout
     // path (`/Users/runner/work/<repo>/<repo>/vscode-extension/...`) is long
     // enough that `user-data-fake-tts`/`user-data-real-provider` pushed the
@@ -85,25 +154,50 @@ export default defineConfig([
   },
   {
     ...common,
-    label: "real-provider-unavailable",
-    // Separate VS Code instance, *without* the fake: exercises the real
-    // `OpenAICompatibleTtsProvider` + `EgressGuard` path against the default
-    // profile's loopback `baseUrl`, which nothing listens on in CI/dev
-    // sandboxes ("TTS unavailable" error path, story S3.5 task 6/8).
-    // Named explicitly, not a `**` glob: `test/integration-real/` also holds
-    // plain-Node vitest tests (import `vitest`, no `vscode` — S4.1's
-    // `ollama-narrator.test.ts`, S4.2/S4.3's `chatterbox-tts.test.ts`), run
-    // separately via `npm run test:integration-real`
-    // (`vitest.integration-real.config.ts`). A wildcard here makes mocha
-    // `require()` those files too and crash with "Vitest cannot be
-    // imported ... using require()" — `vitest`'s `describe`/`it`/`test`
-    // have no meaning under mocha.
-    files: "out/test/integration-real/tts-unavailable.test.js",
-    env: { LLM_VOICE_TEST_FAKE_TTS: undefined, LLM_VOICE_INBOX: inboxDirRealProvider },
-    // See the comment on the `fake-tts` profile above: a *different* cache
-    // directory is what actually forces this run to hit the network.
-    // See the comment on the `fake-tts` profile above re: the socket path length.
-    launchArgs: [`--user-data-dir=${userDataDir("real-provider")}`]
+    label: "tts-auto-fallback-succeeds",
+    // Case 1 (coordinator review): the resolved "auto" provider chain's
+    // first two rungs (Chatterbox, Piper local) are unreachable — pointed at
+    // fixed closed ports, never the machine's real Chatterbox/Piper — but
+    // the final rung (`SystemTtsProvider`) *does* find a (fake) `espeak-ng`
+    // (`LLM_VOICE_TEST_SYSTEM_RUNNER=espeak-only`). Speak must succeed via
+    // that fallback with no error dialog at all; `ensureVoiceReady`'s
+    // one-button "install a better voice" offer (Piper outranks espeak-ng,
+    // `AutoVoiceInstall.ts`) is still expected — declined the same way
+    // `no-voice-available.test.ts` already does — and its own decline
+    // message is what "signale le repli" to the user (`fallbackMessageFor`,
+    // never Chatterbox's name, S8.3).
+    // Named explicitly, not a `**` glob: see the comment on the file this
+    // replaces for why `test/integration-real/` cannot be globbed under mocha.
+    files: "out/test/integration-real/tts-fallback-succeeds.test.js",
+    env: {
+      LLM_VOICE_TEST_FAKE_TTS: undefined,
+      LLM_VOICE_INBOX: inboxDirAutoFallbackSucceeds,
+      LLM_VOICE_TEST_SYSTEM_RUNNER: "espeak-only",
+      LLM_VOICE_TEST_AUTO_CHATTERBOX_BASE_URL: `http://127.0.0.1:${AUTO_CHATTERBOX_CLOSED_PORT}`,
+      LLM_VOICE_TEST_AUTO_PIPER_BASE_URL: `http://127.0.0.1:${AUTO_PIPER_LOCAL_CLOSED_PORT}`
+    },
+    launchArgs: [`--user-data-dir=${autoFallbackSucceedsUserDataDir}`]
+  },
+  {
+    ...common,
+    label: "tts-auto-fallback-fails",
+    // Case 2 (coordinator review): every rung of the same "auto" chain is
+    // deterministically unreachable — Chatterbox/Piper-local on the same
+    // fixed closed ports as above, *and* `LLM_VOICE_TEST_SYSTEM_RUNNER=none`
+    // so `SystemTtsProvider` finds nothing either. Speak must end in the
+    // diagnostic "TTS unavailable" dialog (`Pipeline.handleChunkError`),
+    // never a hang or an unhandled rejection — and, unlike the "succeeds"
+    // profile above, this never depends on the real machine having (or
+    // lacking) any of these engines/servers either.
+    files: "out/test/integration-real/tts-fallback-fails.test.js",
+    env: {
+      LLM_VOICE_TEST_FAKE_TTS: undefined,
+      LLM_VOICE_INBOX: inboxDirAutoFallbackFails,
+      LLM_VOICE_TEST_SYSTEM_RUNNER: "none",
+      LLM_VOICE_TEST_AUTO_CHATTERBOX_BASE_URL: `http://127.0.0.1:${AUTO_CHATTERBOX_CLOSED_PORT}`,
+      LLM_VOICE_TEST_AUTO_PIPER_BASE_URL: `http://127.0.0.1:${AUTO_PIPER_LOCAL_CLOSED_PORT}`
+    },
+    launchArgs: [`--user-data-dir=${autoFallbackFailsUserDataDir}`]
   },
   {
     ...common,

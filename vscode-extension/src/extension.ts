@@ -11,6 +11,7 @@ import { Pipeline } from "./pipeline/Pipeline.js";
 import { ProfileRepository } from "./profiles/ProfileRepository.js";
 import type { AudioSink } from "./playback/index.js";
 import type { TtsProvider } from "./core/tts.js";
+import type { SystemTtsProcessRunner } from "./tts/SystemTtsProvider.js";
 import type { PlayerUserAction } from "./core/playback.js";
 import { createLogger, parseLogLevel, type Logger } from "./infrastructure/logger.js";
 import { setupVoice } from "./onboarding/SetupVoice.js";
@@ -201,6 +202,49 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     }
   }
 
+  // Bug fix (voice-selection-not-applied / infinite loop review): same
+  // dev/test-mode gate as `LLM_VOICE_TEST_FAKE_TTS` above — deterministic
+  // integration coverage of `Pipeline.autoSelectTts()`'s "provider
+  // unreachable, chain falls through" behaviour needs to point the
+  // Chatterbox/Piper-local probes at a port the test itself controls
+  // (closed or fake-served), never a real Chatterbox that may or may not
+  // be running on the machine executing the suite. `undefined` in either
+  // env var leaves `Pipeline` on its real, hardcoded ADR-009 defaults —
+  // this is a no-op outside these two integration profiles.
+  const autoChatterboxBaseUrlOverride =
+    context.extensionMode !== vscode.ExtensionMode.Production
+      ? process.env.LLM_VOICE_TEST_AUTO_CHATTERBOX_BASE_URL
+      : undefined;
+  const autoPiperLocalBaseUrlOverride =
+    context.extensionMode !== vscode.ExtensionMode.Production
+      ? process.env.LLM_VOICE_TEST_AUTO_PIPER_BASE_URL
+      : undefined;
+
+  // Bug fix (voice-selection-not-applied / infinite loop, coordinator
+  // review): replaces `SystemTtsProvider`'s real `child_process`/`fs`
+  // runner with a fake one — see `presets.ts`'s `systemRunner` doc comment
+  // for why manipulating `PATH` alone could not make an integration test
+  // deterministic (VS Code re-derives it from the real login shell
+  // regardless of what `.vscode-test.mjs` sets). `"espeak-only"` finds a
+  // fake `espeak-ng`, never Piper (the "repli disponible" case);
+  // `"none"` finds nothing at all (the "aucun moyen de parler" case).
+  let systemRunnerOverride: SystemTtsProcessRunner | undefined;
+  const systemRunnerMode =
+    context.extensionMode !== vscode.ExtensionMode.Production ? process.env.LLM_VOICE_TEST_SYSTEM_RUNNER : undefined;
+  if (systemRunnerMode === "espeak-only" || systemRunnerMode === "none") {
+    try {
+      const runnerModule = requireTestFixture<{
+        EspeakOnlyRunner: new () => SystemTtsProcessRunner;
+        NoEngineRunner: new () => SystemTtsProcessRunner;
+      }>(context, "FakeSystemTtsRunner.js");
+      systemRunnerOverride =
+        systemRunnerMode === "espeak-only" ? new runnerModule.EspeakOnlyRunner() : new runnerModule.NoEngineRunner();
+      log.info(`LLM_VOICE_TEST_SYSTEM_RUNNER=${systemRunnerMode} — using a fake SystemTtsProcessRunner.`);
+    } catch (error) {
+      log.error("failed to load fake system runner fixture", { error: String(error) });
+    }
+  }
+
   // `statusBar`'s click-menu needs to call back into the pipeline, and the
   // pipeline needs `statusBar` to push state onto it: a plain forward
   // reference (rather than a `let pipeline` read before assignment) avoids
@@ -267,7 +311,10 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     player,
     statusBar,
     ...(sinkOverride !== undefined ? { sinkOverride } : {}),
-    ...(ttsProviderOverride !== undefined ? { ttsProviderOverride } : {})
+    ...(ttsProviderOverride !== undefined ? { ttsProviderOverride } : {}),
+    ...(autoChatterboxBaseUrlOverride !== undefined ? { autoChatterboxBaseUrlOverride } : {}),
+    ...(autoPiperLocalBaseUrlOverride !== undefined ? { autoPiperLocalBaseUrlOverride } : {}),
+    ...(systemRunnerOverride !== undefined ? { systemRunnerOverride } : {})
   });
   pipelineRef.current = pipeline;
   context.subscriptions.push({ dispose: () => pipeline.dispose() });
