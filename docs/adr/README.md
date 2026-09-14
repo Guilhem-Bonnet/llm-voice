@@ -16,8 +16,12 @@ rejetées / Tests qui prouvent la décision).
 | [ADR-009](./ADR-009-tts-tiers.md) | Offre TTS à trois niveaux : local, entreprise, API | D9 (mise à jour par D11) |
 | [ADR-010](./ADR-010-egress-guard.md) | `EgressGuard` : garantie « rien ne sort », prouvée | D10 |
 | [ADR-011](./ADR-011-ui-layout.md) | Layout UI : `minimal` par défaut, `full` en option | D12 |
+| [ADR-012](./ADR-012-native-audio-engine.md) | Moteur audio natif Rust : périmètre, migration, abandon | `GAO-diagnostic-s-001` |
 
-Les 11 ADR sont accepté(e)s et fusionné(e)s sur `main`.
+Les 11 premiers ADR sont accepté(e)s et fusionné(e)s sur `main`. ADR-012 est
+**proposé** : sa phase 0 (rendre les échecs de lecture visibles, jamais
+silencieux) est un prérequis bloquant avant toute écriture Rust ; voir
+`docs/diagnostics/audio-2026-09-14.md` pour la chaîne causale qui l'a motivé.
 
 Décisions détaillées : `_grimoire-output/planning-artifacts/decisions-cadrage-v1.md`.
 Études sources : `local-guarantee-v1.md`, `linux-first-v1.md`,

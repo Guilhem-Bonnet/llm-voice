@@ -67,7 +67,15 @@ export class WebviewAudioSink implements AudioSink {
 
   async load(chunk: AudioSinkChunk): Promise<void> {
     if (this.webview === undefined) {
-      return;
+      // fix(playback): used to `return` in silence (GAO-diagnostic-s-001) —
+      // `PlaybackController` would then mark the chunk `playing` and emit
+      // `chunkChanged` for a highlight nothing backs, with zero audio and
+      // zero error. No webview attached is exactly the state a document
+      // opened before the "Lecture en cours" view ever resolved is in: a
+      // real, nameable failure, not a no-op.
+      throw new Error(
+        `WebviewAudioSink: no player view attached for chunk ${chunk.chunkId} — the "Lecture en cours" view could not be reached`
+      );
     }
     const src = this.webview.asWebviewUri(vscode.Uri.file(chunk.src)).toString();
     const message: ExtensionToWebviewMessage = {

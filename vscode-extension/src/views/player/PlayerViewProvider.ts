@@ -58,9 +58,36 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  /** Reveals the Panel view without stealing editor focus (ADR-001). */
-  reveal(): void {
-    this.view?.show(true /* preserveFocus */);
+  /**
+   * Reveals the player view without stealing editor focus (ADR-001).
+   *
+   * GAO-diagnostic-s-001: `this.view` stays `undefined` until VS Code has
+   * resolved the webview view *at least once* — which only happens once the
+   * user has opened its container (Panel or the `llmVoice` Activity Bar
+   * entry, whichever `llmVoice.ui.layout` picks) themselves. Before this
+   * fix, `this.view?.show(...)` was a silent no-op on a cold container: the
+   * session would start, `WebviewAudioSink.load()` would post into a
+   * webview that never existed, and nothing told the caller. The
+   * auto-registered `<viewId>.focus` command forces VS Code to resolve
+   * (and reveal) the view even from cold — same effect as the user opening
+   * it by hand. Returns whether a view is attached afterwards, so the
+   * caller can report a real failure instead of playing into a void.
+   */
+  async reveal(): Promise<boolean> {
+    if (this.view !== undefined) {
+      this.view.show(true /* preserveFocus */);
+      return true;
+    }
+    const layout = vscode.workspace.getConfiguration("llmVoice").get<string>("ui.layout", "full");
+    const viewId = layout === "minimal" ? PlayerViewProvider.viewType : "llmVoice.playerView";
+    try {
+      await vscode.commands.executeCommand(`${viewId}.focus`);
+    } catch {
+      // The view container itself may not exist in this workbench layout
+      // (e.g. contributed but collapsed/removed) — `this.view` below stays
+      // `undefined` and the caller reports the failure.
+    }
+    return this.view !== undefined;
   }
 
   /** True once `resolveWebviewView` has run at least once. Test hook. */

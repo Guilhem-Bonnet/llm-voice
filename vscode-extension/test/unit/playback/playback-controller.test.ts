@@ -32,6 +32,8 @@ function harness(
     failTexts?: readonly string[];
     onChunkError?: () => "skip" | "stop";
     prefetchChunks?: number;
+    noProgressTimeoutMs?: number;
+    endedGraceMs?: number;
   } = {}
 ): Harness {
   const sink = new FakeAudioSink({ tickMs: 250 });
@@ -53,7 +55,11 @@ function harness(
     ...(options.onChunkError !== undefined ? { onChunkError: options.onChunkError } : {}),
     ...(options.prefetchChunks !== undefined
       ? { prefetchChunks: options.prefetchChunks }
-      : {})
+      : {}),
+    ...(options.noProgressTimeoutMs !== undefined
+      ? { noProgressTimeoutMs: options.noProgressTimeoutMs }
+      : {}),
+    ...(options.endedGraceMs !== undefined ? { endedGraceMs: options.endedGraceMs } : {})
   });
 
   const states: PlaybackState[] = [];
@@ -451,24 +457,138 @@ describe("PlaybackController — failures", () => {
     expect(h.sink.loads).toHaveLength(0);
   });
 
-  it("skips a chunk the sink could not play", async () => {
-    const h = harness();
+  it("stops the session on a playback failure instead of chaining to the next chunk (GAO-diagnostic-s-001)", async () => {
+    // Even a policy that answers `"skip"` must be overruled: a playback
+    // failure is a systemic defect (broken sink), never a per-chunk quirk
+    // — a cascade of these used to be indistinguishable from a highlight
+    // fast-forwarding with no sound (ADR-012 phase 0).
+    const h = harness({ onChunkError: () => "skip" });
     await h.start(3);
     h.sink.failCurrent("decode error");
     await vi.advanceTimersByTimeAsync(0);
 
     expect(h.errors[0]?.origin).toBe("playback");
     expect(h.errors[0]?.message).toBe("decode error");
-    expect(h.controller.getCurrentIndex()).toBe(1);
+    // Never advanced past the chunk that failed to play.
+    expect(h.controller.getCurrentIndex()).toBe(0);
+    expect(h.controller.getState()).toBe("error");
   });
 
-  it("completes when the last chunk is the one that fails", async () => {
+  it("stops, not completes, when the last chunk is the one that fails to play", async () => {
     const h = harness();
     await h.start(1);
     h.sink.failCurrent();
     await vi.advanceTimersByTimeAsync(0);
 
-    expect(h.controller.getState()).toBe("completed");
+    expect(h.controller.getState()).toBe("error");
+  });
+
+  it("reports `load()` rejecting (e.g. no webview attached) as a playback error, never a hang", async () => {
+    const h = harness();
+    const started = h.controller.start({
+      segments: makeSegments(2),
+      profile: makeProfile(),
+      tts: h.tts,
+      sink: h.sink
+    });
+    h.sink.load = async () => {
+      throw new Error("no player view attached");
+    };
+    await vi.advanceTimersByTimeAsync(0);
+    await started;
+
+    expect(h.errors).toHaveLength(1);
+    expect(h.errors[0]?.origin).toBe("playback");
+    expect(h.errors[0]?.message).toBe("no player view attached");
+    expect(h.controller.getState()).toBe("error");
+  });
+
+  it("reports no `timeupdate` after play() as a playback error (fallback watchdog)", async () => {
+    const h = harness({ noProgressTimeoutMs: 1000 });
+    const started = h.controller.start({
+      segments: makeSegments(2),
+      profile: makeProfile(),
+      tts: h.tts,
+      sink: h.sink
+    });
+    // Freeze the sink after `load()` so it never ticks — a cascade of
+    // silent playback errors (GAO-diagnostic-s-001) is exactly "loaded,
+    // marked playing, never a single `timeupdate`".
+    h.sink.play = () => {
+      h.sink.commands.push("play");
+    };
+    await vi.advanceTimersByTimeAsync(0);
+    await started;
+    expect(h.controller.getState()).toBe("playing");
+
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(h.errors).toHaveLength(1);
+    expect(h.errors[0]?.origin).toBe("playback");
+    expect(h.errors[0]?.message).toContain("timeupdate");
+    expect(h.controller.getState()).toBe("error");
+  });
+
+  it("reports no `ended` past durationMs + margin as a playback error (fallback watchdog)", async () => {
+    // A minimal hand-written sink: reports genuine `timeupdate` progress
+    // (so the "did anything ever move" watchdog is satisfied) but never
+    // emits `ended` — a stuck decoder, distinct from a fully silent one.
+    const timeupdateListeners = new Set<(payload: { chunkId: string; positionMs: number }) => void>();
+    let loadedChunkId: string | undefined;
+    const stuckSink = {
+      async load(chunk: { chunkId: string }): Promise<void> {
+        loadedChunkId = chunk.chunkId;
+      },
+      play(): void {
+        if (loadedChunkId === undefined) {
+          return;
+        }
+        const chunkId = loadedChunkId;
+        setTimeout(() => {
+          for (const listener of timeupdateListeners) {
+            listener({ chunkId, positionMs: 100 });
+          }
+        }, 10);
+        // Deliberately never emits `ended`.
+      },
+      pause(): void {},
+      stop(): void {},
+      on(event: string, handler: (payload: unknown) => void): () => void {
+        if (event === "timeupdate") {
+          timeupdateListeners.add(handler as never);
+          return () => timeupdateListeners.delete(handler as never);
+        }
+        return () => {};
+      }
+    };
+    const controller = new PlaybackController({
+      cache: new InMemoryAudioCache(),
+      retryBackoffMs: [0, 0],
+      retryJitterMs: 0,
+      endedGraceMs: 500
+    });
+    const errors: PlaybackErrorInfo[] = [];
+    const states: PlaybackState[] = [];
+    controller.onError((info) => errors.push(info));
+    controller.onStateChange((change) => states.push(change.state));
+    const tts = new RecordingTtsProvider(new FakeTtsProvider({ msPerWord: 1000 }), []);
+    const started = controller.start({
+      segments: makeSegments(1),
+      profile: makeProfile(),
+      tts,
+      // `AudioSink` (`src/playback/AudioSink.ts`) is the full surface this
+      // hand-written object needs to satisfy.
+      sink: stuckSink as never
+    });
+    await vi.advanceTimersByTimeAsync(50);
+    await started;
+    expect(controller.getState()).toBe("playing");
+
+    // CHUNK_MS (3000, `FakeTtsProvider`'s reported duration) + endedGraceMs (500).
+    await vi.advanceTimersByTimeAsync(CHUNK_MS + 500);
+
+    expect(errors.some((e) => e.origin === "playback" && e.message.includes("ended"))).toBe(true);
+    expect(controller.getState()).toBe("error");
   });
 });
 
