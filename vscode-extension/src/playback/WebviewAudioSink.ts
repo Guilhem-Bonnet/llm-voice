@@ -23,6 +23,7 @@
  * deliberately does not model since it is a webview-only concern.
  */
 
+import { access } from "node:fs/promises";
 import * as vscode from "vscode";
 import type {
   ExtensionToWebviewMessage,
@@ -85,6 +86,26 @@ export class WebviewAudioSink implements AudioSink {
       // real, nameable failure, not a no-op.
       throw new Error(
         `WebviewAudioSink: no player view attached for chunk ${chunk.chunkId} — the "Lecture en cours" view could not be reached`
+      );
+    }
+    // GAO-diagnostic-s-001: a byte-for-byte copy of a real field-reported WAV
+    // plays cleanly through this exact webview pipeline (see
+    // `test/integration-security/audio-diagnostic.test.ts`), which rules out
+    // the file's own contents. What that experiment does not rule out is a
+    // `chunk.src` that names a file no longer on disk at the moment `load()`
+    // actually runs — e.g. `DiskAudioCache`'s best-effort eviction
+    // (`evictIfOverBudget`, fired-and-forgotten after every `put()`) racing a
+    // chunk still queued between synthesis and playback. Chromium's
+    // `<audio>` reports exactly that as `MEDIA_ERR_SRC_NOT_SUPPORTED` (code
+    // 4) with no further detail, which is indistinguishable, from the
+    // player's side, from a genuinely malformed file. Fail loudly and
+    // specifically here instead of letting the webview guess.
+    try {
+      await access(chunk.src);
+    } catch {
+      throw new Error(
+        `WebviewAudioSink: cache file missing for chunk ${chunk.chunkId} at ${chunk.src} — ` +
+          "evicted or never written before playback reached it"
       );
     }
     const src = this.webview.asWebviewUri(vscode.Uri.file(chunk.src)).toString();
