@@ -122,8 +122,11 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   // Panel mini-player (`minimal` layout, still available). `resolveWebviewView`
   // rebinds `player`'s single `WebviewAudioSink` to whichever of the two
   // was resolved last — harmless in the normal case (only one layout's view
-  // is ever open at a time), a known, narrow limitation if a user manually
-  // opens both simultaneously.
+  // is ever open at a time). GAO-diagnostic-s-001: when a user does open
+  // both simultaneously, "last resolved wins" the live binding (still true,
+  // still narrow) but a *stale* view disposing can no longer steal/null it
+  // out from under the live one — see `WebviewAudioSink.attach()`/`detach()`
+  // and `PlayerViewProvider.resolveWebviewView()`.
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("llmVoice.playerView", player, {
       webviewOptions: { retainContextWhenHidden: true }

@@ -61,7 +61,18 @@ export class WebviewAudioSink implements AudioSink {
   private readonly userActionEmitter = new Emitter<PlayerUserAction>();
   private readonly readyEmitter = new Emitter<void>();
 
-  /** Binds this sink to a live webview and starts forwarding its messages. */
+  /**
+   * Binds this sink to a live webview and starts forwarding its messages.
+   *
+   * GAO-diagnostic-s-001: the Panel mini-player (`llmVoice.player`) and the
+   * dedicated view (`llmVoice.playerView`) can both be resolved at once —
+   * two independent `vscode.Webview` instances, each with its own
+   * `asWebviewUri()` origin. `attach()` keeps "last resolved wins" as the
+   * active target (an explicit, narrow, still-documented limitation: only
+   * one of the two ever receives `load`/`play`/... while both are open) —
+   * what it no longer does is let the *stale* one silently corrupt state
+   * later; see `detach()`.
+   */
   attach(webview: vscode.Webview): vscode.Disposable {
     this.webview = webview;
     this.webviewReady = false;
@@ -70,8 +81,26 @@ export class WebviewAudioSink implements AudioSink {
     });
   }
 
-  /** Releases the webview reference; queued `on()` listeners stay registered. */
-  detach(): void {
+  /**
+   * Releases the webview reference — but only if `webview` is still the one
+   * this sink is actually routing to. GAO-diagnostic-s-001: before this
+   * guard, `PlayerViewProvider`'s two `resolveWebviewView` registrations
+   * both called `detach()` unconditionally from their own `onDidDispose`.
+   * A *stale* view (already superseded when the other one resolved) closing
+   * — panel auto-hide, container GC, anything — would then null out the
+   * reference to the still-alive, still-visible view's webview mid-session,
+   * so the next `load()` either threw "no player view attached" or forced
+   * `PlayerViewProvider.reveal()` to re-resolve a *different* webview
+   * instance than the one on screen, forging `asWebviewUri()` for one origin
+   * while the user was looking at another — Chromium reports that mismatch
+   * as opaque `MEDIA_ERR_SRC_NOT_SUPPORTED` (error code 4). No `webview`
+   * argument still detaches unconditionally (test-only convenience, see
+   * `test/integration-security/audio-diagnostic.test.ts`).
+   */
+  detach(webview?: vscode.Webview): void {
+    if (webview !== undefined && webview !== this.webview) {
+      return;
+    }
     this.webview = undefined;
     this.webviewReady = false;
   }
@@ -108,7 +137,19 @@ export class WebviewAudioSink implements AudioSink {
           "evicted or never written before playback reached it"
       );
     }
-    const src = this.webview.asWebviewUri(vscode.Uri.file(chunk.src)).toString();
+    // GAO-diagnostic-s-001, fix (3): re-read `this.webview` *after* the
+    // `await` above and forge/post through that exact same reference — a
+    // second webview resolving while this `load()` was awaiting `access()`
+    // must never leave the `asWebviewUri()` origin and the `postMessage()`
+    // target pointing at two different webviews.
+    const target = this.webview;
+    if (target === undefined) {
+      throw new Error(
+        `WebviewAudioSink: no player view attached for chunk ${chunk.chunkId} — ` +
+          "the view was detached while the cache file was being checked"
+      );
+    }
+    const src = target.asWebviewUri(vscode.Uri.file(chunk.src)).toString();
     const message: ExtensionToWebviewMessage = {
       type: "load",
       chunkId: chunk.chunkId,
@@ -116,7 +157,7 @@ export class WebviewAudioSink implements AudioSink {
       autoplay: true,
       ...(chunk.durationMs !== undefined ? { durationMs: chunk.durationMs } : {})
     };
-    this.post(message);
+    void target.postMessage(message);
   }
 
   play(): void {

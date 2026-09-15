@@ -56,9 +56,20 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this.renderHtml(webviewView.webview);
     this.disposables.push(this.sink.attach(webviewView.webview));
 
+    // GAO-diagnostic-s-001: `resolveWebviewView` runs once per view id
+    // (`llmVoice.player` panel mini-player, `llmVoice.playerView` dedicated
+    // view) against this *same* provider instance — `this.view` used to be
+    // unconditionally overwritten/cleared the same way `sink.attach`/
+    // `sink.detach` were, so a *stale* view disposing (the one that lost
+    // the race when both were resolved) could null out the reference to
+    // the still-alive one the user is actually looking at. Both are now
+    // identity-guarded: only the view that owns the current binding may
+    // clear it.
     webviewView.onDidDispose(() => {
-      this.sink.detach();
-      this.view = undefined;
+      this.sink.detach(webviewView.webview);
+      if (this.view === webviewView) {
+        this.view = undefined;
+      }
     });
   }
 
