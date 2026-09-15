@@ -55,9 +55,11 @@ import { PlayerViewProvider } from "../views/player/PlayerViewProvider.js";
 import { StatusBar, type StatusBarPlaybackState, type StatusBarViewModel } from "../ui/StatusBar.js";
 import {
   chooseTtsUnavailableMessage,
+  formatPlaybackFailedMessage,
   NotificationGate,
   notifyChunkInvalid,
   notifyNarratorUnavailable,
+  notifyPlaybackFailed,
   notifyTtsUnavailable,
   type TtsFailureDiagnostic,
   type TtsUnavailableChoice
@@ -590,7 +592,15 @@ export class Pipeline implements PipelineFacade {
       const sink = this.sinkOverride ?? this.player.audioSink;
 
       this.currentUri = doc.uri !== undefined ? vscode.Uri.parse(doc.uri) : undefined;
-      this.player.reveal();
+      // GAO-diagnostic-s-001: playing into a webview that was never
+      // revealed is exactly what produced "no sound, no error" — say so
+      // instead of starting a session nothing can display.
+      if (!(await this.player.reveal())) {
+        void vscode.window.showErrorMessage(
+          "LLM Voice : impossible d'afficher le lecteur (« Lecture en cours ») — lecture annulée."
+        );
+        return;
+      }
 
       this.beginPerfSession();
       // Bug fix (voice-selection-not-applied / infinite loop): a profile
@@ -970,7 +980,12 @@ export class Pipeline implements PipelineFacade {
     this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
     const sink = this.sinkOverride ?? this.player.audioSink;
     this.currentProfileLabel = profile.label;
-    this.player.reveal();
+    if (!(await this.player.reveal())) {
+      void vscode.window.showErrorMessage(
+        "LLM Voice : impossible d'afficher le lecteur (« Lecture en cours ») — lecture annulée."
+      );
+      return;
+    }
     this.beginPerfSession();
     // Bug fix (voice-selection-not-applied / infinite loop): same
     // session-scoped default-voice fallback as `startInternal` — Test Voice
@@ -2040,8 +2055,16 @@ export class Pipeline implements PipelineFacade {
   /**
    * CdC §52's three synthesis-failure surfaces, all reached through
    * `PlaybackController`'s single `onChunkError` callback:
-   *  - `origin !== "synthesis"` (a playback/decode failure) always skips —
-   *    unchanged from before S5.3, no dialog fits a broken audio *file*.
+   *  - `origin !== "synthesis"` (a playback failure — the sink could not
+   *    play a file synthesis *did* produce, or the fallback watchdog never
+   *    saw it start, GAO-diagnostic-s-001/ADR-012 phase 0) **stops** the
+   *    session and names the real sink error, the file and the provider —
+   *    it used to `return "skip"` unconditionally here, silently chaining
+   *    to the next chunk at JS speed on every failure, which is exactly
+   *    what made a cascade of silent playback errors indistinguishable
+   *    from a fast-forwarding highlight with no sound. `PlaybackController`
+   *    itself now also refuses to chain on this origin regardless of what
+   *    this method answers — this is the user-facing half of that fix.
    *  - the session's *first* chunk (`index === 0`) failing after
    *    `AudioQueue`'s retries means the provider itself is unreachable
    *    ("TTS indisponible"): `notifyTtsUnavailable`, and its `Retry` re-runs
@@ -2068,9 +2091,28 @@ export class Pipeline implements PipelineFacade {
    * identically again.
    */
   private async handleChunkError(info: PlaybackErrorInfo): Promise<ChunkErrorDecision> {
-    this.output.warn("chunk failed", { chunkId: info.chunk.id, origin: info.origin, index: info.index });
+    this.output.warn("chunk failed", {
+      chunkId: info.chunk.id,
+      origin: info.origin,
+      index: info.index,
+      message: info.message
+    });
     if (info.origin !== "synthesis") {
-      return "skip";
+      this.statusBar.update({ ...this.statusBarModel("error") });
+      if (this.notificationGate.shouldNotify("playbackFailed")) {
+        this.notificationGate.markShown("playbackFailed");
+        const resolved = this.currentResolvedTts;
+        const message = formatPlaybackFailedMessage({
+          errorDetail: info.message,
+          filePath: info.chunk.audioUri ?? "chemin inconnu",
+          providerId: resolved?.providerId ?? "provider inconnu"
+        });
+        void notifyPlaybackFailed(
+          (msg, ...items) => vscode.window.showErrorMessage(msg, ...items),
+          message
+        );
+      }
+      return "stop";
     }
     this.statusBar.update({ ...this.statusBarModel("error") });
 

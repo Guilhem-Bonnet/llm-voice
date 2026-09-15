@@ -179,8 +179,33 @@ export async function notifyChunkInvalid(
   return choice === "Skip" ? "skip" : "stop";
 }
 
+/**
+ * GAO-diagnostic-s-001 / ADR-012 phase 0: a `"playback"` origin failure (the
+ * sink could not play a file synthesis *did* produce, or the watchdog never
+ * saw it start) is a systemic defect — the session stops, and the message
+ * names the real sink error, the file it tried to play, and the provider
+ * that produced it, so "no sound" is never indistinguishable from "fast
+ * silent skipping" again.
+ */
+export interface PlaybackFailureDiagnostic {
+  errorDetail: string;
+  filePath: string;
+  providerId: string;
+}
+
+export function formatPlaybackFailedMessage(diagnostic: PlaybackFailureDiagnostic): string {
+  return (
+    `LLM Voice : lecture audio impossible (${diagnostic.errorDetail}) — ` +
+    `fichier « ${diagnostic.filePath} », provider « ${diagnostic.providerId} ». Lecture arrêtée.`
+  );
+}
+
+export async function notifyPlaybackFailed(showErrorMessage: ShowMessage, message: string): Promise<void> {
+  await showErrorMessage(message);
+}
+
 /** One failure family CdC §52 describes; see `NotificationGate`. */
-export type NotificationType = "ttsUnavailable" | "narratorUnavailable" | "chunkInvalid";
+export type NotificationType = "ttsUnavailable" | "narratorUnavailable" | "chunkInvalid" | "playbackFailed";
 
 /**
  * Anti-spam guard: each `NotificationType` may notify once until `reset()`

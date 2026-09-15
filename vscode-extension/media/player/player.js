@@ -166,12 +166,42 @@
     post({ type: "ended", chunkId: currentChunkId });
   });
 
+  // GAO-diagnostic-s-001: a WAV that is valid on disk and an `audio.src`
+  // that passed the trusted-host guard above can still fail to decode if
+  // the byte stream the webview actually receives isn't the WAV at all
+  // (e.g. VS Code's resource server answering with an error document).
+  // `audio.error.code` alone can't distinguish those cases, so on error we
+  // re-fetch the exact same URI from inside the webview and report what
+  // came back — status, content-type, and the first bytes — instead of
+  // guessing. Diagnostic-only: never changes playback behaviour.
+  async function reportAudioError(chunkId, message, src) {
+    const debug = { src: src || null };
+    if (src) {
+      try {
+        const response = await fetch(src);
+        debug.fetchStatus = response.status;
+        debug.fetchContentType = response.headers.get("content-type") || "";
+        const buffer = await response.arrayBuffer();
+        const prefix = new Uint8Array(buffer).slice(0, 100);
+        debug.fetchBodyHex = Array.from(prefix)
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join(" ");
+        debug.fetchBodyAscii = Array.from(prefix)
+          .map((byte) => (byte >= 32 && byte < 127 ? String.fromCharCode(byte) : "."))
+          .join("");
+      } catch (fetchError) {
+        debug.fetchThrew = fetchError instanceof Error ? fetchError.message : String(fetchError);
+      }
+    }
+    post({ type: "error", chunkId, message, debug });
+  }
+
   audio.addEventListener("error", () => {
     if (!currentChunkId) {
       return;
     }
     const message = audio.error ? `Audio error code ${audio.error.code}` : "Unknown audio error";
-    post({ type: "error", chunkId: currentChunkId, message });
+    void reportAudioError(currentChunkId, message, audio.currentSrc || audio.src);
   });
 
   progressTrack.addEventListener("click", (event) => {

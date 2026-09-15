@@ -85,6 +85,19 @@ export interface PlaybackControllerOptions extends AudioQueueOptions {
   onChunkError?: ChunkErrorHandler;
   /** `previous()` restarts the chunk past this offset (CdC §9 rewind rule). */
   previousThresholdMs?: number;
+  /**
+   * Fallback watchdog (GAO-diagnostic-s-001, ADR-012 phase 0): if no
+   * `timeupdate` is reported within this delay of `play()`, the sink is
+   * treated as never having actually started — a `playback` error, not a
+   * silent no-op. Default 4000 ms.
+   */
+  noProgressTimeoutMs?: number;
+  /**
+   * Extra margin past a chunk's known `durationMs` within which `ended`
+   * must arrive; past `durationMs + endedGraceMs` with no `ended`, playback
+   * is presumed stuck and reported as a `playback` error. Default 4000 ms.
+   */
+  endedGraceMs?: number;
 }
 
 interface ActiveSession {
@@ -97,6 +110,8 @@ interface ActiveSession {
 }
 
 const DEFAULT_PREVIOUS_THRESHOLD_MS = 2000;
+const DEFAULT_NO_PROGRESS_TIMEOUT_MS = 4000;
+const DEFAULT_ENDED_GRACE_MS = 4000;
 
 export class PlaybackController {
   private readonly stateChanged = new Emitter<PlaybackStateChange>();
@@ -108,6 +123,13 @@ export class PlaybackController {
   private readonly queueOptions: AudioQueueOptions;
   private readonly onChunkError: ChunkErrorHandler;
   private readonly previousThresholdMs: number;
+  private readonly noProgressTimeoutMs: number;
+  private readonly endedGraceMs: number;
+
+  /** Cleared on the first `timeupdate` of the chunk it was armed for. */
+  private noProgressTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Cleared only by `ended`/`error`/a transition — not by `timeupdate`. */
+  private noEndedTimer: ReturnType<typeof setTimeout> | undefined;
 
   private session: ActiveSession | undefined;
   private sinkSubscriptions: Unsubscribe[] = [];
@@ -140,6 +162,9 @@ export class PlaybackController {
     this.onChunkError = options.onChunkError ?? (() => "skip");
     this.previousThresholdMs =
       options.previousThresholdMs ?? DEFAULT_PREVIOUS_THRESHOLD_MS;
+    this.noProgressTimeoutMs =
+      options.noProgressTimeoutMs ?? DEFAULT_NO_PROGRESS_TIMEOUT_MS;
+    this.endedGraceMs = options.endedGraceMs ?? DEFAULT_ENDED_GRACE_MS;
   }
 
   // ---------------------------------------------------------------- events
@@ -230,6 +255,7 @@ export class PlaybackController {
       return;
     }
     this.session.sink.pause();
+    this.clearWatchdogs();
     this.setState("paused");
   }
 
@@ -240,6 +266,12 @@ export class PlaybackController {
     }
     this.session.sink.play();
     this.setState("playing");
+    const chunk = this.currentChunk();
+    if (chunk !== undefined) {
+      const remainingMs =
+        chunk.durationMs !== undefined ? Math.max(chunk.durationMs - this.positionMs, 0) : undefined;
+      this.armWatchdogs(this.currentIndex, chunk.id, remainingMs);
+    }
   }
 
   /** Rewinds to zero and cancels unnecessary synthesis; keeps the cache (CdC §36). */
@@ -251,6 +283,7 @@ export class PlaybackController {
     this.awaitingIndex = undefined;
     this.session.queue.cancelAll();
     this.session.sink.stop();
+    this.clearWatchdogs();
     this.currentIndex = 0;
     this.positionMs = 0;
     this.setState("stopped");
@@ -371,6 +404,7 @@ export class PlaybackController {
     this.sinkSubscriptions = [];
     this.generation += 1;
     this.awaitingIndex = undefined;
+    this.clearWatchdogs();
     if (this.session !== undefined) {
       this.session.queue.dispose();
       this.session.sink.stop();
@@ -397,6 +431,14 @@ export class PlaybackController {
     if (this.disposed || chunk === undefined || chunk.id !== chunkId) {
       return;
     }
+    // Real progress observed: the "did playback even start" half of the
+    // watchdog is satisfied. `noEndedTimer` stays armed — a chunk that
+    // ticks forever past its announced duration without ever reaching
+    // `ended` is still a stuck/broken playback, not a live one.
+    if (this.noProgressTimer !== undefined) {
+      clearTimeout(this.noProgressTimer);
+      this.noProgressTimer = undefined;
+    }
     this.positionMs = positionMs;
     this.progressed.emit({
       positionMs,
@@ -416,6 +458,7 @@ export class PlaybackController {
     ) {
       return;
     }
+    this.clearWatchdogs();
     chunk.status = "played";
     await this.next();
   }
@@ -425,9 +468,80 @@ export class PlaybackController {
     if (this.disposed || chunk === undefined || chunk.id !== chunkId) {
       return;
     }
+    this.clearWatchdogs();
     chunk.status = "error";
     chunk.error = message;
     await this.handleChunkFailure(this.currentIndex, chunk, message, "playback");
+  }
+
+  /**
+   * Fallback watchdog (GAO-diagnostic-s-001, ADR-012 phase 0): a chunk that
+   * never produces a `timeupdate`, or never produces `ended` past its
+   * announced duration, is indistinguishable from a cascade of silent
+   * failures without this. Reported exactly like a sink `error` — same
+   * `"playback"` origin, same "never chain, always stop" rule.
+   */
+  private async handleWatchdogTimeout(
+    generation: number,
+    index: number,
+    chunkId: string,
+    message: string
+  ): Promise<void> {
+    if (this.isStale(generation)) {
+      return;
+    }
+    const chunk = this.currentChunk();
+    if (chunk === undefined || chunk.id !== chunkId || this.currentIndex !== index) {
+      return;
+    }
+    this.clearWatchdogs();
+    chunk.status = "error";
+    chunk.error = message;
+    await this.handleChunkFailure(index, chunk, message, "playback");
+  }
+
+  /**
+   * Arms both fallback timers for the chunk that was just handed to the
+   * sink (`playIndex`) or resumed (`resume`). `remainingDurationMs` is the
+   * chunk's `durationMs` minus whatever was already played — `undefined`
+   * when the sink never reported a duration, in which case only the
+   * "did anything ever move" timer applies.
+   */
+  private armWatchdogs(index: number, chunkId: string, remainingDurationMs: number | undefined): void {
+    this.clearWatchdogs();
+    const generation = this.generation;
+    this.noProgressTimer = setTimeout(() => {
+      this.noProgressTimer = undefined;
+      void this.handleWatchdogTimeout(
+        generation,
+        index,
+        chunkId,
+        `aucun "timeupdate" reçu dans les ${this.noProgressTimeoutMs} ms suivant load()+play() — la lecture n'a probablement jamais démarré`
+      );
+    }, this.noProgressTimeoutMs);
+    if (remainingDurationMs !== undefined) {
+      const deadlineMs = remainingDurationMs + this.endedGraceMs;
+      this.noEndedTimer = setTimeout(() => {
+        this.noEndedTimer = undefined;
+        void this.handleWatchdogTimeout(
+          generation,
+          index,
+          chunkId,
+          `aucun "ended" reçu au-delà de la durée annoncée (${remainingDurationMs} ms) + marge (${this.endedGraceMs} ms) — la lecture est probablement bloquée`
+        );
+      }, deadlineMs);
+    }
+  }
+
+  private clearWatchdogs(): void {
+    if (this.noProgressTimer !== undefined) {
+      clearTimeout(this.noProgressTimer);
+      this.noProgressTimer = undefined;
+    }
+    if (this.noEndedTimer !== undefined) {
+      clearTimeout(this.noEndedTimer);
+      this.noEndedTimer = undefined;
+    }
   }
 
   /**
@@ -482,12 +596,28 @@ export class PlaybackController {
       return;
     }
 
-    await session.sink.load({
-      chunkId: chunk.id,
-      src: chunk.audioUri,
-      ...(chunk.durationMs !== undefined ? { durationMs: chunk.durationMs } : {}),
-      ...(chunk.format !== undefined ? { format: chunk.format } : {})
-    });
+    try {
+      await session.sink.load({
+        chunkId: chunk.id,
+        src: chunk.audioUri,
+        ...(chunk.durationMs !== undefined ? { durationMs: chunk.durationMs } : {}),
+        ...(chunk.format !== undefined ? { format: chunk.format } : {})
+      });
+    } catch (error) {
+      // fix(playback): `load()` rejecting (e.g. `WebviewAudioSink` with no
+      // view attached, GAO-diagnostic-s-001) used to be unhandled — the
+      // chunk would never reach `playing` and the session would just hang.
+      // A sink that cannot even load a chunk is exactly a `"playback"`
+      // failure: never chained, session stopped, real cause named.
+      if (this.isStale(generation)) {
+        return;
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      chunk.status = "error";
+      chunk.error = message;
+      await this.handleChunkFailure(index, chunk, message, "playback");
+      return;
+    }
     if (this.isStale(generation)) {
       return;
     }
@@ -496,6 +626,7 @@ export class PlaybackController {
     session.sink.play();
     this.setState("playing");
     this.chunkChanged.emit({ index, chunk, sourceRanges: chunk.sourceRanges });
+    this.armWatchdogs(index, chunk.id, chunk.durationMs);
     // Re-arm the prefetch window now that the cursor really moved.
     session.queue.setCursor(index);
   }
@@ -512,14 +643,23 @@ export class PlaybackController {
   ): Promise<void> {
     const info: PlaybackErrorInfo = { index, chunk, message, origin };
     this.errored.emit(info);
-    const decision = await this.onChunkError(info);
+    const requested = await this.onChunkError(info);
     if (this.disposed || this.session === undefined) {
       return;
     }
+    // A `"playback"` failure means the sink itself refused/failed to play
+    // audio that synthesis *did* produce (or never reported it started at
+    // all, per the watchdogs above): a systemic defect, not a per-chunk
+    // quirk. Enforced here, at the state-machine level, so no caller's
+    // `onChunkError` policy — however it answers — can turn a broken sink
+    // into a silent, ever-faster chain of skipped chunks
+    // (GAO-diagnostic-s-001, ADR-012 phase 0: "never chain on playback errors").
+    const decision = origin === "playback" ? "stop" : requested;
     if (decision === "stop") {
       this.generation += 1;
       this.session.queue.cancelAll();
       this.session.sink.stop();
+      this.clearWatchdogs();
       this.setState("error");
       return;
     }
@@ -534,6 +674,7 @@ export class PlaybackController {
     this.generation += 1;
     this.session.queue.cancelAll();
     this.session.sink.stop();
+    this.clearWatchdogs();
     this.setState("completed");
   }
 

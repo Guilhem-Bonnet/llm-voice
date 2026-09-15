@@ -50,7 +50,7 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
       ...activeEditorContext(),
       ...extra
     };
-    player.reveal();
+    void player.reveal();
     await pipeline.start(context);
   };
 
@@ -100,13 +100,13 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
         ...activeEditorContext(),
         ...(args ? { uri: args.uri, cursor: { line: args.line, column: 0 } } : {})
       };
-      player.reveal();
+      void player.reveal();
       await pipeline.start(context);
     }),
     vscode.commands.registerCommand("llmVoice.speakClipboard", async () => {
       const text = await vscode.env.clipboard.readText();
       const context: CaptureContext = { scope: "clipboard", text };
-      player.reveal();
+      void player.reveal();
       await pipeline.start(context);
     }),
     vscode.commands.registerCommand("llmVoice.play", () => pipeline.play()),
