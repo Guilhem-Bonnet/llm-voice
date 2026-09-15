@@ -109,7 +109,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     })
   );
 
-  const player = new PlayerViewProvider(context.extensionUri, context.globalStorageUri);
+  const player = new PlayerViewProvider(context.extensionUri, context.globalStorageUri, log);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(PlayerViewProvider.viewType, player, {
       webviewOptions: { retainContextWhenHidden: true }

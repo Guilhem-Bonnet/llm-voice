@@ -7,18 +7,22 @@
 import * as vscode from "vscode";
 import { WebviewAudioSink } from "../../playback/WebviewAudioSink.js";
 import { buildPlayerHtml, getNonce } from "./playerHtml.js";
+import type { Logger } from "../../infrastructure/logger.js";
 
 export class PlayerViewProvider implements vscode.WebviewViewProvider {
   static readonly viewType = "llmVoice.player";
 
-  private readonly sink = new WebviewAudioSink();
+  private readonly sink: WebviewAudioSink;
   private view: vscode.WebviewView | undefined;
   private readonly disposables: vscode.Disposable[] = [];
 
   constructor(
     private readonly extensionUri: vscode.Uri,
-    private readonly globalStorageUri: vscode.Uri
-  ) {}
+    private readonly globalStorageUri: vscode.Uri,
+    logger?: Logger
+  ) {
+    this.sink = new WebviewAudioSink(logger);
+  }
 
   /** The sink other layers (the future PlaybackController) talk to. */
   get audioSink(): WebviewAudioSink {

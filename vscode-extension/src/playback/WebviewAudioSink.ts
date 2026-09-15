@@ -38,11 +38,21 @@ import type {
   AudioSinkListener
 } from "./AudioSink.js";
 import { Emitter, type Unsubscribe } from "./emitter.js";
+import type { Logger } from "../infrastructure/logger.js";
 
 /** Bridges `AudioSink` calls to `postMessage` against a single webview. */
 export class WebviewAudioSink implements AudioSink {
   private webview: vscode.Webview | undefined;
   private webviewReady = false;
+
+  /**
+   * GAO-diagnostic-s-001: optional, diagnostic-only. When set, every
+   * webview-reported `error` also gets a `debug` record (see
+   * `WebviewToExtensionMessage`'s `error.debug`) written at `debug` level —
+   * the URI actually assigned to `audio.src` and the status/content-type/
+   * body-preview of a `fetch()` on that same URI from inside the webview.
+   */
+  constructor(private readonly logger?: Logger) {}
 
   private readonly timeupdateEmitter = new Emitter<AudioSinkEventMap["timeupdate"]>();
   private readonly endedEmitter = new Emitter<AudioSinkEventMap["ended"]>();
@@ -159,6 +169,9 @@ export class WebviewAudioSink implements AudioSink {
         this.endedEmitter.emit({ chunkId: message.chunkId });
         break;
       case "error":
+        if (message.debug !== undefined) {
+          this.logger?.debug(`WebviewAudioSink: playback error for chunk ${message.chunkId}`, message.debug);
+        }
         this.errorEmitter.emit({ chunkId: message.chunkId, message: message.message });
         break;
       case "userAction":

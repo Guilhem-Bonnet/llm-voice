@@ -108,7 +108,19 @@ export type WebviewToExtensionMessage =
   | { type: "ready" }
   | { type: "timeupdate"; chunkId: string; positionMs: number }
   | { type: "ended"; chunkId: string }
-  | { type: "error"; chunkId: string; message: string }
+  | {
+      type: "error";
+      chunkId: string;
+      message: string;
+      /**
+       * GAO-diagnostic-s-001: diagnostic-only detail `player.js` gathers by
+       * re-`fetch()`ing the failed `audio.src` from inside the webview —
+       * the exact URI, HTTP status/content-type, and a short hex/ascii
+       * preview of the body VS Code's resource server actually returned.
+       * Never used for control flow; logged at `debug` level only.
+       */
+      debug?: Record<string, unknown>;
+    }
   | { type: "userAction"; action: PlayerUserAction };
 
 /** Either direction of the player protocol. */
