@@ -70,6 +70,21 @@ impl TrackQueue {
         }
     }
 
+    /// Ajoute un clip à la fin de la file (`enqueue` du protocole Core v1).
+    ///
+    /// Si la file venait d'atteindre `Ended` (plus rien à jouer), l'arrivée
+    /// d'un nouveau clip la fait redevenir `Paused` : ce n'était qu'une
+    /// sous-alimentation temporaire (le prochain segment n'était pas encore
+    /// prêt), pas une fin définitive (GAO-spike-moteur-001, CL-004). C'est au
+    /// niveau au-dessus (`Player::drain_status`) de distinguer un `underrun`
+    /// résolu à temps d'un `ended` confirmé.
+    pub fn push(&mut self, clip: Clip) {
+        self.clips.push(clip);
+        if self.state == PlaybackState::Ended {
+            self.state = PlaybackState::Paused;
+        }
+    }
+
     pub fn state(&self) -> PlaybackState {
         self.state
     }
@@ -283,6 +298,36 @@ mod tests {
             "seek doit tomber dans le 2e clip"
         );
         assert_eq!(q.position_ms(), 1300);
+    }
+
+    #[test]
+    fn push_after_ended_resumes_as_paused_not_stopped() {
+        let mut q = TrackQueue::new(vec![clip(1, 1)]);
+        q.play();
+        // `Ended` n'est constaté qu'à la tentative de lire au-delà de la
+        // dernière trame : un tampon plus grand que le clip (1000 trames).
+        let mut out = vec![0i16; 1200];
+        assert_eq!(q.fill(&mut out, 1), 1000);
+        assert_eq!(q.state(), PlaybackState::Ended);
+
+        q.push(clip(1, 2));
+        assert_eq!(
+            q.state(),
+            PlaybackState::Paused,
+            "un nouveau clip annule la fin définitive"
+        );
+        assert_eq!(q.total_duration_ms(), 2000);
+
+        q.play();
+        let mut out2 = vec![0i16; 1200];
+        let written = q.fill(&mut out2, 1);
+        assert_eq!(written, 1000);
+        assert!(
+            out2[..1000].iter().all(|&s| s == 2),
+            "enchaîne sur le clip ajouté"
+        );
+        assert!(out2[1000..].iter().all(|&s| s == 0), "silence après la fin");
+        assert_eq!(q.state(), PlaybackState::Ended);
     }
 
     #[test]

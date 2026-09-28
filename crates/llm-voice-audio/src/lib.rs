@@ -10,5 +10,5 @@ mod player;
 mod queue;
 
 pub use error::AudioError;
-pub use player::{load_wav, Player};
+pub use player::{load_wav, DrainStatus, Player};
 pub use queue::{Clip, PlaybackState, TrackQueue};

@@ -12,7 +12,7 @@
 use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Racine du dépôt : ce crate vit sous `<repo>/crates/llm-voice-protocol`.
 fn repo_root() -> PathBuf {
@@ -28,12 +28,26 @@ pub fn contracts_root() -> PathBuf {
     repo_root().join("contracts/core-v1")
 }
 
+/// Version de protocole parlée par cette bibliothèque (et donc par le Core).
+pub const PROTOCOL_VERSION: &str = "1.0";
+
+/// Vrai si `value` est une version `1.x` acceptée par le Core
+/// (`common.schema.json#/$defs/protocolVersion`).
+pub fn is_supported_protocol_version(value: &str) -> bool {
+    validate_protocol_version(value).is_ok()
+}
+
+/// Liste fermée des codes d'erreur (`common.schema.json#/$defs/errorCode`).
+pub fn is_known_error_code(value: &str) -> bool {
+    validate_error_code(value).is_ok()
+}
+
 /// `<repo>/contracts/core-v1/examples`.
 pub fn examples_root() -> PathBuf {
     contracts_root().join("examples")
 }
 
-trait Validate {
+pub trait Validate {
     /// Vérifie les invariants qu'un schéma JSON exprime mais que le typage
     /// `serde` ne peut pas porter (motifs, `const`, `if`/`then`).
     fn validate(&self) -> Result<(), String>;
@@ -115,7 +129,7 @@ fn validate_error_code(value: &str) -> Result<(), String> {
 }
 
 /// `common.schema.json#/$defs/audioFormat`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum AudioFormat {
     Wav,
@@ -123,7 +137,7 @@ pub enum AudioFormat {
 }
 
 /// `http/health.response.schema.json#/properties/capabilities`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Capabilities {
     pub formats: Vec<AudioFormat>,
@@ -146,7 +160,7 @@ impl Validate for Capabilities {
 }
 
 /// `http/health.response.schema.json`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct HealthResponse {
     pub protocol_version: String,
@@ -261,7 +275,7 @@ impl Validate for SeekRequest {
 }
 
 /// `http/ack.response.schema.json#/properties/error`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct AckError {
     pub code: String,
@@ -279,12 +293,12 @@ impl Validate for AckError {
 }
 
 /// `http/ack.response.schema.json`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct AckResponse {
     pub protocol_version: String,
     pub ok: bool,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub error: Option<AckError>,
 }
 
@@ -300,7 +314,7 @@ impl Validate for AckResponse {
 }
 
 /// `ws/state.event.schema.json`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct StateEvent {
     pub protocol_version: String,
@@ -323,7 +337,7 @@ impl Validate for StateEvent {
 }
 
 /// `ws/position.event.schema.json`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct PositionEvent {
     pub protocol_version: String,
@@ -345,7 +359,7 @@ impl Validate for PositionEvent {
 macro_rules! segment_lifecycle_event {
     ($name:ident, $expected_type:literal, $doc:literal) => {
         #[doc = $doc]
-        #[derive(Debug, Deserialize)]
+        #[derive(Debug, Deserialize, Serialize)]
         #[serde(deny_unknown_fields, rename_all = "camelCase")]
         pub struct $name {
             pub protocol_version: String,
@@ -379,13 +393,13 @@ segment_lifecycle_event!(
 );
 
 /// `ws/underrun.event.schema.json`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct UnderrunEvent {
     pub protocol_version: String,
     pub r#type: String,
     pub position_ms: u64,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub segment_id: Option<String>,
 }
 
@@ -405,7 +419,7 @@ impl Validate for UnderrunEvent {
 /// `ws/ended.event.schema.json` — posté seulement après vidange complète du
 /// tampon de sortie (GAO-spike-moteur-001, CL-004 : cause du dernier mot
 /// tronqué mesurée au spike).
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct EndedEvent {
     pub protocol_version: String,
@@ -425,14 +439,14 @@ impl Validate for EndedEvent {
 }
 
 /// `ws/error.event.schema.json`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct ErrorEvent {
     pub protocol_version: String,
     pub r#type: String,
     pub code: String,
     pub message: String,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub segment_id: Option<String>,
 }
 
