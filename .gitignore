@@ -37,3 +37,6 @@ coverage/
 
 _grimoire/_memory/grimoire_lexical.sqlite3
 vscode-extension/_grimoire-output/
+
+# Rust (Core, ADR-012)
+/target/

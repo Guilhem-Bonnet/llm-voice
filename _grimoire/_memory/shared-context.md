@@ -40,10 +40,65 @@
   (routage LLM par agent, chaîne de vérification, pyramide de tests, phases 0→6).
 - Rapports phase 0 : `review-cdc-v1.md`, `brainstorm-llm-voice-v1.md`,
   `security-privacy-review-v1.md`, `github-repo-ci-plan-v1.md` (même dossier).
+- **Étude modèles de décision (2026-09-27)** : `decision-models-jev-v1.md` (même dossier), §10 = vérification
+  indépendante et arbitrage. **Retenu** : mode « Auto » = technique SemIf réimplémentée en TypeScript sur l'API native
+  Ollama (logprobs prouvés localement, Ollama 0.21) ; Laya 322M en réserve (palier Python) ; Kev/Nimble/NanoJev/OpenJev
+  écartés ; Jev cloud jamais par défaut. Spike sur 50 réponses étiquetées par l'utilisateur contre un témoin à règles
+  avant tout code produit. Fonctionnalité 0.4, après ADR-012. Cartographie des points d'usage : `decision-points-map-v1.md`.
+  **Exécution du 2026-09-27 (session concierge, 7 cartes du Mission Ledger)** : closes — `GAO-narrateur-in-001`
+  (qwen2.5:7b installé, `/api/chat` structuré prouvé), `GAO-cartographie-001` (`decision-points-map-v1.md` livré,
+  27 chemins vérifiés), `GAO-adr-013-four-001` (`docs/adr/ADR-013-decision-provider.md`, statut Proposé, relu par
+  Sentinel sans point bloquant), `GAO-spike-valuat-001` (outillage `vscode-extension/scripts/decision-spike/`, chaîne
+  prouvée sur 9 réponses synthétiques ; **mesure réelle impossible : inbox vide, hook Claude non installé** →
+  l'utilisateur doit lancer « LLM Voice: Install Claude Hook », étiqueter 50 réponses dans `~/.llm-voice/eval/`, relancer
+  `run-all.mjs`). Bloquée : `GAO-mode-auto-im-001` (attend ADR-012 + spike gagnant). À trancher : `GAO-fournisseur-001`
+  (Jev cloud), `GAO-file-de-lect-001` (file multi-fenêtres). `project-context.yaml` déclare désormais
+  `needs.commands.test-runner` → les gates exécutent `npm --prefix vscode-extension run test:unit`.
+- **Veille briques existantes (2026-09-27)** : `_grimoire-output/research/reports/Briques existantes pour LLM Voice.md`
+  (notes sourcées dans `research_notes/`). Retenus : sherpa-onnx, mpv IPC, pdf.js/mammoth/Readability ; risque Piper GPL-3.0
+  et non-vérifiés listés dans decisions-log du même jour.
+- **ADR-012 (accepté 2026-09-27, rédigé 2026-09-28)** : `docs/adr/ADR-012-native-audio-core.md` — lecture audio native par un Core Rust
+  minimal `llm-voice-core` (loopback, jeton, instance unique, aucune socket sortante) ; orchestration en TypeScript ; ADR-001 remplacé.
 - Routage LLM : Fable = orchestration/gates uniquement ; Opus = ADR, state machine, audit sécurité ;
   Sonnet = code/tests/revues ; Haiku = CI/docs/mémoire. **Toujours passer `model:` au dispatch**
   (les agents `.claude/agents/*.md` en `inherit` tourneraient sinon sur Fable).
-- Vérificateur ≠ auteur, contexte neuf. Gate de phase = `grimoire standard gate check --task-id <phase> --strict`.
+  Registre de référence : `_grimoire/standard/llm-provider-registry.yaml`.
+- Vérificateur ≠ auteur, contexte neuf. Gate de phase = `grimoire standard gate check --task-id <id-ledger> --strict`.
+- **Depuis le 2026-09-13, chaque phase est une carte du Mission Ledger** (`grimoire task add … -a … ; claim ; move --to running`) :
+  le board `_grimoire/standard/task-board.yaml` est projeté depuis le ledger (`_grimoire-runtime-output/ledger/events.jsonl`) et
+  rend le gate opposable ; les preuves vont sous `_grimoire-output/evidence/<id-ledger>/` (enveloppe, pack), plus
+  `grimoire task context <id>` et `grimoire standard decision trace --task-id <id>`. Un id hors board (dont l'ancien
+  `bootstrap`) donne `gate.task_not_on_board`. Les critères d'acceptation doivent nommer un verdict reconnu (gate, test, lint)
+  pour sortir de la classe de vérifiabilité V2. Première carte : `GAO-phase-10-gri-001` (closed · accepted).
+- **Agents disponibles depuis Grimoire Kit 3.46.1 (2026-09-13)** — 9 agents, 10 skills attachés :
+
+  | Rôle dans le plan maître v1 | Agent 3.46 à dispatcher | Skill à nommer dans le brief | Modèle |
+  |---|---|---|---|
+  | Marcel (orchestration) | `concierge` (boucle principale) | — | Fable |
+  | Archie (ADR) | `platform-architect` | — | Opus puis Sonnet |
+  | Stack (code TS, tests) | `backend-engineer` | — | Sonnet |
+  | Convoy (release, VSIX) | `backend-engineer` | `platform-deploy-release` | Sonnet |
+  | Guardian (santé providers, erreurs) | `backend-engineer` | `platform-reliability-sre` | Sonnet |
+  | Flow (CI GitHub Actions) | `ops-engineer` | `infra-pipeline-cicd` | Haiku |
+  | Vault (durcissement, secrets, CSP) | `ops-engineer` | `infra-security-hardening` | Sonnet |
+  | audit offensif pré-release | `security-auditor` (nouveau) | — | Opus |
+  | Sentinel (revue indépendante) | `agent-optimizer` | — | Sonnet |
+  | Atlas (README, docs, repo map) | `agent-optimizer` | `meta-project-navigation` | Haiku |
+  | Mnemo (qualité mémoire) | `agent-optimizer` | `meta-memory-quality` | Haiku |
+  | Vulcan (outillage, fakes) | `agent-optimizer` | `meta-toolsmithing` | Sonnet |
+  | Loop (fix-loop) | `fix-loop-orchestrator` | — | Sonnet → Opus si stérile |
+  | Forge (docker-compose, infra locale) | `ops-engineer` | — | Sonnet |
+
+  Un skill attaché vit dans `_grimoire/kit/skills/<skill>.md` et est replié dans le fichier hôte de son
+  agent porteur : le brief du sous-agent doit nommer le skill pour qu'il l'applique.
+- Garde-fous de session (`_grimoire/standard/policies.yaml`) : `git push`, `gh pr merge`, `gh release`
+  demandent une approbation utilisateur une fois par session ; rafale de `rm` → refroidissement ;
+  budget indicatif 400 écritures / 2000 appels d'outils par session.
+- Hooks git Grimoire installés (`grimoire hooks install`) : `pre-commit` exécute `cc-verify.sh --changed-only`
+  sur les fichiers `.ts/.sh/.py` stagés ; `commit-msg` refuse un message < 10 caractères ; `post-commit`
+  journalise dans `_grimoire-output/Grimoire_TRACE.md`. Bypass déconseillé : `git commit --no-verify`.
+- Concierge : quand aucun spécialiste ne convient, appeler `grimoire agent-miss --category <catégorie>`
+  avant de router vers un généraliste (jamais le contenu de la demande).
 
 ## Conventions
 
