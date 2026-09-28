@@ -253,6 +253,16 @@ export class CoreProcess {
     if (this.options.stateDirOverride !== undefined) {
       env.LLM_VOICE_CORE_STATE_DIR = this.options.stateDirOverride;
     }
+    // Stable PipeWire identity (GAO-s1-fedora-va-001): without it the stream
+    // shows up as "PipeWire ALSA [llm-voice-core]" and WirePlumber restores
+    // its output under that generic key. With a named application the user
+    // sees "LLM Voice" in the desktop sound settings, can move it to any
+    // output, and WirePlumber remembers that choice like for any desktop app.
+    // An explicit PIPEWIRE_PROPS from the environment (test bench) wins.
+    if (process.platform === "linux" && env.PIPEWIRE_PROPS === undefined) {
+      env.PIPEWIRE_PROPS =
+        '{ application.name = "LLM Voice" application.id = "llm-voice" node.name = "llm-voice-core" node.description = "LLM Voice" media.role = "Accessibility" }';
+    }
     // `--parent-pid`: lets the Core stop itself when this extension host
     // dies without a clean `dispose()` (F-02, evidence-pack
     // GAO-audit-s-curi-001 — `main.rs::parse_parent_pid`/`wait_for_parent_death`

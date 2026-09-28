@@ -207,3 +207,9 @@
 - **Contexte** : le budget de 400 écritures (fixé en phase 10) a été atteint en cours de sprint S1, bloquant deux cartes de code déléguées ; les écritures des sous-agents comptent dans la session. Les compteurs ont ensuite été remis à zéro sans trace d'une commande `reset-session` (origine non établie, signalée à l'utilisateur).
 - **Décision** : plafond relevé dans `_grimoire/standard/policies.yaml` (`per_session`) sur accord de guilhem-bonnet (« tu peux continuer »), en réponse à la proposition explicite du concierge. Les approbations de `git push`, `gh pr merge`, `gh release` restent inchangées.
 - **Agent** : concierge
+
+### [2026-09-28] Sortie audio du Core : comportement d'application de bureau sous PipeWire
+- **Contexte** : validation Wayland (GAO-s1-fedora-va-001) — le Core ne suivait pas un changement de sortie par défaut ; cause : WirePlumber restaure la sortie mémorisée de chaque application (entrée `PipeWire ALSA [llm-voice-core]` → `sc_media`).
+- **Décision** : LLM Voice se comporte comme toute application de bureau (sortie mémorisée, déplaçable dans les réglages son). Le Core est lancé avec une identité PipeWire stable (`application.name "LLM Voice"`, `media.role "Accessibility"`) pour être visible et réglable par l'utilisateur. Pas de forçage de cible dans le produit ; le banc de preuve garde son ciblage explicite.
+- **Alternative rejetée** : forcer le suivi du défaut système (contraire au fonctionnement PipeWire, empêcherait l'utilisateur de dédier LLM Voice à une sortie).
+- **Agent** : concierge

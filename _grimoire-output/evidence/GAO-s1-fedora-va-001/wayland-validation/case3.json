@@ -1,0 +1,7 @@
+{
+  "health_after_disparition": "{\"protocolVersion\":\"1.0\",\"status\":\"ok\",\"capabilities\":{\"formats\":[\"wav\",\"pcm16le\"],\"engine\":\"cpal\"}}",
+  "health_final": "{\"protocolVersion\":\"1.0\",\"status\":\"ok\",\"capabilities\":{\"formats\":[\"wav\",\"pcm16le\"],\"engine\":\"cpal\"}}",
+  "ended": 1,
+  "error_event": 0,
+  "core_alive": 1
+}
