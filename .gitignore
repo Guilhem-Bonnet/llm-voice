@@ -16,6 +16,10 @@ npm-debug.log*
 out/
 dist/
 *.vsix
+# Staged Core release binary (ADR-012 §7, GAO-s1-fedora-pa-001) — rebuilt by
+# `stage-core.mjs` from `target/release/`, never committed; still reaches
+# the VSIX because `.vscodeignore` does not exclude it.
+vscode-extension/bin/
 # Copied from integrations/claude-code/ at build time (npm run copy:claude-integration)
 vscode-extension/resources/claude-code/
 # vscode-extension/schemas/profile-collection.schema.json is committed

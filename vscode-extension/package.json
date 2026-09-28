@@ -850,10 +850,14 @@
     "build": "npm run compile && npm run generate:profile-schema && npm run copy:claude-integration && npm run bundle",
     "test:integration": "npm run build && vscode-test",
     "package": "npm run generate:icon && npm run sync:changelog && npm run build && vsce package --no-dependencies -o llm-voice.vsix && node scripts/check-vsix.mjs",
+    "build:core:linux-x64": "cargo build --release -p llm-voice-core --manifest-path ../Cargo.toml",
+    "stage:core:linux-x64": "node scripts/stage-core.mjs linux-x64",
+    "package:linux-x64": "npm run generate:icon && npm run sync:changelog && npm run build && npm run build:core:linux-x64 && npm run stage:core:linux-x64 && vsce package --no-dependencies --target linux-x64 -o llm-voice-linux-x64.vsix && npm run check:vsix:linux-x64",
     "vscode:prepublish": "npm run build",
     "check:audit": "npm audit --omit=dev --audit-level=high",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:vsix": "npm run build && node scripts/check-vsix.mjs",
+    "check:vsix:linux-x64": "node scripts/check-vsix.mjs --target linux-x64",
     "check:security": "npm run check:audit && npm run check:licenses && npm run check:vsix"
   },
   "dependencies": {
