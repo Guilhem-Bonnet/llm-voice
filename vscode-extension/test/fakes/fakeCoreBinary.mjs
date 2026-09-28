@@ -13,6 +13,11 @@
  * of starting a server (simulates `ALREADY_RUNNING_EXIT_CODE` or a crash).
  * `FAKE_CORE_CRASH_AFTER_MS` (optional): exits with code 1 after this delay,
  * once its state has already been published (simulates a mid-session crash).
+ *
+ * The published `core.json` also carries `argv` (the CLI args this fake
+ * received, e.g. `["--parent-pid", "1234"]`) so `core-process.test.ts` can
+ * assert `CoreProcess` actually passed `--parent-pid <process.pid>` (F-02)
+ * without needing to build the real Rust binary.
  */
 import http from "node:http";
 import fs from "node:fs";
@@ -46,7 +51,13 @@ server.listen(0, "127.0.0.1", () => {
   const statePath = path.join(stateDir, "core.json");
   fs.writeFileSync(
     statePath,
-    JSON.stringify({ pid: process.pid, port, token, protocolVersion: "1.0" }),
+    JSON.stringify({
+      pid: process.pid,
+      port,
+      token,
+      protocolVersion: "1.0",
+      argv: process.argv.slice(2)
+    }),
     { mode: 0o600 }
   );
 

@@ -132,4 +132,12 @@ describe("CoreProcess", () => {
   it("exposes the Rust-side ALREADY_RUNNING_EXIT_CODE for reference", () => {
     expect(ALREADY_RUNNING_EXIT_CODE).toBe(17);
   });
+
+  it("spawns the Core with --parent-pid <process.pid> so it can detect a crashed host (F-02)", async () => {
+    const core = make();
+    await core.ensureRunning();
+    const raw = await fsp.readFile(path.join(stateDir, "core.json"), "utf8");
+    const state = JSON.parse(raw) as { argv?: string[] };
+    expect(state.argv).toEqual(["--parent-pid", String(process.pid)]);
+  });
 });

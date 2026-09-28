@@ -253,7 +253,14 @@ export class CoreProcess {
     if (this.options.stateDirOverride !== undefined) {
       env.LLM_VOICE_CORE_STATE_DIR = this.options.stateDirOverride;
     }
-    const child = spawn(binPath, [], { env, stdio: ["ignore", "ignore", "pipe"] });
+    // `--parent-pid`: lets the Core stop itself when this extension host
+    // dies without a clean `dispose()` (F-02, evidence-pack
+    // GAO-audit-s-curi-001 — `main.rs::parse_parent_pid`/`wait_for_parent_death`
+    // poll `/proc/<pid>` at most once a second).
+    const child = spawn(binPath, ["--parent-pid", String(process.pid)], {
+      env,
+      stdio: ["ignore", "ignore", "pipe"]
+    });
     this.child = child;
     this.wireLifecycle(child);
     try {

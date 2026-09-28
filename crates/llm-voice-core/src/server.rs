@@ -146,19 +146,21 @@ fn authorize<T: DeserializeOwned + Validate>(
             format!("version \"{version}\" refusée : le Core parle {PROTOCOL_VERSION}"),
         )));
     }
-    // Le contrat v1 n'a pas de code « requête mal formée » : `internal_error`
-    // en 400 (écart documenté dans l'evidence-pack, à proposer en v1.1).
+    // Code dédié `invalid_request` (F-02/E03, evidence-pack
+    // GAO-audit-s-curi-001) : une requête mal formée ou dont les invariants
+    // (ex. `path` contenant `..`) échouent n'est pas une erreur *interne* du
+    // Core — `internal_error` la confondait avec un vrai bug serveur.
     let request: T = serde_json::from_value(value).map_err(|e| {
         Box::new(ack_err(
             StatusCode::BAD_REQUEST,
-            "internal_error",
+            "invalid_request",
             format!("requête mal formée : {e}"),
         ))
     })?;
     request.validate().map_err(|e| {
         Box::new(ack_err(
             StatusCode::BAD_REQUEST,
-            "internal_error",
+            "invalid_request",
             format!("requête invalide : {e}"),
         ))
     })?;
@@ -176,8 +178,30 @@ async fn health() -> Json<HealthResponse> {
     })
 }
 
+/// Plafond de taille d'un fichier enfilé, vérifié sur les métadonnées
+/// *avant* toute lecture du contenu (F-01, evidence-pack
+/// GAO-audit-s-curi-001) : `load_pcm16le`/`load_wav` chargent le fichier
+/// entier en mémoire, partagée entre toutes les fenêtres VS Code attachées
+/// au même Core — sans plafond, un fichier de cache géant (accidentel ou
+/// hostile) épuise la RAM du démon. 50 Mio couvre largement un segment de
+/// synthèse vocale (à 48 kHz stéréo 16 bits, ~4 min 30 de PCM brut ; à
+/// 8 kHz mono, ~54 min).
+pub const MAX_ENQUEUE_FILE_BYTES: u64 = 50 * 1024 * 1024;
+
+/// Plafond de durée décodée : défense en profondeur dérivée de
+/// `MAX_ENQUEUE_FILE_BYTES` au format le moins dense que le contrat
+/// autorise (PCM 16 bits mono à 8 kHz, le plancher de `sampleRate` —
+/// `llm_voice_protocol::EnqueueRequest::validate`) — le plafond en octets
+/// ne peut donc jamais être respecté par un clip plus long que ceci pour
+/// `wav`/`pcm16le` (aucune compression dans ces deux formats). Reste un
+/// filet de sécurité cohérent avec le plafond de taille, pas une limite
+/// fonctionnelle indépendante.
+pub const MAX_DECODED_DURATION_MS: u64 = MAX_ENQUEUE_FILE_BYTES / 2 * 1000 / 8000;
+
 /// Résout `path` et vérifie qu'il reste sous le dossier de cache (liens
-/// symboliques compris, grâce à `canonicalize`).
+/// symboliques compris, grâce à `canonicalize`), puis que sa taille reste
+/// sous `MAX_ENQUEUE_FILE_BYTES` — vérification faite sur les métadonnées,
+/// avant tout `std::fs::read`.
 fn resolve_in_cache(cache_dir: &Path, path: &str) -> Result<PathBuf, Rejection> {
     let resolved = std::fs::canonicalize(path).map_err(|e| {
         Box::new(ack_err(
@@ -191,6 +215,22 @@ fn resolve_in_cache(cache_dir: &Path, path: &str) -> Result<PathBuf, Rejection> 
             StatusCode::FORBIDDEN,
             "path_outside_cache",
             format!("{path} n'est pas sous le dossier de cache déclaré"),
+        )));
+    }
+    let size = std::fs::metadata(&resolved)
+        .map_err(|e| {
+            Box::new(ack_err(
+                StatusCode::NOT_FOUND,
+                "segment_not_found",
+                format!("{path} : {e}"),
+            ))
+        })?
+        .len();
+    if size > MAX_ENQUEUE_FILE_BYTES {
+        return Err(Box::new(ack_err(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "file_too_large",
+            format!("{path} : {size} octets dépasse le plafond de {MAX_ENQUEUE_FILE_BYTES} octets"),
         )));
     }
     Ok(resolved)
@@ -242,6 +282,16 @@ async fn enqueue(State(state): State<AppState>, body: Bytes) -> Response {
             )
         }
     };
+    let duration_ms = clip.duration_ms();
+    if duration_ms > MAX_DECODED_DURATION_MS {
+        return ack_err(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "file_too_large",
+            format!(
+                "segment décodé de {duration_ms} ms dépasse le plafond de {MAX_DECODED_DURATION_MS} ms"
+            ),
+        );
+    }
     let segment_id = req.segment_id;
     respond(
         state

@@ -11,7 +11,14 @@ use serde_json::Value;
 pub const BIN: &str = env!("CARGO_BIN_EXE_llm-voice-core");
 
 pub fn spawn(state_dir: &Path, cache_dir: &Path) -> Child {
+    spawn_with_args(state_dir, cache_dir, &[])
+}
+
+/// Comme [`spawn`], avec des arguments CLI supplémentaires (`--parent-pid`
+/// pour les tests F-02).
+pub fn spawn_with_args(state_dir: &Path, cache_dir: &Path, args: &[&str]) -> Child {
     Command::new(BIN)
+        .args(args)
         .env("LLM_VOICE_CORE_STATE_DIR", state_dir)
         .env("LLM_VOICE_CACHE_DIR", cache_dir)
         .env_remove("LLM_VOICE_CORE_TOKEN")

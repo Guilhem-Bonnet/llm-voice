@@ -4,7 +4,7 @@
 mod common;
 
 use std::os::unix::fs::PermissionsExt;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use common::{assert_contract, example, spawn, wait_state, Core};
 use futures_util::StreamExt;
@@ -188,13 +188,18 @@ async fn valid_commands_answer_like_the_contract_examples() {
     assert_eq!(code(&body), "path_outside_cache");
 
     let traversal = format!("{}/../x.wav", core.cache_path("sub").display());
-    let (status, _) = post(
+    let (status, body) = post(
         &core,
         "/v1/enqueue",
         auth(json!({ "segmentId": "seg-1", "path": traversal, "format": "wav" })),
     )
     .await;
     assert_eq!(status, StatusCode::BAD_REQUEST, "segment .. refusé");
+    assert_eq!(
+        code(&body),
+        "invalid_request",
+        "E03 : code dédié, pas internal_error"
+    );
 
     let not_wav = core.cache_path("bad.wav");
     std::fs::write(&not_wav, b"pas un wav").expect("écriture");
@@ -206,6 +211,72 @@ async fn valid_commands_answer_like_the_contract_examples() {
     .await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(code(&body), "unsupported_format");
+}
+
+#[tokio::test]
+async fn enqueue_above_the_size_cap_is_refused_before_being_read() {
+    // F-01, evidence-pack GAO-audit-s-curi-001 : fichier creux (`set_len`,
+    // aucune écriture réelle) plus gros que le plafond — vérifié sur les
+    // métadonnées, jamais lu en entier.
+    let core = Core::start();
+    let big = core.cache_path("big.pcm");
+    let file = std::fs::File::create(&big).expect("création");
+    file.set_len(llm_voice_core::server::MAX_ENQUEUE_FILE_BYTES + 1)
+        .expect("set_len");
+    let (status, body) = post(
+        &core,
+        "/v1/enqueue",
+        json!({
+            "protocolVersion": "1.0",
+            "token": core.token,
+            "segmentId": "seg-big",
+            "path": big,
+            "format": "pcm16le",
+            "sampleRate": 22050,
+            "channels": 1
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
+    assert_eq!(code(&body), "file_too_large");
+}
+
+#[tokio::test]
+async fn stops_when_the_process_named_by_parent_pid_disappears() {
+    // F-02, evidence-pack GAO-audit-s-curi-001 (écart ADR-012 §5) : un
+    // "parent" éphémère (`sleep`) qui meurt doit faire tomber le Core sondé
+    // via `--parent-pid`, comme un arrêt propre (code de sortie 0).
+    let state_dir = tempfile::tempdir().expect("tmp");
+    let cache_dir = tempfile::tempdir().expect("tmp");
+    let mut parent = std::process::Command::new("sleep")
+        .arg("0.2")
+        .spawn()
+        .expect("lancement du parent éphémère");
+    let parent_pid = parent.id().to_string();
+    let mut child = common::spawn_with_args(
+        state_dir.path(),
+        cache_dir.path(),
+        &["--parent-pid", &parent_pid],
+    );
+    let _ = wait_state(state_dir.path());
+    parent.wait().expect("attente du parent");
+
+    let deadline = Instant::now() + Duration::from_secs(3);
+    let status = loop {
+        if let Some(status) = child.try_wait().expect("try_wait") {
+            break status;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "le Core n'a pas suivi la mort de --parent-pid sous 3 s"
+        );
+        std::thread::sleep(Duration::from_millis(50));
+    };
+    assert_eq!(status.code(), Some(0), "arrêt propre à la mort du parent");
+    assert!(
+        !state_dir.path().join("core.json").exists(),
+        "core.json retiré à l'arrêt"
+    );
 }
 
 #[test]

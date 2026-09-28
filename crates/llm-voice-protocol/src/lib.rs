@@ -114,8 +114,10 @@ const ERROR_CODES: &[&str] = &[
     "invalid_origin",
     "invalid_host",
     "invalid_protocol_version",
+    "invalid_request",
     "path_outside_cache",
     "unsupported_format",
+    "file_too_large",
     "segment_not_found",
     "internal_error",
 ];
