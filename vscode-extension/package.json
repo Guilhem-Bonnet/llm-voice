@@ -659,6 +659,17 @@
           "minimum": 0,
           "description": "Délai maximal (ms) d'attente d'un provider TTS en statut « Loading » (CdC §51) avant la première synthèse, plutôt que d'échouer immédiatement. 0 = aucune attente."
         },
+        "llmVoice.audio.engine": {
+          "type": "string",
+          "enum": ["webview", "native"],
+          "default": "webview",
+          "description": "Moteur de lecture audio (ADR-012). « webview » (défaut à ce stade) joue via l'élément <audio> du mini-lecteur, sur clic (repli explicite, ADR-001). « native » joue via le démon local `llm-voice-core` (Rust), sans geste utilisateur requis ; bascule du défaut prévue par une carte ultérieure une fois le moteur natif validé en conditions réelles."
+        },
+        "llmVoice.audio.corePath": {
+          "type": "string",
+          "default": "",
+          "description": "Chemin absolu vers le binaire `llm-voice-core` (ADR-012 §5), pour remplacer la résolution par défaut (`<extension>/bin/<plateforme>/llm-voice-core`, puis `target/release/llm-voice-core` en développement). Vide = résolution automatique. Sans effet si `llmVoice.audio.engine` n'est pas « native »."
+        },
         "llmVoice.audio.maxRetries": {
           "type": "number",
           "default": 2,

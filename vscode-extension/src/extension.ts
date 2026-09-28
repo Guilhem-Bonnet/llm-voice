@@ -10,6 +10,8 @@ import type { PipelineFacade } from "./commands/PipelineFacade.js";
 import { Pipeline } from "./pipeline/Pipeline.js";
 import { ProfileRepository } from "./profiles/ProfileRepository.js";
 import type { AudioSink } from "./playback/index.js";
+import { CoreProcess } from "./playback/CoreProcess.js";
+import { NativeAudioSink } from "./playback/NativeAudioSink.js";
 import type { TtsProvider } from "./core/tts.js";
 import type { SystemTtsProcessRunner } from "./tts/SystemTtsProvider.js";
 import type { PlayerUserAction } from "./core/playback.js";
@@ -26,6 +28,12 @@ let logger: Logger | undefined;
 /** `llmVoice.log.level` (default `info`, CdC §81). */
 function readLogLevel(): ReturnType<typeof parseLogLevel> {
   return parseLogLevel(vscode.workspace.getConfiguration("llmVoice").get<string>("log.level"));
+}
+
+/** `llmVoice.audio.engine` (ADR-012); anything but the literal `"native"` stays on the webview engine. */
+function readAudioEngine(): "webview" | "native" {
+  const value = vscode.workspace.getConfiguration("llmVoice").get<string>("audio.engine", "webview");
+  return value === "native" ? "native" : "webview";
 }
 
 /**
@@ -173,6 +181,8 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   let sinkOverride: AudioSink | undefined;
   let ttsProviderOverride: TtsProvider | undefined;
   let testAudioSink: FakeAudioSink | undefined;
+  let coreProcess: CoreProcess | undefined;
+  let nativeAudioSink: NativeAudioSink | undefined;
 
   if (isTestFakeTtsEnabled(context)) {
     try {
@@ -200,6 +210,27 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     } catch (error) {
       log.error("failed to load test fixtures", { error: String(error) });
     }
+  }
+
+  // ADR-012 (GAO-core-rust-mi-001, étape B): `llmVoice.audio.engine` picks
+  // the playback engine `Pipeline` drives, same override slot the fake-TTS
+  // block above uses (`sinkOverride`) — whichever runs last would win, so
+  // this is deliberately gated on `sinkOverride === undefined` to never
+  // shadow the fake sink the dev/test profile just installed. Default stays
+  // `"webview"` (no-op here): the switch to `"native"` by default is a
+  // separate, later card once the engine is validated end-to-end.
+  if (sinkOverride === undefined && readAudioEngine() === "native") {
+    const corePathSetting = vscode.workspace.getConfiguration("llmVoice").get<string>("audio.corePath", "");
+    coreProcess = new CoreProcess({
+      cacheDir: vscode.Uri.joinPath(context.globalStorageUri, "cache").fsPath,
+      extensionPath: context.extensionUri.fsPath,
+      ...(corePathSetting.length > 0 ? { corePathOverride: corePathSetting } : {}),
+      log
+    });
+    const capturedCoreProcess = coreProcess;
+    nativeAudioSink = new NativeAudioSink({ connect: () => capturedCoreProcess.ensureRunning(), log });
+    sinkOverride = nativeAudioSink;
+    log.info("llmVoice.audio.engine=native — using NativeAudioSink + CoreProcess (ADR-012).");
   }
 
   // Bug fix (voice-selection-not-applied / infinite loop review): same
@@ -318,6 +349,14 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   });
   pipelineRef.current = pipeline;
   context.subscriptions.push({ dispose: () => pipeline.dispose() });
+  if (nativeAudioSink !== undefined || coreProcess !== undefined) {
+    context.subscriptions.push({
+      dispose: () => {
+        nativeAudioSink?.dispose();
+        coreProcess?.dispose();
+      }
+    });
+  }
 
   // Mini-player transport buttons (ADR-001 `userAction`), independent of
   // which sink actually drives playback.

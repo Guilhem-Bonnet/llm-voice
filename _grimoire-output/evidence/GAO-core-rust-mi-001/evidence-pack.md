@@ -19,6 +19,16 @@
 | Script de preuve | `scripts/audio-spike/core-play.sh` | backend-engineer | exit 0 |
 | JSON du banc | `_grimoire-output/evidence/GAO-core-rust-mi-001/prove-core.json` | prove.sh | pass |
 
+<!-- grimoire:observed-inventory:start -->
+## Inventaire observé
+
+Régénéré automatiquement depuis `evidence-log.jsonl` (hooks du host) — ne pas éditer à la main ; la section manuelle « Evidence inventory » ci-dessus reste éditable et prime en cas de doute.
+
+| Preuve | Détail | Source | Résultat |
+|---|---|---|---|
+| Aucune preuve observée pour l'instant |  |  |  |
+<!-- grimoire:observed-inventory:end -->
+
 ## Commandes exécutées (2026-09-28)
 
 ```
@@ -66,3 +76,18 @@ Trace `core-play.sh` (stderr) : `core.json` mode 600 ; `enqueue → {"protocolVe
 5. **Sémantique retenue** (doc de `engine.rs`) : `underrun` émis au début de toute file à sec en lecture (donc aussi avant chaque `ended`) ; un `enqueue` pendant une sous-alimentation ou après `ended` repart aussitôt ; `stop` vide la file et libère le périphérique ; `segment_ended` d'un segment non final à fin + 300 ms. À confronter au `NativeAudioSink` (étape B).
 6. **PipeWire / WirePlumber** : après une première lecture sur les haut-parleurs, WirePlumber a réacheminé le flux `llm-voice-core` hors du sink nul (capture muette, rms 0). `core-play.sh` fixe `PIPEWIRE_NODE`, `PIPEWIRE_PROPS` (`node.dont-move`, nom inédit) en plus du sink par défaut basculé/restauré.
 7. **Limites** : fichier d'état Linux (`/proc` retiré, `flock` via std, portable Unix ; Windows non traité) ; pas d'arrêt sur absence de client ni sur mort du parent (ADR-012 §5, non demandé à l'étape A) ; l'URL WS de `core-play.sh` porte le jeton en argument de `curl` (processus local éphémère, visible dans `ps` le temps de la lecture).
+
+## Étape B — extension branchée sur le Core (vérifiée par le concierge, 2026-09-28)
+
+| Vérification | Commande | Résultat |
+|---|---|---|
+| Tests unitaires | `npx vitest run --config vitest.config.ts` | 84 fichiers, 1 025 tests verts (1 010 avant) |
+| Typage | `npm run typecheck` | vert après correction : `core-process.test.ts` utilisait `import.meta` (interdit en sortie CommonJS), remplacé par `__dirname` |
+| Lint | `npm run lint` | aucune erreur |
+| Intégration headless | `xvfb-run -a npx vscode-test --label fake-tts` | 63 passants |
+| Core release | `cargo build --release -p llm-voice-core` | vert |
+| Deux clients, une lecture | `native-audio-sink.test.ts` : « two NativeAudioSink clients against one Core: the second load() replaces the first's queue » | vert |
+| **Bout en bout réel** | `prove.sh --play-cmd "bash scripts/audio-spike/native-sink-play.sh"` : NativeAudioSink compilé → CoreProcess → binaire `llm-voice-core` → PipeWire → banc | `pass: true`, WER 0,077, « Depuis l'extension, le lecteur natif joue cette phrase jusqu'au dernier moment. » (« mot » entendu « moment » par Whisper), aucune erreur sur stderr ; JSON : `prove-native-sink.json` |
+
+Réglage `llmVoice.audio.engine` (`webview` par défaut, `native` au choix) : la bascule par défaut relève de la carte `GAO-bascule-par-001`.
+Aucune dépendance runtime ajoutée : `NativeAudioSink` utilise le `WebSocket` global de Node 22.
