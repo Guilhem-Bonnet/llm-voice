@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/http/seek.request.schema.json",
+  "title": "POST /v1/seek",
+  "description": "Positionne la lecture à `positionMs` absolus depuis le début de la file (bornée à la durée totale, `TrackQueue::seek_ms`).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "token", "positionMs"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "token": { "$ref": "../common.schema.json#/$defs/token" },
+    "positionMs": { "$ref": "../common.schema.json#/$defs/positionMs" }
+  }
+}

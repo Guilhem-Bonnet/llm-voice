@@ -5,6 +5,8 @@
  */
 
 import * as vscode from "vscode";
+import type { AudioSink } from "../../playback/AudioSink.js";
+import { SequencedAudioSink } from "../../playback/SequencedAudioSink.js";
 import { WebviewAudioSink } from "../../playback/WebviewAudioSink.js";
 import { buildPlayerHtml, getNonce } from "./playerHtml.js";
 
@@ -12,6 +14,8 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
   static readonly viewType = "llmVoice.player";
 
   private readonly sink = new WebviewAudioSink();
+  /** The v2 view of `sink` (ADR-012 §3), built once so its queue survives. */
+  private readonly sequenced = new SequencedAudioSink(this.sink);
   private view: vscode.WebviewView | undefined;
   private readonly disposables: vscode.Disposable[] = [];
 
@@ -20,9 +24,14 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
     private readonly globalStorageUri: vscode.Uri
   ) {}
 
-  /** The sink other layers (the future PlaybackController) talk to. */
+  /** The raw webview transport: `attach`, `pushState`, `onUserAction`. */
   get audioSink(): WebviewAudioSink {
     return this.sink;
+  }
+
+  /** `AudioSink` v2 over the webview, handed to `PlaybackController`. */
+  get playbackSink(): AudioSink {
+    return this.sequenced;
   }
 
   /**

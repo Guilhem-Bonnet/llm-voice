@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/ws/segment_started.event.schema.json",
+  "title": "Événement WS — segment_started",
+  "description": "Le Core commence à jouer les échantillons de ce segment (jonction sans blanc : peut précéder de peu la fin réelle du segment précédent au niveau du tampon).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "type", "segmentId", "positionMs"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "type": { "const": "segment_started" },
+    "segmentId": { "$ref": "../common.schema.json#/$defs/segmentId" },
+    "positionMs": { "$ref": "../common.schema.json#/$defs/positionMs" }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/http/play.request.schema.json",
+  "title": "POST /v1/play",
+  "description": "Démarre ou reprend la lecture de la file. `segmentId` optionnel force le départ sur un segment déjà en file plutôt que sur la position courante.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "token"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "token": { "$ref": "../common.schema.json#/$defs/token" },
+    "segmentId": { "$ref": "../common.schema.json#/$defs/segmentId" }
+  }
+}

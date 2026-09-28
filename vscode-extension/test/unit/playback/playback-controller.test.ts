@@ -212,18 +212,24 @@ describe("PlaybackController — playback flow", () => {
     vi.useRealTimers();
   });
 
-  it("loads and plays chunks strictly in order, one at a time (ADR-001)", async () => {
+  it("hands chunks to the sink strictly in order, one at a time (ADR-001, ADR-012 §3)", async () => {
     const h = harness();
     await h.start(3);
     await vi.advanceTimersByTimeAsync(CHUNK_MS * 3);
 
-    expect(h.sink.loads.map((load) => load.chunkId)).toEqual([
+    expect(h.sink.received.map((chunk) => chunk.chunkId)).toEqual([
       "session-1:0",
       "session-1:1",
       "session-1:2"
     ]);
-    // One `play` per chunk: two chunks are never playing at the same time.
-    expect(h.sink.commands.filter((command) => command === "play")).toHaveLength(3);
+    // v2: only the first chunk is `load()`ed; the ready ones are preloaded.
+    expect(h.sink.loads.map((load) => load.chunkId)).toEqual(["session-1:0"]);
+    expect(h.sink.enqueues.map((chunk) => chunk.chunkId)).toEqual([
+      "session-1:1",
+      "session-1:2"
+    ]);
+    // A single `play`: the sink chains the rest, one chunk at a time.
+    expect(h.sink.commands.filter((command) => command === "play")).toHaveLength(1);
     expect(h.chunkChanges.map((change) => change.index)).toEqual([0, 1, 2]);
     expect(h.controller.getState()).toBe("completed");
   });
@@ -289,9 +295,11 @@ describe("PlaybackController — pause, stop, next, previous", () => {
     h.controller.pause();
     await vi.advanceTimersByTimeAsync(5000);
 
-    expect(h.controller.getPositionMs()).toBe(750);
+    // v2 absolute position: the 50 ms of `start()` plus 750 ms, not the last
+    // 250 ms tick — `pause()` reports the exact position (spike CL-003).
+    expect(h.controller.getPositionMs()).toBe(800);
     expect(h.controller.getCurrentIndex()).toBe(0);
-    expect(h.sink.positionMsNow).toBe(750);
+    expect(h.sink.positionMsNow).toBe(800);
     expect(h.controller.getChunks().map((chunk) => chunk.status).join(",")).toBe(
       prefetched
     );
@@ -306,7 +314,8 @@ describe("PlaybackController — pause, stop, next, previous", () => {
     h.controller.resume();
     await vi.advanceTimersByTimeAsync(250);
 
-    expect(h.controller.getPositionMs()).toBe(1000);
+    // Paused at exactly 800 ms (50 + 750), resumed from there.
+    expect(h.controller.getPositionMs()).toBe(1050);
     expect(h.sink.loads).toHaveLength(1);
     expect(h.controller.getCurrentIndex()).toBe(0);
   });

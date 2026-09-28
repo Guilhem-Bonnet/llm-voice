@@ -11,7 +11,12 @@
  *  - never two chunks playing at once (`generation` guard around every await);
  *  - `pause` keeps index, intra-chunk position and prefetched chunks (CdC §35);
  *  - `stop` rewinds, cancels the queue, keeps the cache (CdC §36, §62);
- *  - `dispose` is idempotent and silences every event.
+ *  - `dispose` is idempotent and silences every event;
+ *  - two ready chunks are chained without an `ended`→`load` round trip
+ *    (`AudioSink` v2, ADR-012 §3): once a chunk plays, the next one is handed
+ *    to the sink with `enqueue()` and the machine follows the sink's
+ *    `started`; `load()` is only used for the first chunk, user jumps and a
+ *    next chunk that was not ready in time.
  */
 
 import type { AudioChunk, PlaybackState } from "../core/playback.js";
@@ -19,7 +24,7 @@ import type { NarrationSegment } from "../core/narration.js";
 import type { VoiceProfile } from "../core/profile.js";
 import type { SourceRange } from "../core/source.js";
 import type { TtsProvider } from "../core/tts.js";
-import type { AudioSink } from "./AudioSink.js";
+import type { AudioSink, AudioSinkChunk } from "./AudioSink.js";
 import { InMemoryAudioCache, type AudioCacheStore } from "./AudioCache.js";
 import { AudioQueue, type AudioQueueOptions } from "./AudioQueue.js";
 import { Emitter, type Unsubscribe } from "./emitter.js";
@@ -70,6 +75,15 @@ export interface PlaybackErrorInfo {
   origin: "synthesis" | "playback";
 }
 
+/** The sink ran dry while playing (`AudioSink` v2 `underrun`). */
+export interface PlaybackUnderrun {
+  /** Index the machine is on when the sink reported it. */
+  index: number;
+  /** Chunk the sink was rendering when it starved. */
+  chunkId: string;
+  positionMs: number;
+}
+
 /** What to do with a failed chunk; the default is to skip it. */
 export type ChunkErrorDecision = "skip" | "stop";
 
@@ -96,6 +110,14 @@ interface ActiveSession {
   sealed: boolean;
 }
 
+/** The chunk handed to the sink with `enqueue()`, ahead of its turn. */
+interface PreloadedChunk {
+  index: number;
+  chunkId: string;
+  /** The chunk before it already reported `ended`: `started` is due. */
+  predecessorEnded: boolean;
+}
+
 const DEFAULT_PREVIOUS_THRESHOLD_MS = 2000;
 
 export class PlaybackController {
@@ -103,6 +125,7 @@ export class PlaybackController {
   private readonly chunkChanged = new Emitter<ChunkChange>();
   private readonly progressed = new Emitter<PlaybackProgress>();
   private readonly errored = new Emitter<PlaybackErrorInfo>();
+  private readonly underran = new Emitter<PlaybackUnderrun>();
 
   private readonly cache: AudioCacheStore;
   private readonly queueOptions: AudioQueueOptions;
@@ -118,6 +141,10 @@ export class PlaybackController {
   private generation = 0;
   /** Index the machine is waiting for while narration is still running. */
   private awaitingIndex: number | undefined;
+  /** Next chunk already enqueued in the sink (v2 preloading). */
+  private preloaded: PreloadedChunk | undefined;
+  /** Index a preload is waiting for (synthesis still running). */
+  private preloadingIndex: number | undefined;
   private sessionCounter = 0;
   private disposed = false;
 
@@ -158,6 +185,11 @@ export class PlaybackController {
 
   onError(listener: (info: PlaybackErrorInfo) => void): Unsubscribe {
     return this.errored.on(listener);
+  }
+
+  /** The sink starved while playing (next chunk not ready, slow data). */
+  onUnderrun(listener: (underrun: PlaybackUnderrun) => void): Unsubscribe {
+    return this.underran.on(listener);
   }
 
   // ------------------------------------------------------------ inspection
@@ -249,6 +281,7 @@ export class PlaybackController {
     }
     this.generation += 1;
     this.awaitingIndex = undefined;
+    this.forgetPreload();
     this.session.queue.cancelAll();
     this.session.sink.stop();
     this.currentIndex = 0;
@@ -270,6 +303,7 @@ export class PlaybackController {
       // Narration is still producing segments (CdC §63): buffer instead.
       this.generation += 1;
       this.awaitingIndex = target;
+      this.forgetPreload();
       this.session.sink.stop();
       this.setState("preparing");
       return;
@@ -327,6 +361,11 @@ export class PlaybackController {
     if (waiting !== undefined && waiting < session.chunks.length) {
       this.awaitingIndex = undefined;
       void this.playIndex(waiting);
+      return;
+    }
+    if (this.state === "playing" || this.state === "paused") {
+      // The chunk playing was the last one known: its successor now exists.
+      void this.preloadAfter(this.currentIndex, this.generation);
     }
   }
 
@@ -354,6 +393,7 @@ export class PlaybackController {
     this.chunkChanged.clear();
     this.progressed.clear();
     this.errored.clear();
+    this.underran.clear();
   }
 
   // --------------------------------------------------------------- internals
@@ -371,6 +411,7 @@ export class PlaybackController {
     this.sinkSubscriptions = [];
     this.generation += 1;
     this.awaitingIndex = undefined;
+    this.forgetPreload();
     if (this.session !== undefined) {
       this.session.queue.dispose();
       this.session.sink.stop();
@@ -383,8 +424,14 @@ export class PlaybackController {
       sink.on("timeupdate", (payload) => {
         this.handleTimeUpdate(payload.chunkId, payload.positionMs);
       }),
+      sink.on("started", (payload) => {
+        this.handleStarted(payload.chunkId);
+      }),
       sink.on("ended", (payload) => {
         void this.handleEnded(payload.chunkId);
+      }),
+      sink.on("underrun", (payload) => {
+        this.handleUnderrun(payload.chunkId, payload.positionMs);
       }),
       sink.on("error", (payload) => {
         void this.handleSinkError(payload.chunkId, payload.message);
@@ -417,10 +464,69 @@ export class PlaybackController {
       return;
     }
     chunk.status = "played";
+    const preloaded = this.preloaded;
+    if (preloaded !== undefined && preloaded.index === this.currentIndex + 1) {
+      // The sink already holds the next chunk and chains it on its own: no
+      // `load()` here, the hand-over is reported by `started`.
+      preloaded.predecessorEnded = true;
+      return;
+    }
     await this.next();
   }
 
+  /**
+   * The sink moved on to the chunk preloaded with `enqueue()`: follow it,
+   * exactly as `playIndex` would have after a `load()`, then preload the next.
+   * `started` for any other chunk (the one `playIndex` loaded) is ignored.
+   */
+  private handleStarted(chunkId: string): void {
+    const session = this.session;
+    const preloaded = this.preloaded;
+    if (
+      this.disposed ||
+      session === undefined ||
+      preloaded === undefined ||
+      preloaded.chunkId !== chunkId
+    ) {
+      return;
+    }
+    const previous = this.currentChunk();
+    if (previous !== undefined && previous.status === "playing") {
+      previous.status = "played";
+    }
+    this.forgetPreload();
+    const generation = ++this.generation;
+    this.awaitingIndex = undefined;
+    this.currentIndex = preloaded.index;
+    this.positionMs = 0;
+    session.chunks = [...session.queue.chunks];
+    const chunk = session.chunks[preloaded.index];
+    if (chunk === undefined) {
+      return;
+    }
+    chunk.status = "playing";
+    this.chunkChanged.emit({
+      index: preloaded.index,
+      chunk,
+      sourceRanges: chunk.sourceRanges
+    });
+    session.queue.setCursor(preloaded.index);
+    void this.preloadAfter(preloaded.index, generation);
+  }
+
+  private handleUnderrun(chunkId: string, positionMs: number): void {
+    if (this.disposed || this.session === undefined) {
+      return;
+    }
+    this.underran.emit({ index: this.currentIndex, chunkId, positionMs });
+  }
+
   private async handleSinkError(chunkId: string, message: string): Promise<void> {
+    const preloaded = this.preloaded;
+    if (preloaded !== undefined && preloaded.chunkId === chunkId) {
+      await this.handlePreloadFailure(preloaded, message);
+      return;
+    }
     const chunk = this.currentChunk();
     if (this.disposed || chunk === undefined || chunk.id !== chunkId) {
       return;
@@ -442,6 +548,11 @@ export class PlaybackController {
     }
     const generation = ++this.generation;
     this.awaitingIndex = undefined;
+    if (this.preloaded !== undefined) {
+      // A jump: whatever the sink holds after the current chunk is now wrong.
+      session.sink.clearQueue();
+    }
+    this.forgetPreload();
     this.currentIndex = index;
     this.positionMs = 0;
     session.queue.setCursor(index);
@@ -482,12 +593,7 @@ export class PlaybackController {
       return;
     }
 
-    await session.sink.load({
-      chunkId: chunk.id,
-      src: chunk.audioUri,
-      ...(chunk.durationMs !== undefined ? { durationMs: chunk.durationMs } : {}),
-      ...(chunk.format !== undefined ? { format: chunk.format } : {})
-    });
+    await session.sink.load(sinkChunkFrom(chunk, chunk.audioUri));
     if (this.isStale(generation)) {
       return;
     }
@@ -498,6 +604,100 @@ export class PlaybackController {
     this.chunkChanged.emit({ index, chunk, sourceRanges: chunk.sourceRanges });
     // Re-arm the prefetch window now that the cursor really moved.
     session.queue.setCursor(index);
+    void this.preloadAfter(index, generation);
+  }
+
+  /**
+   * `AudioSink` v2 preloading: as soon as chunk `index` plays, waits for chunk
+   * `index + 1` and hands it to the sink with `enqueue()`, so the sink chains
+   * the two without the `ended`→`load` round trip that made a gap in v1.
+   *
+   * Bound to `generation`: any transition (jump, stop, hand-over) makes it a
+   * no-op. A successor that fails synthesis, is cancelled, or is not ready
+   * before `ended` is left to the regular `next()` → `playIndex` path.
+   */
+  private async preloadAfter(index: number, generation: number): Promise<void> {
+    const session = this.session;
+    const nextIndex = index + 1;
+    if (
+      this.isStale(generation) ||
+      session === undefined ||
+      this.currentIndex !== index ||
+      nextIndex >= session.queue.chunks.length ||
+      this.preloaded !== undefined ||
+      this.preloadingIndex === nextIndex
+    ) {
+      return;
+    }
+    this.preloadingIndex = nextIndex;
+    const chunk = await session.queue.waitFor(nextIndex);
+    if (this.isStale(generation) || this.currentIndex !== index) {
+      return;
+    }
+    this.preloadingIndex = undefined;
+    const current = this.currentChunk();
+    if (
+      chunk.status === "error" ||
+      chunk.audioUri === undefined ||
+      (this.state !== "playing" && this.state !== "paused") ||
+      current === undefined ||
+      current.status !== "playing"
+    ) {
+      // Error, cancellation, or the current chunk already ended (the machine
+      // is on its way to `playIndex`): nothing to preload.
+      return;
+    }
+    session.chunks = [...session.queue.chunks];
+    const preloaded: PreloadedChunk = {
+      index: nextIndex,
+      chunkId: chunk.id,
+      predecessorEnded: false
+    };
+    // Recorded before the await: an `ended` racing the enqueue must already
+    // know the sink holds the successor.
+    this.preloaded = preloaded;
+    try {
+      await session.sink.enqueue(sinkChunkFrom(chunk, chunk.audioUri));
+    } catch (error) {
+      if (!this.isStale(generation) && this.preloaded === preloaded) {
+        await this.handlePreloadFailure(
+          preloaded,
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+    }
+  }
+
+  /**
+   * The enqueued chunk was refused. Before its predecessor ended, it is simply
+   * forgotten: `ended` then takes the regular `load()` path, which retries it.
+   * After, nothing will ever start: it becomes the current chunk and goes
+   * through the usual failure policy.
+   */
+  private async handlePreloadFailure(
+    preloaded: PreloadedChunk,
+    message: string
+  ): Promise<void> {
+    const session = this.session;
+    this.forgetPreload();
+    if (this.disposed || session === undefined || !preloaded.predecessorEnded) {
+      return;
+    }
+    this.generation += 1;
+    this.currentIndex = preloaded.index;
+    this.positionMs = 0;
+    const chunk = session.chunks[preloaded.index];
+    if (chunk === undefined) {
+      return;
+    }
+    chunk.status = "error";
+    chunk.error = message;
+    await this.handleChunkFailure(preloaded.index, chunk, message, "playback");
+  }
+
+  private forgetPreload(): void {
+    this.preloaded = undefined;
+    this.preloadingIndex = undefined;
   }
 
   private isStale(generation: number): boolean {
@@ -518,6 +718,7 @@ export class PlaybackController {
     }
     if (decision === "stop") {
       this.generation += 1;
+      this.forgetPreload();
       this.session.queue.cancelAll();
       this.session.sink.stop();
       this.setState("error");
@@ -532,6 +733,7 @@ export class PlaybackController {
       return;
     }
     this.generation += 1;
+    this.forgetPreload();
     this.session.queue.cancelAll();
     this.session.sink.stop();
     this.setState("completed");
@@ -553,6 +755,16 @@ export class PlaybackController {
       sessionId: this.session?.id ?? ""
     });
   }
+}
+
+/** What the sink needs to play a ready chunk (`load` and `enqueue`). */
+function sinkChunkFrom(chunk: AudioChunk, src: string): AudioSinkChunk {
+  return {
+    chunkId: chunk.id,
+    src,
+    ...(chunk.durationMs !== undefined ? { durationMs: chunk.durationMs } : {}),
+    ...(chunk.format !== undefined ? { format: chunk.format } : {})
+  };
 }
 
 /** Maps narration segments to queue chunks 1:1; chunking happened upstream. */

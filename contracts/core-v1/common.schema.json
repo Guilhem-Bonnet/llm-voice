@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/common.schema.json",
+  "title": "Core v1 — types communs",
+  "description": "Définitions partagées par tous les messages du protocole Core v1 (ADR-012 §4, §5, §6). Référencées par $ref depuis http/*.schema.json et ws/*.schema.json ; jamais instanciées seules.",
+  "$defs": {
+    "protocolVersion": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$",
+      "description": "Version « majeure.mineure » du protocole. Le Core refuse toute requête ou connexion dont la partie majeure diffère de la sienne (ADR-012 §4 : « une version majeure différente est refusée »)."
+    },
+    "token": {
+      "type": "string",
+      "minLength": 16,
+      "description": "Jeton de session aléatoire transmis par l'extension au Core hors ligne de commande (ADR-012 §5). Requis sur chaque commande HTTP ; la connexion WebSocket elle-même est refusée sans un jeton valide à l'ouverture (ADR-012 §6), donc les événements sortants n'ont pas besoin de le reporter."
+    },
+    "segmentId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "description": "Identifiant opaque d'un segment mis en file par `enqueue`, choisi par l'extension."
+    },
+    "positionMs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Position absolue en millisecondes depuis le début de la file (échantillons réellement joués, jamais une estimation d'horloge murale — cf. `TrackQueue::position_ms`)."
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "audioFormat": {
+      "type": "string",
+      "enum": ["wav", "pcm16le"],
+      "description": "`wav` est auto-descriptif ; `pcm16le` (entier signé 16 bits little-endian entrelacé) exige `sampleRate` et `channels` en complément."
+    },
+    "absolutePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!.*\\.\\.)(?:/[^\\u0000]+|[A-Za-z]:\\\\[^\\u0000]+)$",
+      "description": "Chemin absolu vers un fichier du cache (`DiskAudioCache`), jamais une URL. Aucun segment `..` ; le Core revérifie en outre à l'exécution que le chemin résolu reste sous le dossier de cache déclaré au démarrage (ADR-012 §4) — ce que ce motif ne peut pas garantir à lui seul (liens symboliques)."
+    },
+    "errorCode": {
+      "type": "string",
+      "enum": [
+        "invalid_token",
+        "invalid_origin",
+        "invalid_host",
+        "invalid_protocol_version",
+        "path_outside_cache",
+        "unsupported_format",
+        "segment_not_found",
+        "internal_error"
+      ]
+    }
+  }
+}

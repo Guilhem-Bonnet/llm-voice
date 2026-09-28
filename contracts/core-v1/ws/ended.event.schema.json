@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/ws/ended.event.schema.json",
+  "title": "Événement WS — ended",
+  "description": "Toute la file est consommée (`PlaybackState::Ended`). Émis seulement après vidange complète du tampon de sortie par le périphérique, jamais dès que le dernier échantillon a été écrit dans le tampon applicatif (GAO-spike-moteur-001, CL-004 : exigence posée pour le Core suite à la mesure du spike, qui tronquait le dernier mot en rapportant `ended` trop tôt).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "type", "positionMs", "totalDurationMs"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "type": { "const": "ended" },
+    "positionMs": { "$ref": "../common.schema.json#/$defs/positionMs" },
+    "totalDurationMs": { "$ref": "../common.schema.json#/$defs/durationMs" }
+  }
+}

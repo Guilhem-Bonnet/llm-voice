@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/ws/error.event.schema.json",
+  "title": "Événement WS — error",
+  "description": "Erreur asynchrone rapportée hors du cycle requête/réponse HTTP (ex. le fichier d'un segment déjà en file devient illisible). Les rejets synchrones d'une commande utilisent `ack.response.schema.json`, pas cet événement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "type", "code", "message"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "type": { "const": "error" },
+    "code": { "$ref": "../common.schema.json#/$defs/errorCode" },
+    "message": { "type": "string", "minLength": 1 },
+    "segmentId": { "$ref": "../common.schema.json#/$defs/segmentId" }
+  }
+}

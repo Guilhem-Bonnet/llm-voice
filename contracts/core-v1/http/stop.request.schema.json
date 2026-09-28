@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/http/stop.request.schema.json",
+  "title": "POST /v1/stop",
+  "description": "Arrête la lecture et remet la position à zéro (`TrackQueue::stop`). Ne vide pas la file d'attente côté extension : c'est `enqueue` qui la construit à nouveau.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "token"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "token": { "$ref": "../common.schema.json#/$defs/token" }
+  }
+}

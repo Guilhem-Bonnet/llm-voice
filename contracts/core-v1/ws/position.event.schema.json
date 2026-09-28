@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/ws/position.event.schema.json",
+  "title": "Événement WS — position",
+  "description": "Battement de position pendant la lecture (ADR-012 §4 : toutes les 250 ms), avec le segment en cours pour l'affichage.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "type", "segmentId", "positionMs"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "type": { "const": "position" },
+    "segmentId": { "$ref": "../common.schema.json#/$defs/segmentId" },
+    "positionMs": { "$ref": "../common.schema.json#/$defs/positionMs" }
+  }
+}

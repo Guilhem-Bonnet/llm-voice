@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/http/resume.request.schema.json",
+  "title": "POST /v1/resume",
+  "description": "Reprend une lecture en pause à la position gelée (`TrackQueue::resume`) ; distincte de `play` qui peut aussi démarrer une file jamais lancée.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "token"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "token": { "$ref": "../common.schema.json#/$defs/token" }
+  }
+}

@@ -1,0 +1,57 @@
+# Politiques temporelles par session — Grimoire Kit ≥ 3.46 (issue #439).
+# Complète les règles statiques du hook PreToolUse (profil de risque) avec une
+# notion de session : approbation préalable une fois par session, refroidissement
+# après répétition, budgets. Fichier lu par grimoire-hook (Claude Code, Copilot)
+# via grimoire.policies.rules_config ; état de session dans
+# _grimoire-output/.runs/session-<id>.json (ignoré par git).
+# Vérifier : grimoire policies status
+rules:
+  - id: git-push-requires-approval
+    description: "Toute publication distante (git push) demande une approbation explicite, une fois par session"
+    action_kinds: []
+    mutation_classes: []
+    risk_profiles: []
+    verdict_on_match: warn
+    reason_template: "Publication distante : action L4 du projet, approbation utilisateur requise une fois par session"
+    tool_pattern: "Bash(git push:*)"
+    require_approval: true
+
+  - id: gh-release-requires-approval
+    description: "Créer ou éditer une release GitHub (VSIX public) demande une approbation, une fois par session"
+    action_kinds: []
+    mutation_classes: []
+    risk_profiles: []
+    verdict_on_match: warn
+    reason_template: "Release publique du VSIX : approbation utilisateur requise (règle instaurée le 2026-09-09)"
+    tool_pattern: "Bash(gh release:*)"
+    require_approval: true
+
+  - id: gh-pr-merge-requires-approval
+    description: "Fusionner une PR sur main demande une approbation, une fois par session"
+    action_kinds: []
+    mutation_classes: []
+    risk_profiles: []
+    verdict_on_match: warn
+    reason_template: "Fusion sur main : approbation utilisateur requise une fois par session"
+    tool_pattern: "Bash(gh pr merge:*)"
+    require_approval: true
+
+  - id: rm-cooldown
+    description: "Une rafale de suppressions (5 rm en 10 min) déclenche un refroidissement"
+    action_kinds: []
+    mutation_classes: []
+    risk_profiles: []
+    verdict_on_match: warn
+    reason_template: "Rafale de suppressions détectée : refroidissement de 10 minutes"
+    tool_pattern: "Bash(rm:*)"
+    cooldown_after: {pattern: "Bash(rm:*)", count: 5, minutes: 10}
+
+  - id: session-budget
+    description: "Garde-fou de session : au-delà de 400 écritures ou 2000 appels d'outils, chaque appel redemande confirmation"
+    action_kinds: []
+    mutation_classes: []
+    risk_profiles: []
+    verdict_on_match: warn
+    reason_template: "Budget de session dépassé (écritures ou appels d'outils) : boucle stérile probable, confirmer avant de continuer"
+    tool_pattern: "*"
+    per_session: {max_writes: 1500, max_tool_calls: 3000, max_duration_min: 600}

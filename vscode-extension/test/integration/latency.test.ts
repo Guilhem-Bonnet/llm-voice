@@ -8,12 +8,13 @@
  * audio this chunk is" — exactly what CdC §63 cares about shrinking for the
  * first chunk.
  *
- * `sink.loads` accumulates across the *whole* `fake-tts` extension host run
- * (every other integration test file shares the same singleton
- * `FakeAudioSink`, `pipeline.test.ts`'s file header) — every assertion here
- * therefore reads from `sink.loads.length` *at the moment this test's own
- * `start()` resolves its first load*, never from a fixed index, so it is
- * immune to how many sessions earlier suites already ran.
+ * `sink.received` (every chunk handed over by `load()` or, since `AudioSink`
+ * v2, preloaded by `enqueue()`) accumulates across the *whole* `fake-tts`
+ * extension host run (every other integration test file shares the same
+ * singleton `FakeAudioSink`, `pipeline.test.ts`'s file header) — every
+ * assertion here therefore reads from `sink.received.length` *at the moment
+ * this test's own `start()` resolves its first load*, never from a fixed
+ * index, so it is immune to how many sessions earlier suites already ran.
  */
 import * as assert from "node:assert/strict";
 import * as path from "node:path";
@@ -53,21 +54,22 @@ suite("LLM Voice latency (S6.2, CdC §63)", () => {
     const fileUri = fixtureUri("markdown", "latency-first-chunk.md");
     await vscode.workspace.openTextDocument(fileUri);
 
-    // Baseline: index of the *next* load this session will produce, whatever
-    // earlier suites already accumulated into the shared `sink.loads`.
-    const baseline = sink.loads.length;
+    // Baseline: index of the *next* chunk this session will hand over,
+    // whatever earlier suites already accumulated into `sink.received`.
+    const baseline = sink.received.length;
     await api.pipeline.start({ scope: "document", uri: fileUri.toString(), languageId: "markdown" });
 
-    await waitFor(() => sink.loads.length >= baseline + 1);
+    await waitFor(() => sink.received.length >= baseline + 1);
     const firstChunkId = sink.currentChunkId;
     assert.ok(firstChunkId, "the fake sink should have a chunk loaded");
-    const firstDurationMs = sink.loads[baseline]?.durationMs;
+    const firstDurationMs = sink.received[baseline]?.durationMs;
     assert.ok(firstDurationMs !== undefined, "the first load() should carry a durationMs (FakeTtsProvider always sets one)");
 
-    // Drives the queue to the next chunk exactly like AC-02/03 in pipeline.test.ts.
+    // Drives the queue to the next chunk exactly like AC-02/03 in pipeline.test.ts
+    // (the second chunk arrives by `enqueue()` when it was ready in time).
     sink.emitEnded(firstChunkId as string);
-    await waitFor(() => sink.loads.length >= baseline + 2);
-    const secondDurationMs = sink.loads[baseline + 1]?.durationMs;
+    await waitFor(() => sink.received.length >= baseline + 2);
+    const secondDurationMs = sink.received[baseline + 1]?.durationMs;
     assert.ok(secondDurationMs !== undefined);
 
     assert.ok(

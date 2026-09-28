@@ -587,7 +587,7 @@ export class Pipeline implements PipelineFacade {
       // CdC §51 "Loading": a still-warming-up TTS server gets a grace period
       // instead of an immediate failure on the very first synthesis.
       await this.waitForTtsReady(tts, abort.signal);
-      const sink = this.sinkOverride ?? this.player.audioSink;
+      const sink = this.sinkOverride ?? this.player.playbackSink;
 
       this.currentUri = doc.uri !== undefined ? vscode.Uri.parse(doc.uri) : undefined;
       this.player.reveal();
@@ -968,7 +968,7 @@ export class Pipeline implements PipelineFacade {
     const build = await buildSession(segments, profile, undefined, {});
     const tts = await this.ttsFor(profile);
     this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
-    const sink = this.sinkOverride ?? this.player.audioSink;
+    const sink = this.sinkOverride ?? this.player.playbackSink;
     this.currentProfileLabel = profile.label;
     this.player.reveal();
     this.beginPerfSession();

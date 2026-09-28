@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/llm-voice-audio"]
+members = ["crates/llm-voice-audio", "crates/llm-voice-protocol"]
 
 [workspace.package]
 edition = "2021"

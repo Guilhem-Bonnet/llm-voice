@@ -1,14 +1,17 @@
 /**
  * Passive webview-backed audio sink (ADR-001, D4).
  *
- * Implements `AudioSink` (`src/playback/AudioSink.ts`) so `PlaybackController`
- * can drive the real Player webview exactly like it drives `FakeAudioSink` in
- * tests (S3.5 wiring). It only speaks the wire protocol defined in
+ * Implements the v1 `LegacyAudioSink` (`src/playback/AudioSink.ts`): the
+ * `<audio>` element plays one source at a time. `PlayerViewProvider` wraps it
+ * in a `SequencedAudioSink` to offer the `AudioSink` v2 contract (preloading,
+ * `started`, `underrun`) to `PlaybackController`, which then drives the real
+ * Player webview exactly like it drives `FakeAudioSink` in tests (S3.5 wiring,
+ * ADR-012 §3: the webview engine is the explicit fallback). It only speaks the wire protocol defined in
  * `src/core/playback.ts`; it owns no queue, no state machine, and no cache —
  * that lives in the Extension Host per ADR-001.
  *
- * `AudioSinkChunk.src` is documented as "the location the sink can read;
- * `webview.asWebviewUri(...)` in production" (`AudioSink.ts`). Since only the
+ * `AudioSinkChunk.src` is the absolute cache file path (`AudioSink.ts`, v2);
+ * the webview needs a `webview.asWebviewUri(...)` URI instead. Since only the
  * attached `vscode.Webview` can compute that conversion, and
  * `PlaybackController`/`AudioQueue` stay free of any `vscode` import
  * (ADR-005), this sink treats `chunk.src` as the absolute filesystem path
@@ -17,7 +20,7 @@
  * That keeps the conversion encapsulated in the one class that already
  * touches `vscode.Webview`, without leaking it into the pure playback layer.
  *
- * Beyond the `AudioSink` surface (`timeupdate`/`ended`/`error`), this sink
+ * Beyond the `LegacyAudioSink` surface (`timeupdate`/`ended`/`error`), this sink
  * also exposes `onUserAction` for the mini-player's transport buttons
  * (`userAction` in `WebviewToExtensionMessage`), which `AudioSink`
  * deliberately does not model since it is a webview-only concern.
@@ -31,22 +34,21 @@ import type {
   WebviewToExtensionMessage
 } from "../core/playback.js";
 import type {
-  AudioSink,
   AudioSinkChunk,
-  AudioSinkEvent,
-  AudioSinkEventMap,
-  AudioSinkListener
+  LegacyAudioSink,
+  LegacyAudioSinkEvent,
+  LegacyAudioSinkEventMap
 } from "./AudioSink.js";
 import { Emitter, type Unsubscribe } from "./emitter.js";
 
 /** Bridges `AudioSink` calls to `postMessage` against a single webview. */
-export class WebviewAudioSink implements AudioSink {
+export class WebviewAudioSink implements LegacyAudioSink {
   private webview: vscode.Webview | undefined;
   private webviewReady = false;
 
-  private readonly timeupdateEmitter = new Emitter<AudioSinkEventMap["timeupdate"]>();
-  private readonly endedEmitter = new Emitter<AudioSinkEventMap["ended"]>();
-  private readonly errorEmitter = new Emitter<AudioSinkEventMap["error"]>();
+  private readonly timeupdateEmitter = new Emitter<LegacyAudioSinkEventMap["timeupdate"]>();
+  private readonly endedEmitter = new Emitter<LegacyAudioSinkEventMap["ended"]>();
+  private readonly errorEmitter = new Emitter<LegacyAudioSinkEventMap["error"]>();
   private readonly userActionEmitter = new Emitter<PlayerUserAction>();
   private readonly readyEmitter = new Emitter<void>();
 
@@ -109,14 +111,18 @@ export class WebviewAudioSink implements AudioSink {
     this.post({ type: "state", state });
   }
 
-  on<E extends AudioSinkEvent>(event: E, handler: AudioSinkListener<E>): Unsubscribe {
+  on<E extends LegacyAudioSinkEvent>(
+    event: E,
+    handler: (payload: LegacyAudioSinkEventMap[E]) => void
+  ): Unsubscribe {
+    type Handler<K extends LegacyAudioSinkEvent> = (payload: LegacyAudioSinkEventMap[K]) => void;
     switch (event) {
       case "timeupdate":
-        return this.timeupdateEmitter.on(handler as AudioSinkListener<"timeupdate">);
+        return this.timeupdateEmitter.on(handler as Handler<"timeupdate">);
       case "ended":
-        return this.endedEmitter.on(handler as AudioSinkListener<"ended">);
+        return this.endedEmitter.on(handler as Handler<"ended">);
       case "error":
-        return this.errorEmitter.on(handler as AudioSinkListener<"error">);
+        return this.errorEmitter.on(handler as Handler<"error">);
       default: {
         const exhaustive: never = event;
         throw new Error(`WebviewAudioSink: unsupported event ${String(exhaustive)}`);
