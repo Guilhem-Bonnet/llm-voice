@@ -35,6 +35,32 @@ jobs:
         working-directory: .
         run: node scripts/check-traceability.mjs
 
+  rust:
+    name: rust
+    # Carte GAO-tests-rust-e-001 : fmt + clippy + tests du workspace Cargo.
+    # Le runner n'a pas de carte son : LLM_VOICE_NO_AUDIO=1 saute le seul test
+    # qui exige une vraie sortie audio (crates/llm-voice-core/tests/playback.rs),
+    # sans masquer les autres.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    env:
+      LLM_VOICE_NO_AUDIO: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
+      - name: Install ALSA headers (cpal build dependency)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - run: cargo fmt --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+
   audit:
     name: audit
     runs-on: ubuntu-latest

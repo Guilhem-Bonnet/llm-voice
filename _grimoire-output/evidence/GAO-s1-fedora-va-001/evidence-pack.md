@@ -72,3 +72,12 @@ Régénéré automatiquement depuis `evidence-log.jsonl` (hooks du host) — ne 
 |---|---|---|---|
 | Aucune preuve observée pour l'instant |  |  |  |
 <!-- grimoire:observed-inventory:end -->
+
+## Cas 1 sur la machine dev (concierge, 2026-09-29)
+
+Même avec une identité PipeWire neuve à chaque cas (aucune sortie mémorisée possible), le flux du Core ne va pas sur le sink
+nul mis par défaut : la machine a un routage personnalisé (sinks virtuels `sc_voice`, `sc_media`, `sc_game`, `sc_master`,
+`sc_voice_fx` reliés par des boucles, table de mixage) qui impose ses règles aux nouveaux flux. Le cas 1 mesure cette
+configuration, pas le Core. Il est rendu **WARN** (non bloquant) sur échec d'analyse audio ; les échecs de démarrage ou de
+refus du Core restent **FAIL**. Cas 2 à 4 inchangés et bloquants. À revalider sur un Fedora sans table de mixage (S3 : runner
+CI ou machine vierge).

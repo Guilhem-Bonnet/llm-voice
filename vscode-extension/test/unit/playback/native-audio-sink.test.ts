@@ -172,6 +172,53 @@ describe("NativeAudioSink", () => {
     sink.dispose();
   });
 
+  it("a Core refusal of enqueue in load() becomes an error event for that segment (no rejection)", async () => {
+    const { sink, events } = makeSink();
+    server.failNextOn("enqueue", { code: "invalid_request", message: "segmentId refusé par le Core" });
+    const messages: string[] = [];
+    sink.on("error", (payload) => messages.push(payload.message));
+    await expect(sink.load(chunk("c1"))).resolves.toBeUndefined();
+    expect(events).toEqual(["error:c1"]);
+    expect(messages[0]).toContain("segmentId refusé par le Core");
+    sink.dispose();
+  });
+
+  it("a network failure of the load() request becomes an error event too", async () => {
+    const failing = new NativeAudioSink({
+      connect: async () => ({ baseUrl: server.baseUrl, wsUrl: server.wsUrl, token: server.token }),
+      fetchImpl: async () => {
+        throw new Error("fetch failed: ECONNREFUSED");
+      }
+    });
+    const errors: { chunkId: string; message: string }[] = [];
+    failing.on("error", (payload) => errors.push(payload));
+    await expect(failing.load(chunk("c1"))).resolves.toBeUndefined();
+    expect(errors).toEqual([{ chunkId: "c1", message: "fetch failed: ECONNREFUSED" }]);
+    failing.dispose();
+  });
+
+  it("a Core refusal of a starved enqueue() becomes an error event for that segment", async () => {
+    const { sink, events } = makeSink();
+    await sink.load(chunk("c1"));
+    sink.play();
+    server.emit({ type: "segment_started", segmentId: "c1", positionMs: 0 });
+    server.emit({ type: "underrun", segmentId: "c1", positionMs: 900 });
+    await waitFor(() => events.includes("underrun:c1"));
+    server.failNextOn("enqueue", { code: "invalid_request", message: "refusé" });
+    await expect(sink.enqueue(chunk("c2"))).resolves.toBeUndefined();
+    expect(events).toContain("error:c2");
+    sink.dispose();
+  });
+
+  it("a Core refusal of play() becomes an error event for the current segment", async () => {
+    const { sink, events } = makeSink();
+    await sink.load(chunk("c1"));
+    server.failNextOn("play", { code: "internal_error", message: "périphérique absent" });
+    sink.play();
+    await waitFor(() => events.includes("error:c1"));
+    sink.dispose();
+  });
+
   it("two NativeAudioSink clients against one Core: the second load() replaces the first's queue", async () => {
     const { sink: sinkA } = makeSink();
     const { sink: sinkB } = makeSink();

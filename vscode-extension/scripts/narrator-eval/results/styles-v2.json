@@ -1,0 +1,2228 @@
+{
+ "label": "styles-v2",
+ "date": "2026-09-29T22:42:36.425Z",
+ "models": [
+  "qwen2.5:7b"
+ ],
+ "profiles": [
+  "technical-teacher",
+  "llm-summary",
+  "quick-review"
+ ],
+ "styles": {
+  "technical-teacher": "Transforme la section en explication orale pédagogique et naturelle. Ne donne jamais l'impression de lire des notes. Conserve tous les concepts importants. Explique le rôle du code, mais cite une fois chaque nom de fichier, commande et identifiant exact. Ajoute des analogies lorsqu'elles améliorent réellement la compréhension. Règles de fidélité impératives : reprends tels quels, sans les arrondir, les convertir ni les remplacer par une image, tous les nombres avec leur unité, les versions, les noms de fichiers, les commandes, les identifiants de code et les noms propres (cite-les exactement, une fois au moins). Conserve chaque négation (« ne pas », « jamais », « aucun ») attachée à ce qu'elle concerne. N'ajoute aucun fait, chiffre ou unité absent du texte ; une analogie ne doit jamais remplacer une donnée.",
+  "llm-summary": "Présente oralement le résultat comme un collègue développeur. Commence par ce qui a été réalisé. Mentionne les problèmes ou limitations. Termine par ce qu'il reste éventuellement à faire. Sois concis et naturel. Les chiffres, versions, noms de fichiers, commandes, interdictions et limites font partie de l'essentiel : ne les supprime pas pour raccourcir. Règles de fidélité impératives : reprends tels quels, sans les arrondir, les convertir ni les remplacer par une image, tous les nombres avec leur unité, les versions, les noms de fichiers, les commandes, les identifiants de code et les noms propres (cite-les exactement, une fois au moins). Conserve chaque négation (« ne pas », « jamais », « aucun ») attachée à ce qu'elle concerne. N'ajoute aucun fait, chiffre ou unité absent du texte ; une analogie ne doit jamais remplacer une donnée.",
+  "quick-review": "Transforme le contenu en révision orale. Conserve uniquement les concepts, pièges et éléments essentiels à retenir. Sont essentiels : les nombres et unités, versions, noms de fichiers, commandes, identifiants, interdictions et limites ; raccourcis plutôt les explications et exemples. Règles de fidélité impératives : reprends tels quels, sans les arrondir, les convertir ni les remplacer par une image, tous les nombres avec leur unité, les versions, les noms de fichiers, les commandes, les identifiants de code et les noms propres (cite-les exactement, une fois au moins). Conserve chaque négation (« ne pas », « jamais », « aucun ») attachée à ce qu'elle concerne. N'ajoute aucun fait, chiffre ou unité absent du texte ; une analogie ne doit jamais remplacer une donnée."
+ },
+ "temperature": null,
+ "datasetSize": 24,
+ "runs": [
+  {
+   "id": "agent-01-timeout",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4902.91481,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "J'ai corrigé le délai d'attente dans le fichier src/net/EgressGuard.ts : la valeur passe de trente secondes à soixante secondes. Le test npm test -- --grep egress passe maintenant (quarante-deux tests, zéro échec). Il est important de ne pas relancer npm run compile avant d'avoir vérifié la branche feat/s1-native-audio-foundation.\nIl reste à traiter la redirection 302, qui n'est pas gérée encore.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     3,
+     3
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.2018072289156627
+   }
+  },
+  {
+   "id": "agent-02-migration",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 6314.656677999999,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons effectué une migration appelée 20260912_add_index.sql qui ajoute un index sur la colonne users.email. Sur la base de nos tests avec préproduction, comprenant environ 1,2 millions de lignes, cette migration a pris 14 secondes. Cependant, lorsqu'on exécute ce type de commande en production pendant les heures ouvrées, il faut faire attention car CREATE INDEX bloque l'accès en écriture sur la table. Pour éviter cela, on utilise plutôt CREATE INDEX CONCURRENTLY.\nPour revenir à l'état précédent, après cette migration, nous utilisons la commande psql -f rollback_20260912.sql.",
+   "score": {
+    "essential": [
+     4,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [
+     {
+      "t": "verrou en écriture",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 1,
+    "negLost": [
+     "production"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.465
+   }
+  },
+  {
+   "id": "agent-03-bug-parser",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 5178.200468999999,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Il semble qu'il y avait un bug dans la fonction `parseNarration` qui ne capturait pas l'exception levée par `JSON.parse` lorsque le modèle renvoyait du texte hors JSON. Pour corriger cela, on a ajouté une bloc `try/catch` à partir de la ligne 84 du fichier `parseNarration.ts`. Ensuite, pour s'assurer que ce bug ne se reproduirait pas, j'ai ajouté trois tests de non-régression. La version 0.3.1 devrait être déployée demain, mais je n'ai pas encore testé sur macOS.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     3,
+     3
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.4967948717948718
+   }
+  },
+  {
+   "id": "agent-04-refactor",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4463.519827,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons fini la refactoring du fichier PlaybackController. Il a été divisé en deux nouvelles classes : QueueManager et AudioSink. Cela n'a pas affecté le comportement de l'application. Ensuite, j'ai vérifié que tous les tests unitaires passent toujours, il y en a 118 qui sont validés avec une couverture de 87 pour cent. Je n'ai pas modifié le fichier Pipeline.ts car il dépend encore du nom précédemment utilisé pour PlaybackController.",
+   "score": {
+    "essential": [
+     5,
+     6
+    ],
+    "detail": [
+     0,
+     0
+    ],
+    "missing": [
+     {
+      "t": "118 tests",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.494915254237288
+   }
+  },
+  {
+   "id": "agent-05-perf",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 8917.567398,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Pour comprendre les performances du modèle Qwen, commençons par l'examen des mesures de latence. Sur le modèle qwen2.5:7b avec un bloc de 120 mots, la moitié des requêtes se traitent en 1,8 secondes, tandis que les 95% des requêtes sont traitées en 4,3 secondes. Cela signifie qu'une grande partie des demandes est gérée rapidement. Si vous utilisez le modèle qwen2.5:3b pour la même taille de bloc, la moitié des réponses se traitent en seulement 0,9 seconde. Deuxièmement, parlons de la mémoire GPU utilisée par ces modèles. Pour le modèle qwen2.5:7b, il faut 5,1 Go de mémoire GPU. En raison de cette limitation, je recommande d'utiliser au maximum deux requêtes en parallèle sur une carte graphique dotée de 8 Go de mémoire. Si vous tentez de dépasser ce chiffre, vous risquez de rencontrer des problèmes de performance.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     1,
+     2
+    ],
+    "missing": [
+     {
+      "t": "p50",
+      "priority": "detail"
+     }
+    ],
+    "negTotal": 1,
+    "negLost": [
+     "2 requêtes"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 3.2062256809338523
+   }
+  },
+  {
+   "id": "agent-06-ci",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 5644.657434000001,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons un problème dans notre workflow .github/workflows/ci.yml qui échoue à l'étape lint. Le problème concerne ESLint qui indique 6 erreurs no-floating-promises dans src/tts/SystemTtsProvider.ts. Cela signifie que certaines promesses sont flottantes et non résolues, ce qui est généralement considéré comme une mauvaise pratique en JavaScript. Pour corriger cela, je n'ai pas désactivé la règle ; j'ai simplement ajouté void devant les appels concernés pour marquer ces promesses comme étant ignorées intentionnellement. Je ne mets jamais // eslint-disable pour contourner ce genre d'erreur.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.9800664451827243
+   }
+  },
+  {
+   "id": "agent-07-secu",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 7807.499575000002,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "L'audit a révélé que le Core natif écoute uniquement sur l'adresse IP localhost, c'est-à-dire `127.0.0.1:47831`. Il ne s'expose jamais sur l'adresse `0.0.0.0`, qui est souvent utilisée pour indiquer que le service est accessible depuis n'importe quelle interface de la machine. Ensuite, nous avons appris que le jeton d'authentification a une taille de 32 octets et ne figure jamais dans les logs. Cependant, il y a un fichier appelé `~/.cache/llm-voice/core.pid` qui est créé avec des droits 644, ce qui signifie qu'ils sont lus par tous les utilisateurs mais écrits uniquement par le propriétaire du fichier. Il serait préférable de modifier ces permissions à 600 pour que seuls le propriétaire ait la possibilité d'écrire dans ce fichier.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 2.47
+   }
+  },
+  {
+   "id": "agent-08-deps",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 5221.689639999997,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons effectué des mises à jour importantes dans nos dépendances. Zod passe de la version 3.22.4 à 3.23.8, et TypeScript passe de la version 5.4.5 à 5.5.2. Notez que Vitest reste sur la version 1.6.0 car la nouvelle version 2.x cause des problèmes avec le mock de fetch. En outre, nous ne devons pas utiliser npm audit fix --force pour corriger les dépendances. Cela monterait la version d'Esbuild en majeure et cassera notre build.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     3,
+     3
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [
+     "vitest"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.748
+   }
+  },
+  {
+   "id": "agent-09-docker",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 6936.308873999995,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Pour réduire la taille du conteneur, j'ai ajouté un Dockerfile multi-étapes. Avant cela, l'image pèse 1,1 Go, mais maintenant elle en pèse seulement 148 Mo. Cette diminution est due à la manière dont le Dockerfile est structuré pour inclure uniquement les couches nécessaires. Ensuite, cette image construite permet d'exposer le port 8080 et de fonctionner avec l'utilisateur `app` qui a un UID de 10001, au lieu de tourner en tant que root. Pour construire cette image, j'ai exécuté la commande suivante : docker build -t llm-voice:0.3.0 . Cette commande crée une nouvelle image Docker nommée `llm-voice` avec la version 0.3.0.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [
+     "root"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 2.6952789699570814
+   }
+  },
+  {
+   "id": "agent-10-review",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 6699.935902999998,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Dans cette revue de la pull request numéro 214, on identifie deux points bloquants. Premièrement, le code `OllamaNarrator.transform` ne vérifie pas `response.ok` avant d'appeler `response.json()`. Cela signifie que si la réponse est une erreur HTTP, l'application pourrait essayer de traiter un objet JSON qui n'est peut-être pas au format attendu. Deuxièmement, le nom `narratorSettings` est ambigu, ce qui peut causer des confusions pour les autres développeurs lisant le code. Ensuite, il est mentionné que le reste du code est correct et que la fusion peut être effectuée une fois que la CI (Continuous Integration) aura indiqué qu'il n'y a plus d'erreurs. Ne pas fusionner avant cette validation automatique.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 2.3846153846153846
+   }
+  },
+  {
+   "id": "agent-11-config",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4769.980000000003,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons introduit un nouveau paramètre appelé llmVoice.narrator.timeoutMs, avec une valeur par défaut de 60000 millisecondes, ce qui équivaut à 60 secondes. La valeur minimale autorisée est de 1000 millisecondes. Si cette valeur est fixée à zéro, elle ne sera pas acceptée. Ce paramètre devrait être ajouté dans le fichier settings.json uniquement si tu utilises un modèle contenant plus de 13 milliards de paramètres.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.7254098360655739
+   }
+  },
+  {
+   "id": "agent-12-bug-audio",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 5860.329249999995,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons remarqué que le craquement audio était causé par le rééchantillonnage : le Core convertissait du 22 050 hertz en 48 000 hertz sans filtre passe-bas. J'ai donc activé un filtre de la bibliothèque `libsamplerate` en mode `SRC_SINC_BEST_QUALITY`. Ensuite, nous avons testé une boucle avec un sink nul et l'outil `faster-whisper`, qui a donné 0 pour cent d'erreur sur 20 phrases. Malheureusement, je ne pouvais pas tester au casque : j'ai effectué uniquement des tests en boucle logicielle.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.4747774480712166
+   }
+  },
+  {
+   "id": "doc-13-api-fr",
+   "kind": "doc",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 7260.895499999999,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Bien sûr, commençons par l'endpoint POST /tts qui est utilisé pour transformer du texte en parole synthétique. Il nécessite un corps JSON qui comprend au moins le champ text, ce qui représente votre message, et peut également inclure les champs voice qui définit la voix par défaut à siwis, et format qui spécifie le format de sortie, soit wav ou mp3. Notez que le texte ne doit pas dépasser 2000 caractères. Si vous omettez ces deux derniers champs, ils ont des valeurs par défaut respectivement siwis pour voice et wav pour format. Enfin, la réponse du serveur est un flux audio qui peut être directement utilisé ou enregistré selon votre besoin. En cas de dépassement de taille du texte, le serveur renvoie une erreur 413 sans jamais tronquer silencieusement le texte.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 2.686411149825784
+   }
+  },
+  {
+   "id": "doc-14-install",
+   "kind": "doc",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4605.692123000001,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "D'accord, voici la section sur l'installation. Tout d'abord, il faut avoir Node.js de version 20 ou supérieure et Python 3.11. Si vous êtes sous Linux, il est recommandé d'installer le paquet `espeak-ng` via la commande `sudo dnf install espeak-ng`. Il ne faut pas installer le paquet `pip install torch` dans l'environnement système global ; au lieu de cela, utilisez toujours un environnement virtuel `venv`.",
+   "score": {
+    "essential": [
+     4,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [
+     {
+      "t": "Node.js 20",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.680327868852459
+   }
+  },
+  {
+   "id": "doc-15-lifecycle",
+   "kind": "doc",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4385.583496000007,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Dans le cycle de vie d'un segment, il existe quatre états : `queued`, `synthesizing`, `playing` et `done`. Une fois un segment passé à l'état `playing`, il ne revient jamais à `queued`. Si la synthèse échoue, le segment passe directement à `failed` sans retour en `queued`. Il y a au maximum trois tentatives de synthèse, chaque tentative étant séparée d'une durée de 500 millisecondes.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.2532467532467533
+   }
+  },
+  {
+   "id": "doc-16-regex",
+   "kind": "doc",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4711.063141999999,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "L'expression régulière `^v(\\\\.)(\\d+)\\.(\\\\.)(\\d+)\\.(\\\\.)(\\d+)$` sert à valider un tag de version au format SemVer simplifié. Elle ne accepte pas `1.2.3` qui manque le préfixe `v`, et non plus `v1.2` parce que la partie patch est absente. De plus, elle rejette les suffixes de préversion comme `-rc.1`, donc ne va pas jusqu'au bout des spécifications SemVer.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     0,
+     0
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.6255707762557077
+   }
+  },
+  {
+   "id": "doc-17-git",
+   "kind": "doc",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4024.326884000009,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Pour les commits, il est conseillé d'utiliser un préfixe comme 'feat', 'fix', 'docs' ou 'chore', suivi du scope entre parenthèses et d'un message de 72 caractères maximum. Par exemple : 'fix(core): plafond de taille'. Cependant, ne jamais utiliser le 'git push --force' sur la branche main. Utilisez toujours '--force-with-lease' sur votre propre branche.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     4,
+     4
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.2157534246575343
+   }
+  },
+  {
+   "id": "doc-18-cache",
+   "kind": "doc",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4510.389233000009,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le cache LRU, qui a pour rôle de stocker les entrées les plus récentes, peut contenir au maximum 256 éléments et chasse automatiquement chaque entrée après un laps de temps de 15 minutes. La clé utilisée pour identifier ces entrées est formée par le hash SHA-256 du texte joint à l'identifiant voiceId. Il faut noter que ce cache n'est jamais enregistré sur disque, il est vidé chaque fois qu'on redémarre le Core.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     0,
+     1
+    ],
+    "missing": [
+     {
+      "t": "redémarrage",
+      "priority": "detail"
+     }
+    ],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.8565022421524664
+   }
+  },
+  {
+   "id": "doc-19-errors",
+   "kind": "doc",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4479.897683999996,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Il existe différents codes de sortie pour le CLI. Un code 0 signifie que la commande a réussi, tandis qu'un 2 indique qu'il y avait un argument invalide. Le code 3 apparaît lorsque le serveur Ollama ne peut pas être atteint et le 4 est utilisé si le modèle demandé n'a jamais été téléchargé. En outre, le CLI s'assure de ne jamais afficher le contenu réel des messages d'erreur. Ceci est fait pour protéger les informations sensibles.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     0,
+     1
+    ],
+    "missing": [
+     {
+      "t": "succès",
+      "priority": "detail"
+     }
+    ],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.5069444444444444
+   }
+  },
+  {
+   "id": "doc-20-en-arch",
+   "kind": "doc",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3471.0637870000064,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le processus central écoute sur un socket de domaine Unix nommé $XDG_RUNTIME_DIR/llm-voice.sock. Il ne lie jamais de port TCP. Chaque requête doit ne pas dépasser 1 mégaoctet ; les payloads plus grands sont rejetés avec le code d'erreur E_TOO_LARGE. Les timeouts par défaut sont de 30 secondes.",
+   "score": {
+    "essential": [
+     5,
+     7
+    ],
+    "detail": [
+     0,
+     0
+    ],
+    "missing": [
+     {
+      "t": "0600",
+      "priority": "essential"
+     },
+     {
+      "t": "1 MiB",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 2,
+    "negLost": [
+     "1 MiB"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.1529411764705881
+   }
+  },
+  {
+   "id": "doc-21-en-readme",
+   "kind": "doc",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4572.994464000003,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Pour lancer l'extension, commencez par exécuter la commande 'npm run compile'. Cela prépare le code nécessaire avant que l'hôte de l'extension puisse fonctionner. Ne modifiez pas les fichiers dans le dossier 'out/' à la main : ils sont générés à chaque build et pourraient être effacés. Cette extension nécessite au moins la version 1.90 de VS Code. En outre, elle ne transmet aucune information de suivi automatique ou de telemétrie.",
+   "score": {
+    "essential": [
+     3,
+     4
+    ],
+    "detail": [
+     0,
+     2
+    ],
+    "missing": [
+     {
+      "t": "extension host",
+      "priority": "detail"
+     },
+     {
+      "t": "regenerated",
+      "priority": "detail"
+     },
+     {
+      "t": "telemetry",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 2,
+    "negLost": [
+     "telemetry"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 2.056872037914692
+   }
+  },
+  {
+   "id": "agent-22-plan",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4247.308025999999,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Pour commencer, nous allons ajouter le fichier NarratorEval dans scripts/narrator-eval sans toucher à src. Ensuite, nous lancerons 24 textes sur qwen2.5:7b puis qwen2.5:3b. Enfin, nous comparons les taux de fidélité. Le seuil d'acceptation est de 95 % pour les éléments essentiels. Si en dessous de ce pourcentage, on ne livre pas.",
+   "score": {
+    "essential": [
+     6,
+     7
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [
+     {
+      "t": "trois étapes",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.1335616438356164
+   }
+  },
+  {
+   "id": "agent-23-incident",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 5197.609235999989,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le 27 septembre, le Core a été tué par l'OOM killer à 3h12 après avoir fonctionné pendant 6 heures. La raison était un buffer de 2 Go alloué pour un texte de seulement 40 Mo. Cela nous indique qu'il y avait une utilisation excessive de la mémoire. Pour éviter des problèmes similaires, j'ai plafonné l'entrée à 64 Ko dans le fichier Core::read_request. Il est important de ne pas augmenter ce plafond sans revoir l'allocation de mémoire, car cela pourrait causer des problèmes.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [
+     "donnée"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.5639344262295083
+   }
+  },
+  {
+   "id": "agent-24-limits",
+   "kind": "agent",
+   "profile": "technical-teacher",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 5258.828167,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Il faut savoir que si vous essayez de lire un bloc de code avec plus de deux cent lignes, l'application ne pourra pas le gérer et va simplement ignorer cette partie du code en affichant un avertissement qui dit `W_CODE_SKIPPED`. Par contre, les tableaux Markdown ne sont pas analysés ligne par ligne. Ensuite, si vous utilisez le mode `narrated`, il nécessite une version d'Ollama 0,3 ou plus récente. Si Ollama n'est pas installé, l'extension va simplement lire le code tel quel sans ajouter de narration supplémentaire.",
+   "score": {
+    "essential": [
+     5,
+     6
+    ],
+    "detail": [
+     0,
+     1
+    ],
+    "missing": [
+     {
+      "t": "cellule par cellule",
+      "priority": "detail"
+     },
+     {
+      "t": "lecture fidèle",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.669871794871795
+   }
+  },
+  {
+   "id": "agent-01-timeout",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4748.328036999999,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "J'ai corrigé le délai d'attente dans src/net/EgressGuard.ts : la valeur passe de 30 secondes à 60 secondes. Le test npm test -- --grep egress passe maintenant (42 tests, 0 échec). Il ne faut pas relancer npm run compile avant d'avoir vérifié la branche feat/s1-native-audio-foundation.\nIl reste à traiter la redirection 302, qui n'est pas gérée.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     3,
+     3
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0391566265060241
+   }
+  },
+  {
+   "id": "agent-02-migration",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4855.670734999992,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "La migration 20260912_add_index.sql ajoute un index sur users.email. Sur la base de préproduction avec 1,2 million de lignes, elle a pris 14 secondes. Attention : ne jamais l'exécuter en production pendant les heures ouvrées, car CREATE INDEX pose un verrou en écriture sur la table. Utilisez CREATE INDEX CONCURRENTLY à la place pour éviter cela. Le retour arrière se fait avec psql -f rollback_20260912.sql.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0225
+   }
+  },
+  {
+   "id": "agent-03-bug-parser",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3935.2340299999923,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le bug était causé par `parseNarration` qui appelle `JSON.parse` sans capturer l'exception quand le modèle renvoie du texte hors JSON. Le correctif ajoute un bloc `try/catch` dans `parseNarration.ts`, ligne 84. J'ai également ajouté trois tests de non-régression. La version 0.3.1 devrait sortir demain, mais je n'ai pas testé sur macOS.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     3,
+     3
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.080128205128205
+   }
+  },
+  {
+   "id": "agent-04-refactor",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3779.931883000012,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "La refactoring du PlaybackController a été réalisée, créant les fichiers QueueManager et AudioSink. Aucun changement de comportement n'a été apporté. Les 118 tests unitaires passent toujours, la couverture reste à 87 %. L'intégrité du fichier Pipeline.ts n'a pas été modifiée car il dépend encore de l'ancien nom PlaybackController.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     0,
+     0
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.1254237288135593
+   }
+  },
+  {
+   "id": "agent-05-perf",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4538.377335999976,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Sur qwen2.5:7b, les mesures de latence sont p50 à 1,8 secondes et p95 à 4,3 secondes pour un bloc de 120 mots. Avec qwen2.5:3b, le p50 descend à 0,9 seconde. La mémoire GPU utilisée est de 5,1 Go pour le 7b. Je recommande de ne pas dépasser 2 requêtes en parallèle sur la carte de 8 Go.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.11284046692607
+   }
+  },
+  {
+   "id": "agent-06-ci",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3373.6378519999853,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le workflow .github/workflows/ci.yml échoue à l'étape lint : ESLint signale 6 erreurs no-floating-promises dans src/tts/SystemTtsProvider.ts. Je n'ai pas désactivé la règle ; j'ai ajouté void devant les appels concernés. Ne mets jamais // eslint-disable pour contourner ce genre d'erreur.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9568106312292359
+   }
+  },
+  {
+   "id": "agent-07-secu",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4396.496435000008,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le Core natif écoute uniquement sur l'adresse 127.0.0.1 port 47831 et ne jamais expose sur 0.0.0.0. Le jeton d'authentification fait trente-deux octets et n'est pas enregistré dans les logs. Par contre, le fichier ~/.cache/llm-voice/core.pid est créé avec les droits 644 ; il devrait être modifié pour avoir les droits 600.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0766666666666667
+   }
+  },
+  {
+   "id": "agent-08-deps",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3930.919912000012,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Mise à jour des dépendances : zod passe de 3.22.4 à 3.23.8, typescript de 5.4.5 à 5.5.2. vitest reste en 1.6.0 car la 2.x casse le mock de fetch. Ne lance pas npm audit fix --force : il monterait esbuild en majeure et casserait le build.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     3,
+     3
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.948
+   }
+  },
+  {
+   "id": "agent-09-docker",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3897.9183530000155,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "J'ai ajouté un Dockerfile multi-étapes qui réduit la taille finale de l'image à 148 Mo contre 1,1 Go avant. L'image expose le port 8080 et tourne avec l'utilisateur app dont l'UID est 10001, pas en root. La commande de build utilisée est docker build -t llm-voice:0.3.0 .",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.1630901287553648
+   }
+  },
+  {
+   "id": "agent-10-review",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3578.7986600000004,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Revue de la PR #214 : deux points bloquants. Premièrement, `OllamaNarrator.transform` ne vérifie pas `response.ok` avant `response.json()`. Deuxièmement, le nom `narratorSettings` est ambigu. Le reste est correct. Tu peux fusionner après correction, mais ne fusionne pas avant que la CI soit verte.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9966555183946488
+   }
+  },
+  {
+   "id": "agent-11-config",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4001.82326200002,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons ajouté un nouveau paramètre appelé llmVoice.narrator.timeoutMs avec une valeur par défaut de 60000 millisecondes, ce qui correspond à 60 secondes. La valeur minimale autorisée est 1000 milliseconds. Une valeur de 0 est interdite. Ce paramètre doit être ajouté dans settings.json uniquement si vous utilisez un modèle avec plus de 13 milliards de paramètres.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.5081967213114753
+   }
+  },
+  {
+   "id": "agent-12-bug-audio",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4502.4089410000015,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le craquement audio venait du rééchantillonnage : le Core convertissait du 22 050 Hz en 48 000 Hz sans filtre passe-bas. J'ai activé le filtre de `libsamplerate` en mode `SRC_SINC_BEST_QUALITY`. La boucle avec sink nul et faster-whisper donne 0 % d'erreur sur 20 phrases. Je n'ai pas pu tester au casque, seulement en boucle logicielle.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9970326409495549
+   }
+  },
+  {
+   "id": "doc-13-api-fr",
+   "kind": "doc",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 5207.988443000009,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons mis en place un endpoint POST pour la synthèse vocale à travers l'API /tts. Le corps JSON requiert `text` qui est obligatoire et ne doit pas dépasser 2000 caractères, `voice` qui est optionnel et prendra par défaut la valeur `siwis`, et `format` qui peut être soit `wav` soit `mp3`. La réponse du serveur sera un flux audio. En cas de dépassement de taille du texte, le serveur renverra une réponse 413 sans tronquer le message silencieusement.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.5853658536585367
+   }
+  },
+  {
+   "id": "doc-14-install",
+   "kind": "doc",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3111.319789000001,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Installation. Prérequis : Node.js 20 ou supérieur et Python 3.11. Sous Linux, installez espeak-ng via sudo dnf install espeak-ng. N'installez pas le paquet pip install torch dans l'environnement système ; utilisez toujours un venv.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9467213114754098
+   }
+  },
+  {
+   "id": "doc-15-lifecycle",
+   "kind": "doc",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3798.8352939999895,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le cycle de vie d'un segment comporte quatre états : `queued`, `synthesizing`, `playing` et `done`. Un segment ne revient jamais à `queued` une fois passé à `playing`. Si la synthèse échoue, le segment passe à `failed` et la lecture continue avec le suivant. Il y a au plus 3 tentatives, espacées de 500 ms.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9967532467532467
+   }
+  },
+  {
+   "id": "doc-16-regex",
+   "kind": "doc",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3578.996732999978,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "La regex `^v(\\\\.d+)\\\\\\.(\\d+)\\\\\\.(\\\\.d+)$` valide un tag de version au format SemVer simplifié. Elle rejette `1.2.3` (sans le `v`) et `v1.2` (il manque le patch). Elle n'accepte pas les suffixes de préversion comme `-rc.1`.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     0,
+     0
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0136986301369864
+   }
+  },
+  {
+   "id": "doc-17-git",
+   "kind": "doc",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3180.7721519999905,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Convention de commits : un préfixe (feat, fix, docs, chore), un scope entre parenthèses, puis un message de 72 caractères maximum. Exemple : fix(core): plafond de taille. Ne faites jamais de git push --force sur main. Utilisez --force-with-lease sur votre branche uniquement.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     4,
+     4
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9417808219178082
+   }
+  },
+  {
+   "id": "doc-18-cache",
+   "kind": "doc",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 2978.8349379999854,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le cache LRU conserve au plus 256 entrées et expire chaque entrée après 15 minutes. La clé est le hash SHA-256 du texte concaténé au voiceId. Le cache est vidé au redémarrage du Core : il n'est pas persistant sur disque.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9865470852017937
+   }
+  },
+  {
+   "id": "doc-19-errors",
+   "kind": "doc",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3503.9062459999986,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons codé les codes de sortie du CLI : 0 pour un succès, 2 pour un argument invalide, 3 quand le serveur Ollama est injoignable, et 4 quand le modèle demandé n'est pas téléchargé. De plus, le CLI ne montre jamais le contenu des messages d'erreur afin de ne pas divulguer de données sensibles.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0347222222222223
+   }
+  },
+  {
+   "id": "doc-20-en-arch",
+   "kind": "doc",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3916.6129209999926,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le processus central écoute sur un socket Unix à l'emplacement $XDG_RUNTIME_DIR/llm-voice.sock avec le mode 0600. Il ne lie jamais de port TCP. Chaque requête doit ne pas dépasser 1 MiB ; les envois plus volumineux sont rejetés avec le code d'erreur E_TOO_LARGE. Les temps d'exécution par défaut sont de 30 secondes.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     0,
+     0
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.2392156862745098
+   }
+  },
+  {
+   "id": "doc-21-en-readme",
+   "kind": "doc",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3282.7330959999817,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Avant d'exécuter l'hôte de l'extension, assurez-vous de faire `npm run compile`. Ne pas éditer les fichiers sous le répertoire `out/` manuellement : ils sont générés à chaque build. Cette extension nécessite au moins la version 1.90 de VS Code et ne transmet aucune telemetry.",
+   "score": {
+    "essential": [
+     4,
+     4
+    ],
+    "detail": [
+     0,
+     2
+    ],
+    "missing": [
+     {
+      "t": "extension host",
+      "priority": "detail"
+     },
+     {
+      "t": "regenerated",
+      "priority": "detail"
+     }
+    ],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.3080568720379147
+   }
+  },
+  {
+   "id": "agent-22-plan",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 5042.234209000017,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nous avons réalisé trois étapes pour le projet. D'abord, nous avons ajouté `NarratorEval` dans `scripts/narrator-eval/` sans modifier `src/`. Ensuite, nous avons lancé 24 textes sur `qwen2.5:7b` puis `qwen2.5:3b`. Enfin, nous avons comparé les taux de fidélité. Le seuil d'acceptation pour les éléments essentiels est fixé à 95 %. Si le taux est en dessous de ce seuil, nous ne livrons pas.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [
+     "livre"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.3356164383561644
+   }
+  },
+  {
+   "id": "agent-23-incident",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4331.666793000011,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le 27 septembre, le Core a été tué par l'OOM killer à 3h12 après 6 heures d'uptime. Cela s'est produit car un buffer de 2 Go a été alloué pour un texte de 40 Mo. J'ai plafonné l'entrée à 64 Ko dans Core::read_request. Il faut être prudent et ne pas augmenter ce plafond sans revoir l'allocation. Aucune donnée n'a été perdue.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0655737704918034
+   }
+  },
+  {
+   "id": "agent-24-limits",
+   "kind": "agent",
+   "profile": "llm-summary",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3603.800224000006,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Les limites connues incluent un bloc de code de plus de deux cents lignes non supporté et ignoré avec un avertissement W_CODE_SKIPPED. Les tableaux Markdown ne sont pas lus cellule par cellule. Le mode narrated nécessite Ollama 0.3 ou une version ultérieure, sinon l'extension rechute dans la lecture fidèle.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9871794871794872
+   }
+  },
+  {
+   "id": "agent-01-timeout",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4515.416516999976,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "J'ai modifié le délai d'attente dans src/net/EgressGuard.ts de 30 secondes à 60 secondes. Le test npm test -- --grep egress passe maintenant avec 42 tests et aucun échec. N'oubliez pas de vérifier la branche feat/s1-native-audio-foundation avant de relancer npm run compile.\nIl reste à traiter la redirection 302, qui n'est pas gérée.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     3,
+     3
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [
+     "npm run compile"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0060240963855422
+   }
+  },
+  {
+   "id": "agent-02-migration",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4672.031438000005,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "La migration 20260912_add_index.sql ajoute un index sur users.email. Sur la base de préproduction avec 1,2 million de lignes, elle a pris 14 secondes. Attention : ne jamais l'exécuter en production pendant les heures ouvrées car CREATE INDEX pose un verrou en écriture sur la table. Utilisez CREATE INDEX CONCURRENTLY à la place. Le retour arrière se fait avec psql -f rollback_20260912.sql.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9775
+   }
+  },
+  {
+   "id": "agent-03-bug-parser",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4119.318976999988,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le bug est causé par `parseNarration` qui appelle `JSON.parse` sans capturer l'exception quand le modèle renvoie du texte hors JSON. Le correctif ajoute un bloc `try/catch` dans `parseNarration.ts`, ligne 84. J'ai ajouté trois tests de non-régression. La version 0.3.1 devrait sortir demain, mais les tests sur macOS n'ont pas été effectués.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     3,
+     3
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0929487179487178
+   }
+  },
+  {
+   "id": "agent-04-refactor",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3223.9561569999787,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Refactorisation terminée : PlaybackController est découpé en QueueManager et AudioSink. Aucun changement de comportement n'est attendu. Les 118 tests unitaires passent, la couverture reste à 87 %. Je n'ai pas touché à Pipeline.ts : il dépend encore de l'ancien nom PlaybackController.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     0,
+     0
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9627118644067797
+   }
+  },
+  {
+   "id": "agent-05-perf",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4382.300846999977,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Sur qwen2.5:7b, le p50 de latence est de 1,8 secondes et le p95 à 4,3 secondes pour un bloc de 120 mots. Avec qwen2.5:3b, le p50 descend à 0,9 secondes. La mémoire GPU utilisée est de 5,1 Go pour le modèle 7b. Ne dépasser jamais 2 requêtes en parallèle sur la carte de 8Go.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0622568093385214
+   }
+  },
+  {
+   "id": "agent-06-ci",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3424.11473999999,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le workflow .github/workflows/ci.yml échoue à l'étape lint : ESLint signale 6 erreurs no-floating-promises dans src/tts/SystemTtsProvider.ts. Je n'ai pas désactivé la règle ; j'ai ajouté void devant les appels concernés. Ne mets jamais // eslint-disable pour contourner ce genre d'erreur.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9568106312292359
+   }
+  },
+  {
+   "id": "agent-07-secu",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4265.559292999998,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Audit terminé : le Core natif écoute uniquement sur 127.0.0.1:47831 et ne jamais exposé sur 0.0.0.0. Le jeton d'authentification fait 32 octets et n'est pas écrit dans les logs. En revanche, le fichier ~/.cache/llm-voice/core.pid est créé avec les droits 644 ; il faudrait le passer à 600.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9633333333333334
+   }
+  },
+  {
+   "id": "agent-08-deps",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4500.04512699999,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Dans cette mise à jour, `zod` passe de 3.22.4 à 3.23.8 et `typescript` de 5.4.5 à 5.5.2. `vitest` reste à la version 1.6.0 car la nouvelle majeure casse le mock de `fetch`. Il ne faut pas exécuter `npm audit fix --force` car cela monterait `esbuild` en majeure et casserait le build.",
+   "score": {
+    "essential": [
+     6,
+     7
+    ],
+    "detail": [
+     3,
+     3
+    ],
+    "missing": [
+     {
+      "t": "2.x",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.132
+   }
+  },
+  {
+   "id": "agent-09-docker",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3783.331050000008,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "J'ai ajouté un Dockerfile multi-étapes qui réduit la taille finale de l'image à 148 Mo contre 1,1 Go avant. L'image expose le port 8080 et tourne avec l'utilisateur app dont l'UID est 10001, pas en root. Commande de build : docker build -t llm-voice:0.3.0 .",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.1030042918454936
+   }
+  },
+  {
+   "id": "agent-10-review",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3576.164537000004,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "La revue de la PR #214 comporte deux points bloquants. Premièrement, `OllamaNarrator.transform` ne vérifie pas `response.ok` avant `response.json()`. Deuxièmement, le nom `narratorSettings` est ambigu. Le reste est correct. Tu peux fusionner après correction, mais ne fusionne pas avant que la CI soit verte.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0301003344481605
+   }
+  },
+  {
+   "id": "agent-11-config",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3297.4425590000465,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Nouveau paramètre llmVoice.narrator.timeoutMs avec une valeur par défaut de 60000, soit 60 secondes, minimum 1000. Une valeur de 0 est refusée. Ajoute-le dans settings.json uniquement si tu utilises un modèle de plus de 13 milliards de paramètres.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0122950819672132
+   }
+  },
+  {
+   "id": "agent-12-bug-audio",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4470.663242999988,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le craquement audio venait du rééchantillonnage : le Core convertissait du 22 050 Hz en 48 000 Hz sans filtre passe-bas. J'ai activé le filtre de `libsamplerate` en mode `SRC_SINC_BEST_QUALITY`. La boucle avec sink nul et faster-whisper donne 0 % d'erreur sur 20 phrases. Je n'ai pas pu tester au casque, seulement en boucle logicielle.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9970326409495549
+   }
+  },
+  {
+   "id": "doc-13-api-fr",
+   "kind": "doc",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3611.0039099999703,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "L'endpoint POST /tts nécessite un corps JSON avec text (obligatoire, 2000 caractères maximum), voice optionnel avec la valeur par défaut siwis, et format qui peut être wav ou mp3. La réponse est un flux audio. En cas de dépassement de taille, le serveur répond 413 sans tronquer le texte.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0034843205574913
+   }
+  },
+  {
+   "id": "doc-14-install",
+   "kind": "doc",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3591.394335000019,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Pour l'installation, les prérequis nécessaires sont Node.js 20 ou une version ultérieure et Python 3.11. Sur Linux, installez `espeak-ng` via `sudo dnf install espeak-ng`. Neinstallez pas le paquet `pip install torch` dans l'environnement système ; utilisez toujours un `venv`.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.1352459016393444
+   }
+  },
+  {
+   "id": "doc-15-lifecycle",
+   "kind": "doc",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3553.485816999979,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Un segment passe par les états `queued`, `synthesizing`, `playing` et `done`. Il ne revient jamais à `queued` une fois en `playing`. Si la synthèse échoue, le segment passe à `failed` et la lecture continue avec le suivant. Il y a au plus 3 tentatives, espacées de 500 ms.",
+   "score": {
+    "essential": [
+     5,
+     6
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [
+     {
+      "t": "quatre états",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.8831168831168831
+   }
+  },
+  {
+   "id": "doc-16-regex",
+   "kind": "doc",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3616.163640999992,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "L'expression `^v(\\\\.d+)\\.\\\\(d+)\\.\\\\(d+)$` valide un tag de version au format SemVer simplifié. Elle rejette `1.2.3` (sans le `v`) et `v1.2` (il manque le patch). Elle n'accepte pas les suffixes de préversion comme `-rc.1`.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     0,
+     0
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0136986301369864
+   }
+  },
+  {
+   "id": "doc-17-git",
+   "kind": "doc",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3402.23427299998,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Convention de commits : préfixe (`feat`, `fix`, `docs`, `chore`) et scope entre parenthèses, 72 caractères maximum. Exemple : `fix(core): plafond de taille`. Ne faites jamais de `git push --force` sur main. Utilisez `--force-with-lease` sur votre branche uniquement.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     4,
+     4
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.910958904109589
+   }
+  },
+  {
+   "id": "doc-18-cache",
+   "kind": "doc",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 2991.708832000033,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le cache LRU conserve au plus 256 entrées et expire chaque entrée après 15 minutes. La clé est le hash SHA-256 du texte concaténé au voiceId. Le cache est vidé au redémarrage du Core : il n'est pas persistant sur disque.",
+   "score": {
+    "essential": [
+     5,
+     5
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9865470852017937
+   }
+  },
+  {
+   "id": "doc-19-errors",
+   "kind": "doc",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3005.201574000006,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Les codes de sortie du CLI sont 0 pour un succès, 2 pour un argument invalide, 3 quand le serveur Ollama est injoignable, et 4 quand le modèle demandé n'est pas téléchargé. Le CLI ne montre jamais le contenu du texte lu dans les messages d'erreur.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 1,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.8576388888888888
+   }
+  },
+  {
+   "id": "doc-20-en-arch",
+   "kind": "doc",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3851.976214000024,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Le processus Core écoute sur un socket Unix à l'emplacement $XDG_RUNTIME_DIR/llm-voice.sock avec un mode de 0600. Il ne lie jamais de port TCP. Chaque requête doit être inférieure à 1 Mo ; les plus grandes sont rejetées avec le code d'erreur E_TOO_LARGE. Les temps morts par défaut sont de 30 secondes.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     0,
+     0
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [
+     "1 MiB"
+    ],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.184313725490196
+   }
+  },
+  {
+   "id": "doc-21-en-readme",
+   "kind": "doc",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 3222.163782999967,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Avant de lancer le hôte d'extension, exécutez `npm run compile`. Ne modifiez pas les fichiers dans le dossier out/, ils sont regénérés à chaque build. La version requise est VS Code 1.90 ou ultérieure. L'extension ne envoie aucune telemetry.",
+   "score": {
+    "essential": [
+     4,
+     4
+    ],
+    "detail": [
+     0,
+     2
+    ],
+    "missing": [
+     {
+      "t": "extension host",
+      "priority": "detail"
+     },
+     {
+      "t": "regenerated",
+      "priority": "detail"
+     }
+    ],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.1421800947867298
+   }
+  },
+  {
+   "id": "agent-22-plan",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4422.623978999967,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Plan en trois étapes. D'abord, ajouter `NarratorEval` dans `scripts/narrator-eval/` sans toucher à `src/`. Ensuite, lancer 24 textes sur `qwen2.5:7b` puis `qwen2.5:3b`. Enfin, comparer les taux de fidélité. Seuil d'acceptation : 95 % sur les éléments essentiels. En dessous, on ne livre pas.",
+   "score": {
+    "essential": [
+     7,
+     7
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9965753424657534
+   }
+  },
+  {
+   "id": "agent-23-incident",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4537.399105000019,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Incident du 27 septembre : le Core a été tué par l'OOM killer à 3 heures 12 minutes après 6 heures d'uptime. Cause : un buffer de 2 Go alloué pour un texte de 40 Mo. J'ai plafonné l'entrée à 64 Ko dans Core::read_request. Attention, ne pas augmenter ce plafond sans revoir l'allocation. Aucune donnée n'a été perdue.",
+   "score": {
+    "essential": [
+     5,
+     6
+    ],
+    "detail": [
+     2,
+     2
+    ],
+    "missing": [
+     {
+      "t": "03h12",
+      "priority": "essential"
+     }
+    ],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 1.0360655737704918
+   }
+  },
+  {
+   "id": "agent-24-limits",
+   "kind": "agent",
+   "profile": "quick-review",
+   "model": "qwen2.5:7b",
+   "rep": 0,
+   "latencyMs": 4267.964723000012,
+   "degraded": false,
+   "degradedReason": null,
+   "partialFallback": false,
+   "scopeIds": null,
+   "output": "Limites connues : la lecture d'un bloc de code de plus de 200 lignes n'est pas supportée, elle est ignorée avec un avertissement W_CODE_SKIPPED. Les tableaux Markdown ne sont pas lus cellule par cellule. Le mode narrated nécessite Ollama 0.3 ou plus ; sans Ollama, l'extension retombe sur la lecture fidèle.",
+   "score": {
+    "essential": [
+     6,
+     6
+    ],
+    "detail": [
+     1,
+     1
+    ],
+    "missing": [],
+    "negTotal": 2,
+    "negLost": [],
+    "inventions": [],
+    "novelNumbers": [],
+    "lengthRatio": 0.9839743589743589
+   }
+  }
+ ]
+}

@@ -44,3 +44,5 @@ vscode-extension/_grimoire-output/
 
 # Rust (Core, ADR-012)
 /target/
+# Traces Grimoire écrites quand un hook tourne depuis src/
+vscode-extension/src/_grimoire-output/

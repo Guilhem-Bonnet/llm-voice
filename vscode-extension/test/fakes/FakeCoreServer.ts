@@ -59,6 +59,7 @@ export class FakeCoreServer {
   private port = 0;
   /** One-shot overrides for the next `enqueue`/`play`/etc. ack. */
   private queuedAcks: (AckError | undefined)[] = [];
+  private readonly pathAcks = new Map<string, AckError[]>();
 
   get baseUrl(): string {
     return `http://127.0.0.1:${this.port}`;
@@ -98,6 +99,17 @@ export class FakeCoreServer {
   /** Makes the next HTTP command fail with this ack error (one-shot). */
   failNextWith(error: AckError): void {
     this.queuedAcks.push(error);
+  }
+
+  /**
+   * Makes the next command on `path` (e.g. `"enqueue"`) fail with this ack
+   * error (one-shot, HTTP 400), whatever came before it: `load()` sends `stop`
+   * first, so `failNextWith` alone would hit that one.
+   */
+  failNextOn(path: string, error: AckError): void {
+    const list = this.pathAcks.get(path) ?? [];
+    list.push(error);
+    this.pathAcks.set(path, list);
   }
 
   /** Broadcasts one Core v1 WS event (`contracts/core-v1/ws/*.event.schema.json`) as-is. */
@@ -172,7 +184,7 @@ export class FakeCoreServer {
         this.sendAck(res, 400, { code: "invalid_request", message: `segmentId "${body.segmentId}" hors contrat` });
         return;
       }
-      const error = this.queuedAcks.shift();
+      const error = this.pathAcks.get(path)?.shift() ?? this.queuedAcks.shift();
       if (error !== undefined) {
         this.sendAck(res, 400, error);
         return;

@@ -133,6 +133,86 @@ seedAutoProfile(autoFallbackFailsUserDataDir);
 const inboxDirAutoFallbackSucceeds = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-succeeds-"));
 const inboxDirAutoFallbackFails = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-fails-"));
 
+// GAO-tests-int-gr-001: `native-real` — the whole extension in a real,
+// headless VS Code with the *native* engine (`llmVoice.audio.engine=native`),
+// the real Rust Core (`target/release/llm-voice-core`) and the real Piper
+// voice (`system` provider, found via `~/.llm-voice/voices` or PATH), sound
+// captured by `scripts/audio-proof/native-real.sh`. This is the test that
+// would have caught the field bug `segmentId "session-4:0"` (Core refused
+// every enqueue with `invalid_request`): no fake sink, no fake TTS.
+// Opt-in: the suite skips itself unless `LLM_VOICE_NATIVE_REAL=1`, so a CI
+// without audio stays green. Own user-data-dir and extensions-dir (under
+// `.vscode-test/`, absolute, short — see `userDataDir()` above), settings
+// and profile pre-seeded *before* activation (settings are read once, at
+// `activate()`).
+const nativeRealUserDataDir = userDataDir("native-real");
+const nativeRealExtensionsDir = userDataDir("native-real-extensions");
+mkdirSync(join(nativeRealUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice"), { recursive: true });
+mkdirSync(nativeRealExtensionsDir, { recursive: true });
+writeFileSync(
+  join(nativeRealUserDataDir, "User", "settings.json"),
+  JSON.stringify(
+    {
+      "llmVoice.audio.engine": "native",
+      "llmVoice.audio.corePath": join(testRootDir, "..", "target", "release", "llm-voice-core"),
+      "llmVoice.tts.provider": "system",
+      "llmVoice.defaultProfile": "native-real-piper",
+      "llmVoice.cache.enabled": false,
+      "llmVoice.log.level": "debug",
+      "security.workspace.trust.enabled": false
+    },
+    null,
+    2
+  )
+);
+writeFileSync(
+  join(nativeRealUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice", "profiles.json"),
+  JSON.stringify(
+    {
+      schemaVersion: 2,
+      defaultProfileId: "native-real-piper",
+      profiles: [
+        {
+          id: "native-real-piper",
+          label: "Native real (Piper)",
+          mode: "faithful",
+          language: "fr-FR",
+          tts: { providerId: "system" },
+          // One sentence per chunk: three sentences => three segments, so the
+          // Core's per-segment ids are exercised more than once.
+          chunking: { unit: "sentence", maxSentences: 1, prefetchChunks: 1 },
+          playback: { rate: 1, volume: 1 },
+          description: "Test-only profile: real Piper through the system provider."
+        }
+      ]
+    },
+    null,
+    2
+  )
+);
+
+// The security suite must not depend on a real local LLM: its inbox entries
+// are read with the `claude-code` default profile (Résumé LLM, narrated),
+// and a busy or cold Ollama pushed `speakLatestClaudeResponse` past mocha's
+// 20 s timeout (2026-09-29, while two evaluations were using Ollama). A
+// faithful `claude-code` profile (plus a closed narrator port as a second
+// guard) keeps every read local and deterministic.
+const securityUserDataDir = userDataDir("security");
+mkdirSync(join(securityUserDataDir, "User"), { recursive: true });
+writeFileSync(
+  join(securityUserDataDir, "User", "settings.json"),
+  JSON.stringify(
+    {
+      // Faithful profile for inbox reads: this suite tests HTML injection,
+      // not narration (the narrated default would call the real Ollama).
+      "llmVoice.profiles.bySource": { "claude-code": "system-voice" },
+      "llmVoice.narrator.baseUrl": "http://127.0.0.1:9"
+    },
+    null,
+    2
+  )
+);
+
 export default defineConfig([
   {
     ...common,
@@ -262,6 +342,19 @@ export default defineConfig([
     // attempt against an absent loopback server would only add noise.
     files: "out/test/integration-security/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirSecurity },
-    launchArgs: [`--user-data-dir=${userDataDir("security")}`]
+    launchArgs: [`--user-data-dir=${securityUserDataDir}`]
+  },
+  {
+    ...common,
+    label: "native-real",
+    // See the block above. `LLM_VOICE_CORE_STATE_DIR` / `PULSE_SINK` /
+    // `PIPEWIRE_PROPS` come from `native-real.sh`'s environment (inherited by
+    // the extension host, then by the Core `CoreProcess` spawns).
+    files: "out/test/integration-native-real/**/*.test.js",
+    env: { LLM_VOICE_TEST_FAKE_TTS: undefined },
+    launchArgs: [
+      `--user-data-dir=${nativeRealUserDataDir}`,
+      `--extensions-dir=${nativeRealExtensionsDir}`
+    ]
   }
 ]);

@@ -227,8 +227,17 @@ export class NativeAudioSink implements AudioSink {
       return;
     }
     this.current = { chunkId: chunk.chunkId, started: false };
-    await this.post("stop", {});
-    await this.sendEnqueue(chunk);
+    // A refusal by the Core (ack `ok: false`, HTTP >= 400) or a network
+    // failure is this chunk failing, not `load()` failing: it surfaces as an
+    // `error` event so the controller's failure policy (CdC §52) runs. A
+    // rejection here used to leave the controller parked in `preparing`
+    // (GAO-bogue-un-seg-001).
+    try {
+      await this.post("stop", {});
+      await this.sendEnqueue(chunk);
+    } catch (error) {
+      this.emitError(chunk.chunkId, this.errorMessage(error));
+    }
   }
 
   async enqueue(chunk: AudioSinkChunk): Promise<void> {
@@ -237,6 +246,7 @@ export class NativeAudioSink implements AudioSink {
       return;
     }
     if (this.current === undefined || this.starved) {
+      const previous = { current: this.current, starved: this.starved };
       this.starved = false;
       this.current = { chunkId: chunk.chunkId, started: false };
       // The Core auto-resumes a starved queue as soon as a segment lands
@@ -245,7 +255,16 @@ export class NativeAudioSink implements AudioSink {
       // player at all yet (`this.current` was `undefined`, an unusual entry
       // point since `PlaybackController` always `load()`s first), the Core
       // creates one paused, matching `load()`'s contract.
-      await this.sendEnqueue(chunk);
+      try {
+        await this.sendEnqueue(chunk);
+      } catch (error) {
+        // Refused: the Core never got this chunk, so the sink is still in the
+        // state it was in (starved / no player) and an `error` event tells the
+        // controller, like a chunk the engine cannot decode.
+        this.current = previous.current;
+        this.starved = previous.starved;
+        this.emitError(chunk.chunkId, this.errorMessage(error));
+      }
       return;
     }
     this.pending.push(chunk);

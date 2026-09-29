@@ -849,6 +849,7 @@
     "sync:changelog": "node scripts/sync-changelog.mjs",
     "build": "npm run compile && npm run generate:profile-schema && npm run copy:claude-integration && npm run bundle",
     "test:integration": "npm run build && vscode-test",
+    "e2e:local": "bash ../scripts/e2e-local-suite.sh",
     "package": "npm run generate:icon && npm run sync:changelog && npm run build && vsce package --no-dependencies -o llm-voice.vsix && node scripts/check-vsix.mjs",
     "build:core:linux-x64": "cargo build --release -p llm-voice-core --manifest-path ../Cargo.toml",
     "stage:core:linux-x64": "node scripts/stage-core.mjs linux-x64",

@@ -12,6 +12,13 @@ use serde_json::{json, Value};
 
 #[tokio::test]
 async fn enqueue_two_wavs_play_and_receive_ended_on_the_websocket() {
+    // CI (runner sans carte son) : `LLM_VOICE_NO_AUDIO=1` saute ce seul test,
+    // le seul à exiger une vraie sortie audio ; les autres tests du
+    // workspace s'exécutent normalement.
+    if std::env::var_os("LLM_VOICE_NO_AUDIO").is_some_and(|v| !v.is_empty() && v != "0") {
+        eprintln!("SKIP playback : LLM_VOICE_NO_AUDIO est défini (pas de sortie audio)");
+        return;
+    }
     let core = Core::start();
     let a = core.cache_path("seg-a.wav");
     let b = core.cache_path("seg-b.wav");

@@ -533,6 +533,12 @@ export class PlaybackController {
     }
     chunk.status = "error";
     chunk.error = message;
+    // Invalidate the transition in flight before the (possibly slow, user
+    // driven) policy answers: a `load()` that reported its failure as an
+    // `error` event then returns into `playIndex`, which must see itself as
+    // stale instead of flipping the failed chunk to `playing`
+    // (GAO-bogue-un-seg-001).
+    this.generation += 1;
     await this.handleChunkFailure(this.currentIndex, chunk, message, "playback");
   }
 

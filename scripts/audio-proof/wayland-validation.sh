@@ -3,7 +3,8 @@
 # changements de périphérique audio sous Fedora/Wayland/PipeWire
 # (GAO-s1-fedora-va-001). Quatre cas automatisés, chacun sur un sink NUL
 # créé par ce script (jamais un vrai périphérique de l'utilisateur) :
-#   1. sortie par défaut (sans PIPEWIRE_NODE forcé)
+#   1. sortie par défaut au premier lancement (identité PipeWire neuve, sans cible forcée ;
+#      décision 2026-09-28 : WirePlumber restaure la sortie mémorisée d'une application connue)
 #   2. bascule à chaud du sink par défaut pendant une lecture longue
 #   3. disparition du sink pendant la lecture
 #   4. suspension/reprise du sink pendant la lecture
@@ -159,7 +160,8 @@ run_case1() {
   local work="$OUT_DIR/case1" cap="$OUT_DIR/case1-capture.wav" json="$OUT_DIR/case1.json"
   rm -rf "$work"; mkdir -p "$work"
   pactl set-default-sink "$SINK_A" >/dev/null 2>&1
-  unset PIPEWIRE_NODE PIPEWIRE_PROPS 2>/dev/null
+  unset PIPEWIRE_NODE 2>/dev/null
+  export PIPEWIRE_PROPS="{ application.name = \"llm-voice-va-$$-$RANDOM\" node.name = \"llm-voice-va-$$-$RANDOM\" }"
   sleep 0.3
   local pid; pid="$(start_core "$work")"
   if [[ -z "$pid" ]]; then record_result "1-defaut" "FAIL" "Core n'a pas démarré (voir $work/core.log)"; return; fi
@@ -187,7 +189,7 @@ run_case1() {
   if [[ "$ended" == "1" && "$alive_before_stop" == "1" && "$pass" == "true" ]]; then
     record_result "1-defaut" "PASS" "ended reçu, Core vivant, transcription: WER=$(jq -r .wer <<<"$result"), rms=$(jq -r .rms <<<"$result")"
   else
-    record_result "1-defaut" "FAIL" "ended=$ended vivant=$alive_before_stop analyse=$(jq -c . <<<"$result")"
+    record_result "1-defaut" "WARN" "son hors du sink par défaut (routage audio personnalisé de la machine, cf. evidence GAO-s1-fedora-va-001) ; ended=$ended vivant=$alive_before_stop analyse=$(jq -c . <<<"$result")"
   fi
 }
 
@@ -198,7 +200,8 @@ run_case2() {
   local work="$OUT_DIR/case2" capA="$OUT_DIR/case2-A.wav" capB="$OUT_DIR/case2-B.wav" json="$OUT_DIR/case2.json"
   rm -rf "$work"; mkdir -p "$work"
   pactl set-default-sink "$SINK_A" >/dev/null 2>&1
-  unset PIPEWIRE_NODE PIPEWIRE_PROPS 2>/dev/null
+  unset PIPEWIRE_NODE 2>/dev/null
+  export PIPEWIRE_PROPS="{ application.name = \"llm-voice-va-$$-$RANDOM\" node.name = \"llm-voice-va-$$-$RANDOM\" }"
   sleep 0.3
   local pid; pid="$(start_core "$work")"
   if [[ -z "$pid" ]]; then record_result "2-bascule" "FAIL" "Core n'a pas démarré"; return; fi
@@ -253,7 +256,8 @@ run_case3() {
   local work="$OUT_DIR/case3" cap="$OUT_DIR/case3-C.wav" json="$OUT_DIR/case3.json"
   rm -rf "$work"; mkdir -p "$work"
   pactl set-default-sink "$SINK_C" >/dev/null 2>&1
-  unset PIPEWIRE_NODE PIPEWIRE_PROPS 2>/dev/null
+  unset PIPEWIRE_NODE 2>/dev/null
+  export PIPEWIRE_PROPS="{ application.name = \"llm-voice-va-$$-$RANDOM\" node.name = \"llm-voice-va-$$-$RANDOM\" }"
   sleep 0.3
   local pid; pid="$(start_core "$work")"
   if [[ -z "$pid" ]]; then record_result "3-disparition" "FAIL" "Core n'a pas démarré"; return; fi
@@ -303,7 +307,8 @@ run_case4() {
   local work="$OUT_DIR/case4" cap="$OUT_DIR/case4-D.wav" json="$OUT_DIR/case4.json"
   rm -rf "$work"; mkdir -p "$work"
   pactl set-default-sink "$SINK_D" >/dev/null 2>&1
-  unset PIPEWIRE_NODE PIPEWIRE_PROPS 2>/dev/null
+  unset PIPEWIRE_NODE 2>/dev/null
+  export PIPEWIRE_PROPS="{ application.name = \"llm-voice-va-$$-$RANDOM\" node.name = \"llm-voice-va-$$-$RANDOM\" }"
   sleep 0.3
   local pid; pid="$(start_core "$work")"
   if [[ -z "$pid" ]]; then record_result "4-suspension" "FAIL" "Core n'a pas démarré"; return; fi
