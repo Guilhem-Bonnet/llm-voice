@@ -63,6 +63,7 @@ import { spawn } from "node:child_process";
 import type { ProviderHealth } from "../core/health.js";
 import type {
   AudioResult,
+  DirectionCapabilities,
   TtsCapabilities,
   TtsParameterDescriptor,
   TtsProvider,
@@ -187,6 +188,18 @@ const SPEED_PARAMETER: readonly TtsParameterDescriptor[] = [
     description: "Vitesse de lecture appliquée par le moteur système (espeak-ng/Piper/say/SAPI)."
   }
 ];
+
+/**
+ * ADR-015 §5.3, Piper / espeak-ng / say / SAPI: no emotion control, `speed`
+ * (0.5-2, same range as `SPEED_PARAMETER`) carries the tempo, everything else
+ * is ignored. All four engines run on the CPU.
+ */
+const SYSTEM_DIRECTION: DirectionCapabilities = {
+  tempo: { parameter: "speed", min: 0.5, max: 2 },
+  instructions: false,
+  nonverbal: [],
+  usesGpu: false
+};
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -667,7 +680,7 @@ export class SystemTtsProvider implements TtsProvider {
 
   async getCapabilities(signal?: AbortSignal): Promise<TtsCapabilities> {
     const voices = await this.listVoices(signal).catch(() => []);
-    return { streaming: false, voices, parameters: SPEED_PARAMETER, formats: ["wav"], languages: [] };
+    return { streaming: false, voices, parameters: SPEED_PARAMETER, formats: ["wav"], languages: [], direction: SYSTEM_DIRECTION };
   }
 
   async listVoices(signal?: AbortSignal): Promise<Voice[]> {

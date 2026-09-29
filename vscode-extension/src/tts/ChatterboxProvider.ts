@@ -47,7 +47,14 @@ import {
 } from "../core/safePath.js";
 
 import type { ProviderHealth } from "../core/health.js";
-import type { AudioResult, TtsCapabilities, TtsParameterDescriptor, TtsRequest, Voice } from "../core/tts.js";
+import type {
+  AudioResult,
+  DirectionCapabilities,
+  TtsCapabilities,
+  TtsParameterDescriptor,
+  TtsRequest,
+  Voice
+} from "../core/tts.js";
 import {
   OpenAICompatibleTtsProvider,
   messageOf,
@@ -92,6 +99,22 @@ const PARAMETERS: readonly TtsParameterDescriptor[] = [
   // free-form `parameters` entry (it used to be smuggled in here as
   // "language_id", a field `/tts` does not have — see file header).
 ];
+
+/**
+ * ADR-015 §5.3, Chatterbox Multilingual: two knobs (`exaggeration`, `cfg_weight`),
+ * no tempo (no speed parameter is declared; a `speed_factor` on `/tts` is not
+ * verified), balises non verbales ignored (the multilingual tokenizer drops them).
+ * `neutral` is the actual default of `PARAMETERS`; `safeMax` is a PROVISIONAL
+ * ceiling (artefacts at high values are not measured): to be calibrated on the
+ * direction bench (ADR-015 step 6) and overridable per profile.
+ */
+export const CHATTERBOX_DIRECTION: DirectionCapabilities = {
+  intensity: { parameter: "exaggeration", neutral: 0.5, safeMax: 1 },
+  stability: { parameter: "cfg_weight", neutral: 0.5, min: 0, max: 1 },
+  instructions: false,
+  nonverbal: [],
+  usesGpu: true
+};
 
 interface PredefinedVoiceEntry {
   voice_id?: string;
@@ -239,7 +262,7 @@ export class ChatterboxProvider extends OpenAICompatibleTtsProvider {
 
   override async getCapabilities(signal?: AbortSignal): Promise<TtsCapabilities> {
     const base = await super.getCapabilities(signal);
-    return { ...base, parameters: PARAMETERS };
+    return { ...base, parameters: PARAMETERS, direction: CHATTERBOX_DIRECTION };
   }
 
   /** `POST /tts` (native, CdC §24-25/§55) — not the inherited `/v1/audio/speech`, see file header. */

@@ -124,7 +124,11 @@ export class OpenAICompatibleTtsProvider implements TtsProvider {
       voices,
       parameters: [],
       formats: ["wav"],
-      languages: []
+      languages: [],
+      // ADR-015 §5.3: no style control, and the engine behind an OpenAI-compatible
+      // endpoint is unknown, so it is assumed to use the GPU (game-mode fallback
+      // stays on the safe side). Subclasses that know better override this.
+      direction: { instructions: false, nonverbal: [], usesGpu: true }
     };
   }
 

@@ -30,6 +30,29 @@ export interface TtsParameterDescriptor {
   description?: string;
 }
 
+/**
+ * What an engine can carry of a reading direction (ADR-015 §5.2). Read by the
+ * translator (`src/direction/translator`), never by an id or `instanceof`:
+ * a parameter that is not declared here is ignored and traced.
+ *
+ * `parameter` names a key of `TtsRequest.parameters`, except `"speed"` which
+ * is the top-level `TtsRequest.speed` field.
+ */
+export interface DirectionCapabilities {
+  /** Carries the intensity: parameter name and engine calibration (measured on the bench). */
+  readonly intensity?: { parameter: string; neutral: number; safeMax: number };
+  /** Carries the stability of the performance (e.g. `cfg_weight`), same principle. */
+  readonly stability?: { parameter: string; neutral: number; min: number; max: number };
+  /** Carries the tempo; absent = tempo ignored and traced. */
+  readonly tempo?: { parameter: string; min: number; max: number };
+  /** Accepts a natural-language playing note (instruction-following engine, ADR-015 annex A). */
+  readonly instructions: boolean;
+  /** Non-verbal tags the engine renders; `[]` = ignored. */
+  readonly nonverbal: readonly string[];
+  /** Runs on the GPU (drives the game-mode fallback, ADR-015 §8). */
+  readonly usesGpu: boolean;
+}
+
 /** Everything the player needs to know about a provider without guessing (ADR-005). */
 export interface TtsCapabilities {
   /** True only if `synthesizeStream` is implemented and usable. */
@@ -39,6 +62,8 @@ export interface TtsCapabilities {
   formats: readonly AudioFormat[];
   languages: readonly string[];
   maxTextLength?: number;
+  /** ADR-015: optional and additive; absent = "voice and pauses only". */
+  direction?: DirectionCapabilities;
 }
 
 /** One synthesis request for a single chunk of spoken text (CdC §23). */
