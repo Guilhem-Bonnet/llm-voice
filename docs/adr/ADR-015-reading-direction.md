@@ -15,7 +15,7 @@
 
 ## Statut
 
-**Proposé (2026-09-29), à valider par guilhem-bonnet.** Carte du Mission
+**Accepté (2026-09-29) par guilhem-bonnet (« ok je valide »).** Carte du Mission
 Ledger : `GAO-adr-015-dire-001`. Architecture en cinq rôles proposée par le
 concierge et acceptée par l'utilisateur le 2026-09-29 ; cet ADR la rend
 opposable (contrats, stockage, bornes, tests). Relecture indépendante du

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "documentKey": "9fbd661dbac949f0145ac79eaafa12799cb5ea4c07f87826d9ec0ebf92ca86e3",
+  "bibleRevision": 1,
+  "cues": [
+    {
+      "cueId": "h-01",
+      "sourceIds": [
+        "title"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Installation de l'extension, version trois point deux.",
+      "tempo": 1,
+      "pauseAfterMs": 600
+    },
+    {
+      "cueId": "h-02",
+      "sourceIds": [
+        "s-1"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Exécutez la commande npm install, puis redémarrez le service H T T P sur le port huit mille quatre-vingts.",
+      "emphasis": [
+        "npm install",
+        "redémarrez"
+      ],
+      "direction": "Ton didactique, marquer la commande.",
+      "tempo": 0.95
+    },
+    {
+      "cueId": "h-03",
+      "sourceIds": [
+        "s-2",
+        "s-3"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Attention : cette opération supprime le cache local.",
+      "emotion": {
+        "label": "prudent",
+        "intensity": 0.4
+      },
+      "pauseBeforeMs": 500
+    }
+  ]
+}

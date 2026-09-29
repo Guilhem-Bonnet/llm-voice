@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "scope": "series",
+  "scopeKey": "les-chroniques-du-port",
+  "revision": 5,
+  "narrator": {
+    "id": "narrator",
+    "names": [],
+    "traits": {
+      "persona": {
+        "value": "conteur bienveillant",
+        "by": "user",
+        "at": "2026-09-29T10:15:00Z"
+      }
+    },
+    "voice": {
+      "assignments": {
+        "chatterbox": {
+          "voiceRef": "voix-narrateur",
+          "by": "user",
+          "locked": true
+        }
+      }
+    }
+  },
+  "characters": [
+    {
+      "id": "marguerite",
+      "names": [
+        "Marguerite"
+      ],
+      "traits": {
+        "timbre": {
+          "value": "rauque",
+          "by": "user",
+          "at": "2026-09-29T10:15:00Z",
+          "locked": true
+        }
+      },
+      "states": [],
+      "voice": {
+        "assignments": {
+          "chatterbox": {
+            "voiceRef": "voix-femme-2",
+            "by": "user"
+          }
+        }
+      }
+    }
+  ],
+  "analysis": {
+    "genre": "roman"
+  }
+}

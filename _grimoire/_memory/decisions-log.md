@@ -213,3 +213,8 @@
 - **Décision** : LLM Voice se comporte comme toute application de bureau (sortie mémorisée, déplaçable dans les réglages son). Le Core est lancé avec une identité PipeWire stable (`application.name "LLM Voice"`, `media.role "Accessibility"`) pour être visible et réglable par l'utilisateur. Pas de forçage de cible dans le produit ; le banc de preuve garde son ciblage explicite.
 - **Alternative rejetée** : forcer le suivi du défaut système (contraire au fonctionnement PipeWire, empêcherait l'utilisateur de dédier LLM Voice à une sortie).
 - **Agent** : concierge
+
+### [2026-09-29] ADR-015 « Direction de lecture » acceptée
+- **Contexte** : demande utilisateur — pas de règles de prosodie codées en dur (effet robot) ; consigne de jeu par phrase venue d'un LLM qui voit tout le contexte ; mémoire des personnages ; narrateur distinct ; valable aussi pour la documentation et les réponses d'IA. Architecture multi-agents proposée par le concierge, ADR rédigée par platform-architect (Opus), relue par un vérificateur indépendant (accepter avec corrections, appliquées).
+- **Décision** : cinq rôles (analyste, bible des personnages, metteur en scène, traducteur moteur, contrôleur) ; partition par segment indépendante du moteur ; mémoire en ajout seul, le LLM n'écrit que dans la portée du document ; garde-fous en bornes, jamais en règles de style ; repli non dirigé en cas de panne, de retard ou de mode jeu (gpu-yield) ; désactivée par défaut jusqu'à une écoute A/B ≥ 7/10. Moteur à consignes non choisi : banc d'une journée (Qwen3-TTS, Fish S2 Pro, Kyutai Pocket TTS, témoin Chatterbox).
+- **Agent** : concierge, sur validation de guilhem-bonnet (« ok je valide »)
