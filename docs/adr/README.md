@@ -18,12 +18,17 @@ rejetées / Tests qui prouvent la décision).
 | [ADR-011](./ADR-011-ui-layout.md) | Layout UI : `minimal` par défaut, `full` en option — **révisé par ADR-012** (webview = affichage) | D12 |
 | [ADR-012](./ADR-012-native-audio-core.md) | Lecture audio native hors webview : Core Rust minimal `llm-voice-core` | décision du 2026-09-27 (option E) |
 | [ADR-013](./ADR-013-decision-provider.md) | Fournisseur de décision typée (`DecisionProvider`) et mode « Auto » — **proposé** | décision du 2026-09-27 (mode Auto) |
+| [ADR-015](./ADR-015-reading-direction.md) | Direction de lecture : partition par segment, distribution des voix et mémoire (« bible ») — **proposé** | demande du 2026-09-29 (architecture en cinq rôles), veille `GAO-veille-moteu-001` |
 
 Les ADR-001 à ADR-011 sont accepté(e)s et fusionné(e)s sur `main` ; ADR-001
 est remplacé par ADR-012 (le `<audio>` du webview ne reste qu'en repli sur
 clic). ADR-012 est accepté le 2026-09-27 (condition d'entrée du code : spike
 `llm-voice-audio` contre mpv au banc de preuve audio). ADR-013 est proposé
-(condition d'entrée : spike `GAO-spike-valuat-001`).
+(condition d'entrée : spike `GAO-spike-valuat-001`). ADR-015 est proposé, à
+valider par guilhem-bonnet ; il étend ADR-005 et ADR-004 et déplace l'appel
+d'« Auto » (ADR-013) dans l'analyste quand la direction est active ; le choix
+du moteur à consignes attend le banc d'une journée (étape 1 bis). Aucun
+fichier ADR-014 n'existe dans ce dossier.
 
 Décisions détaillées : `_grimoire-output/planning-artifacts/decisions-cadrage-v1.md`.
 Études sources : `local-guarantee-v1.md`, `linux-first-v1.md`,
