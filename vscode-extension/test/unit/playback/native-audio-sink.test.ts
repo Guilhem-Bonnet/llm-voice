@@ -4,7 +4,7 @@
  * sockets, no fake timers — the WebSocket handshake needs a real event loop).
  */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { NativeAudioSink } from "../../../src/playback/NativeAudioSink.js";
+import { NativeAudioSink, decodeSegmentId, encodeSegmentId } from "../../../src/playback/NativeAudioSink.js";
 import type { AudioSinkChunk, AudioSinkEvent, AudioSinkEventMap } from "../../../src/playback/AudioSink.js";
 import { FakeCoreServer } from "../../fakes/FakeCoreServer.js";
 
@@ -46,6 +46,27 @@ describe("NativeAudioSink", () => {
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
   }
+
+  it("encodes pipeline chunk ids into contract-safe segment ids, reversibly", () => {
+    for (const id of ["session-4:0", "session-12:7", "a_b", "c1", "é:ü/.x"]) {
+      const encoded = encodeSegmentId(id);
+      expect(encoded).toMatch(/^[A-Za-z0-9_-]+$/);
+      expect(decodeSegmentId(encoded)).toBe(id);
+    }
+  });
+
+  it("a real pipeline chunk id (session-4:0) is accepted by the Core and events map back to it", async () => {
+    const { sink, events } = makeSink();
+    await sink.load(chunk("session-4:0"));
+    const enqueueBody = server.requests.find((r) => r.path === "enqueue")?.body;
+    expect(enqueueBody?.segmentId).toBe("session-4_3a_0");
+    sink.play();
+    server.emit({ type: "segment_started", segmentId: "session-4_3a_0", positionMs: 0 });
+    server.emit({ type: "segment_ended", segmentId: "session-4_3a_0", positionMs: 1000 });
+    await waitFor(() => events.includes("ended:session-4:0"));
+    expect(events).toContain("started:session-4:0");
+    sink.dispose();
+  });
 
   it("load() stops then enqueues the chunk (wav, paused at 0ms)", async () => {
     const { sink } = makeSink();

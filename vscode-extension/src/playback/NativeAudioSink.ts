@@ -145,6 +145,26 @@ type CoreWsEvent =
   | { type: "error"; code: string; message: string; segmentId?: string };
 
 /** Bounded reconnect attempts after an unexpected WebSocket close. */
+/**
+ * `contracts/core-v1` restricts `segmentId` to `^[A-Za-z0-9_-]+$`, while the
+ * pipeline's chunk ids look like `session-4:0` (field report, 2026-09-29:
+ * every enqueue refused with `invalid_request`). Reversible encoding: every
+ * character outside `[A-Za-z0-9-]` — `_` included, so decoding is
+ * unambiguous — becomes `_<hex code point>_` (`:` → `_3a_`).
+ */
+export function encodeSegmentId(chunkId: string): string {
+  let out = "";
+  for (const char of chunkId) {
+    out += /[A-Za-z0-9-]/.test(char) ? char : `_${(char.codePointAt(0) ?? 0).toString(16)}_`;
+  }
+  return out;
+}
+
+/** Inverse of `encodeSegmentId`. */
+export function decodeSegmentId(segmentId: string): string {
+  return segmentId.replace(/_([0-9a-f]+)_/g, (_match, hex: string) => String.fromCodePoint(parseInt(hex, 16)));
+}
+
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY_MS = 200;
 
@@ -342,7 +362,7 @@ export class NativeAudioSink implements AudioSink {
 
   private async sendEnqueue(chunk: AudioSinkChunk): Promise<void> {
     await this.post("enqueue", {
-      segmentId: chunk.chunkId,
+      segmentId: encodeSegmentId(chunk.chunkId),
       path: chunk.src,
       format: "wav"
     });
@@ -456,6 +476,9 @@ export class NativeAudioSink implements AudioSink {
     } catch {
       this.log?.warn("NativeAudioSink: malformed WebSocket message", { raw });
       return;
+    }
+    if ("segmentId" in event && typeof event.segmentId === "string") {
+      event = { ...event, segmentId: decodeSegmentId(event.segmentId) } as CoreWsEvent;
     }
     switch (event.type) {
       case "segment_started":

@@ -22,7 +22,7 @@ async function main() {
     sink.on("error", (e) => reject(new Error(JSON.stringify(e))));
     setTimeout(() => reject(new Error("timeout 60 s sans ended")), 60000);
   });
-  await sink.load({ chunkId: "proof", src: wav, format: "wav" });
+  await sink.load({ chunkId: process.env.LLM_VOICE_PROOF_CHUNK_ID || "session-1:0", src: wav, format: "wav" });
   sink.play();
   await done;
   sink.dispose();

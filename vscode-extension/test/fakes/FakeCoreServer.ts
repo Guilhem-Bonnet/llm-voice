@@ -165,6 +165,13 @@ export class FakeCoreServer {
         this.sendAck(res, 401, { code: "invalid_token", message: "jeton absent ou invalide" });
         return;
       }
+      // Mirrors contracts/core-v1 `segmentId` (`^[A-Za-z0-9_-]+$`), as the
+      // real Core does: a fake that accepted any id hid the field bug where
+      // every `session-N:i` chunk was refused (2026-09-29).
+      if (typeof body.segmentId === "string" && !/^[A-Za-z0-9_-]+$/.test(body.segmentId)) {
+        this.sendAck(res, 400, { code: "invalid_request", message: `segmentId "${body.segmentId}" hors contrat` });
+        return;
+      }
       const error = this.queuedAcks.shift();
       if (error !== undefined) {
         this.sendAck(res, 400, error);
