@@ -20,3 +20,22 @@
 | CL-5a-011 | Les latences du metteur en scène tiennent le bilan de débit ; les valeurs K, W, L, N, 1,5 s, 10 s, seuil 3 conviennent | hypothèse | aucune mesure (aucun LLM réel) | non vérifié | faible | mesurer en 5b/6, hors mode jeu |
 | CL-5a-012 | `src/core/direction.ts` et les modules bible, controller, translator n'ont pas été modifiés | fait | aucun Edit/Write sur ces fichiers | prouvé | élevée | utiliser |
 | CL-5a-013 | La carte n'a pas changé d'état et rien n'a été commité | fait | aucune commande `task move/close`, aucun `git commit` | prouvé | élevée | utiliser |
+
+## Partie 5b
+
+| ID | Affirmation | Type | Source ou preuve | Statut | Confiance | Décision |
+|---|---|---|---|---|---|---|
+| CL-5b-001 | `OllamaDirectionLlm` n'émet de requête que via `EgressGuardHandle` ; une destination non loopback, `file:`, un rebinding ou une redirection croisée n'émettent aucune requête et donnent `egress-denied` | fait | `ollama.test.ts` « local-first » (fetch enregistreur) ; mutant « refus du garde traité en panne » tué (6 échecs) | prouvé | élevée | utiliser |
+| CL-5b-002 | Le format de requête (modèle `qwen2.5:7b`, `stream:false`, `keep_alive`, `format`, `num_ctx`) et les erreurs (HTTP, absent, non-JSON, sans contenu, timeout, annulation) sont conformes | fait | `ollama.test.ts` ; mutant « `keep_alive` retiré » tué (2 échecs) | prouvé | élevée | utiliser |
+| CL-5b-003 | Le client réel a fonctionné contre un vrai Ollama : 28 appels, 0 échec, aucune réponse coupée, contexte jamais saturé | résultat | `direction-eval/baseline-qwen2.5-7b.json` | prouvé | moyenne (un modèle, 2 répétitions par texte) | utiliser |
+| CL-5b-004 | Le contrôleur laisse passer les nombres, commandes, versions et négations : 27/27 éléments à conserver retrouvés ; 12/16 premières réponses acceptées, 4 refusées pour couverture (3), nombre (1), négation (1) | résultat | rapport de mesure, verdicts par réponse | prouvé | moyenne | utiliser |
+| CL-5b-005 | 15 fenêtres sur 16 dirigées, 1 repli (6 %), 4 fenêtres renvoyées (25 %) | résultat | rapport de mesure | prouvé | moyenne (échantillon faible) | utiliser |
+| CL-5b-006 | Le budget de premier son de 10 s est tenu | hypothèse | mesure : premier segment dirigé 16,0 à 29,1 s (p50 22,3 s) | **réfutée** | élevée | changer (budget, taille de la première fenêtre ou démarrage neutre) |
+| CL-5b-007 | Le débit tient le régime établi (budget 1,5 s, N=8, K=4) | résultat | direction 0,216 seg/s contre lecture 0,071 seg/s (×3), simulation : retard limité à la première fenêtre | prouvé sans TTS ; non vérifié avec TTS sur le même GPU | moyenne | garder, revalider en 5c/6 |
+| CL-5b-008 | Les partitions ne sont pas monotones | hypothèse | conte : 5 libellés mais tempo > 1,1 dans 8/9 cas, intensité 0,73 ± 0,08 ; documentation et réponse d'IA : aucune émotion, tempo ni pause | **partiellement réfutée** | moyenne | à juger à l'écoute (carte 6) ; prompt à retravailler si insuffisant |
+| CL-5b-009 | Les dialogues sont attribués à des locuteurs distincts | résultat | conte : narrator 9, maelys 4, renard 3 ; mais une consigne par segment, pas de découpage récit/réplique dans un segment | prouvé pour l'attribution, limite constatée pour le découpage | moyenne | traiter (prompt ou exemple) |
+| CL-5b-010 | Le prompt v2 (liste des segments à couvrir) corrige l'oubli du dernier segment | hypothèse | v1 : 0/3 acceptées (un passage) ; v2 : 12/16 ; pas de comparaison contrôlée | non vérifié statistiquement | faible | consigner |
+| CL-5b-011 | Le numéro de version des prompts est dans la partition | fait | non : contrat strict ; version dans la clé de cache, le rapport et `promptVersion` | écart documenté | élevée | utiliser l'écart |
+| CL-5b-012 | `test:unit` 1 809 verts (avant 1 775), `typecheck` et `lint` sans erreur | résultat | dernière exécution de la session | prouvé | élevée | utiliser |
+| CL-5b-013 | Cause des ~8 s de génération non expliquées par le débit en jetons | hypothèse | `total_duration` p50 12,7 s contre ~4,3 s attendues | non vérifié | — | investiguer en carte 6 |
+| CL-5b-014 | `src/core/direction.ts`, bible, controller, translator, `Pipeline.ts` non modifiés ; carte non déplacée ; rien commité | fait | aucun Edit sur ces fichiers, aucune commande `task move/close`, aucun `git commit` | prouvé | élevée | utiliser |

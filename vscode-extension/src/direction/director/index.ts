@@ -10,3 +10,5 @@ export * from "./StageDirector.js";
 export * from "./PartitionCache.js";
 export * from "./gpuYield.js";
 export * from "./DirectionPipeline.js";
+export * from "./OllamaDirectionLlm.js";
+export * from "./prompts/index.js";

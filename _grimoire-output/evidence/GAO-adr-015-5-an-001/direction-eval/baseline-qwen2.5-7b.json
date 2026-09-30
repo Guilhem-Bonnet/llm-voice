@@ -1,0 +1,999 @@
+{
+  "meta": {
+    "label": "baseline-qwen2.5-7b",
+    "date": "2026-09-30T01:58:33.270Z",
+    "model": "qwen2.5:7b",
+    "temperature": 0.2,
+    "numCtx": 8192,
+    "K": 4,
+    "W": 6,
+    "L": 4,
+    "N": 8,
+    "repeat": 2,
+    "cps": 15,
+    "promptVersion": "analyst-1.director-2",
+    "coldLoadMs": 152.9,
+    "coldLoadModelMs": 87.2
+  },
+  "status": "complete",
+  "texts": [
+    {
+      "id": "conte",
+      "title": "Conte avec dialogues (texte original)",
+      "expect": {
+        "minSpeakers": 2
+      },
+      "lastAnalysis": {
+        "genre": "Conte pour enfants",
+        "intent": "Raconter l'histoire d'une petite fille généreuse et son renard amical",
+        "audience": "Enfants",
+        "baseTone": "Doux, mélancolique"
+      },
+      "lastCharacters": [
+        "maelys",
+        "renard"
+      ],
+      "aggregate": {
+        "runs": 2,
+        "windows": 6,
+        "directedWindows": 5,
+        "directedShare": 0.833,
+        "neutralWindows": 1,
+        "neutralShare": 0.167,
+        "neutralByReason": {
+          "resend-budget-exhausted": 1
+        },
+        "windowsWithResend": 2,
+        "resendShare": 0.333,
+        "callsPerWindow": 1.67,
+        "boundsAdjusted": 2,
+        "firstAttemptTotal": 6,
+        "firstAttemptAccepted": 4,
+        "firstAttemptAcceptedFaithful": 2,
+        "mustKeepTotal": 5,
+        "mustKeepFound": 5,
+        "firstDirectedP50": 26893.5,
+        "firstDirectedP95": 28855.5,
+        "firstDirectedMs": [
+          29073.5,
+          24713.5
+        ],
+        "wallMsP50": 93555.9,
+        "directionSegPerS": 0.085,
+        "readingSegPerS": 0.07
+      },
+      "quality": {
+        "cues": 16,
+        "cuesPerSegment": 1,
+        "speakers": {
+          "narrator": 9,
+          "maelys": 4,
+          "renard": 3
+        },
+        "speakersAsExpected": true,
+        "emotions": {
+          "dubitative": 5,
+          "doux": 1,
+          "triste": 1,
+          "joyful and relieved": 1,
+          "happy and relieved": 1
+        },
+        "distinctEmotions": 5,
+        "dominantEmotionShare": 0.556,
+        "intensityMean": 0.73,
+        "intensityStdev": 0.08,
+        "tempo": {
+          ">1.1": 8,
+          "absent": 7,
+          "0.9-1.1": 1
+        },
+        "pauseAfter": {
+          "0": 1,
+          "absent": 11,
+          "1-300": 2,
+          "301-800": 2
+        },
+        "pauseBefore": {
+          "1-300": 8,
+          "absent": 7,
+          "301-800": 1
+        },
+        "presence": {
+          "emotion": 0.563,
+          "tempo": 0.563,
+          "pause": 0.563,
+          "direction": 0.375,
+          "emphasis": 0.375,
+          "nonverbal": 0
+        },
+        "monotone": false,
+        "monotoneReasons": [],
+        "firstAttemptViolations": {
+          "uncovered-source": 1,
+          "number-lost": 1,
+          "negation-lost": 1
+        }
+      },
+      "runs": [
+        {
+          "rep": 0,
+          "wallMs": 98161.4,
+          "firstDirectedMs": 29073.5,
+          "analysisMs": 6999,
+          "compute": [
+            29073.3,
+            49412.7,
+            19675.3
+          ],
+          "windows": [
+            {
+              "window": 0,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            },
+            {
+              "window": 1,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 3,
+              "resends": 2,
+              "boundsAdjusted": 1,
+              "facts": 2
+            },
+            {
+              "window": 2,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 1,
+              "facts": 2
+            }
+          ],
+          "stats": {
+            "windowsFromModel": 3,
+            "windowsFromCache": 0,
+            "windowsNeutral": 0,
+            "neutralByReason": {},
+            "llmCalls": 6,
+            "lateSegments": 0
+          },
+          "verdicts": [
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            },
+            {
+              "attempt": 0,
+              "accepted": false,
+              "acceptedFaithful": false,
+              "codes": [
+                "uncovered-source"
+              ]
+            },
+            {
+              "attempt": 1,
+              "accepted": false,
+              "acceptedFaithful": false,
+              "codes": [
+                "uncovered-source"
+              ]
+            },
+            {
+              "attempt": 2,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            },
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": false,
+              "codes": []
+            }
+          ],
+          "mustKeepTotal": 4,
+          "mustKeepFound": 4,
+          "segments": 10,
+          "directedSegments": 10,
+          "segChars": [
+            21,
+            246,
+            247,
+            214,
+            223,
+            205,
+            223,
+            210,
+            244,
+            296
+          ],
+          "analysis": {
+            "genre": "Conte pour enfants",
+            "intent": "Raconter l'histoire de Maëlys et le renard",
+            "audience": "Enfants",
+            "baseTone": "Doux et amical"
+          },
+          "characters": [
+            "maelys",
+            "renard",
+            "canards"
+          ],
+          "reread": {
+            "calls": 0,
+            "ms": 2.5,
+            "windowsFromCache": 3,
+            "windowsFromModel": 0,
+            "windowsNeutral": 0
+          },
+          "callSummary": {
+            "count": 6,
+            "failed": 0
+          }
+        },
+        {
+          "rep": 1,
+          "wallMs": 88950.4,
+          "firstDirectedMs": 24713.5,
+          "analysisMs": 8014.9,
+          "compute": [
+            24713.5,
+            52993.5,
+            11243.4
+          ],
+          "windows": [
+            {
+              "window": 0,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            },
+            {
+              "window": 1,
+              "source": "neutral",
+              "degradedReason": "resend-budget-exhausted",
+              "llmCalls": 3,
+              "resends": 2,
+              "boundsAdjusted": 0,
+              "facts": 0
+            },
+            {
+              "window": 2,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            }
+          ],
+          "stats": {
+            "windowsFromModel": 2,
+            "windowsFromCache": 0,
+            "windowsNeutral": 1,
+            "neutralByReason": {
+              "resend-budget-exhausted": 1
+            },
+            "llmCalls": 6,
+            "lateSegments": 0
+          },
+          "verdicts": [
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            },
+            {
+              "attempt": 0,
+              "accepted": false,
+              "acceptedFaithful": false,
+              "codes": [
+                "number-lost",
+                "negation-lost"
+              ]
+            },
+            {
+              "attempt": 1,
+              "accepted": false,
+              "acceptedFaithful": false,
+              "codes": [
+                "schema-invalid"
+              ]
+            },
+            {
+              "attempt": 2,
+              "accepted": false,
+              "acceptedFaithful": false,
+              "codes": [
+                "negation-lost"
+              ]
+            },
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": false,
+              "codes": []
+            }
+          ],
+          "mustKeepTotal": 1,
+          "mustKeepFound": 1,
+          "segments": 10,
+          "directedSegments": 6,
+          "segChars": [
+            21,
+            246,
+            247,
+            214,
+            223,
+            205,
+            223,
+            210,
+            244,
+            296
+          ],
+          "analysis": {
+            "genre": "Conte pour enfants",
+            "intent": "Raconter l'histoire d'une petite fille généreuse et son renard amical",
+            "audience": "Enfants",
+            "baseTone": "Doux, mélancolique"
+          },
+          "characters": [
+            "maelys",
+            "renard"
+          ],
+          "reread": null,
+          "callSummary": {
+            "count": 6,
+            "failed": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "doc-technique",
+      "title": "Documentation technique (texte original)",
+      "expect": {
+        "maxSpeakers": 1
+      },
+      "lastAnalysis": {
+        "genre": "Manuel d'instructions",
+        "intent": "Informer sur l'installation et la configuration du moteur de synthèse vocale",
+        "audience": "Developpeurs et utilisateurs avancés",
+        "baseTone": "Informel, explicatif"
+      },
+      "lastCharacters": [],
+      "aggregate": {
+        "runs": 2,
+        "windows": 6,
+        "directedWindows": 6,
+        "directedShare": 1,
+        "neutralWindows": 0,
+        "neutralShare": 0,
+        "neutralByReason": {},
+        "windowsWithResend": 1,
+        "resendShare": 0.167,
+        "callsPerWindow": 1.17,
+        "boundsAdjusted": 1,
+        "firstAttemptTotal": 6,
+        "firstAttemptAccepted": 5,
+        "firstAttemptAcceptedFaithful": 5,
+        "mustKeepTotal": 12,
+        "mustKeepFound": 12,
+        "firstDirectedP50": 19188.4,
+        "firstDirectedP95": 22043.6,
+        "firstDirectedMs": [
+          16015.8,
+          22360.9
+        ],
+        "wallMsP50": 37471.2,
+        "directionSegPerS": 0.241,
+        "readingSegPerS": 0.082
+      },
+      "quality": {
+        "cues": 16,
+        "cuesPerSegment": 0.89,
+        "speakers": {
+          "narrator": 16
+        },
+        "speakersAsExpected": true,
+        "emotions": {},
+        "distinctEmotions": 0,
+        "dominantEmotionShare": null,
+        "intensityMean": null,
+        "intensityStdev": null,
+        "tempo": {
+          "absent": 16
+        },
+        "pauseAfter": {
+          "absent": 16
+        },
+        "pauseBefore": {
+          "absent": 16
+        },
+        "presence": {
+          "emotion": 0,
+          "tempo": 0,
+          "pause": 0,
+          "direction": 0,
+          "emphasis": 0.063,
+          "nonverbal": 0
+        },
+        "monotone": true,
+        "monotoneReasons": [
+          "aucune émotion renseignée",
+          "0 libellé(s) d'émotion distinct(s)",
+          "tempo identique partout",
+          "mêmes pauses partout"
+        ],
+        "firstAttemptViolations": {
+          "uncovered-source": 1
+        }
+      },
+      "runs": [
+        {
+          "rep": 0,
+          "wallMs": 34840.3,
+          "firstDirectedMs": 16015.8,
+          "analysisMs": 3858.3,
+          "compute": [
+            16015.7,
+            15000.6,
+            3824
+          ],
+          "windows": [
+            {
+              "window": 0,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 1,
+              "facts": 2
+            },
+            {
+              "window": 1,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            },
+            {
+              "window": 2,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            }
+          ],
+          "stats": {
+            "windowsFromModel": 3,
+            "windowsFromCache": 0,
+            "windowsNeutral": 0,
+            "neutralByReason": {},
+            "llmCalls": 4,
+            "lateSegments": 0
+          },
+          "verdicts": [
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            },
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            },
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            }
+          ],
+          "mustKeepTotal": 6,
+          "mustKeepFound": 6,
+          "segments": 9,
+          "directedSegments": 9,
+          "segChars": [
+            45,
+            223,
+            212,
+            21,
+            207,
+            279,
+            211,
+            234,
+            220
+          ],
+          "analysis": {
+            "genre": "Manuel d'instructions",
+            "intent": "Informer sur l'installation et la configuration du moteur de synthèse vocale",
+            "audience": "Developpeurs ou utilisateurs avancés",
+            "baseTone": "Informel, explicatif"
+          },
+          "characters": [
+            "developer"
+          ],
+          "reread": {
+            "calls": 0,
+            "ms": 1.9,
+            "windowsFromCache": 3,
+            "windowsFromModel": 0,
+            "windowsNeutral": 0
+          },
+          "callSummary": {
+            "count": 4,
+            "failed": 0
+          }
+        },
+        {
+          "rep": 1,
+          "wallMs": 40102,
+          "firstDirectedMs": 22360.9,
+          "analysisMs": 3921.8,
+          "compute": [
+            22360.8,
+            13905.2,
+            3836
+          ],
+          "windows": [
+            {
+              "window": 0,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 2,
+              "resends": 1,
+              "boundsAdjusted": 0,
+              "facts": 0
+            },
+            {
+              "window": 1,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            },
+            {
+              "window": 2,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            }
+          ],
+          "stats": {
+            "windowsFromModel": 3,
+            "windowsFromCache": 0,
+            "windowsNeutral": 0,
+            "neutralByReason": {},
+            "llmCalls": 5,
+            "lateSegments": 0
+          },
+          "verdicts": [
+            {
+              "attempt": 0,
+              "accepted": false,
+              "acceptedFaithful": false,
+              "codes": [
+                "uncovered-source"
+              ]
+            },
+            {
+              "attempt": 1,
+              "accepted": true,
+              "acceptedFaithful": false,
+              "codes": []
+            },
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            },
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            }
+          ],
+          "mustKeepTotal": 6,
+          "mustKeepFound": 6,
+          "segments": 9,
+          "directedSegments": 9,
+          "segChars": [
+            45,
+            223,
+            212,
+            21,
+            207,
+            279,
+            211,
+            234,
+            220
+          ],
+          "analysis": {
+            "genre": "Manuel d'instructions",
+            "intent": "Informer sur l'installation et la configuration du moteur de synthèse vocale",
+            "audience": "Developpeurs et utilisateurs avancés",
+            "baseTone": "Informel, explicatif"
+          },
+          "characters": [],
+          "reread": null,
+          "callSummary": {
+            "count": 5,
+            "failed": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "reponse-ia",
+      "title": "Réponse d'un assistant de code (texte original)",
+      "expect": {
+        "maxSpeakers": 1
+      },
+      "lastAnalysis": {
+        "genre": "Code et documentation",
+        "intent": "Informations sur l'état du développement et les prochaines étapes",
+        "audience": "Développeurs et gestionnaires de projet",
+        "baseTone": "Formel"
+      },
+      "lastCharacters": [],
+      "aggregate": {
+        "runs": 2,
+        "windows": 4,
+        "directedWindows": 4,
+        "directedShare": 1,
+        "neutralWindows": 0,
+        "neutralShare": 0,
+        "neutralByReason": {},
+        "windowsWithResend": 1,
+        "resendShare": 0.25,
+        "callsPerWindow": 1.25,
+        "boundsAdjusted": 0,
+        "firstAttemptTotal": 4,
+        "firstAttemptAccepted": 3,
+        "firstAttemptAcceptedFaithful": 3,
+        "mustKeepTotal": 10,
+        "mustKeepFound": 10,
+        "firstDirectedP50": 19614.6,
+        "firstDirectedP95": 22051.2,
+        "firstDirectedMs": [
+          16907.2,
+          22321.9
+        ],
+        "wallMsP50": 27966.3,
+        "directionSegPerS": 0.216,
+        "readingSegPerS": 0.071
+      },
+      "quality": {
+        "cues": 12,
+        "cuesPerSegment": 1,
+        "speakers": {
+          "narrator": 12
+        },
+        "speakersAsExpected": true,
+        "emotions": {},
+        "distinctEmotions": 0,
+        "dominantEmotionShare": null,
+        "intensityMean": null,
+        "intensityStdev": null,
+        "tempo": {
+          "absent": 12
+        },
+        "pauseAfter": {
+          "absent": 10,
+          "301-800": 1,
+          "1-300": 1
+        },
+        "pauseBefore": {
+          "absent": 12
+        },
+        "presence": {
+          "emotion": 0,
+          "tempo": 0,
+          "pause": 0.167,
+          "direction": 0,
+          "emphasis": 0,
+          "nonverbal": 0
+        },
+        "monotone": true,
+        "monotoneReasons": [
+          "aucune émotion renseignée",
+          "0 libellé(s) d'émotion distinct(s)",
+          "tempo identique partout"
+        ],
+        "firstAttemptViolations": {
+          "uncovered-source": 1
+        }
+      },
+      "runs": [
+        {
+          "rep": 0,
+          "wallMs": 25322.9,
+          "firstDirectedMs": 16907.2,
+          "analysisMs": 3565.4,
+          "compute": [
+            16907.1,
+            8415.7
+          ],
+          "windows": [
+            {
+              "window": 0,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            },
+            {
+              "window": 1,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            }
+          ],
+          "stats": {
+            "windowsFromModel": 2,
+            "windowsFromCache": 0,
+            "windowsNeutral": 0,
+            "neutralByReason": {},
+            "llmCalls": 3,
+            "lateSegments": 0
+          },
+          "verdicts": [
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            },
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            }
+          ],
+          "mustKeepTotal": 5,
+          "mustKeepFound": 5,
+          "segments": 6,
+          "directedSegments": 6,
+          "segChars": [
+            145,
+            229,
+            241,
+            210,
+            218,
+            217
+          ],
+          "analysis": {
+            "genre": "Documentation technique",
+            "intent": "Informations sur l'avancement du développement et les prochaines étapes",
+            "audience": "Développeurs et gestionnaires de projet",
+            "baseTone": "Formel"
+          },
+          "characters": [],
+          "reread": {
+            "calls": 0,
+            "ms": 1.3,
+            "windowsFromCache": 2,
+            "windowsFromModel": 0,
+            "windowsNeutral": 0
+          },
+          "callSummary": {
+            "count": 3,
+            "failed": 0
+          }
+        },
+        {
+          "rep": 1,
+          "wallMs": 30609.6,
+          "firstDirectedMs": 22321.9,
+          "analysisMs": 4351.7,
+          "compute": [
+            22321.9,
+            8287.7
+          ],
+          "windows": [
+            {
+              "window": 0,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 2,
+              "resends": 1,
+              "boundsAdjusted": 0,
+              "facts": 1
+            },
+            {
+              "window": 1,
+              "source": "llm",
+              "degradedReason": null,
+              "llmCalls": 1,
+              "resends": 0,
+              "boundsAdjusted": 0,
+              "facts": 0
+            }
+          ],
+          "stats": {
+            "windowsFromModel": 2,
+            "windowsFromCache": 0,
+            "windowsNeutral": 0,
+            "neutralByReason": {},
+            "llmCalls": 4,
+            "lateSegments": 0
+          },
+          "verdicts": [
+            {
+              "attempt": 0,
+              "accepted": false,
+              "acceptedFaithful": false,
+              "codes": [
+                "uncovered-source"
+              ]
+            },
+            {
+              "attempt": 1,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            },
+            {
+              "attempt": 0,
+              "accepted": true,
+              "acceptedFaithful": true,
+              "codes": []
+            }
+          ],
+          "mustKeepTotal": 5,
+          "mustKeepFound": 5,
+          "segments": 6,
+          "directedSegments": 6,
+          "segChars": [
+            145,
+            229,
+            241,
+            210,
+            218,
+            217
+          ],
+          "analysis": {
+            "genre": "Code et documentation",
+            "intent": "Informations sur l'état du développement et les prochaines étapes",
+            "audience": "Développeurs et gestionnaires de projet",
+            "baseTone": "Formel"
+          },
+          "characters": [],
+          "reread": null,
+          "callSummary": {
+            "count": 4,
+            "failed": 0
+          }
+        }
+      ]
+    }
+  ],
+  "global": {
+    "firstDirectedCount": 6,
+    "firstNotDirected": 0,
+    "firstDirectedP50": 22341.4,
+    "firstDirectedP95": 27983.5,
+    "firstDirectedMin": 16015.8,
+    "firstDirectedMax": 29073.5,
+    "analyzeP50": 4132.5,
+    "analyzeP95": 7750.5,
+    "directP50": 12746.5,
+    "directP95": 21944.4,
+    "directServerTotalP50": 12745.8,
+    "directPromptEvalP50": 226.6,
+    "promptTokensP50": 1552,
+    "promptTokensMax": 2015,
+    "completionTokensP50": 402,
+    "tokensPerSecond": 93.1,
+    "contextSaturated": 0,
+    "truncated": 0,
+    "failedCalls": 0,
+    "calls": 28,
+    "directionSegPerS": 0.216,
+    "readingSegPerS": 0.071,
+    "throughputRatio": 3,
+    "rereadCalls": 0,
+    "rereadRuns": 3,
+    "rereadWindows": 8,
+    "rereadFromCache": 8
+  },
+  "simulation": {
+    "grid": [
+      {
+        "N": 4,
+        "cells": [
+          {
+            "steady": 1500,
+            "lateShare": 0.307,
+            "maxWaitMs": 10000
+          },
+          {
+            "steady": 3000,
+            "lateShare": 0.307,
+            "maxWaitMs": 10000
+          },
+          {
+            "steady": 5000,
+            "lateShare": 0.291,
+            "maxWaitMs": 10000
+          }
+        ]
+      },
+      {
+        "N": 8,
+        "cells": [
+          {
+            "steady": 1500,
+            "lateShare": 0.307,
+            "maxWaitMs": 10000
+          },
+          {
+            "steady": 3000,
+            "lateShare": 0.307,
+            "maxWaitMs": 10000
+          },
+          {
+            "steady": 5000,
+            "lateShare": 0.291,
+            "maxWaitMs": 10000
+          }
+        ]
+      },
+      {
+        "N": 12,
+        "cells": [
+          {
+            "steady": 1500,
+            "lateShare": 0.307,
+            "maxWaitMs": 10000
+          },
+          {
+            "steady": 3000,
+            "lateShare": 0.307,
+            "maxWaitMs": 10000
+          },
+          {
+            "steady": 5000,
+            "lateShare": 0.291,
+            "maxWaitMs": 10000
+          }
+        ]
+      }
+    ],
+    "firstSoundP50": 10000,
+    "firstSoundP95": 10000,
+    "firstSoundMax": 10000,
+    "firstOver10s": 0
+  }
+}

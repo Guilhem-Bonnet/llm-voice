@@ -58,3 +58,75 @@ Aucun LLM réel, aucun GPU, aucune requête réseau : `FakeDirectionLlm` seul ; 
 - Latences p50/p95 et bilan de débit : non mesurés (aucun LLM réel autorisé dans cette partie). Valeurs K=4, W=6, L=4, N=8, 1,5 s, 10 s, seuil 3 : proposées, non mesurées.
 - Un appel LLM déjà en vol quand le drapeau `gpu-yield` apparaît n'est pas interrompu (seuls les nouveaux appels sont refusés) ; à décider avec la mesure.
 - Numérotation : les « tests 8, 10, 11, 12, 14 » du brief ne suivent pas celle de l'ADR (11 = zéro autoplay, 14 = mode jeu) ; ils sont couverts selon le sens décrit dans le brief et selon l'ADR (voir ci-dessus).
+
+## Partie 5b — client Ollama, prompts versionnés, mesure réelle (qwen2.5:7b)
+
+### Livrables (`vscode-extension/`)
+
+- `src/direction/director/OllamaDirectionLlm.ts` : `DirectionLlm` sur `EgressGuardHandle` (jamais de `fetch` global), `POST /api/chat`, `stream:false`, `format` = JSON Schema, modèle par défaut `qwen2.5:7b`, `keep_alive` `"10m"`, `num_ctx` 8192 explicite, température 0,2, délai 60 s ; rejette en `DirectionLlmError` (HTTP, injoignable, non-JSON, sans contenu, timeout, annulation) ou en `EgressDeniedError` (passée telle quelle) ; rapport par appel (`onCall`) sans aucun texte : durées, jetons, `totalMs`, réponse coupée, contexte saturé. Les `traits` de l'analyste voyagent en paires `{key,value}` (plus sûr pour un décodage contraint) et sont repliés en enregistrement.
+- `src/direction/director/prompts/{analyst,director,render,schemas,index}.ts` : prompts versionnés (`analyst-1.director-2`, `DIRECTION_PROMPT_VERSION` = `promptVersion` = clé de cache), schémas de sortie, règles de fidélité reprises mot pour mot de `narrator-eval/styles-v2.json` (nombres avec unité, versions, fichiers, commandes, identifiants, noms propres, négations, aucun ajout). Aucune règle de style ni de genre. Aucune voix n'est jamais montrée au modèle.
+- `test/unit/direction/director/ollama.test.ts` (33 tests) ; `static.test.ts` mis à jour (nouveau module, second utilisateur de `EgressGuard`).
+- `scripts/direction-eval/run-direction-eval.mjs` + `texts.json` (trois textes originaux, sans donnée personnelle).
+- Non modifiés : `src/core/direction.ts`, `src/direction/{bible,controller,translator}/`, `src/narrator/`, `src/net/`, `Pipeline.ts`.
+
+### Commandes exécutées (sortie réelle)
+
+| Commande | Résultat |
+|---|---|
+| `npm run test:unit` avant (début de 5b) | 104 fichiers, 1 775 verts |
+| `npm run test:unit` après | 105 fichiers, 1 809 verts (+1 fichier, +34 tests : 33 client, 1 statique) |
+| `npm run typecheck` / `npm run lint` | sans erreur (un premier lint a échoué sur un accent grave dans le script, corrigé) |
+| Mutants (production modifiée puis restaurée, `cmp` identique) | « refus du garde traité comme panne ordinaire » : 6 tests échouent ; « `keep_alive` retiré de la requête » : 2 échouent |
+| `node scripts/direction-eval/run-direction-eval.mjs --repeat 2 --label baseline-qwen2.5-7b` | rapport complet ; drapeau `gpu-yield` absent juste avant (vérifié) ; 28 appels, 0 échec |
+| `grimoire task context` / `grimoire standard decision trace --task-id GAO-adr-015-5-an-001` | voir fin de section |
+
+Tests du client : format de requête (modèle, `stream`, `keep_alive`, `format`, `options`), contenu du message (fenêtre, contexte, bible, consignes déjà données, renvoi), aucune voix envoyée, parse (JSON, bloc Markdown, valeurs hors bornes laissées au contrôleur), pliage des traits, bout en bout avec `Analyst` et `StageDirector`, erreurs (500, serveur absent, non-JSON, sans contenu, timeout, annulation avant et pendant), pas de requête non loopback (IP publique, hôte distant, `file:`, `localhost.evil`, rebinding, redirection croisée : zéro requête, `egress-denied`), défaut = `127.0.0.1:11434` seul, dérive schéma de cue / contrat `partition.schema.json`, faits autorisés = `DIRECTOR_FACT_TYPES`, phrases de fidélité identiques à `styles-v2.json`.
+
+### Mesure réelle (rapport : `direction-eval/baseline-qwen2.5-7b.{json,md}`)
+
+Conditions : `qwen2.5:7b` local (Q4_K_M), K=4 W=6 L=4 N=8, budgets 1,5 s / 10 s, lecture estimée 15 caractères/s, **2 répétitions par texte** (document neuf à chaque fois, modèle chaud), TTS absent (le GPU n'est pas partagé). Échantillon faible : le p95 de 6 mesures est quasiment le maximum.
+
+| Texte | Fenêtres dirigées | Repli neutre | Fenêtres avec renvoi | 1re réponse acceptée (normal / faithful) | « À conserver » | Premier dirigé p50 / p95 | Direction / lecture (seg/s) |
+|---|---|---|---|---|---|---|---|
+| conte (10 seg.) | 5/6 | 1/6 (`resend-budget-exhausted`) | 2/6 | 4/6 / 2/6 | 5/5 | 26,9 s / 28,9 s | 0,085 / 0,070 |
+| doc technique (8 seg.) | 6/6 | 0 | 1/6 | 5/6 / 5/6 | 12/12 | 19,2 s / 22,0 s | 0,241 / 0,082 |
+| réponse d'IA (6 seg.) | 4/4 | 0 | 1/4 | 3/4 / 3/4 | 10/10 | 19,6 s / 22,1 s | 0,216 / 0,071 |
+| Total | 15/16 (94 %) | 1/16 (6 %) | 4/16 (25 %) | 12/16 (75 %) / 10/16 | 27/27 | 22,3 s / 28,0 s (min 16,0 ; max 29,1) | 0,216 / 0,071 (×3) |
+
+- Appels : analyse p50 4,1 s (p95 7,8 s) ; direction d'une fenêtre p50 12,7 s (p95 21,9 s) ; prompt p50 1 552 jetons (max 2 015, jamais saturé sur 8 192) ; 402 jetons générés p50 à 93 jetons/s ; aucune réponse coupée. Le temps serveur (`total_duration`, p50 12,7 s) explique tout le temps client ; l'évaluation du prompt ne pèse que 0,23 s, la génération de 402 jetons à 93 jetons/s devrait durer ~4,3 s : **l'écart (~8 s) n'est pas expliqué** (hypothèses non testées : décodage contraint par grammaire, partage du GPU).
+- Première réponse refusée : `uncovered-source` 3, `number-lost` 1, `negation-lost` 1 (le contrôleur fait son travail : aucune dérive de nombre ou de commande ne passe).
+- Relecture : 0 appel sur 3 relectures, 8/8 fenêtres servies par le cache.
+- Avant la correction du prompt (v1, un seul passage du conte, non comparable statistiquement) : 0/3 premières réponses acceptées, 2 fenêtres sur 3 en repli, le modèle oubliant le dernier segment. La v2 nomme les segments à couvrir dans la fenêtre.
+
+### Constats sur la qualité des partitions
+
+- Conte : analyse plausible (« Conte pour enfants », personnages `maelys` et `renard` trouvés), locuteurs distribués (narrator 9, maelys 4, renard 3) mais **une seule consigne par segment** : un segment mêlant récit et réplique est lu d'un seul locuteur (la formule « dit-il » part avec la voix du personnage). Émotions : 5 libellés, dominant « dubitative » (56 %), intensité quasi constante (0,73 ± 0,08), **tempo > 1,1 dans 8 des 9 consignes qui en portent un** : biais du modèle vers l'accélération, non corrigé. Un libellé en anglais apparaît (« joyful and relieved »). Verdict monotonie : non, mais la variation est faible.
+- Documentation et réponse d'IA : un seul locuteur (attendu), **aucune émotion, aucun tempo, aucune pause** : partition « monotone » selon les critères du script. C'est peut-être légitime pour un texte neutre (aucune règle de style n'est imposée) mais cela signifie que la direction n'apporte rien sur ces deux genres avec ce modèle et ces prompts ; à trancher par écoute (carte 6), pas par le script.
+- Contenu fidèle : 27/27 éléments à conserver (nombres, commandes, versions, négations) retrouvés dans les segments dirigés.
+
+### Valeurs proposées confrontées à la mesure
+
+| Valeur | Constat | Suite |
+|---|---|---|
+| Budget de premier son 10 s | **Non tenu** : premier segment dirigé 16,0 à 29,1 s (analyse ~4 s + première fenêtre ~12 s, jusqu'à 25 s avec renvois). Toute lecture mesurée aurait démarré en neutre (simulation) | choisir : budget ≥ 30 s, première fenêtre plus courte (K=1 ou 2), ou démarrage neutre assumé ; décision à prendre avec 5c/6 |
+| Budget établi 1,5 s, N=8, K=4 | Tient en régime établi : direction 3 fois plus rapide que la lecture ; la simulation donne les mêmes retards pour N ∈ {4, 8, 12} et budget ∈ {1,5 ; 3 ; 5 s} (le retard se limite à la première fenêtre, ~30 % des segments d'un texte de 6 à 10 segments) | garder ; à revalider avec le TTS sur le même GPU (non mesuré) |
+| W=6, L=4 | Prompt max 2 015 jetons sur 8 192 : marge ×4 ; l'effet de W et L sur la qualité n'est pas mesuré | non tranché |
+| `num_ctx` 8192 | jamais saturé | garder |
+| Disjoncteur seuil 3 | jamais déclenché (0 échec d'appel) ; 1 repli sur 16 fenêtres | non vérifié |
+| Renvois ≤ 2 | 4/16 fenêtres renvoyées, 1 repli après 2 renvois ; 1,35 appel par fenêtre | garder |
+
+Limite du script : la simulation plafonne l'attente du premier son au budget (10 s) ; la « part de lectures où le premier segment dépasse 10 s : 0 » du rapport est donc trompeuse, la vraie latence est la ligne « Premier segment dirigé ». Le « chargement à froid » (153 ms) n'est pas un vrai froid (modèle déjà résident) ; un froid isolé de 6,1 s a été observé lors d'un essai préliminaire.
+
+### Écarts avec l'ADR-015 et le brief
+
+1. **Numéro de version « dans la partition »** : non fait tel quel. Le contrat `partition.schema.json` est strict (`additionalProperties: false`) et `src/core/direction.ts` est intouchable ici. La version des prompts est dans la clé de cache (`promptVersion`), dans le rapport de mesure et exposée par `OllamaDirectionLlm.promptVersion`.
+2. Version des prompts passée à `director-2` en cours de partie (liste des segments à couvrir) ; toutes les mesures du tableau sont en v2.
+3. `num_ctx` explicite (8192) : Ollama abandonne sinon silencieusement le début d'un prompt trop long.
+4. Tests du client en un fichier unique `ollama.test.ts`, avec le serveur simulé existant (réponse constante) plus un garde à `fetch` enregistreur.
+
+### Non fait / non vérifié
+
+- Branchement dans `Pipeline.ts` (5c), badge mode jeu, moteur CPU, choix de voix.
+- Aucune écoute des partitions : la qualité « sonore » n'est pas jugée, seulement structurelle.
+- Un seul modèle mesuré (`qwen2.5:7b`) ; pas de `qwen2.5:3b` ni `gpt-oss:20b` (installé).
+- Cause des ~8 s de génération inexpliqués ; TTS et LLM sur le même GPU ; coût du renvoi quand le drapeau `gpu-yield` apparaît en plein appel.

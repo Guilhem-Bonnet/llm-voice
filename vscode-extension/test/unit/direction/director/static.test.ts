@@ -25,6 +25,7 @@ describe("src/direction/director static rules", () => {
       "Analyst.ts",
       "DirectionPipeline.ts",
       "FakeDirectionLlm.ts",
+      "OllamaDirectionLlm.ts",
       "PartitionCache.ts",
       "StageDirector.ts",
       "gpuYield.ts",
@@ -42,9 +43,9 @@ describe("src/direction/director static rules", () => {
     expect(source).not.toMatch(/\.(play|start)\s*\(/);
   });
 
-  it("makes its only network access through an injected EgressGuardHandle (the fake), never `EgressGuard` internals", () => {
+  it("makes its only network access through an injected EgressGuardHandle (the fake and the Ollama client), never `EgressGuard` internals", () => {
     const users = DIRECTOR_FILES.filter((name) => /from\s+["'][^"']*net\/EgressGuard/.test(readFileSync(join(DIRECTOR, name), "utf8")));
-    expect(users.sort()).toEqual(["FakeDirectionLlm.ts", "llm.ts"]);
+    expect(users.sort()).toEqual(["FakeDirectionLlm.ts", "OllamaDirectionLlm.ts", "llm.ts"]);
   });
 
   it("never compares on a genre anywhere under src/direction (Test 8)", () => {
