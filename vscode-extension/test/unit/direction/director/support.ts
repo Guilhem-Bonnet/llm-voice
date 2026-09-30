@@ -10,6 +10,7 @@ import { BibleStore, documentScope, type DocumentScope, type BibleRejection, typ
 import type { SourceBlock } from "../../../../src/direction/controller/index.js";
 import {
   Analyst,
+  DEFAULT_WINDOW_SIZE,
   DirectionPipeline,
   FakeDirectionLlm,
   PartitionCache,
@@ -91,6 +92,11 @@ export async function makeRig(options: RigOptions = {}): Promise<Rig> {
     cache,
     llm,
     gpuYield: options.gpuYield ?? (() => false),
+    // Historical layout by default (windows from the first segment, no preload): the start-up
+    // behaviour (lead segment, short first window, warm-up) is opted into by `startup.test.ts`.
+    leadSegments: 0,
+    firstWindowSize: options.pipeline?.windowSize ?? DEFAULT_WINDOW_SIZE,
+    warmup: false,
     firstSoundBudgetMs: 2000,
     steadyBudgetMs: 2000,
     trace: (event) => trace.push(event),

@@ -176,7 +176,7 @@ describe("OllamaDirectionLlm: request format", () => {
 
   it("asks the analysis with its own schema, chapter position and known cast", async () => {
     const { mock, baseUrl } = await start({ chatContentOverride: JSON.stringify({ analysis: {}, characters: [] }) });
-    await client(baseUrl).analyze({ ...analysisRequest(), chunkIndex: 1, chunkCount: 3 });
+    await client(baseUrl, { analystFormat: true }).analyze({ ...analysisRequest(), chunkIndex: 1, chunkCount: 3 });
     const body = sent(mock);
     expect(body.format).toEqual(ANALYSIS_OUTPUT_JSON_SCHEMA);
     expect(body.messages[0]?.content).toBe(analystSystemPrompt());
@@ -355,7 +355,7 @@ describe("OllamaDirectionLlm: errors", () => {
 
   it("reports a successful call too", async () => {
     const seen: OllamaCallStats[] = [];
-    const { baseUrl } = await start({ chatContentOverride: JSON.stringify(CUES) });
+    const { baseUrl } = await start({ chatContentOverride: JSON.stringify({ analysis: { genre: "conte" }, characters: [] }) });
     await client(baseUrl, { onCall: (stats) => seen.push(stats) }).analyze(analysisRequest());
     expect(seen).toEqual([expect.objectContaining({ kind: "analyze", ok: true, outcome: "ok", truncated: false })]);
   });
@@ -462,9 +462,153 @@ describe("prompts and schemas", () => {
     expect(prompt).toContain("jamais de voix");
   });
 
-  it("neither prompt names a genre or a reading style", () => {
-    for (const prompt of [directorSystemPrompt(), analystSystemPrompt()]) {
-      expect(prompt).not.toMatch(/\b(roman|conte|documentation|dialogues?)\b|réponse d'IA|colère|joyeu/i);
+  it("the analyst prompt names no genre or reading style", () => {
+    expect(analystSystemPrompt()).not.toMatch(/\b(roman|conte|documentation|dialogues?)\b|réponse d'IA|colère|joyeu/i);
+  });
+
+  it("director-3 demands an expressive score for every kind of text, the tale's narration and lines apart, and no tempo bias", () => {
+    const prompt = directorSystemPrompt();
+    expect(DIRECTOR_PROMPT_VERSION).toBe(3);
+    for (const expected of [
+      "quel que soit le genre",
+      "documentation",
+      "tempo régulier, très légèrement ralenti sur les termes clés",
+      "pause avant une liste",
+      "changement d'idée",
+      "réponse d'un assistant",
+      "ton d'une conversation",
+      "pauses de respiration",
+      "sépare la narration et chaque réplique en consignes distinctes",
+      "varie l'intensité et le tempo selon la scène",
+      "pas être systématiquement supérieur à 1"
+    ]) {
+      expect(prompt).toContain(expected);
     }
+  });
+
+  it("the ranges named in the prompts are the bounds, and no style value is written in the prompt as a number", () => {
+    // The only numbers of the director prompt are the bounds and counts of the contract.
+    const numbers = new Set(directorSystemPrompt().match(/\d+(?:[.,]\d+)?/g) ?? []);
+    const b = DIRECTION_BOUNDS;
+    const allowed = new Set(
+      [0, 1, -1, 3, b.emotionLabelMaxChars, b.tempo.min, b.tempo.max, b.pauseMs.min, b.pauseMs.max, b.silenceBetweenCuesMaxMs, b.emphasisMax, b.directionMaxChars, b.statesMax, b.nonverbalMax].map(String)
+    );
+    for (const value of numbers) {
+      expect(allowed, `nombre inattendu dans le prompt : ${value}`).toContain(value);
+    }
+  });
+});
+
+describe("OllamaDirectionLlm: analysis without grammar (analyst-2)", () => {
+  const GOOD = { analysis: { genre: "conte", baseTone: "doux" }, characters: [{ id: "anna", names: ["Anna"], traits: [{ key: "âge", value: "dix ans" }] }] };
+
+  it("sends no `format` for the analysis, and keeps it for the director", async () => {
+    const { mock, baseUrl } = await start({ chatContentOverride: JSON.stringify(GOOD) });
+    await client(baseUrl).analyze(analysisRequest());
+    expect(sent(mock)).not.toHaveProperty("format");
+    const other = await start({ chatContentOverride: JSON.stringify(CUES) });
+    await client(other.baseUrl).direct(directRequest());
+    expect(sent(other.mock).format).toEqual(DIRECTION_OUTPUT_JSON_SCHEMA);
+  });
+
+  it("`analystFormat: true` brings the grammar back", async () => {
+    const { mock, baseUrl } = await start({ chatContentOverride: JSON.stringify(GOOD) });
+    await client(baseUrl, { analystFormat: true }).analyze(analysisRequest());
+    expect(sent(mock).format).toEqual(ANALYSIS_OUTPUT_JSON_SCHEMA);
+  });
+
+  it("reads the first JSON object out of a sentence or a Markdown fence, and folds the traits", async () => {
+    const wrapped = `Voici l'analyse demandée :\n\`\`\`json\n${JSON.stringify(GOOD)}\n\`\`\`\nJ'espère que cela aide {vraiment}.`;
+    const { mock, baseUrl } = await start({ chatContentOverride: wrapped });
+    const raw = await client(baseUrl).analyze(analysisRequest());
+    expect(RawAnalysisSchema.safeParse(raw).success).toBe(true);
+    expect(raw).toMatchObject({ characters: [{ traits: { âge: "dix ans" } }] });
+    expect(mock.requests).toHaveLength(1);
+  });
+
+  it("sends the answer back once, with the reason, and takes the second one", async () => {
+    const { mock, baseUrl } = await start({ chatContentSequence: ["Je ne sais pas quoi répondre.", JSON.stringify(GOOD)] });
+    const calls: OllamaCallStats[] = [];
+    const raw = await client(baseUrl, { onCall: (c) => calls.push(c) }).analyze(analysisRequest());
+    expect(raw).toMatchObject({ analysis: { genre: "conte" } });
+    expect(mock.requests).toHaveLength(2);
+    const second = sent(mock, 1).messages;
+    expect(second.map((m) => m.role)).toEqual(["system", "user", "assistant", "user"]);
+    expect(second[2]?.content).toBe("Je ne sais pas quoi répondre.");
+    expect(second[3]?.content).toContain("aucun objet JSON dans la réponse");
+    expect(sent(mock, 1)).not.toHaveProperty("format");
+    expect(calls.map((c) => c.kind)).toEqual(["analyze", "analyze"]);
+  });
+
+  it("sends back an object that does not satisfy the schema (a trait that is not a string)", async () => {
+    const bad = { analysis: { genre: "conte" }, characters: [{ id: "anna", traits: { âge: 10 } }] };
+    const { mock, baseUrl } = await start({ chatContentSequence: [JSON.stringify(bad), JSON.stringify(GOOD)] });
+    await client(baseUrl).analyze(analysisRequest());
+    expect(mock.requests).toHaveLength(2);
+    expect(sent(mock, 1).messages[3]?.content).toContain("characters.0.traits");
+  });
+
+  it("falls back after a single re-send: `invalid-structured-output`, exactly two requests, and the analyst degrades without rejecting", async () => {
+    const { mock, baseUrl } = await start({ chatContentSequence: ["pas de JSON", '{"autre": 1}'] });
+    const llm = client(baseUrl);
+    const error = await llm.analyze(analysisRequest()).then(
+      () => undefined,
+      (caught: unknown) => caught
+    );
+    expect(error).toBeInstanceOf(DirectionLlmError);
+    expect((error as DirectionLlmError).reason).toBe("invalid-structured-output");
+    expect(mock.requests).toHaveLength(2);
+
+    const rig = await makeRig({ llm: {} });
+    const again = await start({ chatContentOverride: "toujours pas de JSON" });
+    const analyst = new Analyst({ llm: client(again.baseUrl), store: rig.store });
+    const outcome = await analyst.analyze({ document: rig.document, source: [{ id: "seg-1", rawText: "Anna ouvrit la porte." }] });
+    expect(outcome).toMatchObject({ status: "degraded", degradedReason: "invalid-structured-output" });
+    expect(again.mock.requests).toHaveLength(2);
+  });
+
+  it("a cancel during the first attempt is not retried", async () => {
+    const { mock, baseUrl } = await start({ chatDelayMs: 200, chatContentOverride: "pas de JSON" });
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 30);
+    const error = await client(baseUrl).analyze(analysisRequest(), controller.signal).then(
+      () => undefined,
+      (caught: unknown) => caught
+    );
+    expect((error as DirectionLlmError).reason).toBe("cancelled");
+    expect(mock.requests.length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("OllamaDirectionLlm: warm-up", () => {
+  it("loads the model with an empty chat that keeps the real `num_ctx` and `keep_alive`, and sends no text", async () => {
+    const { mock, baseUrl } = await start();
+    const calls: OllamaCallStats[] = [];
+    await client(baseUrl, { numCtx: 4096, keepAlive: "20m", onCall: (c) => calls.push(c) }).warmup();
+    expect(mock.requests).toHaveLength(1);
+    const body = sent(mock);
+    expect(body.messages).toEqual([]);
+    expect(body).toMatchObject({ model: "qwen2.5:7b", stream: false, keep_alive: "20m", options: { num_ctx: 4096 } });
+    expect(body).not.toHaveProperty("format");
+    expect(calls).toMatchObject([{ kind: "warmup", ok: true }]);
+  });
+
+  it("goes through the guard: a non-loopback destination is refused before any byte leaves", async () => {
+    const { guard, fetched } = recordingGuard();
+    const error = await new OllamaDirectionLlm({ egress: guard, baseUrl: "http://203.0.113.9:11434" }).warmup().then(
+      () => undefined,
+      (caught: unknown) => caught
+    );
+    expect(error).toBeInstanceOf(EgressDeniedError);
+    expect(fetched).toEqual([]);
+  });
+
+  it("a server error is `provider-unavailable`", async () => {
+    const { baseUrl } = await start({ fail500: true });
+    const error = await client(baseUrl).warmup().then(
+      () => undefined,
+      (caught: unknown) => caught
+    );
+    expect((error as DirectionLlmError).reason).toBe("provider-unavailable");
   });
 });

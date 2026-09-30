@@ -14,12 +14,22 @@
  * - `num_ctx` is set explicitly: Ollama's default context is small and it
  *   silently drops the start of a longer prompt (the instructions). The prompt
  *   size reported back (`onCall`) tells when the window is close to it.
- * - `keep_alive` keeps the model resident between windows.
+ * - `keep_alive` keeps the model resident between windows; `warmup` loads it
+ *   when a reading is opened.
+ * - The analysis is asked **without `format`** (the grammar costs about three
+ *   times the time per token, `latency-diagnosis.md`): the answer goes through
+ *   a tolerant reader (`extractFirstJsonObject`), is validated against
+ *   `RawAnalysisSchema`, and is sent back once with the reason if it is not
+ *   valid; a second failure is `invalid-structured-output` (the analyst then
+ *   falls back). The director keeps `format` until validity without a grammar
+ *   is proven.
  * - `onCall` receives counts and durations only, never a text.
  */
 
 import { isAbortLike, messageOf, wasAborted, withTimeout } from "../../narrator/shared.js";
 import { EgressDeniedError, type EgressGuardHandle } from "../../net/EgressGuard.js";
+import { RawAnalysisSchema } from "./Analyst.js";
+import { extractFirstJsonObject } from "./tolerantJson.js";
 import { DirectionLlmError, type AnalysisLlmRequest, type DirectionDegradedReason, type DirectionLlm, type DirectionLlmRequest } from "./llm.js";
 import {
   ANALYSIS_OUTPUT_JSON_SCHEMA,
@@ -42,7 +52,7 @@ export const DEFAULT_OLLAMA_TIMEOUT_MS = 60_000;
 
 /** What one call cost, without any content. */
 export interface OllamaCallStats {
-  readonly kind: "analyze" | "direct";
+  readonly kind: "analyze" | "direct" | "warmup";
   readonly ok: boolean;
   /** `"ok"` or the degraded reason the call ended with. */
   readonly outcome: "ok" | DirectionDegradedReason;
@@ -76,6 +86,8 @@ export interface OllamaDirectionLlmOptions {
   readonly keepAlive?: string | number;
   readonly seed?: number;
   readonly timeoutMs?: number;
+  /** Ask the analysis with the JSON Schema grammar (`format`), as the director is. Defaults to false: tolerant reading and one re-send instead. */
+  readonly analystFormat?: boolean;
   readonly onCall?: (stats: OllamaCallStats) => void;
 }
 
@@ -91,6 +103,10 @@ interface OllamaChatResponse {
 }
 
 type JsonSchema = { readonly [key: string]: unknown };
+interface OllamaMessage {
+  readonly role: "system" | "user" | "assistant";
+  readonly content: string;
+}
 
 const nsToMs = (value: number | undefined): number | undefined =>
   typeof value === "number" && Number.isFinite(value) ? Math.round(value / 1e5) / 10 : undefined;
@@ -127,6 +143,38 @@ export function foldAnalysisTraits(raw: unknown): unknown {
   return { ...answer, characters };
 }
 
+function textOf(content: unknown): string {
+  if (typeof content !== "string") {
+    throw new DirectionLlmError("invalid-structured-output", "no message content");
+  }
+  return content;
+}
+
+/** What is wrong with an analysis answer, or `""` when it is usable (an object with `analysis` or `characters`, matching `RawAnalysisSchema`). */
+function analysisProblem(answer: unknown): string {
+  if (typeof answer !== "object" || answer === null) {
+    return "aucun objet JSON dans la réponse";
+  }
+  if (!("analysis" in answer) && !("characters" in answer)) {
+    return "l'objet n'a ni `analysis` ni `characters`";
+  }
+  const parsed = RawAnalysisSchema.safeParse(answer);
+  return parsed.success
+    ? ""
+    : parsed.error.issues
+        .slice(0, 3)
+        .map((issue) => `${issue.path.join(".") || "(racine)"} : ${issue.message}`)
+        .join(" ; ");
+}
+
+/** The single re-send of the analysis: the reason, and the shape to answer with. */
+function analysisResendPrompt(problem: string): string {
+  return (
+    `Ta réponse n'est pas utilisable (${problem}). ` +
+    'Réponds de nouveau uniquement par un objet JSON de la forme { "analysis": {...}, "characters": [...] }, sans autre texte.'
+  );
+}
+
 /** The content of a chat answer, tolerating a Markdown fence around the JSON some models add despite `format`. */
 function parseJsonContent(content: string): unknown {
   const trimmed = content.trim();
@@ -150,6 +198,7 @@ export class OllamaDirectionLlm implements DirectionLlm {
   private readonly keepAlive: string | number;
   private readonly seed: number | undefined;
   private readonly timeoutMs: number;
+  private readonly analystFormat: boolean;
   private readonly onCall: ((stats: OllamaCallStats) => void) | undefined;
 
   constructor(options: OllamaDirectionLlmOptions) {
@@ -162,25 +211,74 @@ export class OllamaDirectionLlm implements DirectionLlm {
     this.keepAlive = options.keepAlive ?? DEFAULT_KEEP_ALIVE;
     this.seed = options.seed;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_OLLAMA_TIMEOUT_MS;
+    this.analystFormat = options.analystFormat ?? false;
     this.onCall = options.onCall;
   }
 
   async analyze(request: AnalysisLlmRequest, signal?: AbortSignal): Promise<unknown> {
-    const raw = await this.chat("analyze", analystSystemPrompt(), analystUserPrompt(request), ANALYSIS_OUTPUT_JSON_SCHEMA, signal);
-    return foldAnalysisTraits(raw);
+    const messages: OllamaMessage[] = [
+      { role: "system", content: analystSystemPrompt() },
+      { role: "user", content: analystUserPrompt(request) }
+    ];
+    if (this.analystFormat) {
+      return foldAnalysisTraits(await this.chat("analyze", messages, ANALYSIS_OUTPUT_JSON_SCHEMA, signal));
+    }
+    let problem = "";
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const content = await this.chatText("analyze", messages, undefined, signal);
+      const found = extractFirstJsonObject(content);
+      const folded = found === undefined ? undefined : foldAnalysisTraits(found);
+      problem = analysisProblem(folded);
+      if (problem === "") {
+        return folded;
+      }
+      messages.push({ role: "assistant", content }, { role: "user", content: analysisResendPrompt(problem) });
+    }
+    throw new DirectionLlmError("invalid-structured-output", `the analysis is not valid after one re-send: ${problem}`);
   }
 
-  direct(request: DirectionLlmRequest, signal?: AbortSignal): Promise<unknown> {
-    return this.chat("direct", directorSystemPrompt(), directorUserPrompt(request), DIRECTION_OUTPUT_JSON_SCHEMA, signal);
+  async direct(request: DirectionLlmRequest, signal?: AbortSignal): Promise<unknown> {
+    return this.chat(
+      "direct",
+      [
+        { role: "system", content: directorSystemPrompt() },
+        { role: "user", content: directorUserPrompt(request) }
+      ],
+      DIRECTION_OUTPUT_JSON_SCHEMA,
+      signal
+    );
   }
 
-  private async chat(
+  /** Loads the model into memory (empty chat, the same `num_ctx` and `keep_alive` as the real calls so nothing is reloaded). */
+  async warmup(signal?: AbortSignal): Promise<void> {
+    await this.exchange("warmup", [], undefined, signal, () => undefined);
+  }
+
+  private async chat(kind: OllamaCallStats["kind"], messages: OllamaMessage[], format: JsonSchema | undefined, signal: AbortSignal | undefined): Promise<unknown> {
+    return this.exchange(kind, messages, format, signal, (content) => parseJsonContent(textOf(content)));
+  }
+
+  /** The text of the answer (no parsing); `format` is left out of the request when undefined. */
+  private async chatText(
     kind: OllamaCallStats["kind"],
-    system: string,
-    user: string,
-    format: JsonSchema,
+    messages: OllamaMessage[],
+    format: JsonSchema | undefined,
     signal: AbortSignal | undefined
-  ): Promise<unknown> {
+  ): Promise<string> {
+    return this.exchange(kind, messages, format, signal, textOf);
+  }
+
+  /**
+   * One `POST /api/chat`. `accept` turns the `message.content` into the result
+   * inside the call's accounting: what it throws is the call's outcome.
+   */
+  private async exchange<T>(
+    kind: OllamaCallStats["kind"],
+    messages: OllamaMessage[],
+    format: JsonSchema | undefined,
+    signal: AbortSignal | undefined,
+    accept: (content: unknown) => T
+  ): Promise<T> {
     if (wasAborted(signal)) {
       throw new DirectionLlmError("cancelled");
     }
@@ -196,11 +294,8 @@ export class OllamaDirectionLlm implements DirectionLlm {
           model: this.model,
           stream: false,
           keep_alive: this.keepAlive,
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: user }
-          ],
-          format,
+          messages,
+          ...(format !== undefined ? { format } : {}),
           options: {
             temperature: this.temperature,
             num_ctx: this.numCtx,
@@ -229,11 +324,7 @@ export class OllamaDirectionLlm implements DirectionLlm {
         truncated: body.done_reason === "length",
         contextSaturated: promptTokens !== undefined && promptTokens >= this.numCtx * 0.98
       };
-      const content = body.message?.content;
-      if (typeof content !== "string") {
-        throw new DirectionLlmError("invalid-structured-output", "no message content");
-      }
-      return parseJsonContent(content);
+      return accept(body.message?.content);
     } catch (error) {
       const failure = this.classify(error, signal);
       outcome = failure instanceof DirectionLlmError ? failure.reason : "egress-denied";

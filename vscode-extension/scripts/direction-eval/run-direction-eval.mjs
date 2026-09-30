@@ -57,6 +57,10 @@ function parseArgs(argv) {
     after: 4,
     lookahead: 8,
     cps: 15,
+    startup: 1, // 1 = démarrage 5b-bis (segment de tête neutre, 1re fenêtre courte, préchargement, budgets de production) ; 0 = disposition de la baseline (budgets 600 s)
+    playback: 1, // 1 = la lecture dure la durée estimée de chaque segment (temps réel) ; 0 = enchaînement sans attente (baseline)
+    lead: 2,
+    firstWindow: 2,
     out: resolve(root, "..", "_grimoire-output", "evidence", "GAO-adr-015-5-an-001", "direction-eval")
   };
   for (let i = 0; i < argv.length; i++) {
@@ -64,7 +68,7 @@ function parseArgs(argv) {
     if (!a.startsWith("--")) continue;
     o[a.slice(2).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = argv[++i];
   }
-  for (const k of ["repeat", "temperature", "numCtx", "window", "before", "after", "lookahead", "cps"]) o[k] = Number(o[k]);
+  for (const k of ["repeat", "temperature", "numCtx", "window", "before", "after", "lookahead", "cps", "startup", "playback", "lead", "firstWindow"]) o[k] = Number(o[k]);
   return o;
 }
 const args = parseArgs(process.argv.slice(2));
@@ -154,6 +158,7 @@ function markdown(report) {
   L.push(`- Version des prompts : \`${report.meta.promptVersion}\``);
   L.push(`- Paramètres : K=${report.meta.K}, W=${report.meta.W}, L=${report.meta.L}, N=${report.meta.N}, budget établi 1 500 ms, budget de premier son 10 000 ms, lecture estimée ${report.meta.cps} caractères/s`);
   L.push(`- Répétitions par texte : ${report.meta.repeat} (chaque répétition = document neuf, bible et cache vides, modèle chaud)`);
+  L.push(`- Démarrage : ${report.meta.startup ? `5b-bis (segments de tête neutres : ${report.meta.lead}, première fenêtre : ${report.meta.firstWindow}, préchargement, budgets de production 10 s / 1,5 s)` : "disposition de la baseline (fenêtres dès le premier segment, budgets 600 s)"} ; lecture ${report.meta.playback ? "en temps réel (durée estimée de chaque segment)" : "sans attente entre segments"}.`);
   L.push(`- Chargement à froid du modèle (hors mesure) : ${fmt(report.meta.coldLoadMs, " ms")}`);
   L.push(`- Statut : ${report.status}${report.note ? ` — ${report.note}` : ""}`);
   L.push("");
@@ -171,11 +176,21 @@ function markdown(report) {
       `| ${t.id} | ${a.windows} | ${a.directedWindows} (${fmt(a.directedShare)}) | ${a.neutralWindows} (${fmt(a.neutralShare)}) | ${a.windowsWithResend} (${fmt(a.resendShare)}) | ${fmt(a.callsPerWindow)} | ${a.firstAttemptAccepted}/${a.firstAttemptTotal} | ${a.firstAttemptAcceptedFaithful}/${a.firstAttemptTotal} | ${a.mustKeepFound}/${a.mustKeepTotal} | ${fmt(a.firstDirectedP50)} / ${fmt(a.firstDirectedP95)} | ${fmt(a.directionSegPerS)} / ${fmt(a.readingSegPerS)} |`
     );
   }
+  L.push("");
+  L.push("## Démarrage par texte");
+  L.push("");
+  L.push("| Texte | Premier son p50 (ms) | Direction prête p50 (ms) | Premier segment dirigé p50 (ms) | Segments lus en neutre / total | Analyse (statuts) | Segments dirigés avec récit et réplique séparés |");
+  L.push("|---|---|---|---|---|---|---|");
+  for (const t of report.texts) {
+    const a = t.aggregate;
+    L.push(`| ${t.id} | ${fmt(a.firstSoundP50)} | ${fmt(a.firstDirectedReadyP50)} | ${fmt(a.firstDirectedP50)} | ${a.neutralSegments}/${a.segments} | ${JSON.stringify(a.analysisStatus)} | ${fmt(a.splitSegmentShare)} |`);
+  }
   const g = report.global;
   L.push("");
   L.push("## Latence et débit (tous textes)");
   L.push("");
   L.push(`- Premier segment dirigé (analyse + première fenêtre, modèle chaud) : p50 ${fmt(g.firstDirectedP50, " ms")}, p95 ${fmt(g.firstDirectedP95, " ms")}, min ${fmt(g.firstDirectedMin, " ms")}, max ${fmt(g.firstDirectedMax, " ms")} sur ${g.firstDirectedCount} mesures (${g.firstNotDirected} sans segment dirigé).`);
+  L.push(`- Premier son (segment 1, neutre au démarrage) et premier segment dirigé prêt : voir « Démarrage par texte » ci-dessous.`);
   L.push(`- Appel d'analyse : p50 ${fmt(g.analyzeP50, " ms")}, p95 ${fmt(g.analyzeP95, " ms")}.`);
   L.push(`- Appel de direction (une fenêtre, un essai) : p50 ${fmt(g.directP50, " ms")}, p95 ${fmt(g.directP95, " ms")} (temps serveur total_duration p50 ${fmt(g.directServerTotalP50, " ms")}, évaluation du prompt p50 ${fmt(g.directPromptEvalP50, " ms")}) ; jetons de prompt p50 ${fmt(g.promptTokensP50)} / max ${fmt(g.promptTokensMax)} ; jetons générés p50 ${fmt(g.completionTokensP50)} ; ${fmt(g.tokensPerSecond)} jetons/s en génération.`);
   L.push(`- Contexte saturé (prompt ≥ 98 % de num_ctx) : ${g.contextSaturated} appel(s) ; réponses coupées par la limite de jetons : ${g.truncated} ; appels en échec : ${g.failedCalls} sur ${g.calls}.`);
@@ -184,6 +199,10 @@ function markdown(report) {
   L.push("");
   L.push("## Simulation de lecture (durées mesurées, lecture à vitesse estimée)");
   L.push("");
+  if (report.simulation.applicable === false) {
+    L.push("Non applicable : avec le démarrage 5b-bis la lecture est jouée en temps réel dans la mesure (voir « Démarrage par texte »).");
+    L.push("");
+  } else {
   L.push("Part de segments lus en neutre par retard (moyenne sur toutes les lectures mesurées) selon N (anticipation) et le budget établi ; budget de premier son 10 000 ms. Premier son = attente avant le premier segment.");
   L.push("");
   L.push("| N \\ budget établi | 1 500 ms | 3 000 ms | 5 000 ms |");
@@ -194,6 +213,7 @@ function markdown(report) {
   L.push("");
   L.push(`Premier son simulé : p50 ${fmt(report.simulation.firstSoundP50, " ms")}, p95 ${fmt(report.simulation.firstSoundP95, " ms")}, max ${fmt(report.simulation.firstSoundMax, " ms")} ; part de lectures où le premier segment dépasse 10 000 ms : ${fmt(report.simulation.firstOver10s)}.`);
   L.push("");
+  }
   L.push("## Qualité des partitions");
   L.push("");
   for (const t of report.texts) {
@@ -205,6 +225,7 @@ function markdown(report) {
     L.push(`- Émotions : ${q.distinctEmotions} libellés distincts, dominant ${fmt(q.dominantEmotionShare)} ; ${JSON.stringify(q.emotions)}.`);
     L.push(`- Intensité : moyenne ${fmt(q.intensityMean, "")}, écart-type ${fmt(q.intensityStdev)} ; tempo : ${JSON.stringify(q.tempo)} ; pause après : ${JSON.stringify(q.pauseAfter)} ; pause avant : ${JSON.stringify(q.pauseBefore)}.`);
     L.push(`- Champs présents (part des cues) : émotion ${fmt(q.presence.emotion)}, tempo ${fmt(q.presence.tempo)}, pause ${fmt(q.presence.pause)}, note de jeu ${fmt(q.presence.direction)}, insistance ${fmt(q.presence.emphasis)}, non verbal ${fmt(q.presence.nonverbal)}.`);
+    L.push(`- Tempo > 1,1 parmi les cues qui portent un tempo : ${fmt(t.aggregate.tempoAbove11Share)} ; segments dirigés avec plusieurs locuteurs : ${fmt(t.aggregate.splitSegmentShare)}.`);
     L.push(`- Monotonie : ${q.monotone ? "OUI" : "non"} (${q.monotoneReasons.join(" ; ") || "aucun critère atteint"}).`);
     L.push(`- Violations à la première réponse (contrôleur) : ${JSON.stringify(q.firstAttemptViolations)} ; replis : ${JSON.stringify(t.aggregate.neutralByReason)}.`);
     L.push("");
@@ -217,7 +238,7 @@ async function main() {
   const startedAt = new Date();
   mkdirSync(args.out, { recursive: true });
   const outBase = join(args.out, args.label);
-  const meta = { label: args.label, date: startedAt.toISOString(), model: args.model, temperature: args.temperature, numCtx: args.numCtx, K: args.window, W: args.before, L: args.after, N: args.lookahead, repeat: args.repeat, cps: args.cps };
+  const meta = { startup: args.startup === 1, playback: args.playback === 1, lead: args.startup === 1 ? args.lead : 0, firstWindow: args.startup === 1 ? args.firstWindow : args.window, label: args.label, date: startedAt.toISOString(), model: args.model, temperature: args.temperature, numCtx: args.numCtx, K: args.window, W: args.before, L: args.after, N: args.lookahead, repeat: args.repeat, cps: args.cps };
 
   if (gpuYieldFlag()) {
     const report = { meta, status: "deferred", note: "différé : mode jeu" };
@@ -291,6 +312,7 @@ async function main() {
           model: inner.model,
           promptVersion: inner.promptVersion,
           analyze: (r, s) => inner.analyze(r, s),
+          warmup: (s) => inner.warmup(s),
           direct: async (r, s) => {
             const raw = await inner.direct(r, s);
             raws.push({ request: r, raw });
@@ -309,20 +331,22 @@ async function main() {
           contextBefore: args.before,
           contextAfter: args.after,
           lookahead: args.lookahead,
-          firstSoundBudgetMs: 600_000,
-          steadyBudgetMs: 600_000,
+          ...(args.startup === 1
+            ? { leadSegments: args.lead, firstWindowSize: args.firstWindow, warmup: true }
+            : { leadSegments: 0, firstWindowSize: args.window, warmup: false, firstSoundBudgetMs: 600_000, steadyBudgetMs: 600_000 }),
           trace: (event) => trace.push({ t: performance.now() - t0, event })
         });
         const session = pipeline.open({ document, source: blocks, profileId: "eval" });
         const directions = [];
         let firstDirectedMs = null;
+        let firstSoundMs = null;
         for (const [i, block] of blocks.entries()) {
           const d = await session.cuesFor(block.id);
           directions.push(d);
-          if (firstDirectedMs === null && d.directed) firstDirectedMs = performance.now() - t0;
-          if (i === 0 && !d.directed) {
-            // premier segment neutre : on continue, la latence « premier dirigé » sera celle du premier segment dirigé
-          }
+          const now = performance.now() - t0;
+          if (i === 0) firstSoundMs = now;
+          if (firstDirectedMs === null && d.directed) firstDirectedMs = now;
+          if (args.playback === 1) await new Promise((r) => setTimeout(r, (Array.from(block.rawText).length / args.cps) * 1000));
         }
         const wallMs = performance.now() - t0;
         session.dispose();
@@ -340,6 +364,14 @@ async function main() {
         }
         const windows = windowEvents.map((e) => ({ window: e.event.window, source: e.event.source, degradedReason: e.event.degradedReason ?? null, llmCalls: e.event.llmCalls, resends: e.event.resends, boundsAdjusted: e.event.boundsAdjusted, facts: e.event.facts }));
 
+        // Quality is judged on every window the model directed, however it was served during the timed
+        // reading (the segment read neutrally at the start still has its directed cues in the cache): a second,
+        // untimed pass over the cache gives them.
+        const cachePass = pipeline.open({ document, source: blocks, profileId: "eval" });
+        const fullDirections = [];
+        for (const block of blocks) fullDirections.push(await cachePass.cuesFor(block.id));
+        cachePass.dispose();
+
         // Contrôleur : verdict de chaque réponse brute (première réponse = attempt 0).
         const verdicts = raws.map(({ request, raw }) => {
           const source = request.window.map((b) => ({ id: b.id, rawText: b.text, type: typeOf.get(b.id) }));
@@ -350,8 +382,8 @@ async function main() {
         });
 
         // « À conserver » dans les segments dirigés.
-        const directedIds = new Set(directions.filter((d) => d.directed).map((d) => d.segmentId));
-        const spoken = norm(directions.filter((d) => d.directed).flatMap((d) => d.cues.map((c) => c.spokenText)).join(" "));
+        const directedIds = new Set(fullDirections.filter((d) => d.directed).map((d) => d.segmentId));
+        const spoken = norm(fullDirections.filter((d) => d.directed).flatMap((d) => d.cues.map((c) => c.spokenText)).join(" "));
         let mustKeepTotal = 0;
         let mustKeepFound = 0;
         for (const item of text.mustKeep) {
@@ -362,34 +394,43 @@ async function main() {
           }
         }
 
-        const cues = directions.filter((d) => d.directed).flatMap((d) => d.cues);
+        const cues = fullDirections.filter((d) => d.directed).flatMap((d) => d.cues);
+        // Segments (of the directed ones) whose cues are voiced by more than one speaker: narration and lines told apart.
+        const splitSegments = fullDirections.filter((d) => d.directed && new Set(d.cues.map((c) => c.speakerId)).size > 1).length;
+        const readyEvent = trace.find((e) => e.event.type === "window" && e.event.source !== "neutral");
         const segChars = blocks.map((b) => Array.from(b.rawText).length);
         const sim = { segChars, compute };
 
-        // Relecture : même magasin, même cache → aucun appel modèle attendu.
+        // Relecture : même magasin, même cache → aucun appel modèle attendu (le préchargement n'est pas un appel de réponse).
         let reread = null;
         if (rep === 0) {
-          const before = calls.length;
+          const before = calls.filter((c) => c.kind !== "warmup").length;
           const again = pipeline.open({ document, source: blocks, profileId: "eval" });
           const t1 = performance.now();
           const dirs = [];
           for (const block of blocks) dirs.push(await again.cuesFor(block.id));
           again.dispose();
           const s2 = again.stats();
-          reread = { calls: calls.length - before, ms: round(performance.now() - t1), windowsFromCache: s2.windowsFromCache, windowsFromModel: s2.windowsFromModel, windowsNeutral: s2.windowsNeutral };
+          reread = { calls: calls.filter((c) => c.kind !== "warmup").length - before, ms: round(performance.now() - t1), windowsFromCache: s2.windowsFromCache, windowsFromModel: s2.windowsFromModel, windowsNeutral: s2.windowsNeutral };
           rereadRuns++;
           rereadCalls += reread.calls;
           rereadWindows += s2.windowsFromCache + s2.windowsFromModel + s2.windowsNeutral;
           rereadFromCache += s2.windowsFromCache;
         }
 
-        allCalls.push(...calls);
+        allCalls.push(...calls.filter((c) => c.kind !== "warmup"));
         if (firstDirectedMs !== null) firstDirected.push(firstDirectedMs);
         allSims.push({ text: text.id, ...sim });
         runs.push({
           rep,
           wallMs: round(wallMs),
           firstDirectedMs: round(firstDirectedMs),
+          firstSoundMs: round(firstSoundMs),
+          firstDirectedReadyMs: round(readyEvent?.t ?? null),
+          neutralSegments: directions.filter((d) => !d.directed).length,
+          splitSegments,
+          directedSegmentsFull: fullDirections.filter((d) => d.directed).length,
+          analysisStatus: trace.find((e) => e.event.type === "analysis")?.event.status ?? "none",
           analysisMs: round(analysisEvent?.t ?? null),
           compute: compute.map((c) => round(c)),
           windows,
@@ -477,13 +518,21 @@ async function main() {
         firstDirectedP50: round(percentile(fd, 0.5)),
         firstDirectedP95: round(percentile(fd, 0.95)),
         firstDirectedMs: fd.map((x) => round(x)),
+        firstSoundP50: round(percentile(runs.map((r) => r.firstSoundMs).filter((x) => x !== null), 0.5)),
+        firstDirectedReadyP50: round(percentile(runs.map((r) => r.firstDirectedReadyMs).filter((x) => x !== null), 0.5)),
+        neutralSegmentsMean: round(mean(runs.map((r) => r.neutralSegments)), 2),
+        segments: sum(runs.map((r) => r.segments)),
+        neutralSegments: sum(runs.map((r) => r.neutralSegments)),
+        analysisStatus: histogram(runs.map((r) => r.analysisStatus)),
+        splitSegmentShare: share(sum(runs.map((r) => r.splitSegments)), sum(runs.map((r) => r.directedSegmentsFull))),
+        tempoAbove11Share: share(cues.filter((c) => c.tempo !== undefined && c.tempo > 1.1).length, cues.filter((c) => c.tempo !== undefined).length),
         wallMsP50: round(percentile(runs.map((r) => r.wallMs), 0.5)),
         directionSegPerS: round(percentile(directionSegPerS, 0.5), 3),
         readingSegPerS: round(percentile(readingSegPerS, 0.5), 3)
       },
       quality: {
         cues: cues.length,
-        cuesPerSegment: round(cues.length / Math.max(1, sum(runs.map((r) => r.directedSegments))), 2),
+        cuesPerSegment: round(cues.length / Math.max(1, sum(runs.map((r) => r.directedSegmentsFull))), 2),
         speakers,
         speakersAsExpected,
         emotions,
@@ -519,14 +568,15 @@ async function main() {
 
   // Simulation : grille N × budget établi sur toutes les lectures mesurées.
   const K = args.window;
-  const grid = [K, 2 * K, 3 * K].map((N) => ({
+  const simulated = args.startup !== 1; // la simulation suppose des fenêtres alignées sur K ; avec le démarrage 5b-bis la lecture est réelle
+  const grid = (simulated ? [K, 2 * K, 3 * K] : []).map((N) => ({
     N,
     cells: [1500, 3000, 5000].map((steady) => {
       const sims = allSims.map((s) => simulate({ segChars: s.segChars, K, N, compute: s.compute, first: 10_000, steady, cps: args.cps }));
       return { steady, lateShare: round(mean(sims.map((s) => s.lateShare)), 3), maxWaitMs: round(Math.max(...sims.map((s) => s.maxWaitMs))) };
     })
   }));
-  const baseSims = allSims.map((s) => simulate({ segChars: s.segChars, K, N: args.lookahead, compute: s.compute, first: 10_000, steady: 1500, cps: args.cps }));
+  const baseSims = (simulated ? allSims : []).map((s) => simulate({ segChars: s.segChars, K, N: args.lookahead, compute: s.compute, first: 10_000, steady: 1500, cps: args.cps }));
   const firstSounds = baseSims.map((s) => s.firstSoundMs);
   grids.push(grid);
 
@@ -566,9 +616,10 @@ async function main() {
     },
     simulation: {
       grid,
+      applicable: simulated,
       firstSoundP50: round(percentile(firstSounds, 0.5)),
       firstSoundP95: round(percentile(firstSounds, 0.95)),
-      firstSoundMax: round(Math.max(...firstSounds)),
+      firstSoundMax: firstSounds.length > 0 ? round(Math.max(...firstSounds)) : null,
       firstOver10s: share(firstSounds.filter((x) => x > 10_000).length, firstSounds.length)
     }
   };

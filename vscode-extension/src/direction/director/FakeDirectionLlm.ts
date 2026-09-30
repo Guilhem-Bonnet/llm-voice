@@ -55,6 +55,8 @@ export interface FakeDirectionLlmOptions {
   readonly failure?: (info: FakeCallInfo) => FakeFailure | undefined;
   readonly egress?: { readonly guard: EgressGuardHandle; readonly baseUrl: string };
   readonly clock?: () => number;
+  /** Behaviour of `warmup` (the fake always has one): latency and an optional failure. */
+  readonly warmup?: { readonly latencyMs?: number; readonly failure?: FakeFailure };
 }
 
 /** `cue-<id>`, safe for the `cueId` pattern whatever the source id. */
@@ -119,6 +121,8 @@ export class FakeDirectionLlm implements DirectionLlm {
   readonly model: string;
   readonly promptVersion: string;
   readonly calls: RecordedCall[] = [];
+  /** `warmup` calls, kept apart from `calls` (they are not model answers). */
+  warmups = 0;
 
   private readonly options: FakeDirectionLlmOptions;
   private readonly counts: Record<FakeCallKind, number> = { analyze: 0, direct: 0 };
@@ -147,6 +151,24 @@ export class FakeDirectionLlm implements DirectionLlm {
       const script = this.options.direction;
       return typeof script === "function" ? script(info, request) : (script ?? defaultDirection(request));
     });
+  }
+
+  async warmup(signal?: AbortSignal): Promise<void> {
+    this.warmups += 1;
+    const options = this.options.warmup;
+    if (options?.failure === "hang") {
+      return hang(signal);
+    }
+    if ((options?.latencyMs ?? 0) > 0) {
+      await sleep(options?.latencyMs ?? 0, signal);
+    }
+    const failure = options?.failure;
+    if (failure !== undefined) {
+      throw typeof failure === "string" ? new DirectionLlmError(failure) : failure;
+    }
+    if (this.options.egress !== undefined) {
+      await this.throughGuard(this.options.egress, signal);
+    }
   }
 
   private async run(

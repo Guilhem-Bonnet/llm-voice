@@ -30,7 +30,8 @@ describe("src/direction/director static rules", () => {
       "StageDirector.ts",
       "gpuYield.ts",
       "index.ts",
-      "llm.ts"
+      "llm.ts",
+      "tolerantJson.ts"
     ]);
   });
 

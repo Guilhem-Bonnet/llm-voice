@@ -8,12 +8,16 @@ import { DIRECTION_BOUNDS } from "../../../core/direction.js";
 import type { AnalysisLlmRequest } from "../llm.js";
 import { renderBible, renderBlocks } from "./render.js";
 
-export const ANALYST_PROMPT_VERSION = 1;
+/**
+ * 2: asked without a grammar (`format`); the prompt shows the shape of the
+ * answer and asks for the JSON object alone, the client reads it tolerantly.
+ */
+export const ANALYST_PROMPT_VERSION = 2;
 
 export function analystSystemPrompt(): string {
   return [
     "Tu es l'analyste d'une lecture à voix haute. Tu lis un extrait d'un document et tu décris ce qu'il faut savoir pour le lire à voix haute : de quoi il s'agit et qui y parle.",
-    "Tu réponds uniquement par un objet JSON, sans commentaire, de la forme { \"analysis\": {...}, \"characters\": [...] }.",
+    "Tu réponds uniquement par un objet JSON, sans commentaire ni texte autour, de la forme { \"analysis\": {...}, \"characters\": [...] }. Chaque valeur est une chaîne ; `names` est une liste de chaînes ; `traits` est une liste d'objets { \"key\": \"...\", \"value\": \"...\" }.",
     "",
     "`analysis` (chaque valeur : une phrase courte, au plus " + DIRECTION_BOUNDS.factValueMaxChars + " caractères, en français) :",
     "- genre : la nature du texte, en quelques mots libres ;",

@@ -5,16 +5,20 @@
  * `DIRECTION_PROMPT_VERSION`.
  *
  * The prompt states the output contract, the ranges of the safety bounds
- * (ADR-015 §7) and the fidelity rules. It says nothing about how a kind of
- * text should be read: that is the model's judgement, read from the analysis
- * and the text itself.
+ * (ADR-015 §7), the fidelity rules and, since version 3, the demand for an
+ * expressive score whatever the kind of text (version 2 gave flat scores for
+ * documentation and assistant answers, and a fast tempo everywhere in the
+ * tale: `direction-eval/baseline-qwen2.5-7b.md`). Every style value comes from
+ * these instructions to the model, never from code: the code only clamps to
+ * the bounds. Which kind of text applies is the model's reading of the
+ * analysis and of the text; no code branches on it.
  */
 
 import { DIRECTION_BOUNDS, NONVERBAL_KINDS } from "../../../core/direction.js";
 import type { DirectionLlmRequest } from "../llm.js";
 import { FIDELITY_RULES, renderBible, renderBlocks, renderCues, renderResend } from "./render.js";
 
-export const DIRECTOR_PROMPT_VERSION = 2;
+export const DIRECTOR_PROMPT_VERSION = 3;
 
 export function directorSystemPrompt(): string {
   const b = DIRECTION_BOUNDS;
@@ -39,6 +43,12 @@ export function directorSystemPrompt(): string {
     `- states : au plus ${b.statesMax} états courts de celui qui parle ;`,
     `- nonverbal : au plus ${b.nonverbalMax} éléments { kind (${NONVERBAL_KINDS.join(", ")}), at (before ou after) }.`,
     "Tu ne choisis jamais de voix, de moteur ni de réglage technique.",
+    "",
+    "Une partition expressive, quel que soit le genre : une partition sans aucune émotion, sans variation de tempo et sans pause est un échec. Renseigne emotion sur chaque consigne (un libellé court en français, une intensité qui suit la scène), et un tempo ou une pause chaque fois que le sens le demande. Ce qui change dans le texte change dans la partition.",
+    "Selon la nature du texte, d'après l'analyse et le texte lui-même :",
+    "- documentation, texte technique : un tempo régulier, très légèrement ralenti sur les termes clés, les commandes et les nombres ; une pause avant une liste et à chaque changement d'idée ; de l'appui (emphasis) sur les termes importants ; un ton posé et clair ;",
+    "- réponse d'un assistant : le ton d'une conversation, naturel et chaleureux ; de petites pauses de respiration entre les idées ; de l'appui sur ce qui compte pour l'auditeur ;",
+    "- récit, conte, dialogue : sépare la narration et chaque réplique en consignes distinctes (les incises comme « dit-il » restent au narrateur, la réplique va à son personnage) ; varie l'intensité et le tempo selon la scène, la calme comme la tendue ; le tempo ne doit pas être systématiquement supérieur à 1 : ralentis pour la tristesse, le doute, le suspense ou la tendresse, accélère seulement pour l'urgence ou la joie vive.",
     "",
     "Le contexte (segments précédents et suivants, consignes déjà données) est là pour la continuité : tu ne diriges que la fenêtre.",
     "",

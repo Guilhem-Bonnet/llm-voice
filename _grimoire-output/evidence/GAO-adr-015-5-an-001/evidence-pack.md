@@ -136,3 +136,56 @@ Limite du script : la simulation plafonne l'attente du premier son au budget (10
 - Aucune écoute des partitions : la qualité « sonore » n'est pas jugée, seulement structurelle.
 - Un seul modèle mesuré (`qwen2.5:7b`) ; pas de `qwen2.5:3b` ni `gpt-oss:20b` (installé).
 - Cause des ~8 s de génération inexpliqués ; TTS et LLM sur le même GPU ; coût du renvoi quand le drapeau `gpu-yield` apparaît en plein appel.
+
+## Partie 5b-bis — démarrage neutre puis relais, analyste sans grammaire, prompts director-3 (2026-09-29)
+
+### Livrables (`vscode-extension/`)
+
+- `src/direction/director/DirectionPipeline.ts` : `leadSegments` (défaut 2 : lus en neutre sans attente, jamais dirigés), `firstWindowSize` (défaut 2), fenêtres suivantes à `windowSize` ; pendant le démarrage (avant le premier règlement d'une fenêtre) un segment dont la fenêtre n'est pas prête attend au plus `startupGraceMs` (150 ms, le temps qu'une partition en cache revienne du disque) puis est lu en neutre ; relais transparent dès que la fenêtre existe (une fenêtre déjà « late » reste servie quand elle est résolue) ; préchargement `llm.warmup` à `open()` (jamais attendu, jamais en mode jeu, refus du garde = suspension). `llm.ts`/`FakeDirectionLlm.ts` : `warmup?` optionnel.
+- `OllamaDirectionLlm.ts` : analyste **sans `format`** (`analystFormat: true` le rétablit), lecture tolérante (`tolerantJson.ts`, premier objet JSON, accolades dans les chaînes, fences, prose autour), validation Zod (`RawAnalysisSchema` + présence de `analysis` ou `characters`), **un seul renvoi** avec la raison puis `invalid-structured-output` (l'analyste se replie) ; metteur en scène toujours avec `format` ; `warmup()` = chat vide avec le même `num_ctx` et `keep_alive` (pas de rechargement), rapporté `kind: "warmup"`.
+- Prompts : `analyst-2` (forme de la réponse, JSON seul), `director-3` (partition expressive quel que soit le genre ; documentation, réponse d'assistant, récit : consignes du brief, tempo « pas systématiquement supérieur à 1 »). Aucune valeur de style dans le code ; seuls les nombres des bornes figurent dans le prompt (test). `DIRECTION_PROMPT_VERSION` = `analyst-2.director-3`, dans la clé de cache.
+- Tests : `startup.test.ts` (15), `tolerantJson.test.ts` (8), `ollama.test.ts` (+13 : analyse sans grammaire, renvoi unique, préchargement, prompt director-3, nombres du prompt), `static.test.ts`, `support.ts` (disposition historique par défaut du banc : `leadSegments: 0`, `warmup: false`), mock Ollama (`chatContentSequence`). Script `run-direction-eval.mjs` : lecture en temps réel, budgets de production, deuxième passe sur le cache pour juger les partitions, indicateurs de démarrage et de séparation récit/réplique.
+
+### Commandes exécutées
+
+| Commande | Résultat |
+|---|---|
+| `npm run test:unit` avant (fin de 5b) / après | 105 fichiers, 1 809 verts / 107 fichiers, 1 845 verts (+2 fichiers, +36 tests) |
+| `npm run typecheck`, `npm run lint` | sans erreur (un premier typecheck a échoué sur `undefined` avec `exactOptionalPropertyTypes` dans un test, corrigé) |
+| Mutants (production modifiée puis restaurée, `cmp` identique) | attente de démarrage retirée : 2 tests échouent ; renvoi de l'analyste retiré : 3 ; préchargement en mode jeu : 1 ; `format` du metteur en scène retiré : 2 |
+| `node scripts/direction-eval/run-direction-eval.mjs --model qwen2.5:7b --repeat 2 --label director-3-qwen2.5-7b` | drapeau `gpu-yield` absent juste avant (vérifié) ; 34 appels, 1 échec ; rapport `direction-eval/director-3-qwen2.5-7b.{json,md}` |
+
+Première mesure archivée : `direction-eval/director-3-lead1-qwen2.5-7b.{json,md}` (segment de tête = 1, attente de démarrage nulle). Elle a révélé un défaut, corrigé avant la mesure finale : avec une attente nulle, une partition déjà en cache n'avait pas le temps de revenir du disque et une relecture était lue en neutre (section qualité vide, 0 cue) ; premier segment dirigé 48,7 à 71,0 s. Seules ses valeurs de latence sont citées ci-dessous.
+
+### Avant / après (qwen2.5:7b, 2 répétitions par texte, modèle chaud, lecture en temps réel à 15 caractères/s pour « après »)
+
+| Mesure | Baseline (director-2) | 5b-bis (director-3, tête = 2) |
+|---|---|---|
+| Premier son | après l'attente du premier segment (budget 10 s dépassé) | 0,2 à 0,7 ms (segment 1 neutre) |
+| Premier segment dirigé p50 (min-max) | 22,3 s (16,0-29,1) | **34,4 s (32,2-41,2)** : plus lent |
+| Direction prête (analyse + 1re fenêtre de 2), p50 par texte | 16 à 29 s (fenêtre de 4) | conte 33,1 ; doc 19,9 ; IA 27,2 s |
+| Appel d'analyse p50 | 4,1 s | 2,0 s (-51 %) |
+| Fenêtres dirigées / repli | 15/16 (94 %) / 1 | 14/16 (88 %) / 2 (`resend-budget-exhausted`) |
+| Fenêtres renvoyées ; 1re réponse acceptée | 25 % ; 12/16 | 56 % (9/16) ; 7/16 |
+| Analyses valides (sans `format`) | 6/6 avec format | 6/6 |
+| « À conserver » retrouvés | 27/27 | 22/22 |
+| Doc / IA : émotion, tempo, pause | 0 %, 0 %, 0-17 % | 100 %, 100 %, 100 % (doc : 4 libellés ; IA : 3, dont « neutral » en anglais) |
+| Doc / IA : intensité | — | 0,52 ± 0,06 / 0,62 ± 0,13 ; insistance 33 % / 83 % |
+| Conte : libellés (dominant) | 5 (56 %) | 10 (25 %) |
+| Conte : intensité | 0,73 ± 0,08 | 0,74 ± 0,12 |
+| Conte : tempo > 1,1 parmi les cues avec tempo | 8/9 (89 %) | 25 % (5/20) ; 15 cues entre 0,9 et 1,1 |
+| Conte : cues par segment ; segments à plusieurs locuteurs | 1,0 ; 0 | 1,25 ; 12,5 % |
+
+### Constats
+
+- L'expressivité est acquise : plus aucune partition plate, tempo du conte non biaisé. La séparation récit/réplique reste faible (12,5 % des segments). Une majorité de tempos restent entre 0,9 et 1,1 : variation modeste, à juger à l'écoute (carte 6).
+- L'objectif de latence n'est **pas atteint** : le premier segment dirigé arrive plus tard qu'en baseline (34,4 contre 22,3 s p50), même si le premier son est immédiat. Cause mesurée : la direction demandée est plus riche (325 jetons p50 par appel, 1 916 de prompt) et la fenêtre de 2 met 20 à 33 s à être prête (14 s prévus par le diagnostic avec le prompt d'origine) ; la lecture neutre de 2 segments couvre environ 18 s. Avec 1 segment de tête, 48,7 à 71,0 s (la fenêtre suivante de 4, environ 30 s, arrive trop tard). Segments lus en neutre : 4 à 7 sur 9 ou 10 par lecture.
+- La validité recule avec le prompt long : 1re réponse acceptée 44 % (75 % en baseline), 2 replis sur 16 (`uncovered-source` domine : 9 des refus). Aucune dérive de nombre ou de négation.
+- Relecture : 1 appel modèle sur 3 relectures (la fenêtre en repli de la lecture 1 n'est pas en cache, attendu).
+
+### Écarts et non vérifié
+
+1. ADR-015 §2 « aucune règle de style dans les prompts » : levé par la consigne de la carte pour director-3 (les valeurs viennent de la consigne au modèle, le code ne branche sur aucun genre, la garde statique passe). Le test « aucun genre dans les prompts » ne vaut plus que pour l'analyste.
+2. Tête de 2 segments (défaut) choisie sur la mesure ci-dessus, pas sur la recommandation du diagnostic (1 segment) ; elle reste insuffisante. Pistes non essayées : tête de 3, fenêtres de 2 segments au démarrage, fenêtre suivante plus courte, retrait de `format` du metteur en scène avec analyseur tolérant (non prouvé), prompt plus court.
+3. Non mesuré : préchargement à froid (le banc charge le modèle avant), TTS et LLM sur le même GPU, écoute, autres modèles, plus de 2 répétitions.
+4. Modules non modifiés : `src/core/direction.ts`, bible, controller, translator, `Pipeline.ts`. Carte non déplacée, rien commité.

@@ -35,7 +35,7 @@ import type { DocumentScope, PersistentScopeRef } from "../bible/scopes.js";
 import { neutralPartitionForSource, type SourceBlock } from "../controller/index.js";
 import type { Analyst } from "./Analyst.js";
 import { createGpuYieldProbe, type GpuYieldProbe } from "./gpuYield.js";
-import type { DirectionDegradedReason, DirectionLlm } from "./llm.js";
+import { classifyLlmFailure, type DirectionDegradedReason, type DirectionLlm } from "./llm.js";
 import { PartitionCache, cacheBibleStamp, windowCacheKey } from "./PartitionCache.js";
 import type { StageDirector } from "./StageDirector.js";
 
@@ -49,6 +49,22 @@ export const DEFAULT_STEADY_BUDGET_MS = 1500;
 /** Not in the ADR (it says "plusieurs secondes, non mesuré"): chosen here, to be set by the measurements of card 5b/6. */
 export const DEFAULT_FIRST_SOUND_BUDGET_MS = 10_000;
 export const DEFAULT_MAX_CONSECUTIVE_FAILURES = 3;
+/**
+ * Start-up (measured, `direction-eval/latency-diagnosis.md`): the model needs ~14 s
+ * for the analysis and a first window of two segments, far more than the time
+ * to first sound. The first `DEFAULT_LEAD_SEGMENTS` segments are read
+ * neutrally at once, the first directed window is short, and the following
+ * ones have the normal size.
+ */
+export const DEFAULT_LEAD_SEGMENTS = 2;
+/**
+ * Start-up wait (ms) before a segment of a window still pending is read
+ * neutrally: enough for a partition already in the cache to come back from
+ * disk (a re-read is directed from its first window), imperceptible otherwise.
+ * A first measure with a zero wait read a fully cached document neutrally.
+ */
+export const DEFAULT_STARTUP_GRACE_MS = 150;
+export const DEFAULT_FIRST_WINDOW_SIZE = 2;
 
 export type DirectionTraceEvent =
   | { readonly type: "analysis"; readonly status: "analyzed" | "cached" | "degraded"; readonly degradedReason?: DirectionDegradedReason; readonly calls: number; readonly written: number }
@@ -64,6 +80,7 @@ export type DirectionTraceEvent =
       readonly facts: number;
     }
   | { readonly type: "late"; readonly window: number }
+  | { readonly type: "warmup"; readonly ok: boolean; readonly degradedReason?: DirectionDegradedReason }
   | { readonly type: "suspended"; readonly reason: DirectionDegradedReason };
 
 export interface DirectionPipelineOptions {
@@ -71,8 +88,21 @@ export interface DirectionPipelineOptions {
   readonly director: StageDirector;
   readonly store: BibleStore;
   readonly cache: PartitionCache;
-  /** Only `model` and `promptVersion` are read (cache key). */
-  readonly llm: Pick<DirectionLlm, "model" | "promptVersion">;
+  /** `model` and `promptVersion` are the cache key; `warmup` (optional) preloads the model when a reading is opened. */
+  readonly llm: Pick<DirectionLlm, "model" | "promptVersion" | "warmup">;
+  /** Preload the model when a reading is opened (default true; needs `llm.warmup`). Skipped in game mode. */
+  readonly warmup?: boolean;
+  /**
+   * Segments at the start of the document read neutrally without any wait and
+   * never directed, while the analysis and the first window are computed
+   * (default 2, from the measured time to the first directed window; 0 gives the historical layout: windows from the first
+   * segment, the first request waits up to `firstSoundBudgetMs`).
+   */
+  readonly leadSegments?: number;
+  /** Size of the first directed window (default 2); the next ones have `windowSize`. */
+  readonly firstWindowSize?: number;
+  /** See `DEFAULT_STARTUP_GRACE_MS`. */
+  readonly startupGraceMs?: number;
   /** Defaults to the real `$XDG_RUNTIME_DIR/gpu-yield/active` probe. */
   readonly gpuYield?: GpuYieldProbe;
   readonly windowSize?: number;
@@ -160,9 +190,15 @@ function waitFor<T>(promise: Promise<T>, budgetMs: number, signal: AbortSignal |
 export class DirectionPipeline {
   constructor(readonly options: DirectionPipelineOptions) {}
 
-  /** Opens a reading session. Does nothing until `cuesFor` is called: no analysis, no model call, no timer. */
+  /**
+   * Opens a reading session. Until `cuesFor` is called there is no analysis, no
+   * window, no timer; the only thing done here is the model preload
+   * (`llm.warmup`, never waited for, never in game mode).
+   */
   open(params: OpenParams): DirectionSession {
-    return new DirectionSession(this.options, params);
+    const session = new DirectionSession(this.options, params);
+    session.warmUp();
+    return session;
   }
 }
 
@@ -170,11 +206,14 @@ export class DirectionSession {
   private readonly blocks: SourceBlock[];
   private readonly indexOf = new Map<string, number>();
   private readonly windowSize: number;
+  private readonly lead: number;
+  private readonly firstSize: number;
   private readonly before: number;
   private readonly after: number;
   private readonly lookahead: number;
   private readonly firstBudget: number;
   private readonly steadyBudget: number;
+  private readonly startupGrace: number;
   private readonly maxFailures: number;
   private readonly gpuYield: GpuYieldProbe;
 
@@ -188,6 +227,8 @@ export class DirectionSession {
   private failures = 0;
   private suspendedReason: DirectionDegradedReason | undefined;
   private asked = false;
+  /** A directed window (any outcome) has settled: the start-up is over. */
+  private warm = false;
   private lateSegments = 0;
   private llmCalls = 0;
   private fromModel = 0;
@@ -202,16 +243,39 @@ export class DirectionSession {
     this.blocks = params.source.filter((block) => (block.spokenText ?? block.rawText).trim().length > 0);
     this.blocks.forEach((block, index) => this.indexOf.set(block.id, index));
     this.windowSize = Math.max(1, options.windowSize ?? DEFAULT_WINDOW_SIZE);
+    this.firstSize = Math.max(1, options.firstWindowSize ?? DEFAULT_FIRST_WINDOW_SIZE);
+    const lead = Math.max(0, Math.floor(options.leadSegments ?? DEFAULT_LEAD_SEGMENTS));
+    // A document no longer than the lead would never be directed at all.
+    this.lead = this.blocks.length > lead ? lead : 0;
     this.before = Math.max(0, options.contextBefore ?? DEFAULT_CONTEXT_BEFORE);
     this.after = Math.max(0, options.contextAfter ?? DEFAULT_CONTEXT_AFTER);
     this.lookahead = Math.max(0, options.lookahead ?? DEFAULT_LOOKAHEAD);
     this.firstBudget = options.firstSoundBudgetMs ?? DEFAULT_FIRST_SOUND_BUDGET_MS;
     this.steadyBudget = options.steadyBudgetMs ?? DEFAULT_STEADY_BUDGET_MS;
+    this.startupGrace = Math.max(0, options.startupGraceMs ?? DEFAULT_STARTUP_GRACE_MS);
     this.maxFailures = Math.max(1, options.maxConsecutiveFailures ?? DEFAULT_MAX_CONSECUTIVE_FAILURES);
     this.gpuYield = options.gpuYield ?? createGpuYieldProbe();
   }
 
   // -- public ---------------------------------------------------------------
+
+  /** Preloads the model (called by `open`). Never waited for, never rejects; game mode, a suspended session and an empty document skip it. */
+  warmUp(): void {
+    const llm = this.options.llm;
+    if (this.options.warmup === false || llm.warmup === undefined || this.blocks.length === 0 || this.blockedReason() !== undefined) {
+      return;
+    }
+    llm.warmup(this.abort.signal).then(
+      () => this.options.trace?.({ type: "warmup", ok: true }),
+      (error: unknown) => {
+        const reason = classifyLlmFailure(error, this.abort.signal);
+        if (reason === "egress-denied") {
+          this.suspend(reason);
+        }
+        this.options.trace?.({ type: "warmup", ok: false, degradedReason: reason });
+      }
+    );
+  }
 
   /**
    * The cues to read for `segmentId`, at most one wait budget from now. Never
@@ -229,10 +293,17 @@ export class DirectionSession {
     }
     const window = this.windowOf(index);
     this.anticipate(index);
+    if (window < 0) {
+      // Lead segment: read neutrally at once, while the first window is computed.
+      this.asked = true;
+      return this.neutralFor(block, "late");
+    }
     const slot = this.slots.get(window);
     let result = this.resolved.get(window);
     if (result === undefined && slot !== undefined) {
-      const budget = this.late.has(window) ? 0 : this.asked ? this.steadyBudget : this.firstBudget;
+      // Start-up: nothing waits for the first window, the reading goes on neutrally and the directed cues take over as soon as they exist.
+      const startingUp = this.lead > 0 && !this.warm;
+      const budget = this.late.has(window) ? 0 : startingUp ? this.startupGrace : this.asked ? this.steadyBudget : this.firstBudget;
       this.asked = true;
       const waited = await waitFor(slot, budget, signal);
       if ("value" in waited) {
@@ -279,13 +350,18 @@ export class DirectionSession {
 
   // -- windows --------------------------------------------------------------
 
+  /** Window of a segment; -1 for a lead segment (read neutrally, in no window). */
   private windowOf(index: number): number {
-    return Math.floor(index / this.windowSize);
+    if (index < this.lead) {
+      return -1;
+    }
+    const rel = index - this.lead;
+    return rel < this.firstSize ? 0 : 1 + Math.floor((rel - this.firstSize) / this.windowSize);
   }
 
   private range(window: number): { start: number; end: number } {
-    const start = window * this.windowSize;
-    return { start, end: Math.min(this.blocks.length, start + this.windowSize) };
+    const start = window === 0 ? this.lead : this.lead + this.firstSize + (window - 1) * this.windowSize;
+    return { start, end: Math.min(this.blocks.length, start + (window === 0 ? this.firstSize : this.windowSize)) };
   }
 
   /** Schedules the window of `index` and those up to `lookahead` segments further (only its own window in game mode). */
@@ -294,7 +370,9 @@ export class DirectionSession {
       return;
     }
     const last = Math.min(this.blocks.length - 1, index + (this.gpuYield() ? 0 : this.lookahead));
-    for (let window = this.windowOf(index); window <= this.windowOf(last); window += 1) {
+    // A lead segment has no window of its own: asking for it starts the first directed window.
+    const first = Math.max(0, this.windowOf(index));
+    for (let window = first; window <= Math.max(first, this.windowOf(last)); window += 1) {
       this.ensure(window);
     }
   }
@@ -306,6 +384,7 @@ export class DirectionSession {
     const run = this.chain.then(() => this.compute(window));
     this.chain = run;
     const slot = run.then((result) => {
+      this.warm = true;
       if (result.transient) {
         if (this.slots.get(window) === slot) {
           this.slots.delete(window);

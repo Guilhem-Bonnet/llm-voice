@@ -39,3 +39,18 @@
 | CL-5b-012 | `test:unit` 1 809 verts (avant 1 775), `typecheck` et `lint` sans erreur | résultat | dernière exécution de la session | prouvé | élevée | utiliser |
 | CL-5b-013 | Cause des ~8 s de génération non expliquées par le débit en jetons | hypothèse | `total_duration` p50 12,7 s contre ~4,3 s attendues | non vérifié | — | investiguer en carte 6 |
 | CL-5b-014 | `src/core/direction.ts`, bible, controller, translator, `Pipeline.ts` non modifiés ; carte non déplacée ; rien commité | fait | aucun Edit sur ces fichiers, aucune commande `task move/close`, aucun `git commit` | prouvé | élevée | utiliser |
+
+## Partie 5b-bis
+
+| ID | Affirmation | Type | Source ou preuve | Statut | Confiance | Décision |
+|---|---|---|---|---|---|---|
+| CL-5bb-001 | La lecture démarre sans attente : les segments de tête et ceux d'une fenêtre non prête sont lus en neutre, le relais vers la direction est transparent, le préchargement part à l'ouverture (jamais en mode jeu) | fait | `startup.test.ts` (15) ; mutants « attente de démarrage retirée » (2 échecs), « préchargement en mode jeu » (1) tués ; premier son 0,2 à 0,7 ms mesuré | prouvé | élevée | utiliser |
+| CL-5bb-002 | L'analyste sans `format` est valide : lecture tolérante, un seul renvoi, puis repli | fait / résultat | `tolerantJson.test.ts`, `ollama.test.ts` ; mutant « renvoi retiré » tué (3) ; 6/6 analyses valides, appel 2,0 s contre 4,1 s | prouvé (petit échantillon) | moyenne | utiliser, garder `format` du metteur en scène |
+| CL-5bb-003 | La version des prompts (`analyst-2.director-3`) est dans la clé de cache : une autre version ne sert pas le cache | fait | `startup.test.ts` « prompt version in the cache key » | prouvé | élevée | utiliser |
+| CL-5bb-004 | Les partitions director-3 sont expressives pour documentation et réponse d'IA (plus de partition plate) et le tempo du conte n'est plus biaisé | résultat | émotion, tempo, pause à 100 % ; tempo > 1,1 : 25 % contre 89 % ; 10 libellés dans le conte | prouvé structurellement ; qualité sonore non jugée | moyenne | écoute en carte 6 |
+| CL-5bb-005 | Le récit et les répliques sont séparés en consignes distinctes | résultat | 12,5 % des segments du conte à plusieurs locuteurs (0 % en baseline) | **partiellement atteint** | moyenne | à retravailler |
+| CL-5bb-006 | Le premier segment dirigé arrive plus tôt qu'en baseline | hypothèse | 34,4 s p50 (32,2 à 41,2) contre 22,3 s ; 48,7 à 71,0 s avec une tête de 1 | **réfutée** | élevée (6 mesures, un modèle) | traiter : tête plus longue, fenêtres courtes au démarrage, prompt plus court |
+| CL-5bb-007 | La validité des fenêtres est maintenue avec le prompt riche | hypothèse | 1re réponse acceptée 7/16 (12/16 en baseline), repli 2/16 (1/16) | **réfutée** en 1re réponse ; fenêtres dirigées 14/16 (88 %) | moyenne | surveiller ; prompt à alléger ou exemple de couverture |
+| CL-5bb-008 | `test:unit` 1 845 verts (avant 1 809), `typecheck` et `lint` sans erreur | résultat | dernière exécution de la session | prouvé | élevée | utiliser |
+| CL-5bb-009 | Un délai de démarrage nul lit en neutre un document entièrement en cache | fait | 1re mesure (`director-3-lead1`) : 0 cue en relecture ; corrigé par `startupGraceMs` 150 ms, test « re-read » sans `idle()` | prouvé, corrigé | élevée | utiliser |
+| CL-5bb-010 | Aucun module protégé modifié, carte non déplacée, rien commité | fait | aucun Edit hors `vscode-extension/{src/direction/director,test,scripts/direction-eval}` | prouvé | élevée | utiliser |

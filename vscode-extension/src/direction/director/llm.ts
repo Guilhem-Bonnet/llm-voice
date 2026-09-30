@@ -94,6 +94,13 @@ export interface DirectionLlm {
   analyze(request: AnalysisLlmRequest, signal?: AbortSignal): Promise<unknown>;
   /** One window: `{ cues, facts? }` (see `RawDirectionOutputSchema` and `StageDirector`). */
   direct(request: DirectionLlmRequest, signal?: AbortSignal): Promise<unknown>;
+  /**
+   * Optional: loads the model so that the first real call does not pay for it.
+   * Sends no text of the document. The pipeline calls it when a directed
+   * reading is opened, never waits for it and ignores its failure (an egress
+   * refusal excepted: it suspends direction like any other call).
+   */
+  warmup?(signal?: AbortSignal): Promise<void>;
 }
 
 /** Maps any thrown value to the degraded reason it stands for. `signal` is the caller's, to tell a cancel from a timeout. */
