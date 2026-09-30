@@ -1,0 +1,159 @@
+{
+  "date": "2026-09-30T02:07:13.631Z",
+  "model": "qwen2.5:7b",
+  "status": "complete",
+  "decompose": [
+    {
+      "kind": "analyst",
+      "text": "conte",
+      "wallMs": 6591,
+      "totalMs": 6589.5,
+      "loadMs": 89.3,
+      "promptTok": 1174,
+      "promptMs": 252.9,
+      "genTok": 217,
+      "genMs": 2289.1,
+      "tokPerS": 94.8,
+      "done": "stop",
+      "chars": 670,
+      "valid": {
+        "json": true
+      }
+    },
+    {
+      "kind": "analyst",
+      "text": "doc-technique",
+      "wallMs": 3577,
+      "totalMs": 3575,
+      "loadMs": 77.8,
+      "promptTok": 937,
+      "promptMs": 169.4,
+      "genTok": 110,
+      "genMs": 1145.6,
+      "tokPerS": 96,
+      "done": "stop",
+      "chars": 399,
+      "valid": {
+        "json": true
+      }
+    },
+    {
+      "kind": "analyst",
+      "text": "reponse-ia",
+      "wallMs": 3580,
+      "totalMs": 3578.4,
+      "loadMs": 86.9,
+      "promptTok": 828,
+      "promptMs": 132.1,
+      "genTok": 114,
+      "genMs": 1184.4,
+      "tokPerS": 96.2,
+      "done": "stop",
+      "chars": 435,
+      "valid": {
+        "json": true
+      }
+    },
+    {
+      "kind": "director",
+      "text": "conte",
+      "wallMs": 26939,
+      "totalMs": 26937.6,
+      "loadMs": 79,
+      "promptTok": 1621,
+      "promptMs": 568.8,
+      "genTok": 856,
+      "genMs": 9240,
+      "tokPerS": 92.6,
+      "done": "stop",
+      "chars": 2586,
+      "valid": {
+        "json": true,
+        "accepted": true,
+        "faithful": true,
+        "codes": []
+      }
+    },
+    {
+      "kind": "director",
+      "text": "conte",
+      "wallMs": 28424,
+      "totalMs": 28421.6,
+      "loadMs": 82,
+      "promptTok": 1621,
+      "promptMs": 11.2,
+      "genTok": 926,
+      "genMs": 9996.6,
+      "tokPerS": 92.6,
+      "done": "stop",
+      "chars": 2769,
+      "valid": {
+        "json": true,
+        "accepted": true,
+        "faithful": true,
+        "codes": []
+      }
+    },
+    {
+      "kind": "director",
+      "text": "doc-technique",
+      "wallMs": 12198,
+      "totalMs": 12195.7,
+      "loadMs": 78.5,
+      "promptTok": 1457,
+      "promptMs": 216,
+      "genTok": 391,
+      "genMs": 4195.3,
+      "tokPerS": 93.2,
+      "done": "stop",
+      "chars": 1343,
+      "valid": {
+        "json": true,
+        "accepted": true,
+        "faithful": true,
+        "codes": []
+      }
+    },
+    {
+      "kind": "director",
+      "text": "doc-technique",
+      "wallMs": 11002,
+      "totalMs": 11000.8,
+      "loadMs": 97.3,
+      "promptTok": 1457,
+      "promptMs": 11.1,
+      "genTok": 364,
+      "genMs": 3901.5,
+      "tokPerS": 93.3,
+      "done": "stop",
+      "chars": 1221,
+      "valid": {
+        "json": true,
+        "accepted": true,
+        "faithful": true,
+        "codes": []
+      }
+    },
+    {
+      "kind": "director",
+      "text": "reponse-ia",
+      "wallMs": 13142,
+      "totalMs": 13140.2,
+      "loadMs": 80,
+      "promptTok": 1377,
+      "promptMs": 181.7,
+      "genTok": 423,
+      "genMs": 4529.9,
+      "tokPerS": 93.4,
+      "done": "stop",
+      "chars": 1438,
+      "valid": {
+        "json": true,
+        "accepted": true,
+        "faithful": true,
+        "codes": []
+      }
+    }
+  ],
+  "remedies": []
+}

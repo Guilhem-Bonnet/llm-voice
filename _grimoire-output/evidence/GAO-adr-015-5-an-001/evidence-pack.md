@@ -124,6 +124,12 @@ Limite du script : la simulation plafonne l'attente du premier son au budget (10
 3. `num_ctx` explicite (8192) : Ollama abandonne sinon silencieusement le début d'un prompt trop long.
 4. Tests du client en un fichier unique `ollama.test.ts`, avec le serveur simulé existant (réponse constante) plus un garde à `fetch` enregistreur.
 
+### Diagnostic de latence (`direction-eval/latency-diagnosis.md`, 2026-09-29)
+
+- Décomposition (médiane) : appel du metteur en scène 13,1 s = 0,08 s de chargement + 0,18 s de préremplissage + 4,5 s de `eval_duration` + 8,3 s hors `eval_duration`. Coût réel 30 ms par jeton généré (10,7 ms comptés), le « 93 jetons/s » de la baseline est trompeur (environ 33 jetons/s réels). Cause : la contrainte `format` (grammaire JSON Schema) ; `format: "json"` seul ne change rien (32,7 ms/jeton).
+- Remèdes mesurés (1re fenêtre du conte, 3 répétitions) : sans `format` 12 ms/jeton (22,9 s vers 11,8 s), mais valide 2/3 ; fenêtre de 2 segments avec format 7,4 s (-68 %), valide 3/3 ; `num_ctx` réduit et qwen2.5:3b sans effet notable ; fusion analyste + fenêtre 15,3 s (équivalent à analyste + fenêtre de 2 : 14,0 s) ; à froid le chargement coûte 1,7 s (préchargement 1,85 s) ; prompt allégé sans format 4,7 s mais partitions sans émotion, tempo ni pause (rejeté).
+- Stratégie recommandée : premier segment en lecture neutre à t = 0, préchargement à l'ouverture, analyse + fenêtre de 2 segments prête à environ 14 s sur le conte (10 s avec analyste sans format), soit avant la fin de la lecture neutre des segments 1 et 2 (18,5 s) : premier segment dirigé à environ 18,5 s sans trou, contre 22 s p50 (27 s sur le conte). Piste suivante : retrait de la grammaire avec analyseur tolérant, à mesurer dans le pipeline.
+
 ### Non fait / non vérifié
 
 - Branchement dans `Pipeline.ts` (5c), badge mode jeu, moteur CPU, choix de voix.

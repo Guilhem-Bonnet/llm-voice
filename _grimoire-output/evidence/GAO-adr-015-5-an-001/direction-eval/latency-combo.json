@@ -1,0 +1,739 @@
+{
+  "date": "2026-09-30T02:19:40.861Z",
+  "model": "qwen2.5:7b",
+  "status": "complete",
+  "decompose": [],
+  "remedies": [
+    {
+      "name": "conte / analyste sans format",
+      "runs": [
+        {
+          "wallMs": 3494,
+          "totalMs": 3492.3,
+          "loadMs": 78.2,
+          "promptTok": 1174,
+          "promptMs": 403.7,
+          "genTok": 255,
+          "genMs": 2651.3,
+          "tokPerS": 96.2,
+          "done": "stop",
+          "chars": 804,
+          "valid": {
+            "json": true
+          }
+        },
+        {
+          "wallMs": 3028,
+          "totalMs": 3026.1,
+          "loadMs": 75,
+          "promptTok": 1174,
+          "promptMs": 12.2,
+          "genTok": 249,
+          "genMs": 2585.3,
+          "tokPerS": 96.3,
+          "done": "stop",
+          "chars": 782,
+          "valid": {
+            "json": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "conte / analyste avec format (référence)",
+      "runs": [
+        {
+          "wallMs": 7911,
+          "totalMs": 7910,
+          "loadMs": 78.4,
+          "promptTok": 1174,
+          "promptMs": 11.3,
+          "genTok": 266,
+          "genMs": 2840.4,
+          "tokPerS": 93.6,
+          "done": "stop",
+          "chars": 825,
+          "valid": {
+            "json": true
+          }
+        },
+        {
+          "wallMs": 6602,
+          "totalMs": 6599.3,
+          "loadMs": 81.7,
+          "promptTok": 1174,
+          "promptMs": 10.9,
+          "genTok": 220,
+          "genMs": 2322.5,
+          "tokPerS": 94.7,
+          "done": "stop",
+          "chars": 676,
+          "valid": {
+            "json": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "conte / direction C2 : allégé, sans format, fenêtre 4",
+      "runs": [
+        {
+          "wallMs": 4831,
+          "totalMs": 4829.5,
+          "loadMs": 76,
+          "promptTok": 454,
+          "promptMs": 156.2,
+          "genTok": 394,
+          "genMs": 4047.4,
+          "tokPerS": 97.3,
+          "done": "stop",
+          "chars": 1230,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 4715,
+          "totalMs": 4713.3,
+          "loadMs": 79.9,
+          "promptTok": 454,
+          "promptMs": 10.9,
+          "genTok": 394,
+          "genMs": 4053.3,
+          "tokPerS": 97.2,
+          "done": "stop",
+          "chars": 1230,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "conte / direction C3 : allégé, sans format, fenêtre 2",
+      "runs": [
+        {
+          "wallMs": 2236,
+          "totalMs": 2234.8,
+          "loadMs": 77,
+          "promptTok": 303,
+          "promptMs": 98.5,
+          "genTok": 172,
+          "genMs": 1764.5,
+          "tokPerS": 97.5,
+          "done": "stop",
+          "chars": 527,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 2140,
+          "totalMs": 2139.6,
+          "loadMs": 78,
+          "promptTok": 303,
+          "promptMs": 11.1,
+          "genTok": 172,
+          "genMs": 1756.9,
+          "tokPerS": 97.9,
+          "done": "stop",
+          "chars": 527,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "conte / direction E2 : consigne d'origine, sans format, fenêtre 2",
+      "runs": [
+        {
+          "wallMs": 6267,
+          "totalMs": 6266,
+          "loadMs": 78,
+          "promptTok": 1500,
+          "promptMs": 516.1,
+          "genTok": 471,
+          "genMs": 5013.8,
+          "tokPerS": 93.9,
+          "done": "stop",
+          "chars": 1490,
+          "valid": {
+            "json": false,
+            "accepted": false,
+            "faithful": false,
+            "codes": [
+              "not-json"
+            ]
+          }
+        },
+        {
+          "wallMs": 3025,
+          "totalMs": 3023.4,
+          "loadMs": 76,
+          "promptTok": 1500,
+          "promptMs": 11.1,
+          "genTok": 246,
+          "genMs": 2590,
+          "tokPerS": 95,
+          "done": "stop",
+          "chars": 771,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "conte / direction référence : format schéma, fenêtre 4",
+      "runs": [
+        {
+          "wallMs": 35107,
+          "totalMs": 35106,
+          "loadMs": 81.7,
+          "promptTok": 1657,
+          "promptMs": 235.3,
+          "genTok": 1127,
+          "genMs": 12267.9,
+          "tokPerS": 91.9,
+          "done": "stop",
+          "chars": 3416,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 33545,
+          "totalMs": 33543.2,
+          "loadMs": 79.8,
+          "promptTok": 1657,
+          "promptMs": 11.2,
+          "genTok": 1084,
+          "genMs": 11765.7,
+          "tokPerS": 92.1,
+          "done": "stop",
+          "chars": 3316,
+          "valid": {
+            "json": true,
+            "accepted": false,
+            "faithful": false,
+            "codes": [
+              "schema-invalid"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "doc-technique / analyste sans format",
+      "runs": [
+        {
+          "wallMs": 1804,
+          "totalMs": 1803,
+          "loadMs": 83.3,
+          "promptTok": 937,
+          "promptMs": 307,
+          "genTok": 120,
+          "genMs": 1231.5,
+          "tokPerS": 97.4,
+          "done": "stop",
+          "chars": 405,
+          "valid": {
+            "json": true
+          }
+        },
+        {
+          "wallMs": 1483,
+          "totalMs": 1482.2,
+          "loadMs": 97,
+          "promptTok": 937,
+          "promptMs": 11.6,
+          "genTok": 117,
+          "genMs": 1197.3,
+          "tokPerS": 97.7,
+          "done": "stop",
+          "chars": 402,
+          "valid": {
+            "json": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "doc-technique / analyste avec format (référence)",
+      "runs": [
+        {
+          "wallMs": 3638,
+          "totalMs": 3636.9,
+          "loadMs": 76.8,
+          "promptTok": 937,
+          "promptMs": 10.9,
+          "genTok": 118,
+          "genMs": 1227.5,
+          "tokPerS": 96.1,
+          "done": "stop",
+          "chars": 394,
+          "valid": {
+            "json": true
+          }
+        },
+        {
+          "wallMs": 4672,
+          "totalMs": 4671.2,
+          "loadMs": 76.4,
+          "promptTok": 937,
+          "promptMs": 11.2,
+          "genTok": 153,
+          "genMs": 1595.4,
+          "tokPerS": 95.9,
+          "done": "stop",
+          "chars": 551,
+          "valid": {
+            "json": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "doc-technique / direction C2 : allégé, sans format, fenêtre 4",
+      "runs": [
+        {
+          "wallMs": 3682,
+          "totalMs": 3680.1,
+          "loadMs": 79.9,
+          "promptTok": 341,
+          "promptMs": 121.1,
+          "genTok": 298,
+          "genMs": 3057.8,
+          "tokPerS": 97.5,
+          "done": "stop",
+          "chars": 1003,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 3569,
+          "totalMs": 3568.3,
+          "loadMs": 76.6,
+          "promptTok": 341,
+          "promptMs": 11.2,
+          "genTok": 298,
+          "genMs": 3058,
+          "tokPerS": 97.4,
+          "done": "stop",
+          "chars": 1003,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "doc-technique / direction C3 : allégé, sans format, fenêtre 2",
+      "runs": [
+        {
+          "wallMs": 2053,
+          "totalMs": 2052.4,
+          "loadMs": 80.1,
+          "promptTok": 277,
+          "promptMs": 24.1,
+          "genTok": 163,
+          "genMs": 1665.8,
+          "tokPerS": 97.9,
+          "done": "stop",
+          "chars": 528,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 2029,
+          "totalMs": 2027.9,
+          "loadMs": 75.9,
+          "promptTok": 277,
+          "promptMs": 10.8,
+          "genTok": 163,
+          "genMs": 1663.1,
+          "tokPerS": 98,
+          "done": "stop",
+          "chars": 528,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "doc-technique / direction E2 : consigne d'origine, sans format, fenêtre 2",
+      "runs": [
+        {
+          "wallMs": 2439,
+          "totalMs": 2437.7,
+          "loadMs": 76.6,
+          "promptTok": 1305,
+          "promptMs": 445.2,
+          "genTok": 162,
+          "genMs": 1687.1,
+          "tokPerS": 96,
+          "done": "stop",
+          "chars": 517,
+          "valid": {
+            "json": false,
+            "accepted": false,
+            "faithful": false,
+            "codes": [
+              "not-json"
+            ]
+          }
+        },
+        {
+          "wallMs": 2013,
+          "totalMs": 2011.9,
+          "loadMs": 81.2,
+          "promptTok": 1305,
+          "promptMs": 10.7,
+          "genTok": 162,
+          "genMs": 1688.9,
+          "tokPerS": 95.9,
+          "done": "stop",
+          "chars": 517,
+          "valid": {
+            "json": false,
+            "accepted": false,
+            "faithful": false,
+            "codes": [
+              "not-json"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "doc-technique / direction référence : format schéma, fenêtre 4",
+      "runs": [
+        {
+          "wallMs": 11759,
+          "totalMs": 11757.9,
+          "loadMs": 95.2,
+          "promptTok": 1434,
+          "promptMs": 181.5,
+          "genTok": 377,
+          "genMs": 4039.5,
+          "tokPerS": 93.3,
+          "done": "stop",
+          "chars": 1317,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 7337,
+          "totalMs": 7335.3,
+          "loadMs": 83.5,
+          "promptTok": 1434,
+          "promptMs": 12.2,
+          "genTok": 239,
+          "genMs": 2552,
+          "tokPerS": 93.7,
+          "done": "stop",
+          "chars": 792,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": false,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "reponse-ia / analyste sans format",
+      "runs": [
+        {
+          "wallMs": 1580,
+          "totalMs": 1579.2,
+          "loadMs": 77,
+          "promptTok": 828,
+          "promptMs": 275.1,
+          "genTok": 105,
+          "genMs": 1071.7,
+          "tokPerS": 98,
+          "done": "stop",
+          "chars": 366,
+          "valid": {
+            "json": true
+          }
+        },
+        {
+          "wallMs": 1469,
+          "totalMs": 1467.7,
+          "loadMs": 81.1,
+          "promptTok": 828,
+          "promptMs": 10.5,
+          "genTok": 118,
+          "genMs": 1204.8,
+          "tokPerS": 97.9,
+          "done": "stop",
+          "chars": 421,
+          "valid": {
+            "json": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "reponse-ia / analyste avec format (référence)",
+      "runs": [
+        {
+          "wallMs": 4913,
+          "totalMs": 4911.7,
+          "loadMs": 85.3,
+          "promptTok": 828,
+          "promptMs": 11,
+          "genTok": 163,
+          "genMs": 1697.6,
+          "tokPerS": 96,
+          "done": "stop",
+          "chars": 545,
+          "valid": {
+            "json": true
+          }
+        },
+        {
+          "wallMs": 3254,
+          "totalMs": 3252.5,
+          "loadMs": 79.6,
+          "promptTok": 828,
+          "promptMs": 10.8,
+          "genTok": 109,
+          "genMs": 1129.8,
+          "tokPerS": 96.5,
+          "done": "stop",
+          "chars": 381,
+          "valid": {
+            "json": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "reponse-ia / direction C2 : allégé, sans format, fenêtre 4",
+      "runs": [
+        {
+          "wallMs": 4762,
+          "totalMs": 4761.3,
+          "loadMs": 78.2,
+          "promptTok": 425,
+          "promptMs": 134.6,
+          "genTok": 386,
+          "genMs": 3981.9,
+          "tokPerS": 96.9,
+          "done": "stop",
+          "chars": 1327,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 4605,
+          "totalMs": 4603.2,
+          "loadMs": 80.5,
+          "promptTok": 425,
+          "promptMs": 11.3,
+          "genTok": 386,
+          "genMs": 3963.3,
+          "tokPerS": 97.4,
+          "done": "stop",
+          "chars": 1327,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "reponse-ia / direction C3 : allégé, sans format, fenêtre 2",
+      "runs": [
+        {
+          "wallMs": 2363,
+          "totalMs": 2362.2,
+          "loadMs": 77.1,
+          "promptTok": 298,
+          "promptMs": 24,
+          "genTok": 189,
+          "genMs": 1932.1,
+          "tokPerS": 97.8,
+          "done": "stop",
+          "chars": 634,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 2359,
+          "totalMs": 2357.9,
+          "loadMs": 79.7,
+          "promptTok": 298,
+          "promptMs": 11.2,
+          "genTok": 189,
+          "genMs": 1932.6,
+          "tokPerS": 97.8,
+          "done": "stop",
+          "chars": 634,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "reponse-ia / direction E2 : consigne d'origine, sans format, fenêtre 2",
+      "runs": [
+        {
+          "wallMs": 2469,
+          "totalMs": 2467.7,
+          "loadMs": 76.6,
+          "promptTok": 1373,
+          "promptMs": 475.5,
+          "genTok": 161,
+          "genMs": 1678.9,
+          "tokPerS": 95.9,
+          "done": "stop",
+          "chars": 566,
+          "valid": {
+            "json": true,
+            "accepted": false,
+            "faithful": false,
+            "codes": [
+              "uncovered-source"
+            ]
+          }
+        },
+        {
+          "wallMs": 2650,
+          "totalMs": 2649.1,
+          "loadMs": 80.5,
+          "promptTok": 1373,
+          "promptMs": 11.3,
+          "genTok": 215,
+          "genMs": 2247.7,
+          "tokPerS": 95.7,
+          "done": "stop",
+          "chars": 712,
+          "valid": {
+            "json": false,
+            "accepted": false,
+            "faithful": false,
+            "codes": [
+              "not-json"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "reponse-ia / direction référence : format schéma, fenêtre 4",
+      "runs": [
+        {
+          "wallMs": 12738,
+          "totalMs": 12736.8,
+          "loadMs": 74.9,
+          "promptTok": 1381,
+          "promptMs": 155.4,
+          "genTok": 410,
+          "genMs": 4390.9,
+          "tokPerS": 93.4,
+          "done": "stop",
+          "chars": 1397,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 12910,
+          "totalMs": 12908.5,
+          "loadMs": 78,
+          "promptTok": 1381,
+          "promptMs": 11.1,
+          "genTok": 419,
+          "genMs": 4485.7,
+          "tokPerS": 93.4,
+          "done": "stop",
+          "chars": 1426,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    }
+  ],
+  "preload": {
+    "wallMs": 1849,
+    "loadMs": 1759.5
+  },
+  "cold": {
+    "wallMs": 6451,
+    "totalMs": 6449.9,
+    "loadMs": 1670.8,
+    "promptTok": 454,
+    "promptMs": 160.6,
+    "genTok": 394,
+    "genMs": 4055.3,
+    "tokPerS": 97.2,
+    "done": "stop",
+    "chars": 1230,
+    "note": "C2 à froid, modèle déchargé"
+  }
+}
