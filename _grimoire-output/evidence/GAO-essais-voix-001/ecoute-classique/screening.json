@@ -1,0 +1,3005 @@
+[
+ {
+  "name": "0a67_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 12.16,
+   "speech_ratio": 0.54,
+   "pause_count": 10,
+   "pause_total_s": 2.79,
+   "pitch_hz": 130.43,
+   "pitch_spread_hz": 51.93,
+   "loudness_spread_db": 5.69
+  }
+ },
+ {
+  "name": "1410_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 12.24,
+   "speech_ratio": 0.49,
+   "pause_count": 16,
+   "pause_total_s": 4.29,
+   "pitch_hz": 134.08,
+   "pitch_spread_hz": 31.41,
+   "loudness_spread_db": 5.46
+  }
+ },
+ {
+  "name": "1dd0_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.28,
+   "speech_ratio": 0.59,
+   "pause_count": 7,
+   "pause_total_s": 2.25,
+   "pitch_hz": 136.36,
+   "pitch_spread_hz": 14.04,
+   "loudness_spread_db": 5.48
+  }
+ },
+ {
+  "name": "2181_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 7.92,
+   "speech_ratio": 0.66,
+   "pause_count": 3,
+   "pause_total_s": 1.23,
+   "pitch_hz": 120.0,
+   "pitch_spread_hz": 41.38,
+   "loudness_spread_db": 5.18
+  }
+ },
+ {
+  "name": "245e_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 9.84,
+   "speech_ratio": 0.56,
+   "pause_count": 6,
+   "pause_total_s": 2.25,
+   "pitch_hz": 130.08,
+   "pitch_spread_hz": 26.21,
+   "loudness_spread_db": 5.56
+  }
+ },
+ {
+  "name": "29da_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 12.8,
+   "speech_ratio": 0.66,
+   "pause_count": 7,
+   "pause_total_s": 1.98,
+   "pitch_hz": 126.32,
+   "pitch_spread_hz": 35.85,
+   "loudness_spread_db": 5.67
+  }
+ },
+ {
+  "name": "30c5_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.7,
+   "pause_count": 4,
+   "pause_total_s": 1.26,
+   "pitch_hz": 111.11,
+   "pitch_spread_hz": 30.98,
+   "loudness_spread_db": 5.34
+  }
+ },
+ {
+  "name": "3973_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.28,
+   "speech_ratio": 0.7,
+   "pause_count": 3,
+   "pause_total_s": 1.29,
+   "pitch_hz": 205.13,
+   "pitch_spread_hz": 32.82,
+   "loudness_spread_db": 5.38
+  }
+ },
+ {
+  "name": "4189_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.67,
+   "pause_count": 3,
+   "pause_total_s": 1.35,
+   "pitch_hz": 131.87,
+   "pitch_spread_hz": 36.07,
+   "loudness_spread_db": 5.43
+  }
+ },
+ {
+  "name": "468c_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.24,
+   "speech_ratio": 0.58,
+   "pause_count": 10,
+   "pause_total_s": 2.58,
+   "pitch_hz": 127.66,
+   "pitch_spread_hz": 54.72,
+   "loudness_spread_db": 5.87
+  }
+ },
+ {
+  "name": "4b13_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.2,
+   "speech_ratio": 0.66,
+   "pause_count": 8,
+   "pause_total_s": 2.34,
+   "pitch_hz": 137.14,
+   "pitch_spread_hz": 33.17,
+   "loudness_spread_db": 5.45
+  }
+ },
+ {
+  "name": "4b70_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.69,
+   "pause_count": 4,
+   "pause_total_s": 1.11,
+   "pitch_hz": 196.72,
+   "pitch_spread_hz": 28.27,
+   "loudness_spread_db": 5.14
+  }
+ },
+ {
+  "name": "5b55_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.32,
+   "speech_ratio": 0.67,
+   "pause_count": 3,
+   "pause_total_s": 1.05,
+   "pitch_hz": 139.13,
+   "pitch_spread_hz": 25.25,
+   "loudness_spread_db": 5.93
+  }
+ },
+ {
+  "name": "6148_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.92,
+   "speech_ratio": 0.59,
+   "pause_count": 5,
+   "pause_total_s": 1.83,
+   "pitch_hz": 114.29,
+   "pitch_spread_hz": 31.47,
+   "loudness_spread_db": 4.94
+  }
+ },
+ {
+  "name": "617b_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 8.96,
+   "speech_ratio": 0.59,
+   "pause_count": 5,
+   "pause_total_s": 1.86,
+   "pitch_hz": 129.38,
+   "pitch_spread_hz": 14.05,
+   "loudness_spread_db": 5.88
+  }
+ },
+ {
+  "name": "7020_enhanced",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 7.76,
+   "speech_ratio": 0.72,
+   "pause_count": 1,
+   "pause_total_s": 0.51,
+   "pitch_hz": 87.59,
+   "pitch_spread_hz": 37.16,
+   "loudness_spread_db": 4.56
+  }
+ },
+ {
+  "name": "7909_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 8.4,
+   "speech_ratio": 0.68,
+   "pause_count": 3,
+   "pause_total_s": 1.08,
+   "pitch_hz": 101.69,
+   "pitch_spread_hz": 26.79,
+   "loudness_spread_db": 5.39
+  }
+ },
+ {
+  "name": "7b2b_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 12.08,
+   "speech_ratio": 0.5,
+   "pause_count": 14,
+   "pause_total_s": 4.2,
+   "pitch_hz": 147.69,
+   "pitch_spread_hz": 31.48,
+   "loudness_spread_db": 4.89
+  }
+ },
+ {
+  "name": "8935_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.52,
+   "speech_ratio": 0.68,
+   "pause_count": 5,
+   "pause_total_s": 1.32,
+   "pitch_hz": 102.56,
+   "pitch_spread_hz": 46.43,
+   "loudness_spread_db": 5.38
+  }
+ },
+ {
+  "name": "8dc9_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.16,
+   "speech_ratio": 0.57,
+   "pause_count": 9,
+   "pause_total_s": 2.34,
+   "pitch_hz": 121.21,
+   "pitch_spread_hz": 45.54,
+   "loudness_spread_db": 5.46
+  }
+ },
+ {
+  "name": "8f15_enhanced",
+  "wer": 0.25925925925925924,
+  "measures": {
+   "duration_s": 11.28,
+   "speech_ratio": 0.69,
+   "pause_count": 7,
+   "pause_total_s": 2.01,
+   "pitch_hz": 125.65,
+   "pitch_spread_hz": 39.79,
+   "loudness_spread_db": 5.3
+  }
+ },
+ {
+  "name": "92f0_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.64,
+   "speech_ratio": 0.63,
+   "pause_count": 7,
+   "pause_total_s": 2.4,
+   "pitch_hz": 99.38,
+   "pitch_spread_hz": 28.14,
+   "loudness_spread_db": 5.42
+  }
+ },
+ {
+  "name": "9a2e_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 12.56,
+   "speech_ratio": 0.56,
+   "pause_count": 14,
+   "pause_total_s": 3.57,
+   "pitch_hz": 134.83,
+   "pitch_spread_hz": 57.32,
+   "loudness_spread_db": 4.92
+  }
+ },
+ {
+  "name": "9a66_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.48,
+   "speech_ratio": 0.59,
+   "pause_count": 9,
+   "pause_total_s": 2.49,
+   "pitch_hz": 188.98,
+   "pitch_spread_hz": 56.58,
+   "loudness_spread_db": 5.69
+  }
+ },
+ {
+  "name": "AHmad_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.4,
+   "speech_ratio": 0.66,
+   "pause_count": 4,
+   "pause_total_s": 1.65,
+   "pitch_hz": 148.15,
+   "pitch_spread_hz": 20.83,
+   "loudness_spread_db": 4.95
+  }
+ },
+ {
+  "name": "ASEN_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.28,
+   "speech_ratio": 0.62,
+   "pause_count": 11,
+   "pause_total_s": 2.49,
+   "pitch_hz": 123.71,
+   "pitch_spread_hz": 33.46,
+   "loudness_spread_db": 6.06
+  }
+ },
+ {
+  "name": "Aadi_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 11.44,
+   "speech_ratio": 0.56,
+   "pause_count": 10,
+   "pause_total_s": 3.18,
+   "pitch_hz": 131.87,
+   "pitch_spread_hz": 9.57,
+   "loudness_spread_db": 4.94
+  }
+ },
+ {
+  "name": "AbD_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 11.36,
+   "speech_ratio": 0.6,
+   "pause_count": 9,
+   "pause_total_s": 2.76,
+   "pitch_hz": 112.68,
+   "pitch_spread_hz": 56.64,
+   "loudness_spread_db": 5.12
+  }
+ },
+ {
+  "name": "Abhinox_enhanced",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 10.4,
+   "speech_ratio": 0.66,
+   "pause_count": 5,
+   "pause_total_s": 1.71,
+   "pitch_hz": 144.58,
+   "pitch_spread_hz": 19.86,
+   "loudness_spread_db": 5.45
+  }
+ },
+ {
+  "name": "Abo_Ayman_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.84,
+   "speech_ratio": 0.64,
+   "pause_count": 3,
+   "pause_total_s": 1.23,
+   "pitch_hz": 108.6,
+   "pitch_spread_hz": 41.36,
+   "loudness_spread_db": 5.63
+  }
+ },
+ {
+  "name": "Abob_Malay_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.96,
+   "speech_ratio": 0.6,
+   "pause_count": 7,
+   "pause_total_s": 1.98,
+   "pitch_hz": 120.6,
+   "pitch_spread_hz": 47.71,
+   "loudness_spread_db": 4.91
+  }
+ },
+ {
+  "name": "Adarsh_Bulla_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.2,
+   "speech_ratio": 0.54,
+   "pause_count": 6,
+   "pause_total_s": 1.8,
+   "pitch_hz": 131.87,
+   "pitch_spread_hz": 55.91,
+   "loudness_spread_db": 4.9
+  }
+ },
+ {
+  "name": "AgentCobra_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.84,
+   "speech_ratio": 0.65,
+   "pause_count": 10,
+   "pause_total_s": 2.58,
+   "pitch_hz": 145.45,
+   "pitch_spread_hz": 34.32,
+   "loudness_spread_db": 4.68
+  }
+ },
+ {
+  "name": "Ajith_enhanced",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 9.76,
+   "speech_ratio": 0.71,
+   "pause_count": 4,
+   "pause_total_s": 1.26,
+   "pitch_hz": 123.39,
+   "pitch_spread_hz": 26.18,
+   "loudness_spread_db": 5.3
+  }
+ },
+ {
+  "name": "Alejandro_espanol_latino_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 13.04,
+   "speech_ratio": 0.61,
+   "pause_count": 12,
+   "pause_total_s": 2.94,
+   "pitch_hz": 125.65,
+   "pitch_spread_hz": 16.15,
+   "loudness_spread_db": 5.78
+  }
+ },
+ {
+  "name": "Allen_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.96,
+   "speech_ratio": 0.66,
+   "pause_count": 5,
+   "pause_total_s": 2.19,
+   "pitch_hz": 100.84,
+   "pitch_spread_hz": 64.15,
+   "loudness_spread_db": 4.99
+  }
+ },
+ {
+  "name": "AmitNag_enhanced",
+  "wer": 0.7407407407407407,
+  "measures": {
+   "duration_s": 10.48,
+   "speech_ratio": 0.55,
+   "pause_count": 7,
+   "pause_total_s": 3.27,
+   "pitch_hz": 139.53,
+   "pitch_spread_hz": 39.33,
+   "loudness_spread_db": 5.08
+  }
+ },
+ {
+  "name": "Andrea_(Spanish)_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.12,
+   "speech_ratio": 0.58,
+   "pause_count": 4,
+   "pause_total_s": 1.5,
+   "pitch_hz": 177.78,
+   "pitch_spread_hz": 38.49,
+   "loudness_spread_db": 5.88
+  }
+ },
+ {
+  "name": "Andrea_enhanced",
+  "wer": 0.4074074074074074,
+  "measures": {
+   "duration_s": 8.96,
+   "speech_ratio": 0.72,
+   "pause_count": 3,
+   "pause_total_s": 1.17,
+   "pitch_hz": 173.91,
+   "pitch_spread_hz": 25.15,
+   "loudness_spread_db": 5.47
+  }
+ },
+ {
+  "name": "Antoine_Vala_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 7.76,
+   "speech_ratio": 0.59,
+   "pause_count": 4,
+   "pause_total_s": 1.68,
+   "pitch_hz": 149.07,
+   "pitch_spread_hz": 55.52,
+   "loudness_spread_db": 4.91
+  }
+ },
+ {
+  "name": "Antoni_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.8,
+   "speech_ratio": 0.66,
+   "pause_count": 6,
+   "pause_total_s": 1.56,
+   "pitch_hz": 107.62,
+   "pitch_spread_hz": 76.92,
+   "loudness_spread_db": 5.94
+  }
+ },
+ {
+  "name": "Aon_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.68,
+   "speech_ratio": 0.58,
+   "pause_count": 5,
+   "pause_total_s": 1.77,
+   "pitch_hz": 263.74,
+   "pitch_spread_hz": 43.77,
+   "loudness_spread_db": 5.26
+  }
+ },
+ {
+  "name": "Arjun_Z_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.48,
+   "speech_ratio": 0.76,
+   "pause_count": 2,
+   "pause_total_s": 0.51,
+   "pitch_hz": 135.59,
+   "pitch_spread_hz": 25.69,
+   "loudness_spread_db": 5.38
+  }
+ },
+ {
+  "name": "Aryobe_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 11.68,
+   "speech_ratio": 0.62,
+   "pause_count": 11,
+   "pause_total_s": 3.09,
+   "pitch_hz": 118.81,
+   "pitch_spread_hz": 19.47,
+   "loudness_spread_db": 5.57
+  }
+ },
+ {
+  "name": "BLUE_enhanced",
+  "wer": 0.2962962962962963,
+  "measures": {
+   "duration_s": 9.04,
+   "speech_ratio": 0.5,
+   "pause_count": 9,
+   "pause_total_s": 2.37,
+   "pitch_hz": 161.07,
+   "pitch_spread_hz": 44.43,
+   "loudness_spread_db": 4.88
+  }
+ },
+ {
+  "name": "Bijay_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.76,
+   "speech_ratio": 0.71,
+   "pause_count": 4,
+   "pause_total_s": 1.14,
+   "pitch_hz": 184.62,
+   "pitch_spread_hz": 26.42,
+   "loudness_spread_db": 5.17
+  }
+ },
+ {
+  "name": "Blake_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 10.0,
+   "speech_ratio": 0.67,
+   "pause_count": 6,
+   "pause_total_s": 1.74,
+   "pitch_hz": 228.57,
+   "pitch_spread_hz": 39.47,
+   "loudness_spread_db": 5.5
+  }
+ },
+ {
+  "name": "Bobby_McFern_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.84,
+   "speech_ratio": 0.75,
+   "pause_count": 5,
+   "pause_total_s": 1.02,
+   "pitch_hz": 93.75,
+   "pitch_spread_hz": 34.98,
+   "loudness_spread_db": 6.31
+  }
+ },
+ {
+  "name": "Breaking_1_enhanced",
+  "wer": 0.6296296296296297,
+  "measures": {
+   "duration_s": 9.52,
+   "speech_ratio": 0.67,
+   "pause_count": 4,
+   "pause_total_s": 1.8,
+   "pitch_hz": 147.24,
+   "pitch_spread_hz": 42.68,
+   "loudness_spread_db": 6.09
+  }
+ },
+ {
+  "name": "BrokenHypocrite_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.53,
+   "pause_count": 5,
+   "pause_total_s": 1.71,
+   "pitch_hz": 126.32,
+   "pitch_spread_hz": 18.8,
+   "loudness_spread_db": 4.84
+  }
+ },
+ {
+  "name": "Butter_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.16,
+   "speech_ratio": 0.73,
+   "pause_count": 5,
+   "pause_total_s": 1.62,
+   "pitch_hz": 79.6,
+   "pitch_spread_hz": 39.12,
+   "loudness_spread_db": 4.1
+  }
+ },
+ {
+  "name": "CPS_001_enhanced",
+  "wer": 0.2962962962962963,
+  "measures": {
+   "duration_s": 9.84,
+   "speech_ratio": 0.62,
+   "pause_count": 7,
+   "pause_total_s": 2.19,
+   "pitch_hz": 143.71,
+   "pitch_spread_hz": 10.26,
+   "loudness_spread_db": 5.33
+  }
+ },
+ {
+  "name": "Chujus_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.64,
+   "speech_ratio": 0.6,
+   "pause_count": 5,
+   "pause_total_s": 2.16,
+   "pitch_hz": 90.57,
+   "pitch_spread_hz": 69.38,
+   "loudness_spread_db": 6.09
+  }
+ },
+ {
+  "name": "Cicada_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.64,
+   "speech_ratio": 0.66,
+   "pause_count": 6,
+   "pause_total_s": 2.16,
+   "pitch_hz": 148.15,
+   "pitch_spread_hz": 19.91,
+   "loudness_spread_db": 5.31
+  }
+ },
+ {
+  "name": "ClassicWizard_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 7.84,
+   "speech_ratio": 0.54,
+   "pause_count": 5,
+   "pause_total_s": 1.92,
+   "pitch_hz": 115.94,
+   "pitch_spread_hz": 24.58,
+   "loudness_spread_db": 4.94
+  }
+ },
+ {
+  "name": "Curlinvictus_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.72,
+   "speech_ratio": 0.57,
+   "pause_count": 6,
+   "pause_total_s": 1.95,
+   "pitch_hz": 102.13,
+   "pitch_spread_hz": 23.04,
+   "loudness_spread_db": 4.92
+  }
+ },
+ {
+  "name": "Darius_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.04,
+   "speech_ratio": 0.6,
+   "pause_count": 3,
+   "pause_total_s": 1.29,
+   "pitch_hz": 79.34,
+   "pitch_spread_hz": 28.17,
+   "loudness_spread_db": 5.04
+  }
+ },
+ {
+  "name": "Darya_khan_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.88,
+   "speech_ratio": 0.71,
+   "pause_count": 6,
+   "pause_total_s": 1.32,
+   "pitch_hz": 132.6,
+   "pitch_spread_hz": 26.57,
+   "loudness_spread_db": 6.92
+  }
+ },
+ {
+  "name": "Deepak_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 12.16,
+   "speech_ratio": 0.57,
+   "pause_count": 9,
+   "pause_total_s": 2.91,
+   "pitch_hz": 148.15,
+   "pitch_spread_hz": 21.26,
+   "loudness_spread_db": 5.39
+  }
+ },
+ {
+  "name": "Dhruv_Rao_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.96,
+   "speech_ratio": 0.62,
+   "pause_count": 5,
+   "pause_total_s": 1.98,
+   "pitch_hz": 152.87,
+   "pitch_spread_hz": 23.6,
+   "loudness_spread_db": 5.47
+  }
+ },
+ {
+  "name": "Dil_enhanced",
+  "wer": 0.5185185185185185,
+  "measures": {
+   "duration_s": 9.84,
+   "speech_ratio": 0.54,
+   "pause_count": 5,
+   "pause_total_s": 2.61,
+   "pitch_hz": 130.43,
+   "pitch_spread_hz": 25.81,
+   "loudness_spread_db": 5.44
+  }
+ },
+ {
+  "name": "Enrique_(Spanish)_enhanced",
+  "wer": 0.18518518518518517,
+  "measures": {
+   "duration_s": 8.96,
+   "speech_ratio": 0.6,
+   "pause_count": 5,
+   "pause_total_s": 1.8,
+   "pitch_hz": 102.56,
+   "pitch_spread_hz": 28.41,
+   "loudness_spread_db": 5.62
+  }
+ },
+ {
+  "name": "Enrique_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.08,
+   "speech_ratio": 0.62,
+   "pause_count": 6,
+   "pause_total_s": 2.19,
+   "pitch_hz": 103.0,
+   "pitch_spread_hz": 17.95,
+   "loudness_spread_db": 5.73
+  }
+ },
+ {
+  "name": "Erick_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.76,
+   "speech_ratio": 0.7,
+   "pause_count": 4,
+   "pause_total_s": 1.23,
+   "pitch_hz": 114.29,
+   "pitch_spread_hz": 31.24,
+   "loudness_spread_db": 5.69
+  }
+ },
+ {
+  "name": "Ernesto_Y_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 11.12,
+   "speech_ratio": 0.66,
+   "pause_count": 9,
+   "pause_total_s": 2.16,
+   "pitch_hz": 123.08,
+   "pitch_spread_hz": 34.97,
+   "loudness_spread_db": 5.44
+  }
+ },
+ {
+  "name": "Eshan_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.08,
+   "speech_ratio": 0.63,
+   "pause_count": 8,
+   "pause_total_s": 1.77,
+   "pitch_hz": 210.53,
+   "pitch_spread_hz": 22.57,
+   "loudness_spread_db": 4.89
+  }
+ },
+ {
+  "name": "Esteban_Aguirre_Arias_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.52,
+   "speech_ratio": 0.56,
+   "pause_count": 9,
+   "pause_total_s": 3.42,
+   "pitch_hz": 138.73,
+   "pitch_spread_hz": 13.94,
+   "loudness_spread_db": 4.46
+  }
+ },
+ {
+  "name": "Ferdinand_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.48,
+   "speech_ratio": 0.65,
+   "pause_count": 3,
+   "pause_total_s": 1.2,
+   "pitch_hz": 102.56,
+   "pitch_spread_hz": 66.42,
+   "loudness_spread_db": 5.58
+  }
+ },
+ {
+  "name": "FlorDaddy_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.68,
+   "speech_ratio": 0.56,
+   "pause_count": 12,
+   "pause_total_s": 3.3,
+   "pitch_hz": 98.56,
+   "pitch_spread_hz": 53.98,
+   "loudness_spread_db": 5.98
+  }
+ },
+ {
+  "name": "Fred_Mara_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.0,
+   "speech_ratio": 0.71,
+   "pause_count": 2,
+   "pause_total_s": 0.87,
+   "pitch_hz": 129.03,
+   "pitch_spread_hz": 28.08,
+   "loudness_spread_db": 4.71
+  }
+ },
+ {
+  "name": "Giovanne_enhanced",
+  "wer": 0.037037037037037035,
+  "measures": {
+   "duration_s": 8.32,
+   "speech_ratio": 0.62,
+   "pause_count": 3,
+   "pause_total_s": 1.77,
+   "pitch_hz": 142.86,
+   "pitch_spread_hz": 30.36,
+   "loudness_spread_db": 5.3
+  }
+ },
+ {
+  "name": "Glenn_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.68,
+   "speech_ratio": 0.49,
+   "pause_count": 8,
+   "pause_total_s": 2.4,
+   "pitch_hz": 172.66,
+   "pitch_spread_hz": 73.01,
+   "loudness_spread_db": 5.2
+  }
+ },
+ {
+  "name": "Goku_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 10.32,
+   "speech_ratio": 0.63,
+   "pause_count": 4,
+   "pause_total_s": 1.35,
+   "pitch_hz": 127.66,
+   "pitch_spread_hz": 24.61,
+   "loudness_spread_db": 5.11
+  }
+ },
+ {
+  "name": "Gonzalo-1_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.88,
+   "speech_ratio": 0.75,
+   "pause_count": 6,
+   "pause_total_s": 1.29,
+   "pitch_hz": 155.84,
+   "pitch_spread_hz": 33.54,
+   "loudness_spread_db": 5.14
+  }
+ },
+ {
+  "name": "Gonzalo_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.4,
+   "speech_ratio": 0.73,
+   "pause_count": 7,
+   "pause_total_s": 1.53,
+   "pitch_hz": 161.62,
+   "pitch_spread_hz": 29.93,
+   "loudness_spread_db": 5.34
+  }
+ },
+ {
+  "name": "Greggy_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.56,
+   "speech_ratio": 0.56,
+   "pause_count": 8,
+   "pause_total_s": 3.15,
+   "pitch_hz": 108.35,
+   "pitch_spread_hz": 40.6,
+   "loudness_spread_db": 5.6
+  }
+ },
+ {
+  "name": "Haku_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 9.84,
+   "speech_ratio": 0.7,
+   "pause_count": 3,
+   "pause_total_s": 1.05,
+   "pitch_hz": 269.66,
+   "pitch_spread_hz": 42.67,
+   "loudness_spread_db": 5.04
+  }
+ },
+ {
+  "name": "Hannah_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.08,
+   "speech_ratio": 0.72,
+   "pause_count": 3,
+   "pause_total_s": 1.2,
+   "pitch_hz": 252.63,
+   "pitch_spread_hz": 36.72,
+   "loudness_spread_db": 4.38
+  }
+ },
+ {
+  "name": "Hardik_Clone_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.28,
+   "speech_ratio": 0.71,
+   "pause_count": 4,
+   "pause_total_s": 1.56,
+   "pitch_hz": 160.0,
+   "pitch_spread_hz": 31.61,
+   "loudness_spread_db": 4.87
+  }
+ },
+ {
+  "name": "Hillbilly_Jim_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.0,
+   "speech_ratio": 0.65,
+   "pause_count": 5,
+   "pause_total_s": 1.68,
+   "pitch_hz": 163.82,
+   "pitch_spread_hz": 41.41,
+   "loudness_spread_db": 5.88
+  }
+ },
+ {
+  "name": "Hkl_enhanced",
+  "wer": 0.18518518518518517,
+  "measures": {
+   "duration_s": 11.76,
+   "speech_ratio": 0.65,
+   "pause_count": 9,
+   "pause_total_s": 2.49,
+   "pitch_hz": 201.68,
+   "pitch_spread_hz": 23.75,
+   "loudness_spread_db": 5.37
+  }
+ },
+ {
+  "name": "Hugo_the_frenchie_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 12.48,
+   "speech_ratio": 0.62,
+   "pause_count": 9,
+   "pause_total_s": 2.91,
+   "pitch_hz": 149.07,
+   "pitch_spread_hz": 16.28,
+   "loudness_spread_db": 5.9
+  }
+ },
+ {
+  "name": "Ilyass_yea_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.96,
+   "speech_ratio": 0.55,
+   "pause_count": 9,
+   "pause_total_s": 2.7,
+   "pitch_hz": 113.74,
+   "pitch_spread_hz": 26.78,
+   "loudness_spread_db": 6.37
+  }
+ },
+ {
+  "name": "Imran_475_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.0,
+   "speech_ratio": 0.64,
+   "pause_count": 5,
+   "pause_total_s": 1.68,
+   "pitch_hz": 172.66,
+   "pitch_spread_hz": 25.41,
+   "loudness_spread_db": 5.04
+  }
+ },
+ {
+  "name": "Imran_from_I_India_enhanced",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 12.0,
+   "speech_ratio": 0.66,
+   "pause_count": 8,
+   "pause_total_s": 2.25,
+   "pitch_hz": 165.52,
+   "pitch_spread_hz": 23.87,
+   "loudness_spread_db": 5.13
+  }
+ },
+ {
+  "name": "Indian_guy_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.96,
+   "speech_ratio": 0.59,
+   "pause_count": 7,
+   "pause_total_s": 2.61,
+   "pitch_hz": 114.29,
+   "pitch_spread_hz": 35.0,
+   "loudness_spread_db": 5.1
+  }
+ },
+ {
+  "name": "Ineedthisnow_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.36,
+   "speech_ratio": 0.68,
+   "pause_count": 3,
+   "pause_total_s": 1.26,
+   "pitch_hz": 117.08,
+   "pitch_spread_hz": 78.5,
+   "loudness_spread_db": 5.51
+  }
+ },
+ {
+  "name": "JJis2123_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 11.28,
+   "speech_ratio": 0.6,
+   "pause_count": 7,
+   "pause_total_s": 1.89,
+   "pitch_hz": 144.58,
+   "pitch_spread_hz": 12.25,
+   "loudness_spread_db": 4.77
+  }
+ },
+ {
+  "name": "JOSHE_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.24,
+   "speech_ratio": 0.54,
+   "pause_count": 8,
+   "pause_total_s": 2.76,
+   "pitch_hz": 108.11,
+   "pitch_spread_hz": 125.71,
+   "loudness_spread_db": 5.52
+  }
+ },
+ {
+  "name": "James_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.52,
+   "speech_ratio": 0.71,
+   "pause_count": 5,
+   "pause_total_s": 1.38,
+   "pitch_hz": 237.62,
+   "pitch_spread_hz": 37.97,
+   "loudness_spread_db": 5.29
+  }
+ },
+ {
+  "name": "Jaspino_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 12.64,
+   "speech_ratio": 0.71,
+   "pause_count": 7,
+   "pause_total_s": 1.53,
+   "pitch_hz": 75.71,
+   "pitch_spread_hz": 36.16,
+   "loudness_spread_db": 5.04
+  }
+ },
+ {
+  "name": "Jaw_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 12.16,
+   "speech_ratio": 0.62,
+   "pause_count": 12,
+   "pause_total_s": 3.18,
+   "pitch_hz": 120.6,
+   "pitch_spread_hz": 36.63,
+   "loudness_spread_db": 5.95
+  }
+ },
+ {
+  "name": "Jay_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.32,
+   "speech_ratio": 0.64,
+   "pause_count": 3,
+   "pause_total_s": 1.56,
+   "pitch_hz": 145.9,
+   "pitch_spread_hz": 29.54,
+   "loudness_spread_db": 5.21
+  }
+ },
+ {
+  "name": "Jeff_Andrew_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.48,
+   "speech_ratio": 0.75,
+   "pause_count": 3,
+   "pause_total_s": 1.05,
+   "pitch_hz": 89.39,
+   "pitch_spread_hz": 53.57,
+   "loudness_spread_db": 4.86
+  }
+ },
+ {
+  "name": "Jeffrey_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.12,
+   "speech_ratio": 0.55,
+   "pause_count": 5,
+   "pause_total_s": 2.37,
+   "pitch_hz": 128.34,
+   "pitch_spread_hz": 14.47,
+   "loudness_spread_db": 5.17
+  }
+ },
+ {
+  "name": "Jeremy_Q_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.24,
+   "speech_ratio": 0.61,
+   "pause_count": 3,
+   "pause_total_s": 1.2,
+   "pitch_hz": 111.37,
+   "pitch_spread_hz": 35.66,
+   "loudness_spread_db": 5.51
+  }
+ },
+ {
+  "name": "Jimmy_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.64,
+   "speech_ratio": 0.59,
+   "pause_count": 4,
+   "pause_total_s": 1.74,
+   "pitch_hz": 123.71,
+   "pitch_spread_hz": 31.51,
+   "loudness_spread_db": 5.66
+  }
+ },
+ {
+  "name": "Joaopedrobil1_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 12.24,
+   "speech_ratio": 0.52,
+   "pause_count": 13,
+   "pause_total_s": 3.54,
+   "pitch_hz": 117.65,
+   "pitch_spread_hz": 29.72,
+   "loudness_spread_db": 5.08
+  }
+ },
+ {
+  "name": "John_Triguero_enhanced",
+  "wer": 0.4074074074074074,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.59,
+   "pause_count": 5,
+   "pause_total_s": 1.68,
+   "pitch_hz": 137.93,
+   "pitch_spread_hz": 23.83,
+   "loudness_spread_db": 4.83
+  }
+ },
+ {
+  "name": "Juanrestrepo177777_enhanced",
+  "wer": 0.3333333333333333,
+  "measures": {
+   "duration_s": 10.88,
+   "speech_ratio": 0.68,
+   "pause_count": 8,
+   "pause_total_s": 1.62,
+   "pitch_hz": 94.12,
+   "pitch_spread_hz": 58.45,
+   "loudness_spread_db": 5.64
+  }
+ },
+ {
+  "name": "Karti_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.24,
+   "speech_ratio": 0.67,
+   "pause_count": 3,
+   "pause_total_s": 1.47,
+   "pitch_hz": 111.11,
+   "pitch_spread_hz": 32.06,
+   "loudness_spread_db": 5.43
+  }
+ },
+ {
+  "name": "Kditz_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.04,
+   "speech_ratio": 0.62,
+   "pause_count": 7,
+   "pause_total_s": 1.56,
+   "pitch_hz": 104.35,
+   "pitch_spread_hz": 34.98,
+   "loudness_spread_db": 5.17
+  }
+ },
+ {
+  "name": "Koorosh_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.88,
+   "speech_ratio": 0.62,
+   "pause_count": 3,
+   "pause_total_s": 1.53,
+   "pitch_hz": 104.35,
+   "pitch_spread_hz": 19.7,
+   "loudness_spread_db": 4.82
+  }
+ },
+ {
+  "name": "LC_enhanced",
+  "wer": 0.037037037037037035,
+  "measures": {
+   "duration_s": 9.28,
+   "speech_ratio": 0.68,
+   "pause_count": 4,
+   "pause_total_s": 1.44,
+   "pitch_hz": 101.27,
+   "pitch_spread_hz": 24.2,
+   "loudness_spread_db": 5.47
+  }
+ },
+ {
+  "name": "L_Roy_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.56,
+   "speech_ratio": 0.62,
+   "pause_count": 4,
+   "pause_total_s": 1.23,
+   "pitch_hz": 150.0,
+   "pitch_spread_hz": 17.39,
+   "loudness_spread_db": 5.73
+  }
+ },
+ {
+  "name": "Lake_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 8.32,
+   "speech_ratio": 0.7,
+   "pause_count": 4,
+   "pause_total_s": 0.84,
+   "pitch_hz": 145.45,
+   "pitch_spread_hz": 42.44,
+   "loudness_spread_db": 5.67
+  }
+ },
+ {
+  "name": "Lammy_enhanced",
+  "wer": 0.18518518518518517,
+  "measures": {
+   "duration_s": 7.76,
+   "speech_ratio": 0.56,
+   "pause_count": 3,
+   "pause_total_s": 1.26,
+   "pitch_hz": 104.35,
+   "pitch_spread_hz": 40.48,
+   "loudness_spread_db": 5.56
+  }
+ },
+ {
+  "name": "Lara_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.96,
+   "speech_ratio": 0.62,
+   "pause_count": 4,
+   "pause_total_s": 1.26,
+   "pitch_hz": 195.12,
+   "pitch_spread_hz": 35.03,
+   "loudness_spread_db": 5.62
+  }
+ },
+ {
+  "name": "Latin_Accent_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.52,
+   "speech_ratio": 0.56,
+   "pause_count": 9,
+   "pause_total_s": 3.21,
+   "pitch_hz": 195.12,
+   "pitch_spread_hz": 30.96,
+   "loudness_spread_db": 5.32
+  }
+ },
+ {
+  "name": "Liquescent_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 7.92,
+   "speech_ratio": 0.59,
+   "pause_count": 6,
+   "pause_total_s": 1.86,
+   "pitch_hz": 179.1,
+   "pitch_spread_hz": 28.4,
+   "loudness_spread_db": 5.02
+  }
+ },
+ {
+  "name": "Louis_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.96,
+   "speech_ratio": 0.6,
+   "pause_count": 5,
+   "pause_total_s": 1.8,
+   "pitch_hz": 90.57,
+   "pitch_spread_hz": 30.96,
+   "loudness_spread_db": 5.9
+  }
+ },
+ {
+  "name": "Lucas_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.8,
+   "speech_ratio": 0.65,
+   "pause_count": 9,
+   "pause_total_s": 2.13,
+   "pitch_hz": 136.36,
+   "pitch_spread_hz": 19.71,
+   "loudness_spread_db": 6.0
+  }
+ },
+ {
+  "name": "MJDePedro_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 10.08,
+   "speech_ratio": 0.61,
+   "pause_count": 4,
+   "pause_total_s": 1.53,
+   "pitch_hz": 166.67,
+   "pitch_spread_hz": 50.57,
+   "loudness_spread_db": 5.73
+  }
+ },
+ {
+  "name": "Maisako_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.4,
+   "speech_ratio": 0.71,
+   "pause_count": 5,
+   "pause_total_s": 1.14,
+   "pitch_hz": 87.91,
+   "pitch_spread_hz": 63.17,
+   "loudness_spread_db": 5.47
+  }
+ },
+ {
+  "name": "Manahen_enhanced",
+  "wer": 0.4444444444444444,
+  "measures": {
+   "duration_s": 10.56,
+   "speech_ratio": 0.53,
+   "pause_count": 6,
+   "pause_total_s": 2.55,
+   "pitch_hz": 115.38,
+   "pitch_spread_hz": 42.11,
+   "loudness_spread_db": 5.62
+  }
+ },
+ {
+  "name": "Marshal_Indian_enhanced",
+  "wer": 0.25925925925925924,
+  "measures": {
+   "duration_s": 9.12,
+   "speech_ratio": 0.66,
+   "pause_count": 5,
+   "pause_total_s": 1.71,
+   "pitch_hz": 142.01,
+   "pitch_spread_hz": 28.06,
+   "loudness_spread_db": 4.96
+  }
+ },
+ {
+  "name": "Midlands_Bedfordshire_Dialect_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.88,
+   "speech_ratio": 0.65,
+   "pause_count": 5,
+   "pause_total_s": 1.68,
+   "pitch_hz": 84.51,
+   "pitch_spread_hz": 27.02,
+   "loudness_spread_db": 5.5
+  }
+ },
+ {
+  "name": "Moses_enhanced",
+  "wer": 0.18518518518518517,
+  "measures": {
+   "duration_s": 11.52,
+   "speech_ratio": 0.64,
+   "pause_count": 7,
+   "pause_total_s": 2.1,
+   "pitch_hz": 129.73,
+   "pitch_spread_hz": 49.4,
+   "loudness_spread_db": 5.29
+  }
+ },
+ {
+  "name": "MrHat_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.4,
+   "speech_ratio": 0.62,
+   "pause_count": 8,
+   "pause_total_s": 2.22,
+   "pitch_hz": 117.65,
+   "pitch_spread_hz": 43.77,
+   "loudness_spread_db": 5.06
+  }
+ },
+ {
+  "name": "Mr_captain_enhanced",
+  "wer": 0.3333333333333333,
+  "measures": {
+   "duration_s": 7.84,
+   "speech_ratio": 0.65,
+   "pause_count": 2,
+   "pause_total_s": 1.05,
+   "pitch_hz": 113.74,
+   "pitch_spread_hz": 55.48,
+   "loudness_spread_db": 5.53
+  }
+ },
+ {
+  "name": "Muhtasim's_Voice_enhanced",
+  "wer": 0.18518518518518517,
+  "measures": {
+   "duration_s": 9.76,
+   "speech_ratio": 0.66,
+   "pause_count": 4,
+   "pause_total_s": 1.29,
+   "pitch_hz": 120.6,
+   "pitch_spread_hz": 16.66,
+   "loudness_spread_db": 5.65
+  }
+ },
+ {
+  "name": "Mystery_Sir_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.88,
+   "speech_ratio": 0.63,
+   "pause_count": 8,
+   "pause_total_s": 2.55,
+   "pitch_hz": 101.27,
+   "pitch_spread_hz": 50.06,
+   "loudness_spread_db": 5.27
+  }
+ },
+ {
+  "name": "Narrum_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.36,
+   "speech_ratio": 0.58,
+   "pause_count": 13,
+   "pause_total_s": 3.03,
+   "pitch_hz": 106.67,
+   "pitch_spread_hz": 40.47,
+   "loudness_spread_db": 5.39
+  }
+ },
+ {
+  "name": "Nick_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.68,
+   "pause_count": 4,
+   "pause_total_s": 1.29,
+   "pitch_hz": 114.83,
+   "pitch_spread_hz": 26.78,
+   "loudness_spread_db": 4.95
+  }
+ },
+ {
+  "name": "P0LFR_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.6,
+   "speech_ratio": 0.57,
+   "pause_count": 6,
+   "pause_total_s": 2.25,
+   "pitch_hz": 173.91,
+   "pitch_spread_hz": 25.5,
+   "loudness_spread_db": 5.54
+  }
+ },
+ {
+  "name": "Pai_ve_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.2,
+   "speech_ratio": 0.77,
+   "pause_count": 2,
+   "pause_total_s": 0.45,
+   "pitch_hz": 121.83,
+   "pitch_spread_hz": 30.19,
+   "loudness_spread_db": 5.15
+  }
+ },
+ {
+  "name": "Parthiban_enhanced",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 9.28,
+   "speech_ratio": 0.61,
+   "pause_count": 4,
+   "pause_total_s": 1.74,
+   "pitch_hz": 165.52,
+   "pitch_spread_hz": 41.94,
+   "loudness_spread_db": 5.12
+  }
+ },
+ {
+  "name": "Prakash369_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.96,
+   "speech_ratio": 0.62,
+   "pause_count": 4,
+   "pause_total_s": 1.77,
+   "pitch_hz": 131.87,
+   "pitch_spread_hz": 29.65,
+   "loudness_spread_db": 6.31
+  }
+ },
+ {
+  "name": "Puzzle_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.24,
+   "speech_ratio": 0.55,
+   "pause_count": 6,
+   "pause_total_s": 2.7,
+   "pitch_hz": 120.0,
+   "pitch_spread_hz": 76.23,
+   "loudness_spread_db": 4.81
+  }
+ },
+ {
+  "name": "Qasim_Wali_Khan_enhanced",
+  "wer": 0.18518518518518517,
+  "measures": {
+   "duration_s": 8.72,
+   "speech_ratio": 0.6,
+   "pause_count": 6,
+   "pause_total_s": 1.86,
+   "pitch_hz": 123.08,
+   "pitch_spread_hz": 41.86,
+   "loudness_spread_db": 5.99
+  }
+ },
+ {
+  "name": "RAJ_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 8.32,
+   "speech_ratio": 0.66,
+   "pause_count": 3,
+   "pause_total_s": 1.5,
+   "pitch_hz": 143.71,
+   "pitch_spread_hz": 39.33,
+   "loudness_spread_db": 5.69
+  }
+ },
+ {
+  "name": "Rafaelpazv_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.4,
+   "speech_ratio": 0.72,
+   "pause_count": 4,
+   "pause_total_s": 1.47,
+   "pitch_hz": 121.83,
+   "pitch_spread_hz": 49.41,
+   "loudness_spread_db": 5.37
+  }
+ },
+ {
+  "name": "Rahul_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.6,
+   "speech_ratio": 0.62,
+   "pause_count": 4,
+   "pause_total_s": 1.74,
+   "pitch_hz": 133.33,
+   "pitch_spread_hz": 25.82,
+   "loudness_spread_db": 4.99
+  }
+ },
+ {
+  "name": "Raj25_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 12.16,
+   "speech_ratio": 0.63,
+   "pause_count": 11,
+   "pause_total_s": 2.52,
+   "pitch_hz": 123.08,
+   "pitch_spread_hz": 58.29,
+   "loudness_spread_db": 5.61
+  }
+ },
+ {
+  "name": "Ramu_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.8,
+   "speech_ratio": 0.57,
+   "pause_count": 8,
+   "pause_total_s": 3.33,
+   "pitch_hz": 128.34,
+   "pitch_spread_hz": 13.27,
+   "loudness_spread_db": 5.4
+  }
+ },
+ {
+  "name": "Ranjith_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.72,
+   "speech_ratio": 0.6,
+   "pause_count": 8,
+   "pause_total_s": 2.61,
+   "pitch_hz": 128.34,
+   "pitch_spread_hz": 44.02,
+   "loudness_spread_db": 5.56
+  }
+ },
+ {
+  "name": "Richard_cuban_enhanced",
+  "wer": 0.8518518518518519,
+  "measures": {
+   "duration_s": 7.6,
+   "speech_ratio": 0.64,
+   "pause_count": 3,
+   "pause_total_s": 1.5,
+   "pitch_hz": 89.55,
+   "pitch_spread_hz": 14.1,
+   "loudness_spread_db": 5.54
+  }
+ },
+ {
+  "name": "Rony_enhanced",
+  "wer": 0.5555555555555556,
+  "measures": {
+   "duration_s": 10.32,
+   "speech_ratio": 0.67,
+   "pause_count": 6,
+   "pause_total_s": 2.1,
+   "pitch_hz": 110.09,
+   "pitch_spread_hz": 42.65,
+   "loudness_spread_db": 4.86
+  }
+ },
+ {
+  "name": "Roscoe_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.56,
+   "speech_ratio": 0.59,
+   "pause_count": 5,
+   "pause_total_s": 2.25,
+   "pitch_hz": 96.39,
+   "pitch_spread_hz": 42.76,
+   "loudness_spread_db": 5.39
+  }
+ },
+ {
+  "name": "Rs_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 11.12,
+   "speech_ratio": 0.64,
+   "pause_count": 7,
+   "pause_total_s": 2.4,
+   "pitch_hz": 119.11,
+   "pitch_spread_hz": 29.72,
+   "loudness_spread_db": 4.97
+  }
+ },
+ {
+  "name": "Rup_enhanced",
+  "wer": 0.5185185185185185,
+  "measures": {
+   "duration_s": 10.56,
+   "speech_ratio": 0.61,
+   "pause_count": 6,
+   "pause_total_s": 2.13,
+   "pitch_hz": 186.77,
+   "pitch_spread_hz": 30.53,
+   "loudness_spread_db": 5.5
+  }
+ },
+ {
+  "name": "SSA150803_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 8.4,
+   "speech_ratio": 0.68,
+   "pause_count": 3,
+   "pause_total_s": 1.29,
+   "pitch_hz": 144.16,
+   "pitch_spread_hz": 32.75,
+   "loudness_spread_db": 5.44
+  }
+ },
+ {
+  "name": "SS_1684_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.69,
+   "pause_count": 4,
+   "pause_total_s": 1.62,
+   "pitch_hz": 116.5,
+   "pitch_spread_hz": 27.68,
+   "loudness_spread_db": 5.19
+  }
+ },
+ {
+  "name": "STONE_enhanced",
+  "wer": 0.18518518518518517,
+  "measures": {
+   "duration_s": 8.88,
+   "speech_ratio": 0.66,
+   "pause_count": 4,
+   "pause_total_s": 1.65,
+   "pitch_hz": 171.43,
+   "pitch_spread_hz": 43.25,
+   "loudness_spread_db": 5.52
+  }
+ },
+ {
+  "name": "Samsewak_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 13.6,
+   "speech_ratio": 0.69,
+   "pause_count": 8,
+   "pause_total_s": 2.07,
+   "pitch_hz": 109.09,
+   "pitch_spread_hz": 41.45,
+   "loudness_spread_db": 5.25
+  }
+ },
+ {
+  "name": "Selfie_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.48,
+   "speech_ratio": 0.59,
+   "pause_count": 4,
+   "pause_total_s": 1.71,
+   "pitch_hz": 177.12,
+   "pitch_spread_hz": 64.26,
+   "loudness_spread_db": 5.63
+  }
+ },
+ {
+  "name": "Sheddy_enhanced",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 8.64,
+   "speech_ratio": 0.65,
+   "pause_count": 3,
+   "pause_total_s": 1.35,
+   "pitch_hz": 137.14,
+   "pitch_spread_hz": 38.09,
+   "loudness_spread_db": 5.41
+  }
+ },
+ {
+  "name": "Siddh_Indian_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.32,
+   "speech_ratio": 0.67,
+   "pause_count": 3,
+   "pause_total_s": 1.23,
+   "pitch_hz": 125.65,
+   "pitch_spread_hz": 30.96,
+   "loudness_spread_db": 5.41
+  }
+ },
+ {
+  "name": "Sir_TJ_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 12.32,
+   "speech_ratio": 0.8,
+   "pause_count": 3,
+   "pause_total_s": 1.02,
+   "pitch_hz": 126.65,
+   "pitch_spread_hz": 66.04,
+   "loudness_spread_db": 5.53
+  }
+ },
+ {
+  "name": "Sirajo_x_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.2,
+   "speech_ratio": 0.64,
+   "pause_count": 7,
+   "pause_total_s": 2.1,
+   "pitch_hz": 102.56,
+   "pitch_spread_hz": 46.35,
+   "loudness_spread_db": 5.02
+  }
+ },
+ {
+  "name": "Sp46_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.84,
+   "speech_ratio": 0.7,
+   "pause_count": 2,
+   "pause_total_s": 1.14,
+   "pitch_hz": 100.42,
+   "pitch_spread_hz": 44.99,
+   "loudness_spread_db": 5.44
+  }
+ },
+ {
+  "name": "Sr_Erick_enhanced",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 10.08,
+   "speech_ratio": 0.69,
+   "pause_count": 7,
+   "pause_total_s": 1.74,
+   "pitch_hz": 106.43,
+   "pitch_spread_hz": 30.91,
+   "loudness_spread_db": 5.01
+  }
+ },
+ {
+  "name": "Standollars_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.08,
+   "speech_ratio": 0.62,
+   "pause_count": 5,
+   "pause_total_s": 1.68,
+   "pitch_hz": 128.69,
+   "pitch_spread_hz": 30.46,
+   "loudness_spread_db": 5.76
+  }
+ },
+ {
+  "name": "TESLLA_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 12.0,
+   "speech_ratio": 0.61,
+   "pause_count": 9,
+   "pause_total_s": 2.73,
+   "pitch_hz": 120.6,
+   "pitch_spread_hz": 32.0,
+   "loudness_spread_db": 6.03
+  }
+ },
+ {
+  "name": "Tahii_enhanced",
+  "wer": 0.4074074074074074,
+  "measures": {
+   "duration_s": 7.36,
+   "speech_ratio": 0.59,
+   "pause_count": 3,
+   "pause_total_s": 1.23,
+   "pitch_hz": 119.11,
+   "pitch_spread_hz": 20.25,
+   "loudness_spread_db": 5.5
+  }
+ },
+ {
+  "name": "TheFin_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 8.72,
+   "speech_ratio": 0.64,
+   "pause_count": 3,
+   "pause_total_s": 1.29,
+   "pitch_hz": 80.0,
+   "pitch_spread_hz": 38.46,
+   "loudness_spread_db": 5.55
+  }
+ },
+ {
+  "name": "The_Sustainabler_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.24,
+   "speech_ratio": 0.59,
+   "pause_count": 6,
+   "pause_total_s": 2.31,
+   "pitch_hz": 149.07,
+   "pitch_spread_hz": 24.03,
+   "loudness_spread_db": 5.89
+  }
+ },
+ {
+  "name": "The_other_brother_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 11.12,
+   "speech_ratio": 0.65,
+   "pause_count": 9,
+   "pause_total_s": 2.43,
+   "pitch_hz": 106.9,
+   "pitch_spread_hz": 45.45,
+   "loudness_spread_db": 5.78
+  }
+ },
+ {
+  "name": "Titorium_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.72,
+   "speech_ratio": 0.71,
+   "pause_count": 5,
+   "pause_total_s": 1.29,
+   "pitch_hz": 110.6,
+   "pitch_spread_hz": 47.21,
+   "loudness_spread_db": 5.91
+  }
+ },
+ {
+  "name": "Tonmoy_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.12,
+   "speech_ratio": 0.69,
+   "pause_count": 4,
+   "pause_total_s": 1.26,
+   "pitch_hz": 129.73,
+   "pitch_spread_hz": 22.27,
+   "loudness_spread_db": 5.4
+  }
+ },
+ {
+  "name": "Umair_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.44,
+   "speech_ratio": 0.63,
+   "pause_count": 10,
+   "pause_total_s": 2.4,
+   "pitch_hz": 129.73,
+   "pitch_spread_hz": 21.53,
+   "loudness_spread_db": 5.58
+  }
+ },
+ {
+  "name": "Vexat_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 9.12,
+   "speech_ratio": 0.65,
+   "pause_count": 4,
+   "pause_total_s": 1.38,
+   "pitch_hz": 126.98,
+   "pitch_spread_hz": 31.14,
+   "loudness_spread_db": 5.7
+  }
+ },
+ {
+  "name": "Victor_Garcia_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.96,
+   "speech_ratio": 0.64,
+   "pause_count": 4,
+   "pause_total_s": 1.53,
+   "pitch_hz": 89.05,
+   "pitch_spread_hz": 40.55,
+   "loudness_spread_db": 4.63
+  }
+ },
+ {
+  "name": "Vinith___English_India_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.65,
+   "pause_count": 2,
+   "pause_total_s": 0.99,
+   "pitch_hz": 124.35,
+   "pitch_spread_hz": 23.23,
+   "loudness_spread_db": 5.55
+  }
+ },
+ {
+  "name": "Vitch_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.04,
+   "speech_ratio": 0.63,
+   "pause_count": 4,
+   "pause_total_s": 1.29,
+   "pitch_hz": 135.21,
+   "pitch_spread_hz": 28.96,
+   "loudness_spread_db": 5.53
+  }
+ },
+ {
+  "name": "Vivaldi_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.36,
+   "speech_ratio": 0.61,
+   "pause_count": 6,
+   "pause_total_s": 1.92,
+   "pitch_hz": 126.65,
+   "pitch_spread_hz": 49.34,
+   "loudness_spread_db": 5.26
+  }
+ },
+ {
+  "name": "W_A_H_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.4,
+   "speech_ratio": 0.65,
+   "pause_count": 6,
+   "pause_total_s": 1.83,
+   "pitch_hz": 129.03,
+   "pitch_spread_hz": 41.01,
+   "loudness_spread_db": 5.33
+  }
+ },
+ {
+  "name": "Wealthiest_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 12.88,
+   "speech_ratio": 0.73,
+   "pause_count": 5,
+   "pause_total_s": 1.29,
+   "pitch_hz": 94.86,
+   "pitch_spread_hz": 34.94,
+   "loudness_spread_db": 5.05
+  }
+ },
+ {
+  "name": "WhisperInEar_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.44,
+   "speech_ratio": 0.56,
+   "pause_count": 8,
+   "pause_total_s": 1.98,
+   "pitch_hz": 135.59,
+   "pitch_spread_hz": 55.74,
+   "loudness_spread_db": 4.26
+  }
+ },
+ {
+  "name": "Yesid_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.08,
+   "speech_ratio": 0.57,
+   "pause_count": 8,
+   "pause_total_s": 2.64,
+   "pitch_hz": 107.63,
+   "pitch_spread_hz": 103.7,
+   "loudness_spread_db": 5.51
+  }
+ },
+ {
+  "name": "Youfied_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.44,
+   "speech_ratio": 0.54,
+   "pause_count": 9,
+   "pause_total_s": 2.46,
+   "pitch_hz": 103.45,
+   "pitch_spread_hz": 73.01,
+   "loudness_spread_db": 4.53
+  }
+ },
+ {
+  "name": "Yuush_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.16,
+   "speech_ratio": 0.68,
+   "pause_count": 5,
+   "pause_total_s": 1.5,
+   "pitch_hz": 112.68,
+   "pitch_spread_hz": 15.85,
+   "loudness_spread_db": 5.0
+  }
+ },
+ {
+  "name": "a59a_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 7.04,
+   "speech_ratio": 0.67,
+   "pause_count": 2,
+   "pause_total_s": 0.69,
+   "pitch_hz": 125.65,
+   "pitch_spread_hz": 37.58,
+   "loudness_spread_db": 4.94
+  }
+ },
+ {
+  "name": "a6f9_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.08,
+   "speech_ratio": 0.6,
+   "pause_count": 8,
+   "pause_total_s": 2.46,
+   "pitch_hz": 109.59,
+   "pitch_spread_hz": 23.21,
+   "loudness_spread_db": 5.37
+  }
+ },
+ {
+  "name": "a96a_enhanced",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 8.4,
+   "speech_ratio": 0.6,
+   "pause_count": 3,
+   "pause_total_s": 1.32,
+   "pitch_hz": 129.73,
+   "pitch_spread_hz": 43.99,
+   "loudness_spread_db": 5.68
+  }
+ },
+ {
+  "name": "aepeak_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.2,
+   "speech_ratio": 0.67,
+   "pause_count": 4,
+   "pause_total_s": 1.29,
+   "pitch_hz": 134.08,
+   "pitch_spread_hz": 36.64,
+   "loudness_spread_db": 5.58
+  }
+ },
+ {
+  "name": "albertoforofo007_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.32,
+   "speech_ratio": 0.5,
+   "pause_count": 4,
+   "pause_total_s": 2.1,
+   "pitch_hz": 103.45,
+   "pitch_spread_hz": 91.0,
+   "loudness_spread_db": 5.55
+  }
+ },
+ {
+  "name": "amazon_box_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 8.32,
+   "speech_ratio": 0.63,
+   "pause_count": 3,
+   "pause_total_s": 1.44,
+   "pitch_hz": 110.6,
+   "pitch_spread_hz": 27.91,
+   "loudness_spread_db": 5.58
+  }
+ },
+ {
+  "name": "awais_shah_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.52,
+   "speech_ratio": 0.66,
+   "pause_count": 5,
+   "pause_total_s": 1.8,
+   "pitch_hz": 190.48,
+   "pitch_spread_hz": 21.02,
+   "loudness_spread_db": 5.54
+  }
+ },
+ {
+  "name": "bathri_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.76,
+   "speech_ratio": 0.61,
+   "pause_count": 6,
+   "pause_total_s": 1.74,
+   "pitch_hz": 190.48,
+   "pitch_spread_hz": 20.61,
+   "loudness_spread_db": 4.98
+  }
+ },
+ {
+  "name": "bbe4_enhanced",
+  "wer": 0.4444444444444444,
+  "measures": {
+   "duration_s": 11.04,
+   "speech_ratio": 0.55,
+   "pause_count": 7,
+   "pause_total_s": 3.06,
+   "pitch_hz": 138.73,
+   "pitch_spread_hz": 27.47,
+   "loudness_spread_db": 5.33
+  }
+ },
+ {
+  "name": "bc98_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 10.56,
+   "speech_ratio": 0.53,
+   "pause_count": 10,
+   "pause_total_s": 3.39,
+   "pitch_hz": 141.18,
+   "pitch_spread_hz": 37.46,
+   "loudness_spread_db": 5.34
+  }
+ },
+ {
+  "name": "bevi_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 9.12,
+   "speech_ratio": 0.58,
+   "pause_count": 4,
+   "pause_total_s": 1.62,
+   "pitch_hz": 233.01,
+   "pitch_spread_hz": 32.25,
+   "loudness_spread_db": 4.95
+  }
+ },
+ {
+  "name": "boom_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 11.68,
+   "speech_ratio": 0.64,
+   "pause_count": 7,
+   "pause_total_s": 2.49,
+   "pitch_hz": 137.93,
+   "pitch_spread_hz": 57.74,
+   "loudness_spread_db": 4.73
+  }
+ },
+ {
+  "name": "c0a0_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 11.04,
+   "speech_ratio": 0.56,
+   "pause_count": 5,
+   "pause_total_s": 2.82,
+   "pitch_hz": 142.86,
+   "pitch_spread_hz": 22.41,
+   "loudness_spread_db": 4.65
+  }
+ },
+ {
+  "name": "cybina_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.8,
+   "speech_ratio": 0.66,
+   "pause_count": 8,
+   "pause_total_s": 2.4,
+   "pitch_hz": 103.67,
+   "pitch_spread_hz": 11.8,
+   "loudness_spread_db": 5.65
+  }
+ },
+ {
+  "name": "d4a9_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.16,
+   "speech_ratio": 0.67,
+   "pause_count": 6,
+   "pause_total_s": 1.38,
+   "pitch_hz": 102.56,
+   "pitch_spread_hz": 43.0,
+   "loudness_spread_db": 5.85
+  }
+ },
+ {
+  "name": "dce6_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.96,
+   "speech_ratio": 0.63,
+   "pause_count": 4,
+   "pause_total_s": 1.38,
+   "pitch_hz": 126.98,
+   "pitch_spread_hz": 23.86,
+   "loudness_spread_db": 5.29
+  }
+ },
+ {
+  "name": "dwp_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.64,
+   "speech_ratio": 0.6,
+   "pause_count": 5,
+   "pause_total_s": 1.65,
+   "pitch_hz": 118.23,
+   "pitch_spread_hz": 83.12,
+   "loudness_spread_db": 5.43
+  }
+ },
+ {
+  "name": "e819_enhanced",
+  "wer": 0.2962962962962963,
+  "measures": {
+   "duration_s": 9.68,
+   "speech_ratio": 0.54,
+   "pause_count": 4,
+   "pause_total_s": 1.92,
+   "pitch_hz": 115.66,
+   "pitch_spread_hz": 9.01,
+   "loudness_spread_db": 5.68
+  }
+ },
+ {
+  "name": "edd4_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.96,
+   "speech_ratio": 0.56,
+   "pause_count": 7,
+   "pause_total_s": 2.79,
+   "pitch_hz": 144.58,
+   "pitch_spread_hz": 33.22,
+   "loudness_spread_db": 5.41
+  }
+ },
+ {
+  "name": "efeb_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.24,
+   "speech_ratio": 0.68,
+   "pause_count": 3,
+   "pause_total_s": 1.26,
+   "pitch_hz": 126.98,
+   "pitch_spread_hz": 26.33,
+   "loudness_spread_db": 4.58
+  }
+ },
+ {
+  "name": "english_with_german_accent_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.76,
+   "speech_ratio": 0.68,
+   "pause_count": 6,
+   "pause_total_s": 1.59,
+   "pitch_hz": 111.63,
+   "pitch_spread_hz": 21.73,
+   "loudness_spread_db": 5.36
+  }
+ },
+ {
+  "name": "erihppas_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 12.88,
+   "speech_ratio": 0.59,
+   "pause_count": 9,
+   "pause_total_s": 3.27,
+   "pitch_hz": 212.39,
+   "pitch_spread_hz": 54.45,
+   "loudness_spread_db": 4.81
+  }
+ },
+ {
+  "name": "f179_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 9.44,
+   "speech_ratio": 0.59,
+   "pause_count": 9,
+   "pause_total_s": 2.04,
+   "pitch_hz": 258.06,
+   "pitch_spread_hz": 21.35,
+   "loudness_spread_db": 4.52
+  }
+ },
+ {
+  "name": "f9cf_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.04,
+   "speech_ratio": 0.48,
+   "pause_count": 11,
+   "pause_total_s": 3.66,
+   "pitch_hz": 94.31,
+   "pitch_spread_hz": 156.1,
+   "loudness_spread_db": 3.42
+  }
+ },
+ {
+  "name": "fa52_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 11.84,
+   "speech_ratio": 0.64,
+   "pause_count": 7,
+   "pause_total_s": 2.34,
+   "pitch_hz": 175.83,
+   "pitch_spread_hz": 20.85,
+   "loudness_spread_db": 5.55
+  }
+ },
+ {
+  "name": "fc96_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.88,
+   "speech_ratio": 0.63,
+   "pause_count": 7,
+   "pause_total_s": 2.13,
+   "pitch_hz": 162.16,
+   "pitch_spread_hz": 18.93,
+   "loudness_spread_db": 5.59
+  }
+ },
+ {
+  "name": "floyd2026_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.24,
+   "speech_ratio": 0.64,
+   "pause_count": 7,
+   "pause_total_s": 1.86,
+   "pitch_hz": 135.59,
+   "pitch_spread_hz": 23.27,
+   "loudness_spread_db": 4.91
+  }
+ },
+ {
+  "name": "gmaskell92_enhanced",
+  "wer": 0.037037037037037035,
+  "measures": {
+   "duration_s": 10.48,
+   "speech_ratio": 0.5,
+   "pause_count": 10,
+   "pause_total_s": 3.15,
+   "pitch_hz": 97.56,
+   "pitch_spread_hz": 52.08,
+   "loudness_spread_db": 5.41
+  }
+ },
+ {
+  "name": "gyroo_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.72,
+   "speech_ratio": 0.64,
+   "pause_count": 4,
+   "pause_total_s": 1.41,
+   "pitch_hz": 131.51,
+   "pitch_spread_hz": 26.64,
+   "loudness_spread_db": 5.76
+  }
+ },
+ {
+  "name": "hielos_1_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 8.24,
+   "speech_ratio": 0.74,
+   "pause_count": 3,
+   "pause_total_s": 1.26,
+   "pitch_hz": 131.87,
+   "pitch_spread_hz": 27.78,
+   "loudness_spread_db": 5.25
+  }
+ },
+ {
+  "name": "hielos_2_enhanced",
+  "wer": 0.3333333333333333,
+  "measures": {
+   "duration_s": 8.4,
+   "speech_ratio": 0.69,
+   "pause_count": 3,
+   "pause_total_s": 1.17,
+   "pitch_hz": 131.51,
+   "pitch_spread_hz": 34.12,
+   "loudness_spread_db": 4.98
+  }
+ },
+ {
+  "name": "injul_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 11.52,
+   "speech_ratio": 0.61,
+   "pause_count": 7,
+   "pause_total_s": 2.49,
+   "pitch_hz": 137.14,
+   "pitch_spread_hz": 43.04,
+   "loudness_spread_db": 5.63
+  }
+ },
+ {
+  "name": "kbrn1_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.68,
+   "pause_count": 4,
+   "pause_total_s": 1.38,
+   "pitch_hz": 136.36,
+   "pitch_spread_hz": 18.09,
+   "loudness_spread_db": 5.54
+  }
+ },
+ {
+  "name": "kyutai_default",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 8.32,
+   "speech_ratio": 0.65,
+   "pause_count": 3,
+   "pause_total_s": 1.29,
+   "pitch_hz": 266.67,
+   "pitch_spread_hz": 30.38,
+   "loudness_spread_db": 5.16
+  }
+ },
+ {
+  "name": "kyutai_developer",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 8.56,
+   "speech_ratio": 0.62,
+   "pause_count": 8,
+   "pause_total_s": 1.8,
+   "pitch_hz": 110.09,
+   "pitch_spread_hz": 44.09,
+   "loudness_spread_db": 5.7
+  }
+ },
+ {
+  "name": "kyutai_fabieng",
+  "wer": 0.2222222222222222,
+  "measures": {
+   "duration_s": 8.0,
+   "speech_ratio": 0.65,
+   "pause_count": 3,
+   "pause_total_s": 1.11,
+   "pitch_hz": 130.43,
+   "pitch_spread_hz": 26.47,
+   "loudness_spread_db": 5.09
+  }
+ },
+ {
+  "name": "oldNerd2_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.96,
+   "speech_ratio": 0.67,
+   "pause_count": 8,
+   "pause_total_s": 2.1,
+   "pitch_hz": 101.48,
+   "pitch_spread_hz": 90.59,
+   "loudness_spread_db": 5.01
+  }
+ },
+ {
+  "name": "oldNerd3_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 8.56,
+   "speech_ratio": 0.58,
+   "pause_count": 6,
+   "pause_total_s": 1.65,
+   "pitch_hz": 117.07,
+   "pitch_spread_hz": 102.75,
+   "loudness_spread_db": 5.42
+  }
+ },
+ {
+  "name": "oldNerd_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 8.88,
+   "speech_ratio": 0.64,
+   "pause_count": 3,
+   "pause_total_s": 1.44,
+   "pitch_hz": 103.23,
+   "pitch_spread_hz": 99.63,
+   "loudness_spread_db": 5.2
+  }
+ },
+ {
+  "name": "ra_XOr_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.6,
+   "speech_ratio": 0.57,
+   "pause_count": 5,
+   "pause_total_s": 1.83,
+   "pitch_hz": 139.53,
+   "pitch_spread_hz": 44.7,
+   "loudness_spread_db": 4.49
+  }
+ },
+ {
+  "name": "rewi_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.84,
+   "speech_ratio": 0.66,
+   "pause_count": 5,
+   "pause_total_s": 1.83,
+   "pitch_hz": 176.47,
+   "pitch_spread_hz": 25.12,
+   "loudness_spread_db": 6.18
+  }
+ },
+ {
+  "name": "robert_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 7.52,
+   "speech_ratio": 0.45,
+   "pause_count": 7,
+   "pause_total_s": 1.89,
+   "pitch_hz": 122.76,
+   "pitch_spread_hz": 32.61,
+   "loudness_spread_db": 5.58
+  }
+ },
+ {
+  "name": "rshah_1_0_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 10.16,
+   "speech_ratio": 0.65,
+   "pause_count": 6,
+   "pause_total_s": 1.62,
+   "pitch_hz": 133.71,
+   "pitch_spread_hz": 39.95,
+   "loudness_spread_db": 5.96
+  }
+ },
+ {
+  "name": "sanjay_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.8,
+   "speech_ratio": 0.66,
+   "pause_count": 3,
+   "pause_total_s": 1.23,
+   "pitch_hz": 123.71,
+   "pitch_spread_hz": 17.15,
+   "loudness_spread_db": 5.85
+  }
+ },
+ {
+  "name": "siddharth_khanna_enhanced",
+  "wer": 0.18518518518518517,
+  "measures": {
+   "duration_s": 8.88,
+   "speech_ratio": 0.66,
+   "pause_count": 5,
+   "pause_total_s": 1.47,
+   "pitch_hz": 100.0,
+   "pitch_spread_hz": 20.92,
+   "loudness_spread_db": 5.48
+  }
+ },
+ {
+  "name": "solace_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 11.52,
+   "speech_ratio": 0.64,
+   "pause_count": 6,
+   "pause_total_s": 1.59,
+   "pitch_hz": 111.63,
+   "pitch_spread_hz": 16.42,
+   "loudness_spread_db": 6.09
+  }
+ },
+ {
+  "name": "spanish-limaperu_enhanced",
+  "wer": 0.48148148148148145,
+  "measures": {
+   "duration_s": 9.36,
+   "speech_ratio": 0.64,
+   "pause_count": 3,
+   "pause_total_s": 1.44,
+   "pitch_hz": 206.9,
+   "pitch_spread_hz": 37.79,
+   "loudness_spread_db": 5.43
+  }
+ },
+ {
+  "name": "stein_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.72,
+   "speech_ratio": 0.61,
+   "pause_count": 5,
+   "pause_total_s": 1.71,
+   "pitch_hz": 87.91,
+   "pitch_spread_hz": 35.55,
+   "loudness_spread_db": 5.29
+  }
+ },
+ {
+  "name": "sujan_daikoawaj_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 8.56,
+   "speech_ratio": 0.66,
+   "pause_count": 3,
+   "pause_total_s": 1.17,
+   "pitch_hz": 117.65,
+   "pitch_spread_hz": 26.59,
+   "loudness_spread_db": 5.32
+  }
+ },
+ {
+  "name": "surazy_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 10.0,
+   "speech_ratio": 0.64,
+   "pause_count": 5,
+   "pause_total_s": 2.04,
+   "pitch_hz": 121.83,
+   "pitch_spread_hz": 24.61,
+   "loudness_spread_db": 4.95
+  }
+ },
+ {
+  "name": "taiyo_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 10.88,
+   "speech_ratio": 0.56,
+   "pause_count": 8,
+   "pause_total_s": 2.97,
+   "pitch_hz": 103.9,
+   "pitch_spread_hz": 27.14,
+   "loudness_spread_db": 5.08
+  }
+ },
+ {
+  "name": "temp-007_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 9.28,
+   "speech_ratio": 0.67,
+   "pause_count": 6,
+   "pause_total_s": 1.53,
+   "pitch_hz": 137.93,
+   "pitch_spread_hz": 22.84,
+   "loudness_spread_db": 5.13
+  }
+ },
+ {
+  "name": "thepolishdane_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.48,
+   "speech_ratio": 0.53,
+   "pause_count": 11,
+   "pause_total_s": 3.36,
+   "pitch_hz": 117.65,
+   "pitch_spread_hz": 32.01,
+   "loudness_spread_db": 5.63
+  }
+ },
+ {
+  "name": "utk_enhanced",
+  "wer": 0.1111111111111111,
+  "measures": {
+   "duration_s": 9.68,
+   "speech_ratio": 0.64,
+   "pause_count": 5,
+   "pause_total_s": 1.89,
+   "pitch_hz": 134.83,
+   "pitch_spread_hz": 26.1,
+   "loudness_spread_db": 5.34
+  }
+ },
+ {
+  "name": "vinayak_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.08,
+   "speech_ratio": 0.62,
+   "pause_count": 7,
+   "pause_total_s": 1.77,
+   "pitch_hz": 118.52,
+   "pitch_spread_hz": 49.22,
+   "loudness_spread_db": 6.06
+  }
+ },
+ {
+  "name": "virtu_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 10.0,
+   "speech_ratio": 0.66,
+   "pause_count": 3,
+   "pause_total_s": 1.23,
+   "pitch_hz": 113.74,
+   "pitch_spread_hz": 23.27,
+   "loudness_spread_db": 6.39
+  }
+ },
+ {
+  "name": "willbas_enhanced",
+  "wer": 0.07407407407407407,
+  "measures": {
+   "duration_s": 12.8,
+   "speech_ratio": 0.59,
+   "pause_count": 9,
+   "pause_total_s": 3.06,
+   "pitch_hz": 112.68,
+   "pitch_spread_hz": 51.46,
+   "loudness_spread_db": 5.97
+  }
+ },
+ {
+  "name": "yaemdluffy_enhanced",
+  "wer": 0.14814814814814814,
+  "measures": {
+   "duration_s": 13.68,
+   "speech_ratio": 0.86,
+   "pause_count": 4,
+   "pause_total_s": 0.72,
+   "pitch_hz": 118.81,
+   "pitch_spread_hz": 6.41,
+   "loudness_spread_db": 4.41
+  }
+ },
+ {
+  "name": "zerocool_enhanced",
+  "wer": 0.6666666666666666,
+  "measures": {
+   "duration_s": 9.68,
+   "speech_ratio": 0.57,
+   "pause_count": 4,
+   "pause_total_s": 1.71,
+   "pitch_hz": 93.93,
+   "pitch_spread_hz": 49.72,
+   "loudness_spread_db": 4.97
+  }
+ }
+]
