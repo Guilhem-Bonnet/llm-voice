@@ -417,6 +417,8 @@ describe("links, commands, preparation", () => {
     await controller.handle({ type: "copyCommand", engine: "kyutai" });
 
     expect(deps.writeClipboard).toHaveBeenCalledExactlyOnceWith("pocket-tts serve --language french --port 9000");
+    // The game-mode folder lives in /run/user and vanishes at each reboot; Docker refuses the mount without it.
+    expect(startCommand("kyutai16", "http://localhost:8020")).toMatch(/^mkdir -p "\$XDG_RUNTIME_DIR\/gpu-yield" && docker compose /);
     expect(startCommand("kokoro", "http://localhost:8880")).toContain("-p 127.0.0.1:8880:8880");
     expect(startCommand("kokoro", "http://localhost:9000")).toContain("-p 127.0.0.1:9000:8880");
     expect(startCommand("kyutai", "http://localhost:8000")).toBe("pocket-tts serve --language french");

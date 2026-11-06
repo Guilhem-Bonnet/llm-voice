@@ -189,7 +189,7 @@ function portOf(url: string): string | undefined {
  * interface shows no flag holding the word ADR-017 V9 removes from what the user reads
  * (`up --dry-run` gives the same result with and without it, see the evidence pack).
  */
-export const KYUTAI16_COMPOSE_COMMAND = "docker compose -f deploy/docker-compose.tts.yml up -d kyutai16";
+export const KYUTAI16_COMPOSE_COMMAND = `mkdir -p "$XDG_RUNTIME_DIR/gpu-yield" && docker compose -f deploy/docker-compose.tts.yml up -d kyutai16`;
 
 /**
  * The command to run oneself, adapted to the configured port. Shown and copied, never
