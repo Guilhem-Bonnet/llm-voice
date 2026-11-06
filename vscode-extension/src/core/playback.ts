@@ -4,6 +4,8 @@
  * the Webview is a passive single-`<audio>` player.
  */
 
+import type { WaitView } from "../playback/waitEstimate.js";
+import type { TtsHoldReason } from "./tts.js";
 import type { NarrationSegment } from "./narration.js";
 import type { SourceDocument, SourceRange } from "./source.js";
 import type { AudioFormat } from "./tts.js";
@@ -29,6 +31,8 @@ export interface AudioChunk {
   durationMs?: number;
   status: AudioChunkStatus;
   error?: string;
+  /** Set when the engine refused for a reason only the user can lift (`TtsHoldError`). */
+  holdReason?: TtsHoldReason;
 }
 
 /**
@@ -77,6 +81,29 @@ export interface PlayerStateView {
   voice: string;
   title: string;
   state: PlaybackState;
+  /** The wait before the sound, while there is one. */
+  wait?: WaitView;
+  /** Passages already generated past the one being read; absent outside a reading. */
+  ahead?: number;
+  /** "Lecture de : …, lignes 42-58", when the section is known. */
+  reading?: string;
+  /** Why the reading stopped, with what can be done about it. */
+  notice?: PlayerNotice;
+}
+
+/** What the panel shows when the engine holds back (mode jeu, memory). */
+export interface PlayerNotice {
+  title: string;
+  body: string;
+}
+
+/** The open document, as the player shows it. Never its content. */
+export interface PlayerDocumentView {
+  fileName: string;
+  /** Non-empty selected passages, after merging. */
+  passages: number;
+  /** "Passages : lignes 12-18, 40-44 et 90.", from two passages up. */
+  passagesText?: string;
 }
 
 /** Buttons the Webview can report; the Extension Host decides what they mean. */
@@ -90,7 +117,14 @@ export type PlayerUserAction =
   // S7.2: the empty-player welcome buttons (ADR-011's "never shown empty"
   // link becomes two real actions instead of a dead end).
   | "setupVoice"
-  | "speakCurrentDocument";
+  | "speakCurrentDocument"
+  // The "Document ouvert" block. Each one is a click: nothing here starts by itself.
+  | "speakSelection"
+  | "speakFromCursor"
+  | "speakClipboard"
+  // The notice shown when the engine holds back.
+  | "retryHold"
+  | "readWithSystemVoice";
 
 /** Commands sent Extension Host → Webview (D4). */
 export type ExtensionToWebviewMessage =
@@ -108,7 +142,8 @@ export type ExtensionToWebviewMessage =
   | { type: "seek"; positionMs: number }
   | { type: "setRate"; value: number }
   | { type: "setVolume"; value: number }
-  | { type: "state"; state: PlayerStateView };
+  | { type: "state"; state: PlayerStateView }
+  | { type: "document"; document: PlayerDocumentView | null };
 
 /** Events sent Webview → Extension Host (D4). */
 export type WebviewToExtensionMessage =

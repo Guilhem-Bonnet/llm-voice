@@ -8,7 +8,7 @@
 
 import * as vscode from "vscode";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceRange, SourceType } from "../core/source.js";
-import { CAPTURE_RANGE_METADATA_KEY } from "./captureRange.js";
+import { CAPTURE_RANGE_METADATA_KEY, CAPTURE_RANGES_METADATA_KEY } from "./captureRange.js";
 
 export class TextSelectionSource implements SourceAdapter {
   readonly id = "source-text-selection";
@@ -44,7 +44,16 @@ export class TextSelectionSource implements SourceAdapter {
       rawText: document.getText(),
       languageId: document.languageId,
       capturedAt: Date.now(),
-      ...(range !== undefined ? { metadata: { [CAPTURE_RANGE_METADATA_KEY]: range } } : {})
+      ...(range !== undefined
+        ? {
+            metadata: {
+              [CAPTURE_RANGE_METADATA_KEY]: range,
+              ...(context.scope === "selection" && context.selections !== undefined
+                ? { [CAPTURE_RANGES_METADATA_KEY]: context.selections }
+                : {})
+            }
+          }
+        : {})
     };
   }
 

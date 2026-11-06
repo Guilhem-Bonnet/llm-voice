@@ -198,6 +198,137 @@ class Contract(ServerCase):
         self.assertEqual(self.engine.calls[0][0], "Bonjour à tous")
 
 
+class FirstLoad(ServerCase):
+    """Le premier chargement dure 40 à 60 s : /health le dit, et /load le lance sans synthèse."""
+
+    def hold_load(self) -> threading.Event:
+        release = threading.Event()
+        self.addCleanup(release.set)
+        self.engine.on_load = lambda: release.wait(10)
+        return release
+
+    def health(self) -> dict:
+        return json.loads(self.request("GET", "/health")[1])
+
+    def wait_for_state(self, state: str) -> dict:
+        deadline = time.monotonic() + 5
+        payload: dict = {}
+        while time.monotonic() < deadline:
+            payload = self.health()
+            if payload["state"] == state:
+                return payload
+            time.sleep(0.02)
+        self.fail(f"état {state} jamais atteint : {payload}")
+
+    def wait_for_unload(self) -> None:
+        deadline = time.monotonic() + 5
+        while self.engine.unloads == 0 and time.monotonic() < deadline:
+            time.sleep(0.02)
+        self.assertEqual(self.engine.unloads, 1)
+
+    def test_health_says_unloaded_before_any_request(self):
+        payload = self.health()
+        self.assertEqual(payload["state"], "unloaded")
+        self.assertNotIn("loading_since_s", payload)
+
+    def test_health_answers_at_once_during_a_load_and_says_since_when(self):
+        release = self.hold_load()
+        self.assertEqual(self.request("POST", "/load")[0].status, 202)
+        self.wait_for_state("loading")
+        started = time.monotonic()
+        payload = self.health()
+        self.assertLess(time.monotonic() - started, 0.5, "/health ne doit pas attendre le chargement")
+        self.assertFalse(payload["model_loaded"])
+        self.assertGreaterEqual(payload["loading_since_s"], 0)
+        release.set()
+        payload = self.wait_for_state("ready")
+        self.assertTrue(payload["model_loaded"])
+        self.assertNotIn("loading_since_s", payload)
+        self.assertEqual(self.engine.calls, [], "/load ne synthétise rien")
+
+    def test_a_tts_request_loading_the_model_is_also_reported(self):
+        release = self.hold_load()
+        result: list = []
+        thread = threading.Thread(target=lambda: result.append(self.tts(text="Bonjour")[0].status))
+        thread.start()
+        self.wait_for_state("loading")
+        release.set()
+        thread.join(5)
+        self.assertEqual(result, [200])
+        self.assertEqual(self.health()["state"], "ready")
+
+    def test_load_twice_loads_once(self):
+        release = self.hold_load()
+        self.assertEqual(self.request("POST", "/load")[0].status, 202)
+        self.assertEqual(self.request("POST", "/load")[0].status, 202)
+        release.set()
+        self.wait_for_state("ready")
+        self.assertEqual(self.request("POST", "/load")[0].status, 200)
+        self.assertEqual(self.engine.loads, 1)
+
+    def test_tts_waits_for_a_background_load_without_loading_again(self):
+        release = self.hold_load()
+        self.request("POST", "/load")
+        self.wait_for_state("loading")
+        result: list = []
+        thread = threading.Thread(target=lambda: result.append(self.tts(text="Bonjour")[0].status))
+        thread.start()
+        release.set()
+        thread.join(5)
+        self.assertEqual(result, [200])
+        self.assertEqual(self.engine.loads, 1)
+
+    def test_load_refused_in_game_mode_without_touching_the_gpu(self):
+        self.flag.touch()
+        response, data = self.request("POST", "/load")
+        self.assertEqual(response.status, 503)
+        self.assertEqual(json.loads(data)["reason"], "gpu_yield")
+        self.assertEqual(self.engine.loads, 0)
+        self.assertEqual(self.health()["state"], "yielded")
+
+    def test_game_mode_starting_during_a_background_load_releases_the_model(self):
+        release = self.hold_load()
+        self.request("POST", "/load")
+        self.wait_for_state("loading")
+        self.flag.touch()
+        self.assertEqual(self.health()["state"], "yielded")
+        release.set()
+        self.wait_for_unload()
+        self.assertFalse(self.engine.loaded)
+        self.flag.unlink()
+        self.assertFalse(self.wait_for_state("unloaded")["model_loaded"])
+
+    def test_a_failed_background_load_leaves_a_clean_state_and_never_the_exception_text(self):
+        def explode() -> None:
+            raise RuntimeError(f"CUDA out of memory {SECRET}")
+
+        self.engine.on_load = explode
+        self.assertEqual(self.request("POST", "/load")[0].status, 202)
+        self.wait_for_unload()
+        self.wait_for_state("unloaded")
+        self.assertNotIn(SECRET, json.dumps(self.logged, ensure_ascii=False))
+
+    def test_load_obeys_the_same_origin_rules_as_tts(self):
+        response, _ = self.request("POST", "/load", headers={"Origin": "https://evil.example"})
+        self.assertEqual(response.status, 403)
+        self.assertEqual(self.engine.loads, 0)
+
+    def test_503_says_why_for_the_client(self):
+        self.flag.touch()
+        response, data = self.tts(text="Bonjour")
+        self.assertEqual(response.status, 503)
+        self.assertEqual(json.loads(data)["reason"], "gpu_yield")
+        self.flag.unlink()
+
+        def explode() -> None:
+            raise RuntimeError("out of memory")
+
+        self.engine.on_load = explode
+        response, data = self.tts(text="Bonjour")
+        self.assertEqual(response.status, 503)
+        self.assertEqual(json.loads(data)["reason"], "gpu_memory")
+
+
 class Refusals(ServerCase):
     def test_voice_url_never_accepts_a_path_or_an_url(self):
         attempts = ["../../etc/passwd", "/etc/passwd", "http://exemple.org/v.wav", "https://exemple.org/v", "hf://kyutai/tts-voices/x", "file:///etc/passwd", "CAMILLE", "Camille", "cml-577_394/../x"]

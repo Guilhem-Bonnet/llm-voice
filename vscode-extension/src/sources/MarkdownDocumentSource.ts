@@ -9,7 +9,7 @@
 
 import * as vscode from "vscode";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceRange, SourceType } from "../core/source.js";
-import { CAPTURE_RANGE_METADATA_KEY } from "./captureRange.js";
+import { CAPTURE_RANGE_METADATA_KEY, CAPTURE_RANGES_METADATA_KEY } from "./captureRange.js";
 
 const HEADING_RE = /^(#{1,6})\s/;
 
@@ -78,6 +78,9 @@ export class MarkdownDocumentSource implements SourceAdapter {
     const metadata: Record<string, unknown> = {};
     if (captureRange !== undefined) {
       metadata[CAPTURE_RANGE_METADATA_KEY] = captureRange;
+    }
+    if (context.scope === "selection" && context.selections !== undefined) {
+      metadata[CAPTURE_RANGES_METADATA_KEY] = context.selections;
     }
 
     const title = document.uri.path.split("/").pop();

@@ -67,7 +67,6 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
     <p id="welcome-text">Aucune lecture en cours&hellip;</p>
     <div id="welcome-actions" role="group" aria-label="Démarrer une lecture">
       <button id="btn-setup-voice" class="welcome-button" type="button">Choisir une voix</button>
-      <button id="btn-speak-current" class="welcome-button" type="button">Lire le document actuel</button>
     </div>
   </div>
 
@@ -77,6 +76,30 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
       <span id="profile"></span>
       <span id="voice"></span>
     </span>
+  </div>
+
+  <div id="wait" hidden>
+    <div id="wait-head" class="line">
+      <span id="wait-label"></span>
+      <span id="wait-elapsed"></span>
+    </div>
+    <div
+      id="wait-bar"
+      role="progressbar"
+      aria-label="Attente avant la lecture"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+      aria-valuetext=""
+    >
+      <div id="wait-fill"></div>
+    </div>
+    <div id="wait-text" class="wait-line"></div>
+    <div id="wait-typical" class="wait-line" hidden></div>
+    <div id="wait-note" class="wait-line" hidden></div>
+    <div class="actions">
+      <button id="btn-wait-cancel" class="action-button" type="button">Annuler</button>
+    </div>
   </div>
 
   <div id="progress-line" class="line">
@@ -94,6 +117,11 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
     <span id="time">00:00</span>
   </div>
 
+  <div id="reading-line" hidden>
+    <div id="reading" class="wait-line"></div>
+    <div id="ahead" class="wait-line"></div>
+  </div>
+
   <div id="status-line" class="line">
     <span id="status" role="status" aria-live="polite"></span>
   </div>
@@ -104,6 +132,35 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
     <button id="btn-next" class="transport-button" type="button" aria-label="Segment suivant">⏭</button>
     <button id="btn-stop" class="transport-button" type="button" aria-label="Arrêter">⏹</button>
   </div>
+
+  <div id="notice" hidden>
+    <p id="notice-title"></p>
+    <p id="notice-body"></p>
+    <div class="actions">
+      <button id="btn-notice-system" class="action-button" type="button">Lire avec la voix système</button>
+      <button id="btn-notice-retry" class="action-button" type="button">Réessayer</button>
+    </div>
+  </div>
+
+  <section id="document" aria-label="Document ouvert">
+    <div id="document-open" hidden>
+      <h2 id="document-heading">Document ouvert</h2>
+      <p id="document-name"></p>
+      <div class="actions" role="group" aria-label="Lire le document ouvert">
+        <button id="btn-read-document" class="action-button" type="button">Lire le document</button>
+        <button id="btn-read-selection" class="action-button" type="button" hidden>Lire la sélection</button>
+        <button id="btn-read-from-here" class="action-button" type="button">Lire à partir d'ici</button>
+      </div>
+      <p id="document-passages" class="wait-line" hidden></p>
+    </div>
+    <div id="document-empty">
+      <p id="document-empty-text">Ouvrez un fichier pour le lire</p>
+      <div class="actions">
+        <button id="btn-read-clipboard" class="action-button" type="button">Lire le presse-papiers</button>
+      </div>
+    </div>
+    <p id="document-note" class="wait-line">La lecture ne démarre jamais toute seule.</p>
+  </section>
 
   <audio id="audio"></audio>
 

@@ -773,3 +773,36 @@ describe("PlaybackController — buffering (ADR-005's reported-to-phase-4 gap)",
     expect(h.controller.getState()).toBe("playing");
   });
 });
+
+describe("startAhead: a second passage ready before the sound", () => {
+  it("waits for it before the first sound, and does not wait for a passage that does not exist", async () => {
+    const sink = new FakeAudioSink();
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const tts = new FakeTtsProvider();
+    const synthesize = tts.synthesize.bind(tts);
+    let calls = 0;
+    tts.synthesize = async (request, signal) => {
+      calls += 1;
+      if (calls === 2) {
+        await gate;
+      }
+      return synthesize(request, signal);
+    };
+    const controller = new PlaybackController({ retryJitterMs: 0 });
+    const started = controller.start({ segments: makeSegments(3), profile: makeProfile(), tts, sink, startAhead: 1 });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(controller.getState()).toBe("preparing");
+    release();
+    await started;
+    expect(controller.getState()).toBe("playing");
+    controller.dispose();
+
+    const lone = new PlaybackController({ retryJitterMs: 0 });
+    await lone.start({ segments: makeSegments(1), profile: makeProfile(), tts: new FakeTtsProvider(), sink: new FakeAudioSink(), startAhead: 1 });
+    expect(lone.getState()).toBe("playing");
+    lone.dispose();
+  });
+});

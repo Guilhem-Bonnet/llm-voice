@@ -3,7 +3,8 @@
 
 Même contrat HTTP que `pocket-tts serve`, pour que `KyutaiPocketProvider` serve aux deux :
 
-  GET  /health   {"status": "healthy", ...}, jamais de chargement ni de charge GPU
+  GET  /health   {"status": "healthy", "state": ..., ...}, jamais de chargement ni de charge GPU
+  POST /load     lance le chargement du modèle en tâche de fond, sans synthèse : 202, 200 si déjà fait
   GET  /voices   le catalogue et ce que le cache local contient réellement
   POST /tts      formulaire `text`, `voice_url` : renvoie un WAV entier
 
@@ -66,6 +67,8 @@ class ServiceError(Exception):
 
     status = 500
     message = "Échec de la synthèse. Le journal du serveur indique le type d'erreur."
+    # Ce qu'un client décide sans lire la phrase : `gpu_yield` et `gpu_memory` ne se réessaient pas seuls.
+    reason: Optional[str] = None
 
     def __init__(self, message: Optional[str] = None) -> None:
         super().__init__(message or self.message)
@@ -75,16 +78,19 @@ class ServiceError(Exception):
 class GpuYielded(ServiceError):
     status = 503
     message = YIELD_MESSAGE
+    reason = "gpu_yield"
 
 
 class Busy(ServiceError):
     status = 503
     message = "Trop de synthèses en attente. Réessayez dans un instant."
+    reason = "busy"
 
 
 class GpuUnavailable(ServiceError):
     status = 503
     message = "GPU indisponible ou mémoire insuffisante : d'autres services l'utilisent peut-être."
+    reason = "gpu_memory"
 
 
 class VoiceUnavailable(ServiceError):
@@ -234,6 +240,8 @@ class Kyutai16Service:
         self._condition = threading.Condition()
         self._waiting: collections.deque[object] = collections.deque()
         self._running = False
+        # Depuis quand le modèle charge, ou va charger : horloge monotone, `None` hors chargement.
+        self._loading_since: Optional[float] = None
 
     def yielding(self) -> bool:
         try:
@@ -243,14 +251,27 @@ class Kyutai16Service:
             return True
 
     def health(self) -> dict[str, object]:
-        """Ne charge rien : le serveur répond, ce qui ne dit rien du GPU."""
-        return {
+        """Ne charge rien et ne prend aucun verrou : répond aussi pendant `engine.load()`."""
+        yielding = self.yielding()
+        loading_since = self._loading_since
+        loaded = self.engine.loaded
+        if yielding:
+            state = "yielded"
+        elif loading_since is not None:
+            state = "loading"
+        else:
+            state = "ready" if loaded else "unloaded"
+        payload: dict[str, object] = {
             "status": "healthy",
             "engine": ENGINE_NAME,
-            "model_loaded": self.engine.loaded,
-            "gpu_yield": self.yielding(),
+            "state": state,
+            "model_loaded": loaded,
+            "gpu_yield": yielding,
             "voices": len(self.voice_files),
         }
+        if state == "loading" and loading_since is not None:
+            payload["loading_since_s"] = round(time.monotonic() - loading_since, 1)
+        return payload
 
     def voices(self) -> dict[str, object]:
         rows = [{"id": voice, "name": name, "available": voice in self.voice_files} for voice, name in self.catalog.items()]
@@ -285,6 +306,65 @@ class Kyutai16Service:
         except Exception as error:  # noqa: BLE001 : le nom du type seul, voir `synthesize`
             self.log("model_unload_failed", error=type(error).__name__)
 
+    def _load_model(self) -> None:
+        """Appelé par qui détient la file : `/health` lit `_loading_since` sans l'attendre."""
+        started = time.monotonic()
+        with self._condition:
+            if self._loading_since is None:
+                self._loading_since = started
+        try:
+            self.engine.load()
+            self.log("model_loaded", duration_s=round(time.monotonic() - started, 1))
+        finally:
+            with self._condition:
+                self._loading_since = None
+
+    def begin_load(self) -> bool:
+        """Charge le modèle sans rien synthétiser. Vrai s'il l'est déjà, faux si le chargement suit."""
+        if self.yielding():
+            raise GpuYielded()
+        with self._condition:
+            if self.engine.loaded:
+                return True
+            if self._loading_since is not None:
+                return False
+            self._loading_since = time.monotonic()
+        threading.Thread(target=self._load_in_background, name="load", daemon=True).start()
+        return False
+
+    def _load_in_background(self) -> None:
+        def checkpoint() -> None:
+            if self.yielding():
+                raise GpuYielded()
+
+        try:
+            self._enter(checkpoint)
+        except ServiceError as error:
+            self.log("load_abandoned", error=type(error).__name__)
+            with self._condition:
+                self._loading_since = None
+            return
+        release = False
+        try:
+            checkpoint()
+            if not self.engine.loaded:
+                self._load_model()
+                # Le chargement ne s'interrompt pas : le mode jeu a pu commencer pendant.
+                checkpoint()
+        except GpuYielded:
+            release = True
+        except Exception as error:  # noqa: BLE001 : le nom du type seul, voir `synthesize`
+            self.log("load_failed", error=type(error).__name__)
+            release = is_out_of_memory(error)
+        with self._condition:
+            self._loading_since = None
+        # Hors du `except`, pour la raison dite dans `synthesize`.
+        try:
+            if release:
+                self._release_model()
+        finally:
+            self._leave()
+
     def synthesize(self, text: str, voice: str, disconnected: Callable[[], bool]) -> bytes:
         voice_file = self.voice_files.get(voice)
         if voice_file is None:
@@ -303,9 +383,7 @@ class Kyutai16Service:
             try:
                 checkpoint()
                 if not self.engine.loaded:
-                    started = time.monotonic()
-                    self.engine.load()
-                    self.log("model_loaded", duration_s=round(time.monotonic() - started, 1))
+                    self._load_model()
                     # Le chargement ne s'interrompt pas : le mode jeu a pu commencer pendant.
                     checkpoint()
                 pcm, rate = self.engine.synthesize(text, voice_file, checkpoint)
@@ -437,15 +515,25 @@ def make_handler(service: Kyutai16Service) -> type[BaseHTTPRequestHandler]:
                 else:
                     self._json(404, {"detail": "Adresse inconnue."})
             except ServiceError as error:
-                self._json(error.status, {"detail": error.message})
+                self._error(error.status, error)
+
+        def _error(self, status: int, error: ServiceError, extra: Optional[dict[str, str]] = None) -> None:
+            payload: dict[str, object] = {"detail": error.message}
+            if error.reason is not None:
+                payload["reason"] = error.reason
+            self._json(status, payload, extra)
 
         def do_POST(self) -> None:  # noqa: N802
             started = time.monotonic()
             route = urlsplit(self.path).path
-            fields: dict[str, object] = {"route": route if route == "/tts" else "other"}
+            fields: dict[str, object] = {"route": route if route in ("/tts", "/load") else "other"}
             status = 500
             try:
                 self._check_origin()
+                if route == "/load":
+                    status = 200 if service.begin_load() else 202
+                    self._json(status, {"state": "ready" if status == 200 else "loading"})
+                    return
                 if route != "/tts":
                     raise ServiceError("Adresse inconnue.")
                 form = parse_form(self.headers.get("Content-Type") or "", self._read_body())
@@ -460,7 +548,7 @@ def make_handler(service: Kyutai16Service) -> type[BaseHTTPRequestHandler]:
             except ServiceError as error:
                 status = 404 if fields["route"] == "other" and not isinstance(error, BadRequest) else error.status
                 extra = {"Retry-After": "60"} if isinstance(error, GpuYielded) else None
-                self._json(status, {"detail": error.message}, extra)
+                self._error(status, error, extra)
             except (BrokenPipeError, ConnectionResetError):
                 status = 499
                 self.close_connection = True

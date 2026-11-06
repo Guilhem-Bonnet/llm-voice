@@ -399,6 +399,21 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
         case "speakCurrentDocument":
           void vscode.commands.executeCommand("llmVoice.speakDocument");
           break;
+        case "speakSelection":
+          void vscode.commands.executeCommand("llmVoice.speakSelection");
+          break;
+        case "speakFromCursor":
+          void vscode.commands.executeCommand("llmVoice.speakFromCursor");
+          break;
+        case "speakClipboard":
+          void vscode.commands.executeCommand("llmVoice.speakClipboard");
+          break;
+        case "retryHold":
+          void pipeline.retryAfterHold();
+          break;
+        case "readWithSystemVoice":
+          void pipeline.readWithSystemVoice();
+          break;
         default:
           break;
       }

@@ -174,10 +174,146 @@ body {
 }
 
 body[data-state="idle"] #transport,
-body[data-state="idle"] #progress-track {
+body[data-state="idle"] #progress-line {
   display: none;
 }
 
 body:not([data-state="idle"]) #welcome {
+  display: none;
+}
+
+/* `display` set below would otherwise win over the attribute. */
+[hidden] {
+  display: none !important;
+}
+
+/* Fixed size: never stretched, never wrapped. The row wraps, the label does not. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.action-button {
+  appearance: none;
+  flex: none;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 4px;
+  background-color: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
+  cursor: pointer;
+  font-size: var(--vscode-font-size);
+  font-family: var(--vscode-font-family);
+  white-space: nowrap;
+}
+
+.action-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
+}
+
+.action-button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+
+.wait-line {
+  margin: 2px 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+#wait {
+  padding: 4px 0;
+}
+
+#wait-elapsed {
+  flex: none;
+  color: var(--vscode-descriptionForeground);
+  font-variant-numeric: tabular-nums;
+}
+
+#wait-bar {
+  height: 4px;
+  margin: 6px 0;
+  border-radius: 2px;
+  overflow: hidden;
+  background-color: var(--vscode-scrollbarSlider-background);
+}
+
+#wait-fill {
+  height: 100%;
+  width: 0%;
+  background-color: var(--vscode-progressBar-background, var(--vscode-button-background));
+  transition: width 1s linear;
+}
+
+/* The value and the text only. */
+@media (prefers-reduced-motion: reduce) {
+  #wait-fill {
+    transition: none;
+  }
+}
+
+/* The wait block takes the place of the progress line, and speaks through the status below. */
+#wait:not([hidden]) ~ #progress-line {
+  display: none;
+}
+
+#wait:not([hidden]) ~ #status-line {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+#notice {
+  padding: 6px 0;
+}
+
+#notice-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+#notice-body {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+}
+
+#document {
+  padding: 8px 0 0;
+}
+
+#document-heading {
+  margin: 0 0 4px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#document-name {
+  margin: 0;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#document-empty-text {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+}
+
+/* During a reading the panel talks about that reading. */
+body[data-state="preparing"] #document,
+body[data-state="buffering"] #document,
+body[data-state="playing"] #document,
+body[data-state="paused"] #document {
   display: none;
 }

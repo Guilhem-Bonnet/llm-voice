@@ -24,8 +24,42 @@
   };
 
   const welcomeButtons = {
-    setupVoice: document.getElementById("btn-setup-voice"),
-    speakCurrent: document.getElementById("btn-speak-current")
+    setupVoice: document.getElementById("btn-setup-voice")
+  };
+
+  const wait = {
+    block: document.getElementById("wait"),
+    label: document.getElementById("wait-label"),
+    elapsed: document.getElementById("wait-elapsed"),
+    bar: document.getElementById("wait-bar"),
+    fill: document.getElementById("wait-fill"),
+    text: document.getElementById("wait-text"),
+    typical: document.getElementById("wait-typical"),
+    note: document.getElementById("wait-note"),
+    cancel: document.getElementById("btn-wait-cancel")
+  };
+
+  const readingLine = document.getElementById("reading-line");
+  const readingEl = document.getElementById("reading");
+  const aheadEl = document.getElementById("ahead");
+
+  const notice = {
+    block: document.getElementById("notice"),
+    title: document.getElementById("notice-title"),
+    body: document.getElementById("notice-body"),
+    system: document.getElementById("btn-notice-system"),
+    retry: document.getElementById("btn-notice-retry")
+  };
+
+  const documentBlock = {
+    open: document.getElementById("document-open"),
+    empty: document.getElementById("document-empty"),
+    name: document.getElementById("document-name"),
+    passages: document.getElementById("document-passages"),
+    readDocument: document.getElementById("btn-read-document"),
+    readSelection: document.getElementById("btn-read-selection"),
+    readFromHere: document.getElementById("btn-read-from-here"),
+    readClipboard: document.getElementById("btn-read-clipboard")
   };
 
   let currentChunkId = null;
@@ -45,6 +79,7 @@
   // that click must not read as "play", which would start a new reading.
   const CANCEL_GUARD_MS = 600;
   let lastCancelAtMs = Number.NEGATIVE_INFINITY;
+  let hasWait = false;
 
   function formatTime(ms) {
     const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -65,7 +100,81 @@
     buttons.playPause.textContent = loading ? CANCEL_GLYPH : isPlaying ? "⏸" /* pause */ : "▶" /* play */;
     buttons.playPause.setAttribute("aria-label", label);
     buttons.playPause.setAttribute("title", label);
-    statusEl.textContent = loading ? loading.status : "";
+    if (!hasWait) {
+      setStatus(loading ? loading.status : "");
+    }
+  }
+
+  // The live region: writing it again would announce it again, so only a change reaches it.
+  function setStatus(text) {
+    if (statusEl.textContent !== text) {
+      statusEl.textContent = text;
+    }
+  }
+
+  // The bar and its counters stay out of the live region: only `announcement` is spoken,
+  // and it changes at thresholds alone. Reduced motion is CSS: the width simply jumps.
+  function renderWait(view) {
+    hasWait = view !== null && typeof view === "object";
+    wait.block.hidden = !hasWait;
+    if (!hasWait) {
+      return;
+    }
+    const percent = Math.min(100, Math.max(0, Number(view.percent) || 0));
+    wait.label.textContent = typeof view.label === "string" ? view.label : "";
+    wait.elapsed.textContent = view.step === "next-passage" ? "" : `${Number(view.elapsedSeconds) || 0} s`;
+    wait.fill.style.width = `${percent}%`;
+    wait.bar.setAttribute("aria-valuenow", String(percent));
+    wait.bar.setAttribute("aria-valuetext", typeof view.valueText === "string" ? view.valueText : "");
+    wait.text.textContent = typeof view.text === "string" ? view.text : "";
+    const typical = typeof view.typicalSeconds === "number" ? `D'habitude environ ${view.typicalSeconds} s` : "";
+    wait.typical.textContent = typical;
+    wait.typical.hidden = typical.length === 0;
+    const note = typeof view.note === "string" ? view.note : "";
+    wait.note.textContent = note;
+    wait.note.hidden = note.length === 0;
+    setStatus(typeof view.announcement === "string" ? view.announcement : "");
+  }
+
+  function aheadText(state) {
+    if (typeof state.ahead !== "number" || (state.state !== "playing" && state.state !== "paused")) {
+      return "";
+    }
+    if (state.ahead <= 0) {
+      return "Passage suivant en préparation…";
+    }
+    return state.ahead === 1 ? "1 passage d'avance" : `${state.ahead} passages d'avance`;
+  }
+
+  function renderReading(state) {
+    const reading = state.state === "playing" || state.state === "paused" ? state.reading : "";
+    const ahead = aheadText(state);
+    readingEl.textContent = typeof reading === "string" ? reading : "";
+    aheadEl.textContent = ahead;
+    readingLine.hidden = readingEl.textContent.length === 0 && ahead.length === 0;
+  }
+
+  function renderNotice(view) {
+    const shown = view !== null && typeof view === "object";
+    notice.block.hidden = !shown;
+    notice.title.textContent = shown && typeof view.title === "string" ? view.title : "";
+    notice.body.textContent = shown && typeof view.body === "string" ? view.body : "";
+  }
+
+  function renderDocument(view) {
+    const open = view !== null && typeof view === "object";
+    documentBlock.open.hidden = !open;
+    documentBlock.empty.hidden = open;
+    if (!open) {
+      return;
+    }
+    const passages = Number(view.passages) || 0;
+    documentBlock.name.textContent = typeof view.fileName === "string" ? view.fileName : "";
+    documentBlock.readSelection.hidden = passages === 0;
+    documentBlock.readSelection.textContent = passages > 1 ? `Lire les ${passages} passages` : "Lire la sélection";
+    const text = typeof view.passagesText === "string" ? view.passagesText : "";
+    documentBlock.passages.textContent = text;
+    documentBlock.passages.hidden = text.length === 0;
   }
 
   function updateProgress(positionMs, durationMs) {
@@ -148,7 +257,10 @@
         break;
       case "state": {
         const state = message.state;
+        renderWait(state.wait);
         setState(state.state);
+        renderReading(state);
+        renderNotice(state.notice);
         // `textContent` only — never an HTML-parsing sink. `state.title` is
         // derived from the first line of a Claude response or a document
         // heading, i.e. untrusted text that routinely contains `<`, `&`,
@@ -160,6 +272,9 @@
         voiceEl.textContent = typeof state.voice === "string" ? state.voice : "";
         break;
       }
+      case "document":
+        renderDocument(message.document);
+        break;
       default:
         break;
     }
@@ -226,9 +341,21 @@
   // (`body[data-state="idle"]`, see player.css), so these never compete
   // with the transport buttons.
   welcomeButtons.setupVoice.addEventListener("click", () => post({ type: "userAction", action: "setupVoice" }));
-  welcomeButtons.speakCurrent.addEventListener("click", () =>
+
+  wait.cancel.addEventListener("click", () => {
+    lastCancelAtMs = Date.now();
+    post({ type: "userAction", action: "stop" });
+  });
+  notice.retry.addEventListener("click", () => post({ type: "userAction", action: "retryHold" }));
+  notice.system.addEventListener("click", () => post({ type: "userAction", action: "readWithSystemVoice" }));
+
+  // A click, always: the document block never starts anything on its own.
+  documentBlock.readDocument.addEventListener("click", () =>
     post({ type: "userAction", action: "speakCurrentDocument" })
   );
+  documentBlock.readSelection.addEventListener("click", () => post({ type: "userAction", action: "speakSelection" }));
+  documentBlock.readFromHere.addEventListener("click", () => post({ type: "userAction", action: "speakFromCursor" }));
+  documentBlock.readClipboard.addEventListener("click", () => post({ type: "userAction", action: "speakClipboard" }));
 
   post({ type: "ready" });
 })();

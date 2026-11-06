@@ -28,7 +28,7 @@
  */
 
 import type { ProviderHealth } from "../core/health.js";
-import type { AudioResult, TtsCapabilities, TtsProvider, TtsRequest, Voice } from "../core/tts.js";
+import { TtsHoldError, type AudioResult, type TtsCapabilities, type TtsHoldReason, type TtsProvider, type TtsRequest, type Voice } from "../core/tts.js";
 import { repairStreamedWavSizes } from "../core/wavRepair.js";
 import type { EgressGuardHandle } from "../net/EgressGuard.js";
 import { KYUTAI_POCKET_VOICE_CATALOG } from "./kyutaiVoiceCatalog.js";
@@ -60,6 +60,8 @@ export interface KyutaiPocketProviderOptions {
   catalog?: readonly Voice[];
   /** What an error calls this engine; defaults to `"KyutaiPocketProvider"`. */
   engineName?: string;
+  /** The server has `POST /load` and says its `state` (`deploy/kyutai16/server.py`). `pocket-tts serve` does not. */
+  loadsOnDemand?: boolean;
 }
 
 export function messageOf(error: unknown): string {
@@ -82,6 +84,17 @@ function buildTtsForm(text: string, voice: string | undefined): FormData {
   return form;
 }
 
+/** The server's `reason`; a server predating it is recognised by its own two sentences. */
+function holdReasonOf(reason: unknown, detail: string): TtsHoldReason | undefined {
+  if (reason === "gpu_yield" || detail.startsWith("Mode jeu")) {
+    return "gpu-yield";
+  }
+  if (reason === "gpu_memory" || detail.includes("mémoire insuffisante")) {
+    return "gpu-memory";
+  }
+  return undefined;
+}
+
 export class KyutaiPocketProvider implements TtsProvider {
   readonly id: string;
 
@@ -91,6 +104,7 @@ export class KyutaiPocketProvider implements TtsProvider {
   private readonly defaultVoice: string | undefined;
   private readonly catalog: readonly Voice[];
   private readonly engineName: string;
+  private readonly loadsOnDemand: boolean;
 
   constructor(options: KyutaiPocketProviderOptions) {
     this.id = options.id ?? DEFAULT_ID;
@@ -100,6 +114,7 @@ export class KyutaiPocketProvider implements TtsProvider {
     this.defaultVoice = options.defaultVoice;
     this.catalog = options.catalog ?? KYUTAI_POCKET_VOICE_CATALOG;
     this.engineName = options.engineName ?? "KyutaiPocketProvider";
+    this.loadsOnDemand = options.loadsOnDemand === true;
   }
 
   /** `GET /health` → `{"status":"healthy"}`; anything else is `unreachable`, never a false `ok` (ADR-005 D10). */
@@ -115,10 +130,26 @@ export class KyutaiPocketProvider implements TtsProvider {
       if (response.ok) {
         const body = await response
           .json()
-          .then((value) => value as { status?: unknown })
+          .then((value) => value as { status?: unknown; state?: unknown; model_loaded?: unknown; loading_since_s?: unknown })
           .catch(() => undefined);
         if (body?.status === "healthy") {
-          return { providerId: this.id, status: "ok", checkedAt, latencyMs, endpoint: this.endpointLabel("/health") };
+          const known = {
+            providerId: this.id,
+            checkedAt,
+            latencyMs,
+            endpoint: this.endpointLabel("/health"),
+            ...(typeof body.model_loaded === "boolean" ? { modelLoaded: body.model_loaded } : {})
+          };
+          // Only what the server says: a server predating `state` stays a plain `ok`.
+          if (body.state === "loading") {
+            return {
+              ...known,
+              status: "degraded",
+              detail: "loading",
+              ...(typeof body.loading_since_s === "number" ? { loadingSinceMs: body.loading_since_s * 1000 } : {})
+            };
+          }
+          return { ...known, status: "ok" };
         }
       }
       return {
@@ -137,6 +168,24 @@ export class KyutaiPocketProvider implements TtsProvider {
         endpoint: this.endpointLabel("/health"),
         detail: messageOf(error)
       };
+    }
+  }
+
+  /**
+   * `POST /load`: starts the load and returns at once. A refusal or a server predating the
+   * route changes nothing: `synthesize()` then reports it, or pays for the load as before.
+   */
+  async prepare(signal?: AbortSignal): Promise<void> {
+    if (!this.loadsOnDemand) {
+      return;
+    }
+    try {
+      await this.egress.fetch(`${this.baseUrl}/load`, {
+        method: "POST",
+        ...(signal !== undefined ? { signal } : {})
+      });
+    } catch {
+      // `health()` and `synthesize()` report an unreachable server.
     }
   }
 
@@ -188,11 +237,12 @@ export class KyutaiPocketProvider implements TtsProvider {
       ...(signal !== undefined ? { signal } : {})
     });
     if (!response.ok) {
-      const detail = await this.errorDetail(response);
-      throw new Error(
+      const { detail, reason } = await this.errorDetail(response);
+      const message =
         `${this.engineName}: HTTP ${response.status} from ${this.endpointLabel("/tts")}` +
-          (detail.length > 0 ? ` — ${detail}` : "")
-      );
+        (detail.length > 0 ? ` — ${detail}` : "");
+      const hold = response.status === 503 ? holdReasonOf(reason, detail) : undefined;
+      throw hold !== undefined ? new TtsHoldError(hold, message) : new Error(message);
     }
     // Chunked `audio/wav`, no `content-length` known in advance (task
     // envelope): `arrayBuffer()` still reads the stream through to its end.
@@ -201,18 +251,18 @@ export class KyutaiPocketProvider implements TtsProvider {
   }
 
   /** `{"detail": "..."}` (FastAPI's default error shape) when JSON, else the raw body text. */
-  private async errorDetail(response: Response): Promise<string> {
+  private async errorDetail(response: Response): Promise<{ detail: string; reason?: unknown }> {
     const text = await response.text().catch(() => "");
     try {
-      const body = JSON.parse(text) as { detail?: unknown; message?: unknown };
+      const body = JSON.parse(text) as { detail?: unknown; message?: unknown; reason?: unknown };
       const detail = body.detail ?? body.message;
       if (typeof detail === "string" && detail.length > 0) {
-        return detail;
+        return { detail, reason: body.reason };
       }
     } catch {
       // Not JSON: the raw text below is the best available message.
     }
-    return text;
+    return { detail: text };
   }
 
   /** Host + path only (D10): never a query string, never a body. */

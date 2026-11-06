@@ -6,7 +6,7 @@
 
 import { matchPreviewSource, previewFileName } from "./previewSource.js";
 import * as vscode from "vscode";
-import type { CaptureContext, CaptureScope, SourceRange } from "../core/source.js";
+import { normalizeSelections, type CaptureContext, type CaptureScope, type SourceRange } from "../core/source.js";
 import type { HighlightController } from "../highlight/HighlightController.js";
 import type { PlayerViewProvider } from "../views/player/PlayerViewProvider.js";
 import type { SpeakSectionArgs } from "../ui/CodeLensProvider.js";
@@ -106,7 +106,9 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
       // sélection") but only *after* opening the player and briefly showing
       // "preparing". Catching it here, before capture even starts, offers
       // the document instead of just reporting the empty result.
-      if (editor === undefined || editor.selection.isEmpty) {
+      const passages = editor === undefined ? [] : normalizeSelections(editor.selections.map(selectionToSourceRange));
+      const first = passages[0];
+      if (first === undefined) {
         const choice = await vscode.window.showInformationMessage(
           "LLM Voice : aucune sélection. Lire le document entier ?",
           "Lire le document"
@@ -116,7 +118,10 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
         }
         return;
       }
-      await runCapture("selection", { selection: selectionToSourceRange(editor.selection) });
+      await runCapture("selection", {
+        selection: first,
+        ...(passages.length > 1 ? { selections: passages } : {})
+      });
     }),
     vscode.commands.registerCommand(
       "llmVoice.speakFromCursor",

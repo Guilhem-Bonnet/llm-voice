@@ -13,6 +13,26 @@ Ce fichier est la seule source de vérité (voir `CONTRIBUTING.md`) ; le
 
 ## [Unreleased]
 
+**Attente lisible et gestes de lecture.**
+
+### Added
+
+- **Attente** : une barre qui se remplit sur une estimation calculée avant le son (chargement du modèle, préparation par l'IA, génération des deux premiers passages), avec « Lecture dans environ N s ». Plafond à 95 % puis « Encore un instant… », 100 % au premier son réel, jamais de recul. Au-delà du double de l'estimation, « Plus lent que d'habitude », sans rien annuler. Les mesures, par moteur, restent dans `globalState`, sans aucun texte.
+- **Document ouvert** : le lecteur suit l'éditeur et propose « Lire le document », « Lire la sélection », « Lire à partir d'ici », sans jamais démarrer tout seul. Rien d'ouvert : « Lire le presse-papiers ».
+- **Sélections multiples** : tous les passages, dans l'ordre du document, chevauchements fusionnés (« Lire les N passages »).
+- **Pendant la lecture** : « N passages d'avance », « Passage suivant en préparation… », « Lecture de : … ».
+- **Raccourcis** : `Ctrl+Alt+V F` (à partir d'ici), `Ctrl+Alt+V T` (section).
+- **Kyutai 1.6B** : `POST /load` charge le modèle sans synthèse ; `/health` dit `state` et `loading_since_s`. Un service déjà lancé doit être redémarré pour en profiter.
+
+### Changed
+
+- La lecture attend qu'un second passage soit prêt avant de commencer, pour éviter une coupure juste après.
+- Le moteur est préparé avant l'IA, et le délai `llmVoice.tts.timeoutMs` ne compte plus un premier chargement (`llmVoice.tts.readyTimeoutMs` passe à 180000).
+
+### Fixed
+
+- Mode jeu et mémoire insuffisante : aucune nouvelle tentative automatique, et le lecteur dit ce qui se passe, avec « Réessayer » et « Lire avec la voix système ».
+
 **ADR-017 — la voix choisie est celle qu'on entend, partout : voix globale séparée du mode de lecture.**
 
 ### Changed

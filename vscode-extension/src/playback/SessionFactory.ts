@@ -26,7 +26,7 @@ import type { SourceSegment } from "../core/source.js";
 import { Emitter, type Unsubscribe } from "./emitter.js";
 
 /** Default number of source segments handed to the narrator per call (CdC §33). */
-const DEFAULT_GROUP_SIZE = 4;
+export const DEFAULT_GROUP_SIZE = 4;
 
 /** Tunables of one session build. */
 export interface SessionBuildOptions {

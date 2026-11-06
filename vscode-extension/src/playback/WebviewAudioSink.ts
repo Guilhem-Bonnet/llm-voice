@@ -29,6 +29,7 @@
 import * as vscode from "vscode";
 import type {
   ExtensionToWebviewMessage,
+  PlayerDocumentView,
   PlayerStateView,
   PlayerUserAction,
   WebviewToExtensionMessage
@@ -109,6 +110,11 @@ export class WebviewAudioSink implements LegacyAudioSink {
   /** Pushes a mini-player snapshot (title, profile, index/total, state). */
   pushState(state: PlayerStateView): void {
     this.post({ type: "state", state });
+  }
+
+  /** The open document, for the panel's "Document ouvert" block. Starts nothing. */
+  pushDocument(document: PlayerDocumentView | null): void {
+    this.post({ type: "document", document });
   }
 
   on<E extends LegacyAudioSinkEvent>(

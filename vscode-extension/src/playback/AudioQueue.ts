@@ -24,6 +24,7 @@
  * still be played. Chunks that fall out of the window are unpinned.
  */
 
+import { isTtsHoldError } from "../core/tts.js";
 import type { AudioChunk } from "../core/playback.js";
 import type { TtsProvider, TtsRequest } from "../core/tts.js";
 import { computeCacheKey, type AudioCacheStore } from "./AudioCache.js";
@@ -294,6 +295,7 @@ export class AudioQueue {
     }
     chunk.status = "pending";
     delete chunk.error;
+    delete chunk.holdReason;
     this.jobs.delete(index);
     this.suspended = false;
     this.pump();
@@ -473,6 +475,14 @@ export class AudioQueue {
     } catch (error) {
       if (signal.aborted) {
         this.revertToPending(chunk);
+        return;
+      }
+      // The mode jeu or a full GPU: asking again changes nothing until the user acts.
+      if (isTtsHoldError(error)) {
+        chunk.status = "error";
+        chunk.error = error.message;
+        chunk.holdReason = error.reason;
+        this.emitTiming(index, { cacheHit: false, ready: false });
         return;
       }
       job.attempts += 1;

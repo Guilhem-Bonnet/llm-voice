@@ -573,6 +573,16 @@
         "when": "editorTextFocus && editorHasSelection && !terminalFocus"
       },
       {
+        "key": "ctrl+alt+v f",
+        "command": "llmVoice.speakFromCursor",
+        "when": "editorTextFocus && !terminalFocus"
+      },
+      {
+        "key": "ctrl+alt+v t",
+        "command": "llmVoice.speakSection",
+        "when": "editorTextFocus && editorLangId == markdown && !terminalFocus"
+      },
+      {
         "key": "ctrl+alt+v c",
         "command": "llmVoice.speakClipboard",
         "when": "!terminalFocus"
@@ -716,7 +726,7 @@
         },
         "llmVoice.tts.readyTimeoutMs": {
           "type": "number",
-          "default": 30000,
+          "default": 180000,
           "minimum": 0,
           "description": "Délai maximal (ms) d'attente d'un provider TTS en statut « Loading » (CdC §51) avant la première synthèse, plutôt que d'échouer immédiatement. 0 = aucune attente."
         },

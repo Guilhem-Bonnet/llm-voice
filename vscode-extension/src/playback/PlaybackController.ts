@@ -47,6 +47,11 @@ export interface PlaybackStartRequest {
    * end then waits for `appendSegments()` instead of completing.
    */
   sealed?: boolean;
+  /**
+   * Passages to have ready beyond the first before the sound starts: a later start, in
+   * exchange for no cut right after it. Needs a prefetch window at least this wide.
+   */
+  startAhead?: number;
 }
 
 /** Emitted whenever the state machine moves (CdC §34). */
@@ -113,6 +118,8 @@ interface ActiveSession {
   queue: AudioQueue;
   chunks: AudioChunk[];
   sealed: boolean;
+  /** Consumed by the first `playIndex`: only the start of a reading waits for it. */
+  startAhead: number;
 }
 
 /** The chunk handed to the sink with `enqueue()`, ahead of its turn. */
@@ -244,7 +251,8 @@ export class PlaybackController {
       sink: request.sink,
       queue,
       chunks: [...queue.chunks],
-      sealed: request.sealed ?? true
+      sealed: request.sealed ?? true,
+      startAhead: request.startAhead ?? 0
     };
     this.subscribeSink(request.sink);
     this.currentIndex = 0;
@@ -602,6 +610,16 @@ export class PlaybackController {
     if (chunk.audioUri === undefined) {
       // Cancelled while generating: another transition already took over.
       return;
+    }
+
+    const startAhead = session.startAhead;
+    session.startAhead = 0;
+    for (let ahead = 1; ahead <= startAhead && session.queue.chunks[index + ahead] !== undefined; ahead += 1) {
+      // A failure there is reported when the reading reaches it, not now.
+      await session.queue.waitFor(index + ahead);
+      if (this.isStale(generation)) {
+        return;
+      }
     }
 
     await session.sink.load(sinkChunkFrom(chunk, chunk.audioUri));

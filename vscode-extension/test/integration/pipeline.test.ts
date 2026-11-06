@@ -231,10 +231,12 @@ suite("LLM Voice pipeline (S3.5, AC-01..06)", () => {
     await vscode.window.showTextDocument(document);
     const testPipeline = api.pipeline as unknown as { getPlaybackState(): string };
 
+    const tts = api.ttsProvider as unknown as { requests: Array<{ text: string }> };
+    const before = tts.requests.length;
     await vscode.commands.executeCommand("llmVoice.speakDocument");
     assert.equal(testPipeline.getPlaybackState(), "playing", "a whole text file must start reading");
-    const tts = api.ttsProvider as unknown as { requests: Array<{ text: string }> };
-    const whole = tts.requests.at(-1)?.text ?? "";
+    // A second passage may already be generated when the sound starts (`startAhead`).
+    const whole = tts.requests.slice(before).map((request) => request.text).join(" ");
     assert.match(whole, /Première phrase/);
     await api.pipeline.stop();
 

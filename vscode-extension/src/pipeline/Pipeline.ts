@@ -17,6 +17,22 @@
  * status bar switches to `error`, never an unhandled rejection.
  */
 
+import { normalizeSelections } from "../core/source.js";
+import type { PlayerNotice } from "../core/playback.js";
+import type { TtsHoldReason } from "../core/tts.js";
+import { DEFAULT_GROUP_SIZE } from "../playback/SessionFactory.js";
+import {
+  WaitTracker,
+  estimateWait,
+  recordWaitMeasure,
+  sanitizeWaitMeasures,
+  type WaitEstimate,
+  type WaitEstimateInput,
+  type WaitMeasureKind,
+  type WaitMeasureStore,
+  type WaitStep
+} from "../playback/waitEstimate.js";
+import { charsOf, describeReading, passagesAhead } from "../views/player/readingText.js";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as vscode from "vscode";
@@ -66,7 +82,7 @@ import {
   type TtsUnavailableChoice
 } from "../ui/notifications.js";
 import { formatProviderHealthQuickPickItem, titleCaseProviderId } from "../ui/providerStatusText.js";
-import { ClipboardSource, MarkdownDocumentSource, TextSelectionSource, readCaptureRange } from "../sources/index.js";
+import { ClipboardSource, MarkdownDocumentSource, TextSelectionSource, readCaptureRanges } from "../sources/index.js";
 import {
   ProfileRepository,
   apiKeySecretKey,
@@ -173,7 +189,24 @@ const FAVORITE_VOICES_KEY = "llmVoice.voices.favorites";
 /** Under `globalStorageUri`: the gallery's trial phrases, and nothing else. */
 const GALLERY_TRIALS_FOLDER = "gallery-trials";
 
-const DEFAULT_READY_TIMEOUT_MS = 30_000;
+const DEFAULT_READY_TIMEOUT_MS = 180_000;
+/** `globalState`: durations and rates by engine (`WaitMeasureStore`), never any text. */
+const WAIT_MEASURES_KEY = "llmVoice.waitMeasures";
+const WAIT_TICK_MS = 1000;
+/** How long the bar stays at 100 % once the sound has started. */
+const WAIT_COMPLETE_HOLD_MS = 400;
+/** A second passage ready before the sound: a slightly later start, no cut right after it. */
+const START_AHEAD_PASSAGES = 1;
+const HOLD_NOTICES: Readonly<Record<TtsHoldReason, PlayerNotice>> = {
+  "gpu-yield": {
+    title: "La voix se met en retrait pendant le jeu",
+    body: "Le moteur libère la carte graphique tant que vous jouez. Relancez la lecture une fois le jeu terminé."
+  },
+  "gpu-memory": {
+    title: "La carte graphique n'a pas assez de mémoire",
+    body: "Le modèle a été déchargé. Fermez ce qui utilise la carte, puis réessayez."
+  }
+};
 /** Polling interval while `start()` waits on a `"Loading"` provider. */
 const READY_POLL_INTERVAL_MS = 500;
 /**
@@ -331,6 +364,15 @@ export class Pipeline implements PipelineFacade {
   private readonly autoChatterboxBaseUrlOverride: string | undefined;
   private readonly autoPiperLocalBaseUrlOverride: string | undefined;
   private readonly systemRunnerOverride: SystemTtsProcessRunner | undefined;
+  private wait: WaitTracker | undefined;
+  private waitTicker: ReturnType<typeof setInterval> | undefined;
+  private waitCompleteTimer: ReturnType<typeof setTimeout> | undefined;
+  private waitTitle = "";
+  private waitEngineId = "";
+  private firstChunkPaysForLoad = false;
+  private notice: PlayerNotice | undefined;
+  private heldTts: TtsProvider | undefined;
+  private currentHeadings: readonly SourceSegment[] = [];
 
   private readonly egress: EgressGuardHandle;
   private readonly registry = new TtsProviderRegistry<TtsProvider>();
@@ -506,6 +548,7 @@ export class Pipeline implements PipelineFacade {
       this.pushPlayerState();
     });
     this.controller.onStateChange((change) => {
+      this.syncWaitWithState(change.state);
       this.statusBar.update(this.statusBarModel(change.state));
       this.updatePlaybackStateContext(change.state);
       if (change.state === "stopped" && this.currentUri !== undefined) {
@@ -587,6 +630,7 @@ export class Pipeline implements PipelineFacade {
   // ------------------------------------------------------------- lifecycle
 
   dispose(): void {
+    this.endWaitTimers();
     this.controller.dispose();
     this.captureAbort?.abort();
     this.inboxWatcher.dispose();
@@ -601,14 +645,46 @@ export class Pipeline implements PipelineFacade {
     return this.startInternal(captureContext);
   }
 
+  /** The panel's "Réessayer" after a mode jeu or a full GPU: the engine loads first, then the same passage. */
+  async retryAfterHold(): Promise<void> {
+    this.notice = undefined;
+    this.notificationGate.clear("ttsUnavailable");
+    const tts = this.heldTts;
+    if (tts !== undefined) {
+      const abort = new AbortController();
+      this.pendingStart = abort;
+      await this.prepareEngine(tts, { narrated: false, narrationChars: 0, firstPassagesChars: 0 }, abort.signal);
+      if (this.pendingStart === abort) {
+        this.pendingStart = undefined;
+      }
+      if (abort.signal.aborted) {
+        this.endWait();
+        return;
+      }
+    }
+    this.pushPlayerState();
+    this.controller.retryCurrentChunk();
+  }
+
+  /** The panel's "Lire avec la voix système": the same request, spoken by the system voice this once. */
+  async readWithSystemVoice(): Promise<void> {
+    this.notice = undefined;
+    const context = this.lastCaptureContext;
+    if (context !== undefined) {
+      await this.startInternal(context, { systemVoice: true });
+    }
+  }
+
   /**
    * `doc.sourceType` (S5.1/S5.2) resolves the per-source default profile
    * via `llmVoice.profiles.bySource` (CdC §47, `resolveDefaultProfileId`)
    * — e.g. a Claude Code inbox message defaults to "Résumé LLM" — falling
    * back to the last-selected profile, then the collection default.
    */
-  private async startInternal(captureContext: CaptureContext): Promise<void> {
+  private async startInternal(captureContext: CaptureContext, options: { systemVoice?: boolean } = {}): Promise<void> {
     this.lastCaptureContext = captureContext;
+    this.notice = undefined;
+    this.endWait();
     this.captureAbort?.abort();
     const abort = new AbortController();
     this.captureAbort = abort;
@@ -627,7 +703,10 @@ export class Pipeline implements PipelineFacade {
       const reading = await this.profiles.resolveReading(doc.sourceType, this.modesBySourceSettings());
       // ADR-017 §1.3: everything downstream receives the effective mode, whichever
       // voice it speaks with, and never needs to know where that voice came from.
-      const profile = reading.effective;
+      const profile: VoiceProfile = options.systemVoice === true
+        ? { ...reading.effective, tts: { providerId: "system", baseUrl: "" } }
+        : reading.effective;
+      this.waitTitle = doc.title ?? "";
       this.currentProfileLabel = profile.label;
       this.currentVoiceLabel = describeVoice(profile.tts);
       this.currentSyncMode = profile.synchronization?.mode ?? "highlight-scroll";
@@ -638,7 +717,7 @@ export class Pipeline implements PipelineFacade {
       // chunk. `"retry"` re-runs this whole method once the voice is
       // installed — the original request is transparently resumed.
       if ((await this.ensureVoiceReady(profile, abort.signal)) === "retry") {
-        return this.startInternal(captureContext);
+        return this.startInternal(captureContext, options);
       }
 
       const segments = await this.buildSegments(doc, profile);
@@ -655,20 +734,57 @@ export class Pipeline implements PipelineFacade {
         profile.mode === "narrated" && !this.narrationDisabledForSession
           ? await this.narratorFor(profile)
           : undefined;
-      const build = await buildSession(segments, profile, narrator, {
-        signal: abort.signal,
-        onWarning: (warning) => this.handleNarratorWarning(warning)
-      });
-      this.stopNarration();
-      this.currentSessionBuild = build;
       const tts = await this.ttsFor(profile, { warmUp: true });
       this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
-      // CdC §51 "Loading": a still-warming-up TTS server gets a grace period
-      // instead of an immediate failure on the very first synthesis.
-      await this.waitForTtsReady(tts, abort.signal);
+      this.heldTts = tts;
+      const narrated = narrator !== undefined;
+      const passagesBeforeSound = 1 + (this.audioPrefetchChunks() > 0 ? START_AHEAD_PASSAGES : 0);
+      const narrationChars = charsOf(segments.slice(0, DEFAULT_GROUP_SIZE).map((seg) => seg.rawText));
+      // CdC §51 "Loading": the engine loads first, so that a synthesis request's
+      // timeout measures a synthesis, and never the 40 to 60 s of a first load.
+      await this.prepareEngine(
+        tts,
+        {
+          narrated,
+          narrationChars,
+          firstPassagesChars: charsOf(segments.slice(0, passagesBeforeSound).map((seg) => seg.rawText))
+        },
+        abort.signal
+      );
       if (abort.signal.aborted) {
         return;
       }
+      if (narrated) {
+        this.reviseWait("narration", {
+          modelLoaded: true,
+          narrated,
+          narrationChars,
+          firstPassagesChars: charsOf(segments.slice(0, passagesBeforeSound).map((seg) => seg.rawText))
+        });
+      }
+      const narrationStartedAt = Date.now();
+      let narrationDegraded = false;
+      const build = await buildSession(segments, profile, narrator, {
+        signal: abort.signal,
+        onWarning: (warning) => {
+          narrationDegraded = true;
+          this.handleNarratorWarning(warning);
+        }
+      });
+      if (narrated && !narrationDegraded && !abort.signal.aborted && narrationChars > 0) {
+        this.recordWaitMeasure(tts.id, "narrationMsPerChar", (Date.now() - narrationStartedAt) / narrationChars);
+      }
+      this.stopNarration();
+      this.currentSessionBuild = build;
+      if (abort.signal.aborted) {
+        return;
+      }
+      this.reviseWait("first-passage", {
+        modelLoaded: true,
+        narrated: false,
+        narrationChars: 0,
+        firstPassagesChars: charsOf(build.segments.slice(0, passagesBeforeSound).map((seg) => seg.spokenText))
+      });
       const sink = this.sinkOverride ?? this.player.playbackSink;
 
       this.currentUri = doc.uri !== undefined ? vscode.Uri.parse(doc.uri) : undefined;
@@ -696,6 +812,7 @@ export class Pipeline implements PipelineFacade {
         tts,
         sink,
         sealed: !narrating,
+        startAhead: passagesBeforeSound - 1,
         ...(engineSpeed !== undefined ? { engineSpeed } : {})
       });
       if (narrating) {
@@ -722,7 +839,142 @@ export class Pipeline implements PipelineFacade {
       if (this.pendingStart === abort) {
         this.pendingStart = undefined;
       }
+      // An early return or a cancel: nobody will tell this wait it is over.
+      if (this.captureAbort === abort && !["preparing", "buffering", "playing"].includes(this.controller.getState())) {
+        this.endWait();
+      }
     }
+  }
+
+  /**
+   * Opens the wait with its estimate, then, if the model is not loaded, asks for it and
+   * waits. A server that cannot load on demand answers `ok` at once: the estimate still
+   * counts its load, which the first synthesis then pays for, and that one is not measured.
+   */
+  private async prepareEngine(
+    tts: TtsProvider,
+    plan: { narrated: boolean; narrationChars: number; firstPassagesChars: number },
+    signal: AbortSignal
+  ): Promise<void> {
+    this.waitEngineId = tts.id;
+    this.firstChunkPaysForLoad = false;
+    const health = await tts.health(signal).catch(() => undefined);
+    const loading = health?.status === "degraded" && health.detail === "loading";
+    const cold = loading || health?.modelLoaded === false;
+    this.beginWait(cold ? "engine" : plan.narrated ? "narration" : "first-passage", {
+      ...plan,
+      modelLoaded: !cold,
+      ...(health?.loadingSinceMs !== undefined ? { loadingSinceMs: health.loadingSinceMs } : {})
+    });
+    if (!cold || this.ttsReadyTimeoutMs() <= 0) {
+      this.firstChunkPaysForLoad = cold;
+      return;
+    }
+    const startedAt = Date.now();
+    await tts.prepare?.(signal);
+    await this.waitForTtsReady(tts, signal);
+    if (signal.aborted) {
+      return;
+    }
+    const after = await tts.health(signal).catch(() => undefined);
+    if (after?.modelLoaded === true || (after?.status === "ok" && after.modelLoaded === undefined)) {
+      this.recordWaitMeasure(tts.id, "loadMs", (health?.loadingSinceMs ?? 0) + Date.now() - startedAt);
+    } else {
+      this.firstChunkPaysForLoad = true;
+    }
+  }
+
+  private waitMeasures(): WaitMeasureStore {
+    return sanitizeWaitMeasures(this.context.globalState.get(WAIT_MEASURES_KEY));
+  }
+
+  private recordWaitMeasure(engineId: string, kind: WaitMeasureKind, value: number): void {
+    void this.context.globalState.update(WAIT_MEASURES_KEY, recordWaitMeasure(this.waitMeasures(), engineId, kind, value));
+  }
+
+  /** Not part of `PipelineFacade`: what the integration tests read back. */
+  getWaitMeasuresForTest(): WaitMeasureStore {
+    return this.waitMeasures();
+  }
+
+  private estimateFor(input: Omit<WaitEstimateInput, "measures">): WaitEstimate {
+    return estimateWait({ ...input, measures: this.waitMeasures()[this.waitEngineId] });
+  }
+
+  private typicalWaitMs(step: WaitStep): number | undefined {
+    return step === "engine" ? this.waitMeasures()[this.waitEngineId]?.loadMs : undefined;
+  }
+
+  private beginWait(step: WaitStep, input: Omit<WaitEstimateInput, "measures">): void {
+    this.endWaitTimers();
+    this.wait = new WaitTracker(step, this.estimateFor(input), Date.now, this.typicalWaitMs(step));
+    this.waitTicker = setInterval(() => this.refreshWait(), WAIT_TICK_MS);
+    (this.waitTicker as unknown as { unref?: () => void }).unref?.();
+    this.refreshWait();
+  }
+
+  private reviseWait(step: WaitStep, input: Omit<WaitEstimateInput, "measures">): void {
+    if (this.wait === undefined) {
+      this.beginWait(step, input);
+      return;
+    }
+    this.wait.revise(step, this.estimateFor(input), this.typicalWaitMs(step));
+    this.refreshWait();
+  }
+
+  private refreshWait(): void {
+    this.statusBar.update(this.statusBarModel(this.controller.getState()));
+    this.pushPlayerState();
+  }
+
+  private endWaitTimers(): void {
+    clearInterval(this.waitTicker);
+    this.waitTicker = undefined;
+    clearTimeout(this.waitCompleteTimer);
+    this.waitCompleteTimer = undefined;
+  }
+
+  private endWait(): void {
+    this.endWaitTimers();
+    if (this.wait !== undefined) {
+      this.wait = undefined;
+      this.refreshWait();
+    }
+  }
+
+  /** The first real sound: the bar reaches 100 %, is seen there, and goes. */
+  private completeWait(): void {
+    const wait = this.wait;
+    if (wait === undefined) {
+      return;
+    }
+    this.endWaitTimers();
+    wait.complete();
+    this.refreshWait();
+    this.waitCompleteTimer = setTimeout(() => this.endWait(), WAIT_COMPLETE_HOLD_MS);
+    (this.waitCompleteTimer as unknown as { unref?: () => void }).unref?.();
+  }
+
+  /** The machine's state decides when a wait ends, or when a new one starts mid-reading. */
+  private syncWaitWithState(state: PlaybackState): void {
+    if (state === "playing") {
+      this.completeWait();
+      return;
+    }
+    if (state === "buffering" || state === "preparing") {
+      const next = this.controller.getChunks()[this.controller.getCurrentIndex()];
+      if (state === "preparing" && this.wait !== undefined) {
+        return;
+      }
+      this.beginWait(state === "buffering" ? "next-passage" : "first-passage", {
+        modelLoaded: true,
+        narrated: false,
+        narrationChars: 0,
+        firstPassagesChars: next?.spokenText.length ?? 0
+      });
+      return;
+    }
+    this.endWait();
   }
 
   /**
@@ -771,7 +1023,7 @@ export class Pipeline implements PipelineFacade {
   }
 
   private async buildSegments(doc: SourceDocument, profile: VoiceProfile): Promise<SourceSegment[]> {
-    const captureRange = readCaptureRange(doc.metadata);
+    const captureRanges = readCaptureRanges(doc.metadata);
     const all =
       doc.sourceType === "markdown"
         ? segment(
@@ -779,10 +1031,15 @@ export class Pipeline implements PipelineFacade {
             segmentationPolicyFor(profile, this.audioFirstChunkSentences())
           )
         : plainTextSegments(doc.rawText);
-    if (captureRange === undefined) {
+    this.currentHeadings = all.filter((seg) => seg.type === "heading");
+    if (captureRanges === undefined) {
       return all;
     }
-    return all.filter((seg) => seg.sourceRange !== undefined && rangesOverlap(seg.sourceRange, captureRange));
+    // `all` is in document order, and a segment over two passages stays one segment.
+    return all.filter((seg) => {
+      const range = seg.sourceRange;
+      return range !== undefined && captureRanges.some((passage) => rangesOverlap(range, passage));
+    });
   }
 
   // -------------------------------------------------------------- control
@@ -812,7 +1069,7 @@ export class Pipeline implements PipelineFacade {
     return {
       state: this.controller.getState(),
       hasActiveEditor: editor !== undefined,
-      hasNonEmptySelection: editor !== undefined && !editor.selection.isEmpty
+      hasNonEmptySelection: editor !== undefined && editor.selections.some((selection) => !selection.isEmpty)
     };
   }
 
@@ -857,17 +1114,22 @@ export class Pipeline implements PipelineFacade {
       void vscode.window.showInformationMessage("LLM Voice : aucun document ouvert à lire.");
       return;
     }
-    const context: CaptureContext = useSelection
+    const passages = normalizeSelections(
+      editor.selections.map((selection) => ({
+        startLine: selection.start.line,
+        startColumn: selection.start.character,
+        endLine: selection.end.line,
+        endColumn: selection.end.character
+      }))
+    );
+    const firstPassage = passages[0];
+    const context: CaptureContext = useSelection && firstPassage !== undefined
       ? {
           scope: "selection",
           uri: editor.document.uri.toString(),
           languageId: editor.document.languageId,
-          selection: {
-            startLine: editor.selection.start.line,
-            startColumn: editor.selection.start.character,
-            endLine: editor.selection.end.line,
-            endColumn: editor.selection.end.character
-          }
+          selection: firstPassage,
+          ...(passages.length > 1 ? { selections: passages } : {})
         }
       : {
           scope: "document",
@@ -2525,6 +2787,14 @@ export class Pipeline implements PipelineFacade {
     }
     this.statusBar.update({ ...this.statusBarModel("error") });
 
+    // The mode jeu or a full GPU: nothing is retried, the panel says what happens and what can be done.
+    if (info.chunk.holdReason !== undefined) {
+      this.notice = HOLD_NOTICES[info.chunk.holdReason];
+      this.player.reveal();
+      this.pushPlayerState();
+      return "stop";
+    }
+
     if (info.index === 0) {
       if (this.notificationGate.shouldNotify("ttsUnavailable")) {
         this.notificationGate.markShown("ttsUnavailable");
@@ -2604,6 +2874,8 @@ export class Pipeline implements PipelineFacade {
    */
   private handleChunkTiming(event: ChunkTimingEvent): void {
     this.perf.recordChunk(event);
+    this.measureSynthesis(event);
+    this.pushPlayerState();
     this.output.debug("chunk timing", {
       index: event.index,
       cacheHit: event.cacheHit,
@@ -2611,6 +2883,21 @@ export class Pipeline implements PipelineFacade {
       queueSize: event.queueSize,
       ...(event.synthesisMs !== undefined ? { synthesisMs: event.synthesisMs } : {})
     });
+  }
+
+  /** Characters and milliseconds only. A first request that also loaded the model measures nothing. */
+  private measureSynthesis(event: ChunkTimingEvent): void {
+    if (event.synthesisMs === undefined || !event.ready || event.cacheHit) {
+      return;
+    }
+    if (event.index === 0 && this.firstChunkPaysForLoad) {
+      this.firstChunkPaysForLoad = false;
+      return;
+    }
+    const chars = this.controller.getChunks()[event.index]?.spokenText.length ?? 0;
+    if (chars > 0) {
+      this.recordWaitMeasure(this.waitEngineId, "synthesisMsPerChar", event.synthesisMs / chars);
+    }
   }
 
   /**
@@ -2753,8 +3040,19 @@ export class Pipeline implements PipelineFacade {
 
   private statusBarModel(state: string): StatusBarViewModel {
     const remoteCheck = this.cachedLocalModeResult?.checks.find((check) => check.id === 1 || check.id === 2);
+    const wait = this.wait?.view();
     return {
-      state: toStatusBarState(state),
+      // The machine stays idle during the steps before `controller.start`.
+      state: wait !== undefined && state === "idle" ? "preparing" : toStatusBarState(state),
+      ...(wait !== undefined && wait.percent < 100
+        ? {
+            wait: {
+              shortLabel: wait.shortLabel,
+              elapsedSeconds: wait.elapsedSeconds,
+              showElapsed: wait.step !== "next-passage"
+            }
+          }
+        : {}),
       profileLabel: this.currentProfileLabel,
       positionMs: this.controller.getPositionMs(),
       isLocalOnly: this.cachedLocalModeResult?.badge === "local",
@@ -2771,14 +3069,24 @@ export class Pipeline implements PipelineFacade {
    */
   private pushPlayerState(): void {
     const chunks = this.controller.getChunks();
+    const index = this.controller.getCurrentIndex();
+    const state = this.controller.getState();
+    const wait = this.wait?.view();
+    const current = chunks[index];
+    const reading = current === undefined ? undefined : describeReading(this.currentHeadings, current.sourceRanges);
+    const ahead = chunks.length > 0 ? passagesAhead(chunks, index) : undefined;
     this.player.audioSink.pushState({
       session: "current",
       index: this.controller.getCurrentIndex(),
       total: chunks.length,
       profile: this.currentProfileLabel,
       voice: this.currentVoiceLabel,
-      title: this.currentUri?.path.split("/").pop() ?? "",
-      state: this.controller.getState()
+      title: wait !== undefined && state === "idle" ? this.waitTitle : (this.currentUri?.path.split("/").pop() ?? ""),
+      state: wait !== undefined && state === "idle" ? "preparing" : state,
+      ...(wait !== undefined ? { wait } : {}),
+      ...(ahead !== undefined ? { ahead } : {}),
+      ...(reading !== undefined ? { reading } : {}),
+      ...(this.notice !== undefined ? { notice: this.notice } : {})
     });
   }
 }

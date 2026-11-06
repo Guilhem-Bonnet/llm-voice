@@ -58,7 +58,16 @@ describe("formatStatusBarText", () => {
   });
 
   it("renders the buffering text (ADR-005's reported-to-phase-4 gap, S4.2)", () => {
-    expect(formatStatusBarText({ ...base, state: "buffering" })).toBe("⏳ Buffering…");
+    expect(formatStatusBarText({ ...base, state: "buffering" })).toBe("$(sync~spin) Passage suivant…");
+  });
+
+  it("shows the step and its seconds during a wait, in place of the state's text", () => {
+    const wait = { shortLabel: "Moteur en démarrage…", elapsedSeconds: 12, showElapsed: true };
+    expect(formatStatusBarText({ ...base, state: "preparing", wait })).toBe("$(sync~spin) Moteur en démarrage… 12 s");
+    expect(formatStatusBarText({ ...base, state: "buffering", wait: { ...wait, shortLabel: "Passage suivant…", showElapsed: false } })).toBe(
+      "$(sync~spin) Passage suivant…"
+    );
+    expect(formatStatusBarTooltip({ ...base, state: "preparing", wait })).toBe("LLM Voice — cliquer pour annuler");
   });
 
   it("renders the stale text regardless of profile (D6, ADR-011)", () => {

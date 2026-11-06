@@ -21,6 +21,10 @@ export interface ProviderHealth {
   /** Host and path only — never a body, never a header (D10). */
   endpoint?: string;
   detail?: string;
+  /** Said by an engine that loads a model on demand; absent when it says nothing about it. */
+  modelLoaded?: boolean;
+  /** With `detail: "loading"`: how long the engine says it has been loading. */
+  loadingSinceMs?: number;
 }
 
 /** Anything addressable by a stable identifier and selectable from a profile. */

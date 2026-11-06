@@ -36,6 +36,8 @@ export interface StatusBarViewModel {
    * in the tooltip instead, per the audit's own minimum recommendation.
    */
   voiceLabel?: string;
+  /** The wait before the sound, while there is one: wins over the playback state's text. */
+  wait?: { shortLabel: string; elapsedSeconds: number; showElapsed: boolean };
 }
 
 export function formatTime(ms: number): string {
@@ -47,6 +49,10 @@ export function formatTime(ms: number): string {
 
 /** Renders the exact texts from ADR-011 for each playback state. */
 export function formatStatusBarText(vm: StatusBarViewModel): string {
+  if (vm.wait !== undefined) {
+    const elapsed = vm.wait.showElapsed ? ` ${vm.wait.elapsedSeconds} s` : "";
+    return `$(sync~spin) ${vm.wait.shortLabel}${elapsed}`;
+  }
   const time = formatTime(vm.positionMs ?? 0);
   switch (vm.state) {
     case "idle":
@@ -57,7 +63,7 @@ export function formatStatusBarText(vm: StatusBarViewModel): string {
     case "preparing":
       return `$(sync~spin) ${vm.profileLabel}`;
     case "buffering":
-      return "⏳ Buffering…";
+      return "$(sync~spin) Passage suivant…";
     case "playing":
       return `$(debug-pause) ${time} • ${vm.profileLabel}`;
     case "paused":
@@ -78,6 +84,11 @@ export function formatStatusBarTooltip(vm: StatusBarViewModel): string {
   switch (vm.state) {
     case "error":
       return "LLM Voice : erreur de lecture — cliquer pour reprendre";
+    case "preparing":
+    case "buffering":
+      return vm.wait !== undefined
+        ? "LLM Voice — cliquer pour annuler"
+        : `LLM Voice — ${vm.profileLabel}${voiceSuffix} — cliquer pour les actions de lecture`;
     default:
       return `LLM Voice — ${vm.profileLabel}${voiceSuffix} — cliquer pour les actions de lecture`;
   }

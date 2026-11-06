@@ -303,6 +303,7 @@ export function createTtsProvider(
         languages: preset.languages ?? KYUTAI16_LOCAL_PRESET.languages ?? [],
         catalog: KYUTAI16_VOICE_CATALOG,
         engineName: "Kyutai narration",
+        loadsOnDemand: true,
         ...(options.defaultVoice !== undefined ? { defaultVoice: options.defaultVoice } : {})
       });
     case "openai-compatible":

@@ -134,9 +134,35 @@ export interface AudioCacheEntry {
   lastAccessAt: number;
 }
 
+/** The engine refuses for now, and repeating the request would change nothing until the user acts. */
+export type TtsHoldReason = "gpu-yield" | "gpu-memory";
+
+/** Never retried by `AudioQueue`: the mode jeu in particular is never insisted upon. */
+export class TtsHoldError extends Error {
+  constructor(
+    readonly reason: TtsHoldReason,
+    message: string
+  ) {
+    super(message);
+    this.name = "TtsHoldError";
+  }
+}
+
+/** By name, not `instanceof`: an error may cross a bundle boundary (the extension and its tests have two copies). */
+export function isTtsHoldError(error: unknown): error is TtsHoldError {
+  return error instanceof Error && error.name === "TtsHoldError";
+}
+
 /** Replaceable speech engine: local, enterprise or cloud behind one contract (D9). */
 export interface TtsProvider {
   readonly id: string;
+  /**
+   * Asks an engine whose model loads on demand to load it now, without synthesising.
+   * `health()` then says `degraded`/`"loading"` until it is done, so the time of a load
+   * is never counted against a synthesis request's timeout. Never rejects for a server
+   * that cannot do it: the first synthesis then pays for the load, as before.
+   */
+  prepare?(signal?: AbortSignal): Promise<void>;
   /**
    * What the audio cache should identify this engine by when `id` is not enough:
    * one instance that may speak through different engines over time

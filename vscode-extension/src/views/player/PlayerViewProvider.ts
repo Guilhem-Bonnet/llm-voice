@@ -8,6 +8,7 @@ import * as vscode from "vscode";
 import type { AudioSink } from "../../playback/AudioSink.js";
 import { SequencedAudioSink } from "../../playback/SequencedAudioSink.js";
 import { WebviewAudioSink } from "../../playback/WebviewAudioSink.js";
+import { documentViewOf, type DocumentViewInput } from "./documentView.js";
 import { buildPlayerHtml, getNonce } from "./playerHtml.js";
 
 export class PlayerViewProvider implements vscode.WebviewViewProvider {
@@ -18,6 +19,7 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
   private readonly sequenced = new SequencedAudioSink(this.sink);
   private view: vscode.WebviewView | undefined;
   private readonly disposables: vscode.Disposable[] = [];
+  private editorWatch: vscode.Disposable[] = [];
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -60,9 +62,11 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this.renderHtml(webviewView.webview);
     this.disposables.push(this.sink.attach(webviewView.webview));
+    this.followActiveEditor();
 
     webviewView.onDidDispose(() => {
       this.sink.detach();
+      this.stopFollowingEditor();
       this.view = undefined;
     });
   }
@@ -77,7 +81,50 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
     return this.view !== undefined;
   }
 
+  /** The panel follows the editor and only displays it: none of these events starts a reading. */
+  private followActiveEditor(): void {
+    this.stopFollowingEditor();
+    const push = (): void => this.sink.pushDocument(this.activeDocumentView());
+    const stopReady = this.sink.onReady(push);
+    this.editorWatch = [
+      new vscode.Disposable(stopReady),
+      vscode.window.onDidChangeActiveTextEditor(push),
+      vscode.window.onDidChangeTextEditorSelection((event) => {
+        if (event.textEditor === vscode.window.activeTextEditor) {
+          push();
+        }
+      })
+    ];
+    push();
+  }
+
+  private stopFollowingEditor(): void {
+    for (const disposable of this.editorWatch) {
+      disposable.dispose();
+    }
+    this.editorWatch = [];
+  }
+
+  private activeDocumentView(): ReturnType<typeof documentViewOf> {
+    const editor = vscode.window.activeTextEditor;
+    if (editor === undefined) {
+      return documentViewOf(undefined);
+    }
+    const input: DocumentViewInput = {
+      scheme: editor.document.uri.scheme,
+      path: editor.document.uri.path,
+      selections: editor.selections.map((selection) => ({
+        startLine: selection.start.line,
+        startColumn: selection.start.character,
+        endLine: selection.end.line,
+        endColumn: selection.end.character
+      }))
+    };
+    return documentViewOf(input);
+  }
+
   dispose(): void {
+    this.stopFollowingEditor();
     for (const disposable of this.disposables) {
       disposable.dispose();
     }
