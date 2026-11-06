@@ -21,6 +21,10 @@
  *  - The server's language is fixed at its own startup (`--language`), not
  *    per request: `languages` is a constructor option mirroring what the
  *    user declared their running server was started with, never detected.
+ *
+ * `deploy/kyutai16/server.py` (Kyutai TTS 1.6B) answers this same contract, so
+ * `createTtsProvider`'s `"kyutai-1-6b"` case is this class with another `id`,
+ * `catalog` and `engineName`.
  */
 
 import type { ProviderHealth } from "../core/health.js";
@@ -52,6 +56,10 @@ export interface KyutaiPocketProviderOptions {
    * server's own catalogue (sent the same way, see `synthesize()`).
    */
   defaultVoice?: string;
+  /** Defaults to `KYUTAI_POCKET_VOICE_CATALOG`. */
+  catalog?: readonly Voice[];
+  /** What an error calls this engine; defaults to `"KyutaiPocketProvider"`. */
+  engineName?: string;
 }
 
 export function messageOf(error: unknown): string {
@@ -81,6 +89,8 @@ export class KyutaiPocketProvider implements TtsProvider {
   private readonly egress: EgressGuardHandle;
   private readonly languages: readonly string[];
   private readonly defaultVoice: string | undefined;
+  private readonly catalog: readonly Voice[];
+  private readonly engineName: string;
 
   constructor(options: KyutaiPocketProviderOptions) {
     this.id = options.id ?? DEFAULT_ID;
@@ -88,6 +98,8 @@ export class KyutaiPocketProvider implements TtsProvider {
     this.egress = options.egress;
     this.languages = options.languages;
     this.defaultVoice = options.defaultVoice;
+    this.catalog = options.catalog ?? KYUTAI_POCKET_VOICE_CATALOG;
+    this.engineName = options.engineName ?? "KyutaiPocketProvider";
   }
 
   /** `GET /health` → `{"status":"healthy"}`; anything else is `unreachable`, never a false `ok` (ADR-005 D10). */
@@ -135,7 +147,7 @@ export class KyutaiPocketProvider implements TtsProvider {
   async getCapabilities(_signal?: AbortSignal): Promise<TtsCapabilities> {
     return {
       streaming: false,
-      voices: KYUTAI_POCKET_VOICE_CATALOG,
+      voices: this.catalog,
       parameters: [],
       formats: ["wav"],
       languages: this.languages
@@ -157,7 +169,7 @@ export class KyutaiPocketProvider implements TtsProvider {
    * testing after GAO-fix-voix-fra-001 (fixed here, GAO-fix-provider-001).
    */
   async listVoices(_signal?: AbortSignal): Promise<Voice[]> {
-    return [...KYUTAI_POCKET_VOICE_CATALOG];
+    return [...this.catalog];
   }
 
   /**
@@ -178,7 +190,7 @@ export class KyutaiPocketProvider implements TtsProvider {
     if (!response.ok) {
       const detail = await this.errorDetail(response);
       throw new Error(
-        `KyutaiPocketProvider: HTTP ${response.status} from ${this.endpointLabel("/tts")}` +
+        `${this.engineName}: HTTP ${response.status} from ${this.endpointLabel("/tts")}` +
           (detail.length > 0 ? ` — ${detail}` : "")
       );
     }

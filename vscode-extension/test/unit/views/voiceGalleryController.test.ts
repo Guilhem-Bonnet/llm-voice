@@ -17,9 +17,11 @@ import {
   isLoopbackUrl,
   parseGalleryMessage,
   rememberRecent,
-  startCommand
+  startCommand,
+  GALLERY_VOICE_COUNT
 } from "../../../src/views/voiceGallery/galleryModel.js";
 import { VoiceGalleryController, type VoiceGalleryDeps } from "../../../src/views/voiceGallery/VoiceGalleryController.js";
+import { KYUTAI16_VOICE_CATALOG } from "../../../src/tts/kyutai16VoiceCatalog.js";
 
 const KNOWN = new Set(GALLERY_ENTRIES.map((entry) => entry.id));
 
@@ -430,8 +432,11 @@ describe("links, commands, preparation", () => {
 });
 
 describe("the model", () => {
-  it("has 23 voices of the mockup, then the two to prepare; every id is distinct", () => {
+  it("has 23 voices of the mockup, 36 of Kyutai narration, then the two to prepare; every id is distinct", () => {
     expect(KNOWN.size).toBe(GALLERY_ENTRIES.length);
+    expect(GALLERY_ENTRIES).toHaveLength(23 + 36 + 2);
+    expect(GALLERY_VOICE_COUNT).toBe(23 + 36);
+    expect(GALLERY_ENTRIES.filter((entry) => entry.engine === "kyutai16")).toHaveLength(36);
     expect(GALLERY_ENTRIES.filter((entry) => entry.engine === "kyutai")).toHaveLength(20);
     expect(GALLERY_ENTRIES.map((entry) => entry.id)).toEqual(expect.arrayContaining(["system", "piper", "kokoro", "chatterbox", "own-voice"]));
   });
@@ -498,7 +503,7 @@ describe("the voice menu (Quick Pick of chooseVoice)", () => {
       "Utiliser ma voix"
     ]);
     expect(rows[1]?.description).toBe("active");
-    expect(rows.find((row) => row.label === "Ouvrir la galerie")?.description).toBe("23 voix");
+    expect(rows.find((row) => row.label === "Ouvrir la galerie")?.description).toBe("59 voix");
   });
 
   it("never lists the catalogue, whatever the history", () => {
@@ -523,5 +528,126 @@ describe("the voice menu (Quick Pick of chooseVoice)", () => {
       "Utiliser ma voix"
     ]);
     expect(rows[1]?.action).toEqual({ kind: "current" });
+  });
+});
+
+describe("Kyutai narration", () => {
+  const started = (binding: { providerId: string }) => (binding.providerId === "kyutai-1-6b" ? "ok" : "unreachable") as "ok" | "unreachable";
+  const CAMILLE = "kyutai16:cml-577_394";
+
+  it("lists Camille first, keeps every card when the server is stopped, and offers listening", async () => {
+    const { controller, lastState } = harness();
+
+    await controller.handle({ type: "ready" });
+
+    const cards = lastState()?.cards.filter((card) => card.section === "kyutai16") ?? [];
+    expect(cards).toHaveLength(36);
+    expect(cards[0]?.id).toBe(CAMILLE);
+    for (const card of cards) {
+      expect(card).toMatchObject({ ready: false, canChoose: false, canListen: true, state: "Non prête" });
+      expect(card.sampleUri, card.id).toBeUndefined();
+    }
+  });
+
+  it("makes them ready once its own server answers, Pocket's state apart", async () => {
+    const { controller, lastState } = harness({ health: started });
+
+    await controller.handle({ type: "ready" });
+
+    expect(lastState()?.engines.kyutai16?.status).toBe("started");
+    expect(lastState()?.engines.kyutai?.status).toBe("stopped");
+    expect(lastState()?.cards.find((card) => card.id === CAMILLE)).toMatchObject({ ready: true, canChoose: true, state: "Prête" });
+    expect(lastState()?.cards.find((card) => card.id === "estelle")?.ready).toBe(false);
+  });
+
+  it("probes port 8020 by itself, and never synthesizes for it", async () => {
+    const { controller, deps } = harness();
+
+    await controller.handle({ type: "ready" });
+
+    expect(deps.checkHealth).toHaveBeenCalledWith({ providerId: "kyutai-1-6b", baseUrl: "http://localhost:8020" }, expect.anything());
+    expect(deps.synthesize).not.toHaveBeenCalled();
+  });
+
+  it("Choisir writes engine, voice id and port together, and marks that card, not Pocket's Estelle", async () => {
+    const { controller, currentVoice, lastState } = harness({ health: started });
+
+    await controller.handle({ type: "choose", voiceId: "kyutai16:estelle" });
+
+    expect(currentVoice()).toEqual({ providerId: "kyutai-1-6b", baseUrl: "http://localhost:8020", voice: "estelle", speed: 1 });
+    expect(lastState()?.activeId).toBe("kyutai16:estelle");
+    expect(lastState()?.activeLabel).toBe("Estelle");
+  });
+
+  it("names the active voice by its first name", async () => {
+    const { controller, lastState } = harness({ voice: { providerId: "kyutai-1-6b", voice: "cml-577_394", speed: 1 } });
+
+    await controller.handle({ type: "ready" });
+
+    expect(lastState()?.activeId).toBe(CAMILLE);
+    expect(lastState()?.activeLabel).toBe("Camille");
+  });
+
+  it("a voice id outside the catalogue marks no card", () => {
+    expect(activeEntryId({ providerId: "kyutai-1-6b", voice: "../../etc/passwd" })).toBeUndefined();
+    expect(activeEntryId({ providerId: "kyutai-1-6b" })).toBe(CAMILLE);
+  });
+
+  it("Écouter says the server is stopped, with nothing sent to any engine", async () => {
+    const { controller, deps, posted } = harness();
+
+    await controller.handle({ type: "trial", voiceId: CAMILLE, text: "Bonjour", requestId: 1 });
+
+    expect(posted).toContainEqual({ type: "trialStopped", requestId: 1, voiceId: CAMILLE, engine: "kyutai16" });
+    expect(deps.synthesize).not.toHaveBeenCalled();
+  });
+
+  it("Écouter sends the phrase with the server's voice id, or a default phrase: there is no sample", async () => {
+    const { controller, deps, posted } = harness({ health: started });
+
+    await controller.handle({ type: "trial", voiceId: CAMILLE, text: "", requestId: 2 });
+
+    expect(deps.synthesize).toHaveBeenCalledWith(
+      { providerId: "kyutai-1-6b", baseUrl: "http://localhost:8020", voice: "cml-577_394" },
+      "Bonjour. Je lis ce document à voix haute.",
+      expect.anything()
+    );
+    expect(posted).toContainEqual({ type: "trialAudio", requestId: 2, voiceId: CAMILLE, uri: "res://trial/a.wav" });
+  });
+
+  it("copies the Compose command, and shows it unchanged whatever the port", async () => {
+    const { controller, deps, lastState } = harness();
+
+    await controller.handle({ type: "ready" });
+    await controller.handle({ type: "copyCommand", engine: "kyutai16" });
+
+    expect(deps.writeClipboard).toHaveBeenCalledWith("docker compose -f deploy/docker-compose.tts.yml up -d kyutai16");
+    expect(lastState()?.engines.kyutai16?.command).toBe("docker compose -f deploy/docker-compose.tts.yml up -d kyutai16");
+    expect(startCommand("kyutai16", "http://localhost:9999")).toBe("docker compose -f deploy/docker-compose.tts.yml up -d kyutai16");
+  });
+
+  it("credits name all 36 voices and what is not documented, and each link is allowed", async () => {
+    const narration = GALLERY_CREDITS.narration;
+    const named = narration.flatMap((group) => (group.licence.startsWith("Modèle") ? [] : group.voices.split(", ")));
+    expect(named.sort()).toEqual(KYUTAI16_VOICE_CATALOG.map((voice) => voice.label).sort());
+    expect(narration.map((group) => group.note ?? "").join(" ")).toContain("consentement");
+    expect(narration.find((group) => group.voices === "Estelle")?.licence).toBe("CC0");
+    expect(GALLERY_LINKS).toContain("https://huggingface.co/kyutai/tts-1.6b-en_fr");
+    const { controller, posted } = harness();
+    await controller.handle({ type: "ready" });
+    const state = [...posted].reverse().find((message) => message.type === "state") as unknown as {
+      credits: { groups: { source: string }[] };
+      kyutai16Note: string;
+    };
+    expect(state.credits.groups.map((group) => group.source)).toContain("Kyutai narration, CML-TTS");
+    expect(state.kyutai16Note).toContain("accent");
+  });
+
+  it("CREDITS.md says the same, and that no sample ships", () => {
+    const shipped = readFileSync(resolve(__dirname, "../../../media/voices/CREDITS.md"), "utf8");
+    for (const voice of KYUTAI16_VOICE_CATALOG) {
+      expect(shipped, voice.label).toContain(voice.label);
+    }
+    expect(shipped).toContain("Aucun échantillon de ces voix");
   });
 });

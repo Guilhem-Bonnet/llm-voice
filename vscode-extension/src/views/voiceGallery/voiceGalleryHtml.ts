@@ -69,7 +69,7 @@ export function buildVoiceGalleryHtml(inputs: VoiceGalleryHtmlInputs): string {
 
     <div id="phrase-row" class="toolbar">
       <label class="muted small" for="phrase">Phrase d'essai</label>
-      <input id="phrase" class="field" type="text" maxlength="300" placeholder="Votre phrase, envoyée au moteur au clic. Sinon, l'échantillon inclus." />
+      <input id="phrase" class="field" type="text" maxlength="300" placeholder="Votre phrase, envoyée au moteur au clic. Sinon, l'échantillon inclus ou une phrase par défaut." />
       <button id="phrase-reset" class="button" type="button">Rétablir</button>
     </div>
 
@@ -88,6 +88,25 @@ export function buildVoiceGalleryHtml(inputs: VoiceGalleryHtmlInputs): string {
     <section id="section-local" class="section">
       <h2>Prêtes sur cette machine</h2>
       <div id="cards-local" class="cards"></div>
+    </section>
+
+    <section id="section-kyutai16" class="section">
+      <div class="section-head">
+        <h2>Kyutai narration · 36 voix en français</h2>
+        <span id="kyutai16-status" class="small"></span>
+        <button id="kyutai16-credits" class="button" type="button">Crédits et licences</button>
+      </div>
+      <p id="kyutai16-note" class="muted small"></p>
+      <div id="kyutai16-server" class="banner" hidden>
+        <div class="banner-text">
+          <strong>Serveur à démarrer depuis le dépôt</strong>
+          <span class="muted small">Il utilise la carte graphique et ne fonctionne que sur votre machine. Rien ne démarre sans vous.</span>
+          <code id="kyutai16-command" class="command"></code>
+        </div>
+        <button id="kyutai16-copy" class="button" type="button">Copier la commande</button>
+        <button id="kyutai16-check" class="button" type="button">Vérifier</button>
+      </div>
+      <div id="cards-kyutai16" class="cards"></div>
     </section>
 
     <section id="section-kyutai" class="section">

@@ -181,7 +181,9 @@ writeFileSync(
       voice:
         process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "kyutai"
           ? // No baseUrl on purpose: the provider must find its own port.
-            { providerId: "kyutai-pocket", voice: "estelle", speed: 1 }
+            process.env.LLM_VOICE_NATIVE_REAL_ENGINE === "kyutai16"
+            ? { providerId: "kyutai-1-6b", voice: "cml-577_394", speed: 1 }
+            : { providerId: "kyutai-pocket", voice: "estelle", speed: 1 }
           : { providerId: "system", speed: 1 }
     },
     null,

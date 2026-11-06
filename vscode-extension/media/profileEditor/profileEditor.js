@@ -268,7 +268,8 @@
   var KNOWN_DEFAULT_BASE_URLS = {
     chatterbox: "http://localhost:8004",
     kokoro: "http://localhost:8880",
-    "kyutai-pocket": "http://localhost:8000"
+    "kyutai-pocket": "http://localhost:8000",
+    "kyutai-1-6b": "http://localhost:8020"
   };
   // Sentinel review (same day): the first version of this fix compared
   // `current` to these values verbatim — but the real error the user saw

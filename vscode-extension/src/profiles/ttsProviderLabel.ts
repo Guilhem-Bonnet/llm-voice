@@ -30,6 +30,8 @@ export function friendlyTtsProviderLabel(providerId: string | undefined): string
       return "Kokoro (voix locale rapide)";
     case "kyutai-pocket":
       return "Kyutai Pocket TTS (avancé)";
+    case "kyutai-1-6b":
+      return "Kyutai narration (carte graphique)";
     case "openai-compatible":
       return "Compatible OpenAI (distant)";
     default:

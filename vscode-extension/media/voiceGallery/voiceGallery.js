@@ -10,7 +10,7 @@
 
   const SVG_NS = "http://www.w3.org/2000/svg";
   const STAR_PATH = "M8 1.5l2 4.3 4.7.6-3.5 3.2.9 4.7L8 12l-4.1 2.3.9-4.7L1.3 6.4 6 5.8z";
-  const SECTIONS = ["local", "kyutai", "prepare"];
+  const SECTIONS = ["local", "kyutai16", "kyutai", "prepare"];
 
   const search = get("search");
   const phrase = get("phrase");
@@ -340,7 +340,7 @@
   }
 
   function applyFilters() {
-    const visible = { local: 0, kyutai: 0, prepare: 0 };
+    const visible = { local: 0, kyutai16: 0, kyutai: 0, prepare: 0 };
     for (const card of cards.values()) {
       const shown = matches(card.model);
       card.root.hidden = !shown;
@@ -351,7 +351,7 @@
     for (const section of SECTIONS) {
       get("section-" + section).hidden = visible[section] === 0;
     }
-    get("empty").hidden = visible.local + visible.kyutai + visible.prepare > 0;
+    get("empty").hidden = visible.local + visible.kyutai16 + visible.kyutai + visible.prepare > 0;
     for (const name of Object.keys(filterButtons)) {
       const on = name === filter;
       filterButtons[name].setAttribute("aria-pressed", on ? "true" : "false");
@@ -372,11 +372,12 @@
           ? "Serveur arrêté"
           : "État du serveur inconnu";
     status.classList.toggle("state-ok", Boolean(kyutai) && kyutai.status === "started");
+    refreshNarrationServer();
 
     const engine = bannerEngine();
     banner.hidden = engine === undefined;
     if (engine !== undefined) {
-      const name = engine === "kokoro" ? "Kokoro" : engine === "chatterbox" ? "Chatterbox" : "Kyutai";
+      const name = engine === "kokoro" ? "Kokoro" : engine === "chatterbox" ? "Chatterbox" : "Kyutai Pocket";
       get("banner-title").textContent = "Le serveur " + name + " est arrêté";
       get("banner-detail").textContent =
         engine === "kyutai"
@@ -384,6 +385,23 @@
           : "Démarrez-le pour écouter cette voix : il tourne uniquement sur votre machine.";
       get("banner-command").textContent = engines[engine].command;
     }
+  }
+
+  /** Kyutai narration says its state in its own section, command included: no banner for it. */
+  function refreshNarrationServer() {
+    const narration = engines.kyutai16;
+    const started = Boolean(narration) && narration.status === "started";
+    const status = get("kyutai16-status");
+    status.textContent = !narration
+      ? ""
+      : started
+        ? "Serveur démarré"
+        : narration.status === "stopped"
+          ? "Serveur arrêté"
+          : "État du serveur inconnu";
+    status.classList.toggle("state-ok", started);
+    get("kyutai16-server").hidden = !narration || started;
+    get("kyutai16-command").textContent = narration ? narration.command : "";
   }
 
   function bannerEngine() {
@@ -435,6 +453,7 @@
     engines = message.engines && typeof message.engines === "object" ? message.engines : {};
     activeId = message.activeId;
     get("current-voice").textContent = message.activeLabel || "";
+    get("kyutai16-note").textContent = message.kyutai16Note || "";
     for (const model of message.cards) {
       const card = cards.get(model.id) || createCard(model);
       card.model = model;
@@ -475,7 +494,7 @@
       case "trialStopped": {
         const finished = settlePending(message);
         if (finished) {
-          refusedEngine = message.engine;
+          refusedEngine = message.engine === "kyutai16" ? refusedEngine : message.engine;
           if (engines[message.engine]) {
             engines[message.engine].status = "stopped";
           }
@@ -521,6 +540,13 @@
   get("banner-check").addEventListener("click", () => {
     vscode.postMessage({ type: "refreshHealth" });
   });
+  get("kyutai16-copy").addEventListener("click", () => {
+    vscode.postMessage({ type: "copyCommand", engine: "kyutai16" });
+  });
+  get("kyutai16-check").addEventListener("click", () => {
+    vscode.postMessage({ type: "refreshHealth" });
+  });
+  get("kyutai16-credits").addEventListener("click", () => showCredits(true));
   get("open-credits").addEventListener("click", () => showCredits(true));
   get("credits-back").addEventListener("click", () => showCredits(false));
 

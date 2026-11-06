@@ -18,6 +18,7 @@ import type { ProviderHealth } from "../core/health.js";
 import {
   CHATTERBOX_LOCAL_PRESET,
   KOKORO_LOCAL_PRESET,
+  KYUTAI16_LOCAL_PRESET,
   KYUTAI_POCKET_LOCAL_PRESET,
   PIPER_LOCAL_PRESET
 } from "../tts/presets.js";
@@ -59,7 +60,7 @@ function settingNamesNoServer(settingBaseUrl: string): boolean {
 
 /**
  * `profile.tts.{providerId,baseUrl}` if set, else `llmVoice.tts.{provider,baseUrl}`.
- * `kyutai-pocket` keeps its own port: the setting's default is Chatterbox's.
+ * `kyutai-pocket` and `kyutai-1-6b` keep their own port: the setting's default is Chatterbox's.
  * So do `kokoro` and `piper-local`, however they were chosen, unless the
  * setting names another endpoint: `llmVoice.tts.provider` can select them,
  * which leaves that setting as the only place to point at a custom server.
@@ -69,6 +70,8 @@ export function resolveTtsConfig(tts: TtsBinding, settings: TtsSettings): Resolv
   let ownDefault: string | undefined;
   if (tts.providerId === "kyutai-pocket") {
     ownDefault = KYUTAI_POCKET_LOCAL_PRESET.baseUrl;
+  } else if (tts.providerId === "kyutai-1-6b") {
+    ownDefault = KYUTAI16_LOCAL_PRESET.baseUrl;
   } else if (settingNamesNoServer(settings.baseUrl)) {
     if (providerId === "kokoro") {
       ownDefault = KOKORO_LOCAL_PRESET.baseUrl;

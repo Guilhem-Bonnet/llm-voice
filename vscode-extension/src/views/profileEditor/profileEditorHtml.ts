@@ -74,7 +74,8 @@ export function buildProfileEditorHtml(inputs: ProfileEditorHtmlInputs): string 
         <select id="field-narrator-provider" name="narratorProvider">
           <option value="">Aucun (pas de reformulation)</option>
           <option value="ollama">Ollama — IA locale, aucune donnée envoyée hors de cette machine</option>
-          <option value="openai-compatible">Compatible OpenAI — service distant</option>
+          <option value="kyutai-1-6b">Kyutai narration — carte graphique, nécessite le service Docker kyutai16</option>
+        <option value="openai-compatible">Compatible OpenAI — service distant</option>
         </select>
 
         <label for="field-narrator-model">Modèle</label>

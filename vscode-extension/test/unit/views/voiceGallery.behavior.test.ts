@@ -141,12 +141,12 @@ class FakeElement {
 interface CardInput {
   id: string;
   label: string;
-  section?: "local" | "kyutai" | "prepare";
+  section?: "local" | "kyutai16" | "kyutai" | "prepare";
   ready?: boolean;
   sampleUri?: string;
   canChoose?: boolean;
   canListen?: boolean;
-  engine?: "kyutai" | "kokoro" | "chatterbox";
+  engine?: "kyutai" | "kyutai16" | "kokoro" | "chatterbox";
   state?: string;
   detail?: string;
   prepare?: string;
@@ -229,7 +229,7 @@ function runGallery() {
   );
   const receive = (data: unknown): void => handlers.forEach((handler) => handler({ data }));
   const cardOf = (id: string): FakeElement => {
-    const found = ["cards-local", "cards-kyutai", "cards-prepare"]
+    const found = ["cards-local", "cards-kyutai16", "cards-kyutai", "cards-prepare"]
       .flatMap((section) => element(section).children)
       .find((candidate) => candidate.dataset.voiceId === id);
     if (found === undefined) {
@@ -238,7 +238,7 @@ function runGallery() {
     return found;
   };
   const visibleCards = (): string[] =>
-    ["cards-local", "cards-kyutai", "cards-prepare"]
+    ["cards-local", "cards-kyutai16", "cards-kyutai", "cards-prepare"]
       .flatMap((section) => element(section).children)
       .filter((candidate) => !candidate.hidden)
       .map((candidate) => candidate.dataset.voiceId ?? "");
@@ -667,5 +667,101 @@ describe("the document and its styles", () => {
     ]) {
       expect(html).toContain(text);
     }
+  });
+});
+
+describe("the Kyutai narration section", () => {
+  const COMMAND = "docker compose -f deploy/docker-compose.tts.yml up -d kyutai16";
+  const NARRATION = [
+    card({ id: "kyutai16:cml-577_394", label: "Camille", section: "kyutai16", engine: "kyutai16", canChoose: false, state: "Non prête", detail: "CML-TTS, CC BY 4.0." }),
+    card({ id: "kyutai16:estelle", label: "Estelle", section: "kyutai16", engine: "kyutai16", canChoose: false, state: "Non prête", detail: "Unmute, CC0." })
+  ];
+  const cardText = (root: FakeElement): string => root.all().map((child) => child.textContent).join(" ");
+  const stopped = {
+    kyutai: { status: "started", command: "pocket" },
+    kyutai16: { status: "stopped", command: COMMAND }
+  };
+
+  it("sits before Pocket's, Camille first", () => {
+    const html = buildVoiceGalleryHtml({ nonce: "n", cspSource: "c", scriptUri: "s", styleUri: "t" });
+    expect(html.indexOf('id="section-kyutai16"')).toBeGreaterThan(0);
+    expect(html.indexOf('id="section-kyutai16"')).toBeLessThan(html.indexOf('id="section-kyutai"'));
+    const { element, receive } = runGallery();
+    receive(state({ cards: NARRATION, engines: stopped }));
+    expect(element("cards-kyutai16").children.map((child) => child.dataset.voiceId)).toEqual(["kyutai16:cml-577_394", "kyutai16:estelle"]);
+  });
+
+  it("server stopped: says so, shows the command to copy, and the cards stay visible and listenable", () => {
+    const { element, posted, receive, cardOf, visibleCards } = runGallery();
+    receive(state({ cards: NARRATION, engines: stopped, kyutai16Note: "Accent non documenté." }));
+
+    expect(element("kyutai16-status").textContent).toBe("Serveur arrêté");
+    expect(element("kyutai16-server").hidden).toBe(false);
+    expect(element("kyutai16-command").textContent).toBe(COMMAND);
+    expect(element("kyutai16-note").textContent).toBe("Accent non documenté.");
+    expect(visibleCards()).toContain("kyutai16:cml-577_394");
+    expect(element("section-kyutai16").hidden).toBe(false);
+    const camille = cardOf("kyutai16:cml-577_394");
+    expect(camille.buttonNamed("Choisir")).toBeUndefined();
+    expect(button(camille, "Écouter").hidden).toBe(false);
+
+    element("kyutai16-copy").click();
+    expect(posted).toContainEqual({ type: "copyCommand", engine: "kyutai16" });
+    element("kyutai16-check").click();
+    expect(posted).toContainEqual({ type: "refreshHealth" });
+  });
+
+  it("server started: the command goes away", () => {
+    const { element, receive } = runGallery();
+    receive(state({ cards: NARRATION, engines: { kyutai16: { status: "started", command: COMMAND } } }));
+
+    expect(element("kyutai16-status").textContent).toBe("Serveur démarré");
+    expect(element("kyutai16-status").classes.has("state-ok")).toBe(true);
+    expect(element("kyutai16-server").hidden).toBe(true);
+  });
+
+  it("no sample: Écouter asks the host, with the phrase, and plays only the answer", () => {
+    const { audio, element, posted, receive, cardOf } = runGallery();
+    receive(state({ cards: NARRATION, engines: stopped }));
+    element("phrase").value = "Une phrase à moi.";
+
+    button(cardOf("kyutai16:cml-577_394"), "Écouter").click();
+
+    expect(posted).toContainEqual({ type: "trial", voiceId: "kyutai16:cml-577_394", text: "Une phrase à moi.", requestId: 1 });
+    expect(audio.playCalls).toBe(0);
+    receive({ type: "trialAudio", requestId: 1, voiceId: "kyutai16:cml-577_394", uri: "res://trial/c.wav" });
+    expect(audio.src).toBe("res://trial/c.wav");
+    expect(audio.playCalls).toBe(1);
+  });
+
+  it("a stopped server is told on the card and in the section, not by Pocket's banner", () => {
+    const { element, receive, cardOf } = runGallery();
+    receive(state({ cards: NARRATION, engines: { ...stopped, kyutai16: { status: "started", command: COMMAND } } }));
+    button(cardOf("kyutai16:cml-577_394"), "Écouter").click();
+
+    receive({ type: "trialStopped", requestId: 1, voiceId: "kyutai16:cml-577_394", engine: "kyutai16" });
+
+    expect(cardText(cardOf("kyutai16:cml-577_394"))).toContain("Serveur arrêté.");
+    expect(element("kyutai16-status").textContent).toBe("Serveur arrêté");
+    expect(element("kyutai16-server").hidden).toBe(false);
+    expect(element("server-banner").hidden).toBe(true);
+  });
+
+  it("a server's error, such as the game mode, reaches the card as text", () => {
+    const { receive, cardOf } = runGallery();
+    receive(state({ cards: NARRATION, engines: stopped }));
+    button(cardOf("kyutai16:cml-577_394"), "Écouter").click();
+
+    receive({ type: "trialError", requestId: 1, voiceId: "kyutai16:cml-577_394", message: "Mode jeu actif (gpu-yield)" });
+
+    expect(cardText(cardOf("kyutai16:cml-577_394"))).toContain("Mode jeu actif (gpu-yield)");
+  });
+
+  it("its credits button opens the credits", () => {
+    const { element, receive } = runGallery();
+    receive(state({ cards: NARRATION, engines: stopped }));
+    element("kyutai16-credits").click();
+    expect(element("credits-view").hidden).toBe(false);
+    expect(element("gallery-view").hidden).toBe(true);
   });
 });

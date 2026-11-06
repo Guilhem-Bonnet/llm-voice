@@ -9,19 +9,21 @@ import type { TtsBinding } from "../../core/profile.js";
 import { CHATTERBOX_COMPOSE_COMMAND, ttsBindingForTier } from "../../onboarding/voiceTiers.js";
 import { bindingForEngineVoice, describeVoice } from "../../profiles/voiceResolution.js";
 import { KOKORO_DEFAULT_FR_VOICE } from "../../tts/KokoroProvider.js";
+import { KYUTAI16_VOICE_CATALOG, KYUTAI16_VOICE_CAVEAT } from "../../tts/kyutai16VoiceCatalog.js";
 import { KYUTAI_POCKET_VOICE_CATALOG } from "../../tts/kyutaiVoiceCatalog.js";
 import {
   CHATTERBOX_LOCAL_PRESET,
   KOKORO_LOCAL_PRESET,
+  KYUTAI16_LOCAL_PRESET,
   KYUTAI_POCKET_LOCAL_PRESET
 } from "../../tts/presets.js";
 import { PIPER_VOICE_ID } from "../../tts/SystemTtsProvider.js";
 
-export type ServerEngine = "kyutai" | "kokoro" | "chatterbox";
+export type ServerEngine = "kyutai" | "kyutai16" | "kokoro" | "chatterbox";
 export type GalleryEngine = ServerEngine | "system" | "own-voice";
 export type PrepareTarget = "chatterbox" | "ownVoice" | "piper";
 export type EngineStatus = "started" | "stopped" | "unknown";
-export type GallerySection = "local" | "kyutai" | "prepare";
+export type GallerySection = "local" | "kyutai" | "kyutai16" | "prepare";
 
 export interface GalleryEntry {
   id: string;
@@ -30,6 +32,8 @@ export interface GalleryEntry {
   detail?: string;
   /** Path under `media/` of an included sample, played in the page itself. */
   sample?: string;
+  /** The engine's name for this voice, when the entry id cannot be it. */
+  voice?: string;
 }
 
 const KYUTAI_ENTRIES: readonly GalleryEntry[] = KYUTAI_POCKET_VOICE_CATALOG.map((voice) => ({
@@ -39,10 +43,23 @@ const KYUTAI_ENTRIES: readonly GalleryEntry[] = KYUTAI_POCKET_VOICE_CATALOG.map(
   ...(voice.preview !== undefined ? { sample: voice.preview } : {})
 }));
 
+/**
+ * `estelle` also exists under Pocket: the entry id carries the engine, the voice id stays
+ * what the server knows. No `sample`: consent is not established for these voices.
+ */
+const KYUTAI16_ENTRIES: readonly GalleryEntry[] = KYUTAI16_VOICE_CATALOG.map((voice) => ({
+  id: `kyutai16:${voice.id}`,
+  label: voice.label,
+  engine: "kyutai16",
+  voice: voice.id,
+  detail: voice.licence?.spdx === "CC0-1.0" ? "Unmute, CC0." : "CML-TTS, CC BY 4.0."
+}));
+
 export const GALLERY_ENTRIES: readonly GalleryEntry[] = [
   { id: "system", label: "Voix système", engine: "system", detail: "Déjà sur votre machine, qualité correcte." },
   { id: "piper", label: "Piper Siwis", engine: "system", detail: "Voix française autonome, bonne qualité." },
   { id: "kokoro", label: "Kokoro Siwis", engine: "kokoro" },
+  ...KYUTAI16_ENTRIES,
   ...KYUTAI_ENTRIES,
   { id: "chatterbox", label: "Chatterbox", engine: "chatterbox", detail: "Qualité maximale. Nécessite Docker." },
   { id: "own-voice", label: "Ma voix", engine: "own-voice", detail: "Clonez votre voix, le fichier reste sur votre machine." }
@@ -70,6 +87,7 @@ export const MAX_TRIAL_PHRASE_LENGTH = 300;
 
 const SERVER_PRESETS: Readonly<Record<ServerEngine, { providerId: string; baseUrl: string }>> = {
   kyutai: { providerId: "kyutai-pocket", baseUrl: KYUTAI_POCKET_LOCAL_PRESET.baseUrl },
+  kyutai16: { providerId: "kyutai-1-6b", baseUrl: KYUTAI16_LOCAL_PRESET.baseUrl },
   kokoro: { providerId: "kokoro", baseUrl: KOKORO_LOCAL_PRESET.baseUrl },
   chatterbox: { providerId: "chatterbox", baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl }
 };
@@ -92,6 +110,9 @@ export function engineProviderId(engine: ServerEngine): string {
  * has none here: it needs a file, which only the `useOwnVoice` flow can provide.
  */
 export function bindingForEntry(entry: GalleryEntry, current: TtsBinding): TtsBinding & { providerId: string } {
+  if (entry.engine === "kyutai16") {
+    return serverVoice("kyutai16", current, entry.voice ?? entry.id);
+  }
   switch (entry.id) {
     case "system":
       return ttsBindingForTier("system");
@@ -129,6 +150,10 @@ export function activeEntryId(binding: TtsBinding): string | undefined {
       const id = binding.voice;
       return id !== undefined && galleryEntry(id)?.engine === "kyutai" ? id : undefined;
     }
+    case "kyutai-1-6b": {
+      const id = `kyutai16:${binding.voice ?? KYUTAI16_LOCAL_PRESET.voice}`;
+      return galleryEntry(id) !== undefined ? id : undefined;
+    }
     default:
       return undefined;
   }
@@ -159,6 +184,14 @@ function portOf(url: string): string | undefined {
 }
 
 /**
+ * Run from the repository: the VSIX ships no `deploy/`, and this service needs its cached
+ * model anyway. Naming the service is enough for Compose to activate its group, so the
+ * interface shows no flag holding the word ADR-017 V9 removes from what the user reads
+ * (`up --dry-run` gives the same result with and without it, see the evidence pack).
+ */
+export const KYUTAI16_COMPOSE_COMMAND = "docker compose -f deploy/docker-compose.tts.yml up -d kyutai16";
+
+/**
  * The command to run oneself, adapted to the configured port. Shown and copied, never
  * run: starting a server belongs to card 0-006.
  */
@@ -169,6 +202,8 @@ export function startCommand(engine: ServerEngine, url: string): string {
       const base = "pocket-tts serve --language french";
       return port !== undefined && port !== portOf(KYUTAI_POCKET_LOCAL_PRESET.baseUrl) ? `${base} --port ${port}` : base;
     }
+    case "kyutai16":
+      return KYUTAI16_COMPOSE_COMMAND;
     case "kokoro":
       return `docker run --rm -p 127.0.0.1:${port ?? "8880"}:8880 ghcr.io/remsky/kokoro-fastapi-cpu:latest`;
     case "chatterbox":
@@ -177,7 +212,8 @@ export function startCommand(engine: ServerEngine, url: string): string {
 }
 
 export const ENGINE_NAMES: Readonly<Record<ServerEngine, string>> = {
-  kyutai: "Kyutai",
+  kyutai: "Kyutai Pocket",
+  kyutai16: "Kyutai narration",
   kokoro: "Kokoro",
   chatterbox: "Chatterbox"
 };
@@ -206,7 +242,7 @@ export interface CardInputs {
 }
 
 function isServerEngine(engine: GalleryEngine): engine is ServerEngine {
-  return engine === "kyutai" || engine === "kokoro" || engine === "chatterbox";
+  return engine === "kyutai" || engine === "kyutai16" || engine === "kokoro" || engine === "chatterbox";
 }
 
 export function buildCards(inputs: CardInputs): GalleryCard[] {
@@ -214,6 +250,21 @@ export function buildCards(inputs: CardInputs): GalleryCard[] {
 }
 
 function cardOf(entry: GalleryEntry, inputs: CardInputs): GalleryCard {
+  if (entry.engine === "kyutai16") {
+    // Stays visible when not ready; a click on `Écouter` says why, and shows the command.
+    const ready = inputs.status.kyutai16 === "started";
+    return {
+      id: entry.id,
+      label: entry.label,
+      section: "kyutai16",
+      engine: "kyutai16",
+      ready,
+      canChoose: ready,
+      canListen: true,
+      state: ready ? "Prête" : "Non prête",
+      ...(entry.detail !== undefined ? { detail: entry.detail } : {})
+    };
+  }
   const base = {
     id: entry.id,
     label: entry.label,
@@ -288,10 +339,13 @@ const CODE_SOURCE = "https://github.com/kyutai-labs/pocket-tts";
 const VCTK_SOURCE = "https://datashare.ed.ac.uk/handle/10283/3443";
 const DONATION_SOURCE = "https://unmute.sh/voice-donation";
 const VOICE_ZERO_SOURCE = "https://github.com/OwenTyme/voice-zero";
+const KYUTAI16_MODEL_SOURCE = "https://huggingface.co/kyutai/tts-1.6b-en_fr";
+const KYUTAI16_CODE_SOURCE = "https://github.com/kyutai-labs/moshi";
+const CML_SOURCE = "https://huggingface.co/kyutai/tts-voices/tree/main/cml-tts/fr";
 
 /** Same facts as `media/voices/CREDITS.md`, which ships next to the samples. */
 export const GALLERY_CREDITS = {
-  subtitle: "D'où viennent les voix de Kyutai Pocket TTS, et sous quelle licence.",
+  subtitle: "D'où viennent les voix de Kyutai Pocket TTS et de Kyutai narration, et sous quelle licence.",
   groups: [
     {
       source: "VCTK",
@@ -305,6 +359,19 @@ export const GALLERY_CREDITS = {
     { source: "Unmute, Kyutai", licence: "CC0", voices: "Estelle" }
   ] satisfies readonly CreditGroup[],
   engine: { source: "Moteur", licence: "Modèle CC BY 4.0, code MIT", voices: "Kyutai Pocket TTS" } satisfies CreditGroup,
+  /** Kyutai narration: its own list, its voices are not the samples `CREDITS.md` lists above. */
+  narration: [
+    {
+      source: "Kyutai narration, CML-TTS",
+      licence: "CC BY 4.0",
+      voices: KYUTAI16_VOICE_CATALOG.filter((voice) => voice.licence?.spdx === "CC-BY-4.0")
+        .map((voice) => voice.label)
+        .join(", "),
+      note: KYUTAI16_VOICE_CAVEAT
+    },
+    { source: "Kyutai narration, Unmute", licence: "CC0", voices: "Estelle" },
+    { source: "Moteur de narration", licence: "Modèle CC BY 4.0, code MIT", voices: "Kyutai TTS 1.6B" }
+  ] satisfies readonly CreditGroup[],
   clause:
     "Il est interdit de cloner ou d'imiter une voix sans consentement explicite et légal, et de présenter un contenu généré comme un enregistrement authentique de personnes réelles.",
   links: [
@@ -314,7 +381,10 @@ export const GALLERY_CREDITS = {
     { label: "Code", url: CODE_SOURCE },
     { label: "VCTK", url: VCTK_SOURCE },
     { label: "Dons de voix", url: DONATION_SOURCE },
-    { label: "Voice Zero", url: VOICE_ZERO_SOURCE }
+    { label: "Voice Zero", url: VOICE_ZERO_SOURCE },
+    { label: "Modèle de narration", url: KYUTAI16_MODEL_SOURCE },
+    { label: "Code de narration", url: KYUTAI16_CODE_SOURCE },
+    { label: "Voix CML-TTS", url: CML_SOURCE }
   ]
 };
 
@@ -365,7 +435,7 @@ export function parseGalleryMessage(raw: unknown, knownIds: ReadonlySet<string>)
         ? { type: "favorite", voiceId, favorite: raw.favorite }
         : undefined;
     case "copyCommand":
-      return raw.engine === "kyutai" || raw.engine === "kokoro" || raw.engine === "chatterbox"
+      return raw.engine === "kyutai" || raw.engine === "kyutai16" || raw.engine === "kokoro" || raw.engine === "chatterbox"
         ? { type: "copyCommand", engine: raw.engine }
         : undefined;
     case "openLink":

@@ -58,9 +58,16 @@ if [ "${1:-}" = "--inner" ]; then
   exit 0   # le verdict du test est combiné à celui du banc plus bas
 fi
 
+if [ "${1:-}" = "--kyutai16" ]; then
+  # Même scénario avec Kyutai TTS 1.6B et la voix Camille, service `kyutai16` démarré sur le port 8020.
+  export LLM_VOICE_NATIVE_REAL_ENGINE=kyutai16
+  curl -fs -m 3 http://localhost:8020/health >/dev/null \
+    || { echo "native-real.sh: le service kyutai16 doit tourner sur le port 8020 (deploy/README.md)" >&2; exit 2; }
+  set -- --kyutai
+fi
 if [ "${1:-}" = "--kyutai" ]; then
   export LLM_VOICE_NATIVE_REAL_SCENARIO=kyutai
-  curl -fs -m 3 http://localhost:8000/health >/dev/null \
+  [ "${LLM_VOICE_NATIVE_REAL_ENGINE:-}" = "kyutai16" ] || curl -fs -m 3 http://localhost:8000/health >/dev/null \
     || { echo "native-real.sh: pocket-tts serve --language french doit tourner sur le port 8000" >&2; exit 2; }
   # Cache du VS Code de test uniquement : chaque preuve exerce une vraie synthèse.
   # `LLM_VOICE_NATIVE_REAL_KEEP_CACHE=1` conserve le cache pour prouver sa guérison.

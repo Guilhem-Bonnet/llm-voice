@@ -65,3 +65,4 @@ _grimoire-output/evidence/GAO-essais-voix-001/ecoute-kyutai16/index.html
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-classique/wav/
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-classique/*.ogg
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-classique/index.html
+deploy/kyutai16/__pycache__/

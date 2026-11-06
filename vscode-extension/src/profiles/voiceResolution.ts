@@ -7,11 +7,15 @@
 
 import type { GlobalVoice, ReadingMode, TtsBinding } from "../core/profile.js";
 import type { TtsParameterDescriptor, Voice } from "../core/tts.js";
+import { KYUTAI16_VOICE_CATALOG } from "../tts/kyutai16VoiceCatalog.js";
 import { KYUTAI_POCKET_VOICE_CATALOG } from "../tts/kyutaiVoiceCatalog.js";
 import { PIPER_VOICE_ID } from "../tts/SystemTtsProvider.js";
 import { friendlyTtsProviderLabel } from "./ttsProviderLabel.js";
 
 export type VoiceOrigin = "global" | "mode";
+
+/** Every voice the interface can name by id. `estelle` is in both, under the same name and language. */
+const NAMED_VOICES: readonly Voice[] = [...KYUTAI_POCKET_VOICE_CATALOG, ...KYUTAI16_VOICE_CATALOG];
 
 /** A mode as stored, and as it reads: `tts` of `effective` is the voice retained. */
 export interface EffectiveMode {
@@ -68,7 +72,7 @@ export function effectiveModeOf(mode: ReadingMode, global: GlobalVoice): Effecti
  * outranks a voice name at synthesis (`ChatterboxProvider`), so it does here too;
  * otherwise the label would repeat the lie cause A is about.
  */
-export function describeVoice(binding: TtsBinding, catalog: readonly Voice[] = KYUTAI_POCKET_VOICE_CATALOG): string {
+export function describeVoice(binding: TtsBinding, catalog: readonly Voice[] = NAMED_VOICES): string {
   if (binding.referenceAudio !== undefined) {
     return "Votre échantillon";
   }
@@ -84,7 +88,7 @@ export function describeVoice(binding: TtsBinding, catalog: readonly Voice[] = K
 /** What a catalogue declares about the language of this voice; `undefined` when it says nothing. */
 export function declaredVoiceLanguage(
   binding: TtsBinding,
-  catalog: readonly Voice[] = KYUTAI_POCKET_VOICE_CATALOG
+  catalog: readonly Voice[] = NAMED_VOICES
 ): string | undefined {
   if (binding.voice === undefined || binding.referenceAudio !== undefined) {
     return undefined;

@@ -191,6 +191,40 @@ suite("voice-chain: voice gallery (card 0-005)", () => {
     assert.equal(posted.filter((message) => message.type === "trialAudio").length, 0);
   });
 
+  test("Kyutai narration: the same contract on its own engine, Écouter then Choisir, and the reading speaks with it", async () => {
+    writeVoice({ providerId: "kyutai-1-6b", baseUrl: url, voice: "cml-577_394" });
+    await vscode.commands.executeCommand("llmVoice.openVoiceGallery");
+    await waitFor(() => posted.some((message) => message.engines?.kyutai16?.status === "started"), "its server seen as started");
+    const state = posted.filter((message) => message.type === "state").at(-1);
+    assert.equal(state?.activeId, "kyutai16:cml-577_394");
+    assert.equal(synthesisRequests(server).length, 0, "no POST /tts before a click");
+
+    await pipeline.dispatchVoiceGalleryMessageForTest({ type: "trial", voiceId: "kyutai16:estelle", text: `Essai ${Date.now()}.`, requestId: 21 });
+    assert.equal(synthesisRequests(server).length, 1);
+    assert.match(synthesisRequests(server)[0]?.body ?? "", /name="voice_url"\s+estelle/);
+    assert.ok(posted.find((message) => message.type === "trialAudio")?.uri?.startsWith("https://"));
+
+    server.requests.length = 0;
+    await pipeline.dispatchVoiceGalleryMessageForTest({ type: "choose", voiceId: "kyutai16:cml-7601_7727" });
+    assert.deepEqual(readVoice(), { providerId: "kyutai-1-6b", baseUrl: url, voice: "cml-7601_7727", speed: 1 });
+    assert.equal(synthesisRequests(server).length, 0, "choosing is not listening");
+
+    await pipeline.start({ scope: "clipboard", text: `Lecture narrée ${Date.now()}.` });
+    await waitFor(() => synthesisRequests(server).length > 0, "a POST /tts from the reading");
+    await pipeline.stop();
+    assert.match(synthesisRequests(server)[0]?.body ?? "", /name="voice_url"\s+cml-7601_7727/);
+  });
+
+  test("Kyutai narration, server stopped: the page is told, no request, no process", async () => {
+    writeVoice({ providerId: "kyutai-1-6b", baseUrl: "http://127.0.0.1:9", voice: "cml-577_394" });
+    await vscode.commands.executeCommand("llmVoice.openVoiceGallery");
+
+    await pipeline.dispatchVoiceGalleryMessageForTest({ type: "trial", voiceId: "kyutai16:cml-577_394", text: "Bonjour", requestId: 22 });
+
+    assert.ok(posted.some((message) => message.type === "trialStopped"));
+    assert.equal(synthesisRequests(server).length, 0);
+  });
+
   test("favorites live in globalState", async () => {
     await vscode.commands.executeCommand("llmVoice.openVoiceGallery");
 

@@ -11,12 +11,13 @@ import type { TtsProvider } from "../core/tts.js";
 import type { EgressGuardHandle } from "../net/EgressGuard.js";
 import { ChatterboxProvider } from "./ChatterboxProvider.js";
 import { KokoroProvider, KOKORO_DEFAULT_FR_VOICE } from "./KokoroProvider.js";
+import { KYUTAI16_DEFAULT_VOICE, KYUTAI16_VOICE_CATALOG } from "./kyutai16VoiceCatalog.js";
 import { KyutaiPocketProvider } from "./KyutaiPocketProvider.js";
 import { OpenAICompatibleTtsProvider } from "./OpenAICompatibleTtsProvider.js";
 import { SystemTtsProvider, type SystemTtsProcessRunner } from "./SystemTtsProvider.js";
 
 /** Which concrete class a preset instantiates; never guessed from an id (ADR-005). */
-export type TtsPresetKind = "chatterbox" | "kokoro" | "kyutai-pocket" | "openai-compatible" | "system";
+export type TtsPresetKind = "chatterbox" | "kokoro" | "kyutai-pocket" | "kyutai-1-6b" | "openai-compatible" | "system";
 
 export interface TtsProviderPreset {
   id: string;
@@ -173,12 +174,29 @@ export const KYUTAI_POCKET_LOCAL_PRESET: TtsProviderPreset = {
   remote: false
 };
 
+/**
+ * Kyutai TTS 1.6B: `deploy/kyutai16/server.py`, the same HTTP contract as Pocket TTS on
+ * its own port. Opt-in like Pocket: no entry in `llmVoice.tts.provider`'s enum, never
+ * named by a shipped default. Its port must match the service `kyutai16` of
+ * `deploy/docker-compose.tts.yml`.
+ */
+export const KYUTAI16_LOCAL_PRESET: TtsProviderPreset = {
+  id: "kyutai-1-6b-local",
+  label: "Kyutai narration (local, TTS 1.6B, carte graphique, service Docker kyutai16)",
+  kind: "kyutai-1-6b",
+  baseUrl: "http://localhost:8020",
+  languages: ["fr"],
+  voice: KYUTAI16_DEFAULT_VOICE,
+  remote: false
+};
+
 export const TTS_PROVIDER_PRESETS: readonly TtsProviderPreset[] = [
   CHATTERBOX_LOCAL_PRESET,
   KOKORO_LOCAL_PRESET,
   PIPER_LOCAL_PRESET,
   SYSTEM_LOCAL_PRESET,
   KYUTAI_POCKET_LOCAL_PRESET,
+  KYUTAI16_LOCAL_PRESET,
   OPENAI_COMPATIBLE_PRESET
 ];
 
@@ -278,6 +296,15 @@ export function createTtsProvider(
         languages: preset.languages ?? [],
         ...(options.defaultVoice !== undefined ? { defaultVoice: options.defaultVoice } : {})
       });
+    case "kyutai-1-6b":
+      return new KyutaiPocketProvider({
+        ...providerOptions,
+        id: options.id ?? "kyutai-1-6b",
+        languages: preset.languages ?? KYUTAI16_LOCAL_PRESET.languages ?? [],
+        catalog: KYUTAI16_VOICE_CATALOG,
+        engineName: "Kyutai narration",
+        ...(options.defaultVoice !== undefined ? { defaultVoice: options.defaultVoice } : {})
+      });
     case "openai-compatible":
       return new OpenAICompatibleTtsProvider(providerOptions);
     case "system":
@@ -310,6 +337,9 @@ export function presetKindForProviderId(providerId: string): TtsPresetKind {
   // `"kokoro-local"` never were.
   if (providerId === "kyutai-pocket") {
     return "kyutai-pocket";
+  }
+  if (providerId === "kyutai-1-6b") {
+    return "kyutai-1-6b";
   }
   return "openai-compatible";
 }
