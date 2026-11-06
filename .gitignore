@@ -50,3 +50,5 @@ vscode-extension/src/_grimoire-output/
 # Banc d écoute : audio régénérable par scripts/voice-lab/run.sh
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute/wav/
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-france/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-france/*.ogg

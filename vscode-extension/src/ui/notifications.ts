@@ -90,7 +90,8 @@ export function chooseTtsUnavailableMessage(
   return TTS_UNAVAILABLE_MESSAGE;
 }
 
-export const NARRATOR_UNAVAILABLE_MESSAGE = "LLM Voice: Narrator unavailable";
+export const NARRATOR_UNAVAILABLE_MESSAGE =
+  "LLM Voice : l'IA de ce mode n'a pas répondu. Ce passage est lu tel quel, sans réécriture.";
 
 export const CHOOSE_VOICE_LABEL = "Choisir une voix";
 export const OPEN_TTS_SETTINGS_LABEL = "Voir les réglages";

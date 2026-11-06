@@ -1,9 +1,10 @@
 # Textes d'essai des voix
 
-Ces textes servent à écouter et à comparer les voix de LLM Voice. Tu peux les ouvrir et les lire directement dans l'extension, ou les modifier : le banc les relit à chaque lancement.
+Ces textes servent à écouter et à comparer les voix de LLM Voice. Les fichiers numérotés alimentent le banc et contiennent des balises : pour écouter un document normal dans l'extension, ouvre `lecture-demo.md`.
 
 | Fichier | Ce qu'on écoute |
 |---|---|
+| `lecture-demo.md` | **À ouvrir pour essayer l'extension** : un document normal à lire à voix haute |
 | `01-mots-techniques.md` | La prononciation du vocabulaire technique, telle quelle puis réécrite phonétiquement |
 | `02-ton-et-style.md` | Le même contenu écrit dans plusieurs tons |
 | `03-personnages.md` | Une scène à plusieurs voix |

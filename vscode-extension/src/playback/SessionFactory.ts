@@ -118,6 +118,10 @@ class SessionBuildImpl implements SessionBuild {
 
   warn(warning: NarrationWarning): void {
     this.degraded = true;
+    // A cancellation is the user's own gesture (stop, new reading), not a failing narrator.
+    if (warning.reason === "cancelled") {
+      return;
+    }
     this.warnSink?.(warning);
     this.warned.emit(warning);
   }
