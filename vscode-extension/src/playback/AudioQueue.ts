@@ -414,6 +414,7 @@ export class AudioQueue {
           ? { parameters: this.binding.parameters }
           : {}),
         ...(this.binding.speed !== undefined ? { speed: this.binding.speed } : {}),
+        ...(this.binding.language !== undefined ? { language: this.binding.language } : {}),
         spokenText: chunk.spokenText
       });
       // Pin now: this index is by construction inside the prefetch window

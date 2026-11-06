@@ -13,6 +13,16 @@
 |---|---|---|---|
 | Point de départ git | HEAD 9ec5465 | git rev-parse --short HEAD | référence (2026-11-06) |
 
+<!-- grimoire:observed-inventory:start -->
+## Inventaire observé
+
+Régénéré automatiquement depuis `evidence-log.jsonl` (hooks du host) — ne pas éditer à la main ; la section manuelle « Evidence inventory » ci-dessus reste éditable et prime en cas de doute.
+
+| Preuve | Détail | Source | Résultat |
+|---|---|---|---|
+| Aucune preuve observée pour l'instant |  |  |  |
+<!-- grimoire:observed-inventory:end -->
+
 ## Phase rouge : échec réel des causes A, B, C, D
 
 **Run 1, code d'avant ADR-017** (HEAD `9ec5465`), avec les seules sondes de test ajoutées (faux puits, port
@@ -124,3 +134,8 @@ The task can be considered complete only when mandatory evidence gates for the s
 - `npm run package:linux-x64` : `check-vsix` vert pour la cible linux-x64, 45 fichiers. `npm run check:vsix` (universel) rouge seulement parce que le binaire du Core est présent après ce paquet : comportement attendu du contrôle.
 - V15, audio réel sur sink nul : `native-real-systeme.log` WER 0.0455 ; `native-real-kyutai.log` WER 0.0, modes hérités. Sortie par défaut inchangée après le banc.
 - Copie du vrai profiles.json de l'utilisateur, passée par `ProfileStore` dans un dossier temporaire : voix globale kyutai-pocket, estelle ; marque 1 ; défaut faithful-local ; quatre modes hérités, libellés Fidèle, Professeur, Résumé, Révision ; system-voice masqué ; Révision garde rate 1.1 ; aucune notice ; sauvegarde identique à l'octet ; rejeu sans effet. Test temporaire non versé.
+
+## Après relecture indépendante (2026-11-06)
+
+- `test:unit` 2512 verts ; `test:integration-voice` 14 passing ; `fake-tts` 65 passing sur trois passes de suite.
+- Un passage isolé de `fake-tts` a donné 64 passing, 1 failing (durée 13 s au lieu de 6 s) ; test en échec non capturé, non reproduit : instabilité possible, cause inconnue.

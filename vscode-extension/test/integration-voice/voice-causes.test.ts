@@ -364,6 +364,32 @@ suite("voice-chain: causes A, B, C, D (ADR-017 §1.1)", () => {
     assert.equal(ttsBodies(main).length, 0, "nothing of this reaches the engine's synthesis");
   });
 
+  test("opening the voice picker starts no synthesis, even with the warm-up on; a reading then warms the engine", async () => {
+    const restore = declineNotifications();
+    const config = vscode.workspace.getConfiguration("llmVoice");
+    const server = new MockTtsServer();
+    const url = await server.listen();
+    const previousWarmup = config.inspect<boolean>("tts.warmup")?.globalValue;
+    await config.update("tts.warmup", true, vscode.ConfigurationTarget.Global);
+    try {
+      seed({ providerId: "chatterbox", baseUrl: url, voice: "voice-initial" });
+      const opened = vscode.commands.executeCommand("llmVoice.chooseVoice");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await vscode.commands.executeCommand("workbench.action.closeQuickOpen");
+      await opened;
+      assert.ok(server.requests.length > 0, "the picker did talk to this engine, otherwise this test proves nothing");
+      assert.equal(ttsBodies(server).length, 0);
+
+      await readClipboard(`Préchauffage ${Date.now()}.`);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      assert.ok(ttsBodies(server).length >= 2, "the reading and its warm-up both reach the engine");
+    } finally {
+      await config.update("tts.warmup", previousWarmup, vscode.ConfigurationTarget.Global);
+      await server.close();
+      restore();
+    }
+  });
+
   test("the tiers of setupVoice, now of chooseVoice, write the whole global voice and leave the modes alone", async () => {
     const restore = declineNotifications();
     try {

@@ -112,6 +112,8 @@ export interface AudioFrame {
 
 /** Exact material hashed into the audio cache key (CdC §37). */
 export interface AudioCacheKeyMaterial {
+  /** Language sent to the engine: it changes the audio for a same text and voice. */
+  language?: string;
   providerId: string;
   model?: string;
   voice?: string;

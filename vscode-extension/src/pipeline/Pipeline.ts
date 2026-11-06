@@ -19,6 +19,7 @@
 
 import * as path from "node:path";
 import * as vscode from "vscode";
+import { createGpuYieldProbe } from "../direction/director/gpuYield.js";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
 import type { PlaybackState } from "../core/playback.js";
@@ -638,7 +639,7 @@ export class Pipeline implements PipelineFacade {
         onWarning: (warning) => this.handleNarratorWarning(warning)
       });
       this.currentSessionBuild = build;
-      const tts = await this.ttsFor(profile);
+      const tts = await this.ttsFor(profile, { warmUp: true });
       this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
       // CdC §51 "Loading": a still-warming-up TTS server gets a grace period
       // instead of an immediate failure on the very first synthesis.
@@ -1986,7 +1987,7 @@ export class Pipeline implements PipelineFacade {
 
   // --------------------------------------------------------------- internals
 
-  private async ttsFor(profile: VoiceProfile): Promise<TtsProvider> {
+  private async ttsFor(profile: VoiceProfile, options: { warmUp?: boolean } = {}): Promise<TtsProvider> {
     if (this.ttsProviderOverride !== undefined) {
       return this.ttsProviderOverride;
     }
@@ -2000,6 +2001,9 @@ export class Pipeline implements PipelineFacade {
     const key = ttsInstanceKey(resolved, referenceAudioPath);
     const existing = this.registry.get(key);
     if (existing !== undefined) {
+      if (options.warmUp === true) {
+        this.warmupIfEnabled(existing, key, profile.language, profile.tts.voice);
+      }
       return existing;
     }
     const apiKey = await this.resolveApiKey(profile.tts.apiKeyRef, resolved.providerId);
@@ -2038,11 +2042,12 @@ export class Pipeline implements PipelineFacade {
       }
     );
     this.registry.register(provider);
-    // S6.2: warm up this brand-new instance in the background, once — never
-    // for `existing` above, so a document already read once this session
-    // never re-pays this even though `warmedProviderIds` alone would already
-    // make it a no-op (this early return also skips the `Set` lookup).
-    this.warmupIfEnabled(provider, key, profile.language, profile.tts.voice);
+    // S6.2: warm up in the background, once per instance, and only for a
+    // reading the user asked for: listing voices or checking health must not
+    // start a synthesis (`warmedProviderIds` makes a later call a no-op).
+    if (options.warmUp === true) {
+      this.warmupIfEnabled(provider, key, profile.language, profile.tts.voice);
+    }
     return provider;
   }
 
@@ -2554,7 +2559,9 @@ export class Pipeline implements PipelineFacade {
    * genuinely broken provider).
    */
   private warmupIfEnabled(tts: TtsProvider, providerId: string, language: string, voice: string | undefined): void {
-    if (!this.ttsWarmupEnabled() || this.warmedProviderIds.has(providerId)) {
+    // Not spent while the GPU is yielded to a game: the warm-up is an
+    // optimisation, the next reading simply pays for it.
+    if (!this.ttsWarmupEnabled() || this.warmedProviderIds.has(providerId) || createGpuYieldProbe()()) {
       return;
     }
     this.warmedProviderIds.add(providerId);

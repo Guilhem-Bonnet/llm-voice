@@ -290,7 +290,7 @@ vit dans `globalState` (`ProfileRepository.ts:24`) : l'appelant l'écrit, jamais
 | La 0.3 a réécrit le fichier (marque et `hidden` perdus) | Reclassé : modes d'origine revidés, `system-voice` remasqué, voix globale gardée. Ce que la 0.3 a choisi dans un mode reste une voix propre. |
 | Sauvegarde restaurée puis nouvelle montée | Reclassé contre la voix globale actuelle : les modes d'origine héritent de nouveau, les autres s'affichent « Voix propre : X ». Aucune procédure à suivre. |
 | `global-voice.json` supprimé, marque présente | **Pas de reclassement ni de recalcul** depuis des `tts` vides : voix `{ providerId: "system", speed: 1 }` et message « Voix réinitialisée ». |
-| Marque absente, `global-voice.json` absent et `tts` vides (fichier réécrit par la 0.3 après suppression de la voix) | Pas de recalcul depuis des `tts` vides : voix `{ providerId: "system", speed: 1 }` et message « Voix réinitialisée ». |
+| Marque absente, `global-voice.json` absent et `tts` vides, alors que la sauvegarde prouve un `tts` antérieur non vide pour ce mode | Pas de recalcul depuis des `tts` vides : voix `{ providerId: "system", speed: 1 }` et message « Voix réinitialisée ». Sans cette preuve, c'est un fichier 0.3 authentique, lu par `llmVoice.tts.*` comme aujourd'hui. |
 | `global-voice.json` supprimé et sauvegarde restaurée | Voix recalculée depuis le fichier restauré : c'est la remise à zéro complète. |
 | Un mode devenu voix propre, marque présente | Jamais revidé : le classement ne tourne plus. |
 
