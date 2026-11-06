@@ -1,0 +1,483 @@
+{
+ "items": [
+  {
+   "section": "Référence Kyutai",
+   "id": "estelle-recit",
+   "title": "Estelle · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "estelle-recit.ogg",
+   "measures": {
+    "duration_s": 15.64,
+    "speech_ratio": 0.59,
+    "pause_count": 7,
+    "pause_total_s": 3.21,
+    "pitch_hz": 230.77,
+    "pitch_spread_hz": 25.69,
+    "loudness_spread_db": 4.15
+   },
+   "note": "Kyutai, enregistrement français, CC0",
+   "synth_s": 5.8
+  },
+  {
+   "section": "Référence Kyutai",
+   "id": "estelle-documentation",
+   "title": "Estelle · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "estelle-documentation.ogg",
+   "measures": {
+    "duration_s": 18.68,
+    "speech_ratio": 0.6,
+    "pause_count": 9,
+    "pause_total_s": 3.9,
+    "pitch_hz": 235.29,
+    "pitch_spread_hz": 28.12,
+    "loudness_spread_db": 4.44
+   },
+   "note": "Kyutai, enregistrement français, CC0",
+   "synth_s": 6.92
+  },
+  {
+   "section": "Piper, France",
+   "id": "siwis-medium-recit",
+   "title": "siwis-medium · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "siwis-medium-recit.ogg",
+   "measures": {
+    "duration_s": 16.94,
+    "speech_ratio": 0.73,
+    "pause_count": 7,
+    "pause_total_s": 3.03,
+    "pitch_hz": 198.65,
+    "pitch_spread_hz": 28.84,
+    "loudness_spread_db": 4.66
+   },
+   "note": "licence : CC BY 4.0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "siwis-medium-documentation",
+   "title": "siwis-medium · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "siwis-medium-documentation.ogg",
+   "measures": {
+    "duration_s": 18.74,
+    "speech_ratio": 0.76,
+    "pause_count": 7,
+    "pause_total_s": 2.76,
+    "pitch_hz": 198.65,
+    "pitch_spread_hz": 26.94,
+    "loudness_spread_db": 4.51
+   },
+   "note": "licence : CC BY 4.0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "gilles-low-recit",
+   "title": "gilles-low · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "gilles-low-recit.ogg",
+   "measures": {
+    "duration_s": 18.72,
+    "speech_ratio": 0.7,
+    "pause_count": 7,
+    "pause_total_s": 3.24,
+    "pitch_hz": 101.91,
+    "pitch_spread_hz": 20.52,
+    "loudness_spread_db": 5.1
+   },
+   "note": "licence : CC0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "gilles-low-documentation",
+   "title": "gilles-low · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "gilles-low-documentation.ogg",
+   "measures": {
+    "duration_s": 22.62,
+    "speech_ratio": 0.69,
+    "pause_count": 8,
+    "pause_total_s": 5.16,
+    "pitch_hz": 101.91,
+    "pitch_spread_hz": 15.9,
+    "loudness_spread_db": 4.99
+   },
+   "note": "licence : CC0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "tom-medium-recit",
+   "title": "tom-medium · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "tom-medium-recit.ogg",
+   "measures": {
+    "duration_s": 18.41,
+    "speech_ratio": 0.65,
+    "pause_count": 8,
+    "pause_total_s": 3.54,
+    "pitch_hz": 130.86,
+    "pitch_spread_hz": 25.08,
+    "loudness_spread_db": 5.24
+   },
+   "note": "licence : AGPLv3, à examiner avant toute intégration ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "tom-medium-documentation",
+   "title": "tom-medium · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "tom-medium-documentation.ogg",
+   "measures": {
+    "duration_s": 20.91,
+    "speech_ratio": 0.7,
+    "pause_count": 10,
+    "pause_total_s": 3.45,
+    "pitch_hz": 135.48,
+    "pitch_spread_hz": 25.07,
+    "loudness_spread_db": 5.24
+   },
+   "note": "licence : AGPLv3, à examiner avant toute intégration ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "upmc-medium-locuteur-0-recit",
+   "title": "upmc-medium locuteur 0 · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "upmc-medium-locuteur-0-recit.ogg",
+   "measures": {
+    "duration_s": 17.3,
+    "speech_ratio": 0.69,
+    "pause_count": 9,
+    "pause_total_s": 3.18,
+    "pitch_hz": 229.69,
+    "pitch_spread_hz": 28.26,
+    "loudness_spread_db": 5.24
+   },
+   "note": "licence : CC BY-SA 4.0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "upmc-medium-locuteur-0-documentation",
+   "title": "upmc-medium locuteur 0 · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "upmc-medium-locuteur-0-documentation.ogg",
+   "measures": {
+    "duration_s": 19.38,
+    "speech_ratio": 0.69,
+    "pause_count": 10,
+    "pause_total_s": 3.24,
+    "pitch_hz": 229.69,
+    "pitch_spread_hz": 30.58,
+    "loudness_spread_db": 5.47
+   },
+   "note": "licence : CC BY-SA 4.0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "upmc-medium-locuteur-1-recit",
+   "title": "upmc-medium locuteur 1 · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "upmc-medium-locuteur-1-recit.ogg",
+   "measures": {
+    "duration_s": 17.34,
+    "speech_ratio": 0.7,
+    "pause_count": 8,
+    "pause_total_s": 3.63,
+    "pitch_hz": 129.71,
+    "pitch_spread_hz": 27.17,
+    "loudness_spread_db": 5.14
+   },
+   "note": "licence : CC BY-SA 4.0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "upmc-medium-locuteur-1-documentation",
+   "title": "upmc-medium locuteur 1 · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "upmc-medium-locuteur-1-documentation.ogg",
+   "measures": {
+    "duration_s": 18.98,
+    "speech_ratio": 0.71,
+    "pause_count": 8,
+    "pause_total_s": 3.42,
+    "pitch_hz": 131.25,
+    "pitch_spread_hz": 24.73,
+    "loudness_spread_db": 4.78
+   },
+   "note": "licence : CC BY-SA 4.0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-1840-low-recit",
+   "title": "mls_1840-low · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "mls-1840-low-recit.ogg",
+   "measures": {
+    "duration_s": 34.37,
+    "speech_ratio": 0.41,
+    "pause_count": 19,
+    "pause_total_s": 17.34,
+    "pitch_hz": 111.11,
+    "pitch_spread_hz": 26.34,
+    "loudness_spread_db": 5.5
+   },
+   "note": "licence : CC BY 4.0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-1840-low-documentation",
+   "title": "mls_1840-low · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "mls-1840-low-documentation.ogg",
+   "measures": {
+    "duration_s": 40.61,
+    "speech_ratio": 0.37,
+    "pause_count": 18,
+    "pause_total_s": 22.71,
+    "pitch_hz": 109.59,
+    "pitch_spread_hz": 27.04,
+    "loudness_spread_db": 5.14
+   },
+   "note": "licence : CC BY 4.0 ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-0-recit",
+   "title": "mls-medium locuteur 0 · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "mls-medium-locuteur-0-recit.ogg",
+   "measures": {
+    "duration_s": 19.55,
+    "speech_ratio": 0.59,
+    "pause_count": 14,
+    "pause_total_s": 5.16,
+    "pitch_hz": 110.8,
+    "pitch_spread_hz": 35.33,
+    "loudness_spread_db": 5.07
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-0-documentation",
+   "title": "mls-medium locuteur 0 · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "mls-medium-locuteur-0-documentation.ogg",
+   "measures": {
+    "duration_s": 20.73,
+    "speech_ratio": 0.67,
+    "pause_count": 9,
+    "pause_total_s": 4.47,
+    "pitch_hz": 112.5,
+    "pitch_spread_hz": 17.08,
+    "loudness_spread_db": 5.32
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-18-recit",
+   "title": "mls-medium locuteur 18 · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "mls-medium-locuteur-18-recit.ogg",
+   "measures": {
+    "duration_s": 21.21,
+    "speech_ratio": 0.64,
+    "pause_count": 11,
+    "pause_total_s": 4.71,
+    "pitch_hz": 204.17,
+    "pitch_spread_hz": 23.17,
+    "loudness_spread_db": 5.32
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-18-documentation",
+   "title": "mls-medium locuteur 18 · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "mls-medium-locuteur-18-documentation.ogg",
+   "measures": {
+    "duration_s": 19.96,
+    "speech_ratio": 0.68,
+    "pause_count": 8,
+    "pause_total_s": 4.59,
+    "pitch_hz": 210.0,
+    "pitch_spread_hz": 24.68,
+    "loudness_spread_db": 5.52
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-37-recit",
+   "title": "mls-medium locuteur 37 · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "mls-medium-locuteur-37-recit.ogg",
+   "measures": {
+    "duration_s": 20.13,
+    "speech_ratio": 0.56,
+    "pause_count": 16,
+    "pause_total_s": 6.45,
+    "pitch_hz": 193.42,
+    "pitch_spread_hz": 24.84,
+    "loudness_spread_db": 5.31
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-37-documentation",
+   "title": "mls-medium locuteur 37 · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "mls-medium-locuteur-37-documentation.ogg",
+   "measures": {
+    "duration_s": 19.1,
+    "speech_ratio": 0.61,
+    "pause_count": 11,
+    "pause_total_s": 4.2,
+    "pitch_hz": 200.45,
+    "pitch_spread_hz": 27.66,
+    "loudness_spread_db": 4.7
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-56-recit",
+   "title": "mls-medium locuteur 56 · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "mls-medium-locuteur-56-recit.ogg",
+   "measures": {
+    "duration_s": 19.29,
+    "speech_ratio": 0.62,
+    "pause_count": 13,
+    "pause_total_s": 4.8,
+    "pitch_hz": 168.32,
+    "pitch_spread_hz": 18.02,
+    "loudness_spread_db": 5.23
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-56-documentation",
+   "title": "mls-medium locuteur 56 · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "mls-medium-locuteur-56-documentation.ogg",
+   "measures": {
+    "duration_s": 20.46,
+    "speech_ratio": 0.69,
+    "pause_count": 11,
+    "pause_total_s": 4.14,
+    "pitch_hz": 172.27,
+    "pitch_spread_hz": 15.49,
+    "loudness_spread_db": 4.99
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-75-recit",
+   "title": "mls-medium locuteur 75 · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "mls-medium-locuteur-75-recit.ogg",
+   "measures": {
+    "duration_s": 16.95,
+    "speech_ratio": 0.66,
+    "pause_count": 10,
+    "pause_total_s": 4.2,
+    "pitch_hz": 214.08,
+    "pitch_spread_hz": 18.83,
+    "loudness_spread_db": 5.14
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-75-documentation",
+   "title": "mls-medium locuteur 75 · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "mls-medium-locuteur-75-documentation.ogg",
+   "measures": {
+    "duration_s": 18.04,
+    "speech_ratio": 0.7,
+    "pause_count": 6,
+    "pause_total_s": 3.21,
+    "pitch_hz": 218.32,
+    "pitch_spread_hz": 16.89,
+    "loudness_spread_db": 4.93
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-94-recit",
+   "title": "mls-medium locuteur 94 · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "mls-medium-locuteur-94-recit.ogg",
+   "measures": {
+    "duration_s": 23.88,
+    "speech_ratio": 0.57,
+    "pause_count": 18,
+    "pause_total_s": 6.93,
+    "pitch_hz": 206.07,
+    "pitch_spread_hz": 20.88,
+    "loudness_spread_db": 5.45
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-94-documentation",
+   "title": "mls-medium locuteur 94 · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "mls-medium-locuteur-94-documentation.ogg",
+   "measures": {
+    "duration_s": 24.67,
+    "speech_ratio": 0.67,
+    "pause_count": 15,
+    "pause_total_s": 5.88,
+    "pitch_hz": 208.02,
+    "pitch_spread_hz": 20.48,
+    "loudness_spread_db": 5.63
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-113-recit",
+   "title": "mls-medium locuteur 113 · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "mls-medium-locuteur-113-recit.ogg",
+   "measures": {
+    "duration_s": 21.36,
+    "speech_ratio": 0.95,
+    "pause_count": 4,
+    "pause_total_s": 0.81,
+    "pitch_hz": 193.42,
+    "pitch_spread_hz": 52.05,
+    "loudness_spread_db": 4.61
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  },
+  {
+   "section": "Piper, France",
+   "id": "mls-medium-locuteur-113-documentation",
+   "title": "mls-medium locuteur 113 · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "mls-medium-locuteur-113-documentation.ogg",
+   "measures": {
+    "duration_s": 22.78,
+    "speech_ratio": 0.96,
+    "pause_count": 3,
+    "pause_total_s": 0.57,
+    "pitch_hz": 200.45,
+    "pitch_spread_hz": 68.56,
+    "loudness_spread_db": 4.47
+   },
+   "note": "licence : CC BY 4.0, 125 locuteurs ; accent non vérifié au-delà du code fr_FR"
+  }
+ ],
+ "errors": []
+}
