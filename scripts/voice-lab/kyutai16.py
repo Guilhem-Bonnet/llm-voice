@@ -52,6 +52,14 @@ def doc_texts() -> dict[str, str]:
 
 
 def jobs_for(stage: str, lab: Path, voices: dict[str, Path]) -> list[tuple[str, Path, str]]:
+    extra = sorted((lab / "extra-voices").glob("*.safetensors")) if (lab / "extra-voices").exists() else []
+    if stage == "extra":
+        return [(f"court-x-{path.name.split('.')[0]}", path, SHORT) for path in extra]
+    if stage == "extra-docs":
+        chosen = json.loads((lab / "out" / "extra-selection.json").read_text(encoding="utf-8"))
+        texts = doc_texts()
+        by_name = {path.name.split(".")[0]: path for path in extra}
+        return [(f"{kind}-x-{name}", by_name[name], texts[kind]) for kind in DOC_KINDS for name in chosen]
     if stage == "screen":
         return [(f"court-{name}", path, SHORT) for name, path in voices.items()]
     chosen = json.loads((lab / "out" / "selection.json").read_text(encoding="utf-8"))["selected"]
@@ -222,7 +230,7 @@ def main() -> int:
     parser.add_argument("--lab", default=str(Path.home() / ".llm-voice/voices-lab/kyutai-1.6b"))
     sub = parser.add_subparsers(dest="command", required=True)
     gen = sub.add_parser("gen")
-    gen.add_argument("--stage", choices=("screen", "docs"), required=True)
+    gen.add_argument("--stage", choices=("screen", "docs", "extra", "extra-docs"), required=True)
     gen.add_argument("--device", default="cpu")
     gen.add_argument("--reverse", action="store_true", help="parcourt les tâches à l'envers (second travailleur)")
     gen.add_argument("--limit", type=int, default=0)
