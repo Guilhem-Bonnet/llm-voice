@@ -14,7 +14,17 @@ export interface Voice {
   label: string;
   language?: string;
   gender?: string;
+  /** Path of a short sample, relative to the extension's `media/` folder. */
   preview?: string;
+  /** Where the voice comes from, when a catalogue has read its licence. */
+  licence?: VoiceLicence;
+}
+
+export interface VoiceLicence {
+  dataset: string;
+  spdx: string;
+  sourceUrl: string;
+  attributionRequired: boolean;
 }
 
 /** Declared shape of a provider-specific tuning parameter, used to build UI. */

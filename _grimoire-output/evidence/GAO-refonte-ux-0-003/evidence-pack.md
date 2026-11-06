@@ -51,3 +51,11 @@ Sources : pocket_tts/utils/utils.py 4.0.1 (cache uv local, _ORIGINS_OF_PREDEFINE
 - Modèle : CC BY 4.0 (métadonnées kyutai/pocket-tts) ; code MIT ; clause « Prohibited use » sur le clonage sans consentement.
 - À éclaircir : accès gated annoncé sur kyutai/pocket-tts, licence du dépôt kyutai/pocket-tts-without-voice-cloning.
 - Prérequis lus : Python >=3.10,<3.15 ; PyTorch >=2.5 ; sous Linux environ 3 Go avec CUDA, environ 200 Mo avec l'index CPU.
+
+## Relecture directe et implémentation (2026-11-05)
+
+- Texte exact lu avec `curl` : `huggingface.co/kyutai/tts-voices/raw/main/README.md` (VCTK et Alba CC BY 4.0, dons et Voice Zero CC0, Unmute « our own recordings and you may use them as CC0 », Expresso et EARS non commerciaux).
+- API Hugging Face : `kyutai/pocket-tts` gated « auto », `kyutai/pocket-tts-without-voice-cloning` non gated, cc-by-4.0, liste des voix avec leurs fichiers.
+- `src/tts/kyutaiVoiceCatalog.ts` : 20 voix, source et licence pour chacune. `test/unit/tts/kyutaiVoiceCatalog.test.ts`. `npm run test:unit` : 113 fichiers, 2001 tests verts.
+- Échantillons : `scripts/encode-voice-samples.sh`, `media/voices/*.ogg`, 384 Ko au total, `media/voices/CREDITS.md`.
+- Non prouvé : lecture des .ogg dans la webview VS Code (carte galerie) ; texte juridique non validé par un juriste.

@@ -158,8 +158,7 @@ export const SYSTEM_LOCAL_PRESET: TtsProviderPreset = {
  * other preset's `voice` (e.g. `KOKORO_LOCAL_PRESET`) — not read by
  * `createTtsProvider` itself. `"estelle"` is the one voice the official
  * README (`github.com/kyutai-labs/pocket-tts`, "Trying it with the CLI")
- * tags `(fr)`; it is one of two entries in
- * `KyutaiPocketProvider.KYUTAI_POCKET_VOICE_CATALOG` (fix 2026-11-05: an
+ * tags `(fr)`, and the first entry of `KYUTAI_POCKET_VOICE_CATALOG` (fix 2026-11-05: an
  * earlier version of this preset defaulted to `"alba"`, which that same
  * README tags English, not French — wrong for a preset whose entire
  * purpose is a French voice).

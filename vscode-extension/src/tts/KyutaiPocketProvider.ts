@@ -27,28 +27,11 @@ import type { ProviderHealth } from "../core/health.js";
 import type { AudioResult, TtsCapabilities, TtsProvider, TtsRequest, Voice } from "../core/tts.js";
 import { repairStreamedWavSizes } from "../core/wavRepair.js";
 import type { EgressGuardHandle } from "../net/EgressGuard.js";
+import { KYUTAI_POCKET_VOICE_CATALOG } from "./kyutaiVoiceCatalog.js";
 
 const DEFAULT_ID = "kyutai-pocket";
 
-/**
- * ADR-016 §4: minimal static catalogue — CC0/CC-BY voices only, CC-BY-NC
- * (Expresso, EARS) excluded. Both names are confirmed by the official
- * README (`github.com/kyutai-labs/pocket-tts`, "Trying it with the CLI"
- * voice list, verified 2026-11-05): `"estelle"` is the one voice tagged
- * `(fr)` there (source file `developpeuse-3.wav`, `unmute-prod-website`
- * folder of `kyutai/tts-voices`) — it is the default below, since this
- * project's whole reason for this provider is French. `"alba"` is tagged
- * English in the same list (kept only as a documented alternative, not the
- * default — an earlier version of this file wrongly defaulted to it,
- * fixed 2026-11-05). Building the full catalogue (every voice, its exact
- * licence line, more French voices from CML-TTS, an attribution file) is
- * the separate card ADR-016 §4 already calls for — these two entries only
- * exist so `getCapabilities()` never returns an empty voice list.
- */
-export const KYUTAI_POCKET_VOICE_CATALOG: readonly Voice[] = [
-  { id: "estelle", label: "Estelle", language: "fr" },
-  { id: "alba", label: "Alba", language: "en" }
-];
+export { KYUTAI_POCKET_VOICE_CATALOG };
 
 export interface KyutaiPocketProviderOptions {
   /** Defaults to `"kyutai-pocket"`. */
