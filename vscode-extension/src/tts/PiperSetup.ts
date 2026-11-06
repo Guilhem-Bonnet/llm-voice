@@ -160,17 +160,15 @@ export async function isPiperAlreadyInstalled(
   const binaryName = platform === "win32" ? "piper.exe" : "piper";
   const binaryPath = path.join(installDir, "bin", binaryName);
   const voiceModelPath = path.join(installDir, "voices", `${PIPER_ASSETS.voiceId}.onnx`);
-  const [hasBinary, hasVoice] = await Promise.all([
-    fsp.access(binaryPath).then(
+  // The voice's config sits next to its model: without it, an interrupted
+  // install would count as complete and never be repaired.
+  const exists = (file: string): Promise<boolean> =>
+    fsp.access(file).then(
       () => true,
       () => false
-    ),
-    fsp.access(voiceModelPath).then(
-      () => true,
-      () => false
-    )
-  ]);
-  return hasBinary && hasVoice ? { binaryPath, voiceModelPath } : undefined;
+    );
+  const present = await Promise.all([binaryPath, voiceModelPath, `${voiceModelPath}.json`].map(exists));
+  return present.every(Boolean) ? { binaryPath, voiceModelPath } : undefined;
 }
 
 /** `tar -xf <archive> -C <destDir> --strip-components=1` — see the file header for why `tar` and why `--strip-components`. */

@@ -55,6 +55,15 @@ describe("isPiperAlreadyInstalled", () => {
     }
   });
 
+  it("treats a voice model without its config as not installed: an interrupted install stays repairable", async () => {
+    installDir = await mkdtemp(join(tmpdir(), "piper-already-test-"));
+    await mkdir(join(installDir, "bin"), { recursive: true });
+    await mkdir(join(installDir, "voices"), { recursive: true });
+    await writeFile(join(installDir, "bin", "piper"), "x");
+    await writeFile(join(installDir, "voices", "fr_FR-siwis-medium.onnx"), "x");
+    expect(await isPiperAlreadyInstalled(installDir, "linux")).toBeUndefined();
+  });
+
   it("returns undefined on a fresh/empty directory", async () => {
     installDir = await mkdtemp(join(tmpdir(), "piper-already-test-"));
     expect(await isPiperAlreadyInstalled(installDir, "linux")).toBeUndefined();
@@ -66,6 +75,7 @@ describe("isPiperAlreadyInstalled", () => {
     await mkdir(join(installDir, "voices"), { recursive: true });
     await writeFile(join(installDir, "bin", "piper"), "x");
     await writeFile(join(installDir, "voices", "fr_FR-siwis-medium.onnx"), "x");
+    await writeFile(join(installDir, "voices", "fr_FR-siwis-medium.onnx.json"), "{}");
 
     const result = await isPiperAlreadyInstalled(installDir, "linux");
 
@@ -120,6 +130,7 @@ describe("installPiperVoice", () => {
     await mkdir(join(dir, "voices"), { recursive: true });
     await writeFile(join(dir, "bin", "piper"), "fake binary");
     await writeFile(join(dir, "voices", "fr_FR-siwis-medium.onnx"), "fake model");
+    await writeFile(join(dir, "voices", "fr_FR-siwis-medium.onnx.json"), "{}");
     const confirm = vi.fn();
     const download = vi.fn();
 
@@ -146,6 +157,7 @@ describe("installPiperVoice", () => {
     await mkdir(join(dir, "voices"), { recursive: true });
     await writeFile(join(dir, "bin", "piper.exe"), "fake binary");
     await writeFile(join(dir, "voices", "fr_FR-siwis-medium.onnx"), "fake model");
+    await writeFile(join(dir, "voices", "fr_FR-siwis-medium.onnx.json"), "{}");
 
     const outcome = await installPiperVoice({
       installDir: dir,

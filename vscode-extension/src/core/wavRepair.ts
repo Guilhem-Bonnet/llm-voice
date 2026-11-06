@@ -21,10 +21,12 @@ export function repairStreamedWavSizes(bytes: Uint8Array): Uint8Array {
       if (size <= available) {
         return bytes;
       }
-      const repaired = bytes.slice();
+      // A stream cut mid-sample would still be refused: keep whole 16-bit samples.
+      const kept = available - (available % 2);
+      const repaired = bytes.slice(0, offset + 8 + kept);
       const repairedView = new DataView(repaired.buffer);
       repairedView.setUint32(4, repaired.length - 8, true);
-      repairedView.setUint32(offset + 4, available, true);
+      repairedView.setUint32(offset + 4, kept, true);
       return repaired;
     }
     offset += 8 + size + (size % 2);
