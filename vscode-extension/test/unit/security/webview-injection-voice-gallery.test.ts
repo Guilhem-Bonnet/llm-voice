@@ -58,13 +58,13 @@ describe("the gallery document", () => {
   });
 
   it("interpolates nothing but the nonce and the URIs", () => {
-    const blank = buildVoiceGalleryHtml({ nonce: "", cspSource: "", scriptUri: "", styleUri: "" });
-    const other = buildVoiceGalleryHtml({ nonce: "A", cspSource: "B", scriptUri: "C", styleUri: "D" });
-    expect(blank.replace(/\s/g, "").length).toBeLessThan(other.replace(/\s/g, "").length + 10);
+    const render = (tag: string): string =>
+      buildVoiceGalleryHtml({ nonce: `N${tag}N`, cspSource: `C${tag}C`, scriptUri: `S${tag}S`, styleUri: `T${tag}T` }).replaceAll(tag, "");
+    expect(render("one1")).toBe(render("two2"));
+    expect(render("one1")).not.toContain("undefined");
     for (const payload of PAYLOADS) {
       expect(html).not.toContain(payload);
     }
-    expect(html).not.toContain("undefined");
   });
 
   it("loads nothing from outside", () => {

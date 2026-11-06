@@ -24,8 +24,13 @@ const common = {
 // wrote). An absolute path anchored to this file's own directory removes
 // the ambiguity — same fix `prefetchChunksUserDataDir` below already used.
 const testRootDir = dirname(fileURLToPath(import.meta.url));
+// Every run starts from an empty profile: state kept from an earlier run (modes
+// duplicated by a test, a selection left behind) made tests fail one run out of
+// two, depending on what the previous run had left.
 function userDataDir(profileName) {
-  return join(testRootDir, ".vscode-test", profileName);
+  const dir = join(testRootDir, ".vscode-test", profileName);
+  rmSync(dir, { recursive: true, force: true });
+  return dir;
 }
 
 // S5.1: `Pipeline`'s `InboxRepository` resolves its directory once, at

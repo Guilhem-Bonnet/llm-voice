@@ -170,7 +170,7 @@ export function startCommand(engine: ServerEngine, url: string): string {
       return port !== undefined && port !== portOf(KYUTAI_POCKET_LOCAL_PRESET.baseUrl) ? `${base} --port ${port}` : base;
     }
     case "kokoro":
-      return `docker run --rm -p ${port ?? "8880"}:8880 ghcr.io/remsky/kokoro-fastapi-cpu:latest`;
+      return `docker run --rm -p 127.0.0.1:${port ?? "8880"}:8880 ghcr.io/remsky/kokoro-fastapi-cpu:latest`;
     case "chatterbox":
       return CHATTERBOX_COMPOSE_COMMAND;
   }

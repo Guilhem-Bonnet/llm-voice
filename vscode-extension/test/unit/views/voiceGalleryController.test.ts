@@ -415,6 +415,8 @@ describe("links, commands, preparation", () => {
     await controller.handle({ type: "copyCommand", engine: "kyutai" });
 
     expect(deps.writeClipboard).toHaveBeenCalledExactlyOnceWith("pocket-tts serve --language french --port 9000");
+    expect(startCommand("kokoro", "http://localhost:8880")).toContain("-p 127.0.0.1:8880:8880");
+    expect(startCommand("kokoro", "http://localhost:9000")).toContain("-p 127.0.0.1:9000:8880");
     expect(startCommand("kyutai", "http://localhost:8000")).toBe("pocket-tts serve --language french");
   });
 

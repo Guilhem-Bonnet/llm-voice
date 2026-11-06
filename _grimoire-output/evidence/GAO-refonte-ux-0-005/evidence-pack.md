@@ -16,6 +16,16 @@
 | Mesure des boutons, Chromium headless, 260 à 1400 px | render-measures.txt | page réelle, variables `--vscode-*` simulées | 0 bouton étiré, à la ligne ou débordant ; aucun débordement horizontal |
 | Rendus | galerie-*.png | même harnais | sombre (1400, 1120, 800, 500, 320, 260, serveur arrêté), clair (1120), crédits (720) |
 
+<!-- grimoire:observed-inventory:start -->
+## Inventaire observé
+
+Régénéré automatiquement depuis `evidence-log.jsonl` (hooks du host) — ne pas éditer à la main ; la section manuelle « Evidence inventory » ci-dessus reste éditable et prime en cas de doute.
+
+| Preuve | Détail | Source | Résultat |
+|---|---|---|---|
+| Aucune preuve observée pour l'instant |  |  |  |
+<!-- grimoire:observed-inventory:end -->
+
 ## Validation
 
 | Check | Command or method | Result | Notes |
