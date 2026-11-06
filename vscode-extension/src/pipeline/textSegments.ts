@@ -6,6 +6,7 @@
 
 import type { SourceRange, SourceSegment } from "../core/source.js";
 import { splitSentences } from "../parser/SentenceSplitter.js";
+import type { SourceBlock } from "../parser/types.js";
 
 interface Position {
   line: number;
@@ -49,6 +50,35 @@ export function plainTextSegments(text: string): SourceSegment[] {
       }
     };
   });
+}
+
+/**
+ * The same text-as-written reading, passage by passage, for a text file read with several
+ * voices (ADR-018): `segment()` would normalise what `plainTextSegments` says verbatim.
+ */
+export function plainScriptSegments(blocks: readonly SourceBlock[]): SourceSegment[] {
+  let index = 0;
+  return blocks.flatMap((block) =>
+    splitSentences(block.text).map((sentence): SourceSegment => {
+      const origin = block.rawSource.indexOf(sentence.text);
+      const from = advancePosition(block.rawSource, origin === -1 ? 0 : origin);
+      const to = advancePosition(block.rawSource, origin === -1 ? block.rawSource.length : origin + sentence.text.length);
+      const onFirstLine = (position: Position): Position =>
+        position.line === 0
+          ? { line: block.sourceRange.startLine, column: block.sourceRange.startColumn + position.column }
+          : { line: block.sourceRange.startLine + position.line, column: position.column };
+      const start = onFirstLine(from);
+      const end = onFirstLine(to);
+      return {
+        id: `plain-${index++}`,
+        type: "sentence",
+        rawText: sentence.text,
+        spokenText: sentence.text,
+        sourceRange: { startLine: start.line, startColumn: start.column, endLine: end.line, endColumn: end.column },
+        ...(block.speakerId !== undefined ? { speakerId: block.speakerId } : {})
+      };
+    })
+  );
 }
 
 function comparePosition(a: Position, b: Position): number {

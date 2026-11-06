@@ -13,7 +13,7 @@ export type PreparationOutcome =
   | { status: "ready"; done: number; total: number }
   | { status: "cancelled"; done: number; total: number }
   | { status: "held"; holdReason: TtsHoldReason; done: number; total: number }
-  | { status: "failed"; done: number; total: number };
+  | { status: "failed"; error: string; done: number; total: number };
 
 export interface ReadingPreparerDeps {
   tts: TtsProvider;
@@ -51,7 +51,7 @@ export class ReadingPreparer {
         if (chunk.status === "error") {
           return chunk.holdReason !== undefined
             ? { status: "held", holdReason: chunk.holdReason, done, total }
-            : { status: "failed", done, total };
+            : { status: "failed", error: chunk.error ?? "cause inconnue", done, total };
         }
         done += 1;
         onProgress?.(done, total);

@@ -4,6 +4,7 @@
  * `KyutaiPocketProvider`. Sink factice, aucun GPU.
  */
 import * as assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -21,8 +22,11 @@ interface TestPipeline {
   stop(): Promise<void>;
   pause(): Promise<void>;
   play(): Promise<void>;
+  previousSegment(): Promise<void>;
+  nextSegment(): Promise<void>;
   clearAudioCache(): Promise<void>;
   toggleCast(uri?: string): Promise<boolean | undefined>;
+  flushCastDocumentsForTest(): Promise<void>;
   describeScript(document: { uri: string; languageId: string; text: string }): Promise<{ text: string; roles: number; enabled: boolean } | undefined>;
   chooseCastVoices(): Promise<void>;
   setSceneChoiceForTest(choice: (message: string) => Thenable<string | undefined>): void;
@@ -91,12 +95,15 @@ const SCENE = [
 
 suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
   let pipeline: TestPipeline;
+  let api: ExtensionTestApi;
   let server: MockTtsServer;
   let mainUrl = "";
   const window = vscode.window as unknown as Record<string, unknown>;
   const originalInfo = window.showInformationMessage;
   const originalPick = window.showQuickPick;
+  const originalWarning = window.showWarningMessage;
   let informed: string[] = [];
+  let warned: string[] = [];
 
   const sent = (): Sent[] =>
     server.requests
@@ -115,10 +122,14 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
   suiteSetup(async () => {
     const extension = vscode.extensions.getExtension("guilhem-bonnet.llm-voice");
     assert.ok(extension);
-    const api = (await extension.activate()) as ExtensionTestApi;
+    api = (await extension.activate()) as ExtensionTestApi;
     pipeline = api.pipeline as unknown as TestPipeline;
     window.showInformationMessage = (message: string) => {
       informed.push(message);
+      return Promise.resolve(undefined);
+    };
+    window.showWarningMessage = (message: string) => {
+      warned.push(message);
       return Promise.resolve(undefined);
     };
     server = new MockTtsServer({ healthBody: { status: "healthy", model_loaded: true }, msPerChar: 8, ttsDelayMs: 15 });
@@ -130,12 +141,14 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
   suiteTeardown(async () => {
     window.showInformationMessage = originalInfo;
     window.showQuickPick = originalPick;
+    window.showWarningMessage = originalWarning;
     pipeline.setSceneChoiceForTest(() => Promise.resolve(undefined));
     await server.close();
   });
 
   setup(async () => {
     informed = [];
+    warned = [];
     if (pipeline.getPlaybackState() !== "idle") {
       await pipeline.stop();
     }
@@ -173,6 +186,25 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
       roles: 0,
       enabled: false
     });
+  });
+
+  test("activer tient même si une autre écriture de l'état se croise avec elle", async () => {
+    const uri = fileWith(SCENE);
+    const key = createHash("sha256").update(uri, "utf8").digest("hex");
+    const stored = (): boolean => api.context.globalState.get<Record<string, boolean>>("llmVoice.cast.documents")?.[key] === true;
+    let wanted = false;
+    for (let round = 0; round < 60; round += 1) {
+      void api.context.globalState.update("llmVoice.test.croisement", round);
+      await new Promise((resolve) => setTimeout(resolve, round % 5));
+      wanted = !wanted;
+      assert.equal(await pipeline.toggleCast(uri), wanted, `bascule ${round}`);
+      assert.equal((await pipeline.describeScript({ uri, languageId: "markdown", text: SCENE }))?.enabled, wanted, `lecture ${round}`);
+    }
+    await pipeline.toggleCast(uri);
+    wanted = !wanted;
+    void api.context.globalState.update("llmVoice.test.croisement", undefined);
+    await pipeline.flushCastDocumentsForTest();
+    assert.equal(stored(), wanted);
   });
 
   test("`voice_url` suit le personnage, dans l'ordre, jamais deux requêtes à la fois ; relire ne génère rien", async () => {
@@ -246,12 +278,18 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
     const uri = fileWith(SCENE);
     await pipeline.toggleCast(uri);
     await readToTheEnd(uri);
+    // La distribution dépend du chemin du fichier, tiré au hasard : une voix fixe tombait sur
+    // celle que Lucien avait déjà (554 chemins sur 20 000), et il n'y avait rien à régénérer.
+    const before = sent().find((request) => request.text.startsWith("Vous cherchez"))?.voice;
+    let chosen: string | undefined;
     server.requests.length = 0;
     const editor = await vscode.window.showTextDocument(vscode.Uri.parse(uri));
     assert.ok(editor);
     window.showQuickPick = (items: readonly { label: string; voiceId?: string }[]) => {
       const rows = [...items];
-      return Promise.resolve(rows.find((row) => row.label === "Lucien") ?? rows.find((row) => row.voiceId === "cml-928_486"));
+      const row = rows.find((candidate) => candidate.label === "Lucien") ?? rows.find((candidate) => candidate.voiceId !== undefined && candidate.voiceId !== before);
+      chosen = row?.voiceId ?? chosen;
+      return Promise.resolve(row);
     };
     await pipeline.chooseCastVoices();
     window.showQuickPick = originalPick;
@@ -259,7 +297,7 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
     assert.deepEqual(sent(), []);
 
     await readToTheEnd(uri);
-    assert.deepEqual(sent(), [{ text: "Vous cherchez ceci, peut-être ?", voice: "cml-928_486" }]);
+    assert.deepEqual(sent(), [{ text: "Vous cherchez ceci, peut-être ?", voice: chosen }]);
   });
 
   test("au-delà de 20 s : rien ne part avant le choix ; « Préparer » remplit le cache sans lire ; la lecture ne génère plus rien", async () => {
@@ -377,6 +415,292 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
       await fresh.close();
     }
   });
+
+  /** Une scène trop longue pour partir sans poser la question. */
+  function longScene(tag: string): string {
+    const lines = Array.from({ length: 40 }, (_, index) => `${index % 2 === 0 ? "ALMA" : "BRUNO"} : ${tag} ${index}, courte.`);
+    return fileWith(`${lines.join("\n\n")}\n`);
+  }
+
+  async function withServer(options: ConstructorParameters<typeof MockTtsServer>[0], body: (fresh: MockTtsServer) => Promise<void>): Promise<void> {
+    const fresh = new MockTtsServer(options);
+    const url = await fresh.listen();
+    try {
+      writeVoice({ providerId: "kyutai-1-6b", baseUrl: url, voice: NARRATOR });
+      pipeline.resetAutoTtsCacheForTest();
+      await body(fresh);
+    } finally {
+      writeVoice({ providerId: "kyutai-1-6b", baseUrl: mainUrl, voice: NARRATOR });
+      pipeline.resetAutoTtsCacheForTest();
+      await fresh.close();
+    }
+  }
+
+  /** Ce profil coupe l'attente du moteur (`readyTimeoutMs: 0`) : elle est le sujet des tests à froid. */
+  async function withEngineWait(body: () => Promise<void>): Promise<void> {
+    const settings = vscode.workspace.getConfiguration("llmVoice");
+    await settings.update("tts.readyTimeoutMs", 10000, vscode.ConfigurationTarget.Global);
+    try {
+      await body();
+    } finally {
+      await settings.update("tts.readyTimeoutMs", undefined, vscode.ConfigurationTarget.Global);
+    }
+  }
+
+  function postsOf(fresh: MockTtsServer): string[] {
+    return fresh.requests.filter((request) => request.method === "POST" && request.url === "/tts").map((request) => fieldOf(request.body, "text") ?? "");
+  }
+
+  function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+    let resolve: (value: T) => void = () => undefined;
+    const promise = new Promise<T>((done) => {
+      resolve = done;
+    });
+    return { promise, resolve };
+  }
+
+  test("un fichier texte à plusieurs voix dit exactement le texte de sa lecture simple, passage par passage", async () => {
+    documents += 1;
+    const lines = [
+      "ALMA : Voir https://example.com/a?b=1 et 3.5 km.",
+      "BRUNO : Le calcul 2*3*4 est juste -> voilà.",
+      "",
+      "ALMA : Un _mot_ puis [un lien](http://z.fr/x) ici.",
+      "BRUNO : Rien de plus."
+    ];
+    const file = join(mkdtempSync(join(tmpdir(), "cast-")), `piece-${documents}-${Date.now()}.txt`);
+    writeFileSync(file, `${lines.join("\n")}\n`);
+    const uri = vscode.Uri.file(file).toString();
+    await pipeline.toggleCast(uri);
+    await pipeline.start({ scope: "document", uri, languageId: "plaintext" });
+    await waitFor(() => pipeline.getPlaybackState() === "completed", `completed, was ${pipeline.getPlaybackState()}`);
+    assert.deepEqual(sent().map((request) => request.text), [
+      "Voir https://example.com/a?b=1 et 3.5 km.",
+      "Le calcul 2*3*4 est juste -> voilà.",
+      "Un _mot_ puis [un lien](http://z.fr/x) ici.",
+      "Rien de plus."
+    ]);
+    assert.deepEqual(warned, []);
+  });
+
+  test("un lien dans une réplique ne fait pas perdre la distribution du document", async () => {
+    const uri = fileWith(`${SCENE}\nANSELME : Voir [la doc](http://z.fr/x) maintenant.\n`);
+    await pipeline.toggleCast(uri);
+    await readToTheEnd(uri);
+    const requests = sent();
+    assert.deepEqual(warned, []);
+    const link = requests.find((request) => request.text === "Voir la doc maintenant.");
+    assert.ok(link, JSON.stringify(requests));
+    assert.equal(link.voice, requests.find((request) => request.text.startsWith("J'ai couru"))?.voice);
+    assert.notEqual(link.voice, NARRATOR);
+  });
+
+  test("Préparer à froid : le moteur charge avant le premier passage", async () => {
+    await withEngineWait(() =>
+      withServer({ healthBody: { status: "healthy", model_loaded: false }, msPerChar: 2 }, async (fresh) => {
+        pipeline.setSceneChoiceForTest(() => Promise.resolve("Préparer"));
+        const uri = longScene("Froid");
+        await pipeline.toggleCast(uri);
+        await read(uri);
+        await pipeline.getPreparationForTest();
+        const posts = fresh.requests.filter((request) => request.method === "POST").map((request) => request.url);
+        assert.equal(posts[0], "/load", posts.slice(0, 3).join(" "));
+        assert.equal(posts.filter((url) => url === "/tts").length, 40);
+      })
+    );
+  });
+
+  for (const [reason, cause] of [["gpu_yield", "La voix se met en retrait pendant le jeu"], ["gpu_memory", "La carte graphique n'a pas assez de mémoire"]] as const) {
+    test(`Préparer suspendue (${reason}) : la vraie cause, une seule demande, et rien ne repart`, async () => {
+      await withServer({ healthBody: { status: "healthy", model_loaded: true }, msPerChar: 2, ttsHold: reason }, async (fresh) => {
+        pipeline.setSceneChoiceForTest(() => Promise.resolve("Préparer"));
+        const uri = longScene(`Suspendue ${reason}`);
+        await pipeline.toggleCast(uri);
+        await read(uri);
+        await pipeline.getPreparationForTest();
+        assert.equal(postsOf(fresh).length, 1);
+        assert.equal(warned.length, 1, warned.join(" | "));
+        assert.ok(warned[0]?.includes(cause), warned[0]);
+        assert.ok(warned[0]?.includes("0 passages sur 40"), warned[0]);
+        assert.ok(!warned[0]?.includes("ne répond pas"), warned[0]);
+      });
+    });
+  }
+
+  test("Préparer en échec : le message donne la cause, sans dire que le moteur ne répond pas", async () => {
+    await withServer({ healthBody: { status: "healthy", model_loaded: true }, msPerChar: 2, fail500: true }, async () => {
+      pipeline.setSceneChoiceForTest(() => Promise.resolve("Préparer"));
+      const uri = longScene("Échec");
+      await pipeline.toggleCast(uri);
+      await read(uri);
+      await pipeline.getPreparationForTest();
+      assert.equal(warned.length, 1, warned.join(" | "));
+      assert.ok(warned[0]?.includes("simulated failure"), warned[0]);
+      assert.ok(!warned[0]?.includes("ne répond pas"), warned[0]);
+    });
+  });
+
+  for (const answer of ["Lire quand même", "Préparer"]) {
+    test(`Arrêter ferme la question : « ${answer} » donné après Stop ne lance rien`, async () => {
+      const uri = longScene(`Question ${answer}`);
+      await pipeline.toggleCast(uri);
+      const choice = deferred<string | undefined>();
+      let asked = 0;
+      pipeline.setSceneChoiceForTest(() => {
+        asked += 1;
+        return choice.promise;
+      });
+      const stateBefore = pipeline.getPlaybackState();
+      await read(uri);
+      await waitFor(() => asked === 1, "la question");
+      await pipeline.stop();
+      assert.ok(!informed.includes("LLM Voice : rien à arrêter."), informed.join(" | "));
+      choice.resolve(answer);
+      await pipeline.getPreparationForTest();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      assert.deepEqual(sent(), []);
+      assert.equal(pipeline.getPlaybackState(), stateBefore);
+    });
+  }
+
+  test("Arrêter annule une préparation en cours : plus aucune requête, pas de « prêt »", async () => {
+    await withServer({ healthBody: { status: "healthy", model_loaded: true }, msPerChar: 2, ttsDelayMs: 50 }, async (fresh) => {
+      pipeline.setSceneChoiceForTest(() => Promise.resolve("Préparer"));
+      const uri = longScene("Annulée");
+      await pipeline.toggleCast(uri);
+      await read(uri);
+      await waitFor(() => postsOf(fresh).length >= 2, "deux passages préparés");
+      await pipeline.stop();
+      await pipeline.getPreparationForTest();
+      const count = postsOf(fresh).length;
+      assert.ok(count < 40, String(count));
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      assert.equal(postsOf(fresh).length, count);
+      assert.ok(!informed.some((message) => message.includes("prêt")), informed.join(" | "));
+      assert.deepEqual(warned, []);
+    });
+  });
+
+  test("Arrêter pendant le chargement du moteur : aucune synthèse ne part", async () => {
+    await withEngineWait(() =>
+      withServer({ healthBody: { status: "healthy", state: "loading", model_loaded: false }, msPerChar: 2 }, async (fresh) => {
+        pipeline.setSceneChoiceForTest(() => Promise.resolve("Préparer"));
+        const uri = longScene("Chargement");
+        await pipeline.toggleCast(uri);
+        await read(uri);
+        await waitFor(() => fresh.requests.some((request) => request.method === "POST" && request.url === "/load"), "POST /load");
+        await pipeline.stop();
+        await pipeline.getPreparationForTest();
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        assert.deepEqual(postsOf(fresh), []);
+      })
+    );
+  });
+
+  test("« Lire » répondu à « prêt » après un Stop ne lance rien", async () => {
+    const uri = longScene("Prêt");
+    await pipeline.toggleCast(uri);
+    pipeline.setSceneChoiceForTest(() => Promise.resolve("Préparer"));
+    const answer = deferred<string | undefined>();
+    let ready = false;
+    window.showInformationMessage = (message: string) => {
+      informed.push(message);
+      if (message.includes("prêt")) {
+        ready = true;
+        return answer.promise;
+      }
+      return Promise.resolve(undefined);
+    };
+    try {
+      await read(uri);
+      await waitFor(() => ready, "le message « prêt »");
+      await pipeline.stop();
+      const stateAfterStop = pipeline.getPlaybackState();
+      answer.resolve("Lire");
+      await pipeline.getPreparationForTest();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      assert.equal(pipeline.getPlaybackState(), stateAfterStop);
+    } finally {
+      window.showInformationMessage = (message: string) => {
+        informed.push(message);
+        return Promise.resolve(undefined);
+      };
+    }
+  });
+
+  test("un narrateur absent de `/voices` : le message dit cela, et non qu'il faut une voix 1.6B", async () => {
+    await withServer(
+      { healthBody: { status: "healthy", model_loaded: true }, msPerChar: 2, kyutaiVoices: { voices: [{ id: "estelle", available: true }] } },
+      async () => {
+        const uri = fileWith(SCENE);
+        await pipeline.toggleCast(uri);
+        await readToTheEnd(uri);
+        assert.ok(informed.some((message) => message.includes("voix du narrateur n'est pas disponible")), informed.join(" | "));
+        assert.ok(!informed.some((message) => message.includes("demande une voix Kyutai 1.6B")), informed.join(" | "));
+      }
+    );
+  });
+
+  test("le préchauffage n'est coupé que si la lecture passe réellement par le jeu d'acteurs", async () => {
+    const settings = vscode.workspace.getConfiguration("llmVoice");
+    await settings.update("tts.warmup", true, vscode.ConfigurationTarget.Global);
+    const warmed = (fresh: MockTtsServer): boolean => postsOf(fresh).includes("Bonjour, ceci fonctionne.");
+    const options = { healthBody: { status: "healthy", model_loaded: true }, msPerChar: 2 };
+    try {
+      await withServer(options, async (fresh) => {
+        const uri = fileWith("Un texte sans aucun personnage. Il se lit seul.\n");
+        await pipeline.toggleCast(uri);
+        await readToTheEnd(uri);
+        await waitFor(() => warmed(fresh), "le préchauffage d'un document activé sans personnage", 3000);
+      });
+      await withServer(options, async (fresh) => {
+        const uri = fileWith(SCENE);
+        await pipeline.toggleCast(uri);
+        await readToTheEnd(uri);
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        assert.equal(warmed(fresh), false, postsOf(fresh).join(" | "));
+      });
+    } finally {
+      await settings.update("tts.warmup", undefined, vscode.ConfigurationTarget.Global);
+    }
+  });
+
+  test("Précédent et Suivant vont de réplique en réplique, chacune à sa voix", async () => {
+    await withServer({ healthBody: { status: "healthy", model_loaded: true }, msPerChar: 150 }, async (fresh) => {
+      const uri = fileWith(SCENE);
+      await pipeline.toggleCast(uri);
+      await read(uri);
+      await waitFor(() => pipeline.getPlaybackState() === "playing" && pipeline.getCurrentChunkIndex() === 0, "premier passage");
+      assert.equal(pipeline.getSpeakerLineForTest(), "Narrateur · voix Camille");
+      await nextPassage(1);
+      assert.equal(pipeline.getSpeakerLineForTest(), "Madeleine · voix Estelle");
+      await nextPassage(2);
+      assert.equal(pipeline.getSpeakerLineForTest(), "Narrateur · voix Camille");
+      await nextPassage(3);
+      const anselme = pipeline.getSpeakerLineForTest();
+      assert.match(anselme ?? "", /^Anselme · voix /);
+      await pipeline.previousSegment();
+      await waitFor(() => pipeline.getCurrentChunkIndex() === 2 && pipeline.getPlaybackState() === "playing", "retour au passage 2");
+      assert.equal(pipeline.getSpeakerLineForTest(), "Narrateur · voix Camille");
+      await nextPassage(3);
+      assert.equal(pipeline.getSpeakerLineForTest(), anselme);
+      await pipeline.stop();
+      const voices = new Map(
+        fresh.requests
+          .filter((request) => request.method === "POST" && request.url === "/tts")
+          .map((request) => [fieldOf(request.body, "text"), fieldOf(request.body, "voice_url")])
+      );
+      assert.equal(voices.get("Scène"), NARRATOR);
+      assert.equal(voices.get("Tu arrives bien tard, Anselme."), "estelle");
+      assert.equal(voices.get("essoufflé"), NARRATOR);
+      assert.ok(![NARRATOR, "estelle"].includes(voices.get("J'ai couru depuis le pont.") ?? NARRATOR));
+    });
+  });
+
+  async function nextPassage(index: number): Promise<void> {
+    await pipeline.nextSegment();
+    await waitFor(() => pipeline.getCurrentChunkIndex() === index && pipeline.getPlaybackState() === "playing", `passage ${index}, à ${pipeline.getCurrentChunkIndex()}`);
+  }
 
   test("une voix hors 1.6B : à une voix, sans étiquette, et le motif est donné", async () => {
     const uri = fileWith(SCENE);

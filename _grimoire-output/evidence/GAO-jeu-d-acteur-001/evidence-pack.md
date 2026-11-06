@@ -96,3 +96,43 @@ The task can be considered complete only when mandatory evidence gates for the s
 8. Messages trompeurs : suspension mémoire dite « ne répond pas » ; narrateur absent de `/voices` dit « demande une voix 1.6B ».
 9. `warmUp` coupé dès l'activation, même sans personnage ni mode Fidèle.
 Mode jeu : pendant la préparation, le serveur répond 503 et la préparation passe à `held` ; aucun contournement relevé côté code du commit.
+
+## Corrections de la relecture (2026-11-06), arbre de travail non commité, base f038bed
+
+Rouge constaté d'abord. Unitaires : `test/unit/direction/script/parseScript-relecture.test.ts`, 44 échecs sur 53 avant le code. Intégration : 12 échecs sur 25 dans `voice-chain: jeu d'acteurs`, tests compilés contre le paquet `dist/` de la base. Trois de ces rouges étaient dus au profil (`readyTimeoutMs: 0`) ; une fois les tests corrigés, ils ont été revus rouges par mutation : `prepareEngine` retiré, garde de « Lire » retirée (`'playing' !== 'idle'`).
+
+| # | Correction | Test |
+|---|---|---|
+| 1 | Cible de lien, image, code en ligne, adresse protégés ; `inlineText` équilibre les parenthèses d'URL | `1. lien Markdown…` ; `un lien dans une réplique…` |
+| 2 | Mots de structure, sigle sans voyelle exclus ; nom présent une fois : refusé en forme seule ou `NOM :` sans réplique, admis en `NOM : réplique` à partir de 4 lettres ; une ligne en capitales refusée, en tête de paragraphe, coupe le locuteur courant | `2. un mot en capitales…` |
+| 3 | `src/direction/script/stageDirection.ts` : collée à un mot, référence, phrase coupée : non ; tête de réplique ou entre deux phrases : oui ; ailleurs : forme d'indication exigée | `3. une parenthèse…` |
+| 4 | La ponctuation seule suit la réplique (`closing`), ou l'indication s'il n'y a pas de réplique à compléter | `4. la ponctuation…` |
+| 5 | `parseScript(…, { plainText })`, `plainScriptSegments`, garde sur `plainReadingOf` (la même fonction que la lecture simple) | `5. un fichier texte…` ; `un fichier texte à plusieurs voix…` |
+| 6 | `prepareEngine` avant le premier passage de « Préparer », aucun test du drapeau côté client : le serveur refuse | `Préparer à froid…` ; `Préparer suspendue…` |
+| 7 | `stop` et `dispose` annulent question et préparation ; toute réponse tardive vérifiée (`over()`) | `Arrêter ferme la question…`, `Arrêter annule…`, `Arrêter pendant le chargement…`, `« Lire » répondu…` |
+| 8 | Titre de `HOLD_NOTICES`, erreur réelle du passage (`failed.error`), `CAST_NARRATOR_ABSENT` | `Préparer suspendue…`, `Préparer en échec…`, `un narrateur absent…` |
+| 9 | Préchauffage décidé après `castReadingFor`, coupé seulement si `cast.voices` existe | `le préchauffage n'est coupé…` |
+| plus | Précédent et Suivant sur le faux serveur | `Précédent et Suivant…` (vert dès l'écriture) |
+
+Instabilités :
+
+- Test « une voix changée » : 0 échec sur 6 passes de la suite de base, puis sur 8 passes ciblées sous charge CPU. Deux causes reproduites à la demande. (a) Second chargement de `.vscode-test.mjs` pendant un passage : il vide et réécrit tous les profils ; même test en échec, code 1. Corrigé : seul le profil du libellé demandé est touché ; `voice-chain` et `integration-security` ont ensuite tourné ensemble, verts. (b) Voix fixe du test égale à la voix automatique de Lucien : 554 chemins sur 20 000 (`cast-collision-179` a donné `[]`). Corrigé dans le test. Laquelle a frappé l'autre agent : non établi.
+- Bug de produit trouvé en cherchant : deux écritures de `globalState` à quelques millisecondes d'écart perdent la seconde. Sonde temporaire : 118 sur 400, même valeur fausse 15 ms après. Code de VS Code 1.145 lu : `onDidChangeStorage` remplace `_value` par l'écho. `toggleCast` perdait l'activation dès le premier croisement (test rouge, `lecture 0`). Corrigé pour `toggleCast` seul (`castChoices`, écriture vérifiée).
+- « favorites live in globalState » : même mécanisme, établi en une passe de sonde sur `globalState`, sans rejouer l'échec du test lui-même. Produit non corrigé pour les favoris, voix récentes, mesures d'attente.
+
+| Check | Commande | Résultat |
+|---|---|---|
+| Types | `npm run -s typecheck` | code 0 |
+| Lint | `npm run -s lint` | code 0 |
+| Unitaires | `npm run -s test:unit` | code 0, 144 fichiers, 2960 tests |
+| Build | `npm run -s build` | code 0 |
+| fake-tts | `xvfb-run -a npx vscode-test --label fake-tts` | code 0, 77 passing |
+| Sécurité | `xvfb-run -a npx vscode-test --label integration-security` | code 0, 8 passing |
+| Voix | `npm run -s test:integration-voice`, 4 passes | code 0 à chaque passe, 50 passing |
+| Preuve réelle | `scripts/audio-proof/native-real.sh --cast`, drapeau de jeu absent, port 8020 prêt | code 0, `preuve-audio-relecture.jsonl` |
+
+Preuve réelle : WER 0,0734 (une mesure, contre 0,1186 au passage précédent, écart non expliqué) ; premier son 49,9 s ; lecture 123,6 s ; plus long silence entre deux sons 1,2 s ; 29 requêtes, toutes 200 ; quatre voix `cml-577_394`, `cml-4724_3731`, `cml-10179_11051`, `cml-8128_7016` ; à l'écran Narrateur · Camille, Madeleine · Mika, Anselme · Andréa, Lucien · Noam.
+
+Limite mesurée de la règle des parenthèses, avant le retrait des participes en `-é` : 1855 lignes de `docs/adr` et du CHANGELOG, forcées en `@a:` : 35 ont une partie au narrateur, 2 sont refusées par la garde (lignes coupées au milieu d'un code). Aucun mot perdu. Mesure non refaite après ce retrait.
+
+Non fait : écoute de guilhem-bonnet, `dispose` exécuté, gate, ADR-018 §1 à mettre à jour avec ces règles.

@@ -59,7 +59,7 @@ import { parseScript, plainTextBlocks } from "../direction/script/parseScript.js
 import { sameWordsApartFromLabels } from "../direction/script/scriptFidelity.js";
 import { bindingForChunk, cacheKeyFor, type AudioQueueBinding } from "../playback/AudioQueue.js";
 import { bindingFrom, chunksFrom } from "../playback/PlaybackController.js";
-import { ReadingPreparer } from "../playback/ReadingPreparer.js";
+import { ReadingPreparer, type PreparationOutcome } from "../playback/ReadingPreparer.js";
 import { segment } from "../parser/Segmenter.js";
 import {
   buildSession,
@@ -140,7 +140,7 @@ import { createNarratorProvider } from "../narrator/index.js";
 import type { Logger } from "../infrastructure/logger.js";
 import type { PipelineFacade } from "../commands/PipelineFacade.js";
 import { decidePlay, decidePlayPause, type PlayDecision } from "../commands/playDecision.js";
-import { plainTextSegments, rangesOverlap } from "./textSegments.js";
+import { plainScriptSegments, plainTextSegments, rangesOverlap } from "./textSegments.js";
 import { createInstallFreshnessCheck, installedBundlePath } from "./installFreshness.js";
 import {
   resolveNarratorConfig,
@@ -206,9 +206,12 @@ const DEFAULT_READY_TIMEOUT_MS = 180_000;
 const WAIT_MEASURES_KEY = "llmVoice.waitMeasures";
 /** `globalState`: the fingerprints of the documents read with several voices (ADR-018 §3), nothing else. */
 const CAST_DOCUMENTS_KEY = "llmVoice.cast.documents";
+const CAST_STORE_ATTEMPTS = 5;
+const CAST_STORE_SETTLE_MS = 50;
 const SCENE_PREPARE = "Préparer";
 const SCENE_READ_ANYWAY = "Lire quand même";
 const CAST_VOICE_REQUIRED = "LLM Voice : le jeu d'acteurs demande une voix Kyutai 1.6B. La lecture reste à une voix.";
+const CAST_NARRATOR_ABSENT = "LLM Voice : la voix du narrateur n'est pas disponible sur le moteur de voix, elle manque à sa liste. Le jeu d'acteurs ne peut pas démarrer : choisissez une autre voix.";
 
 /** What a reading with several voices needs on top of a plain one. */
 interface CastReading {
@@ -414,6 +417,11 @@ export class Pipeline implements PipelineFacade {
   private preparer: ReadingPreparer | undefined;
   /** Not part of `PipelineFacade`: what the integration tests await. */
   private preparation: Promise<void> | undefined;
+  /** This session's "Lire à plusieurs voix", by document fingerprint: see `storeCastChoices`. */
+  private readonly castChoices = new Map<string, boolean>();
+  private castDocumentsWrite: Promise<void> = Promise.resolve();
+  /** A long-scene question or a preparation under way: what Stop has to end while the player is idle. */
+  private sceneAbort: AbortController | undefined;
   private sceneChoice: (message: string) => Thenable<string | undefined> = (message) =>
     vscode.window.showInformationMessage(message, SCENE_PREPARE, SCENE_READ_ANYWAY);
   private currentHeadings: readonly SourceSegment[] = [];
@@ -695,6 +703,8 @@ export class Pipeline implements PipelineFacade {
 
   dispose(): void {
     this.endWaitTimers();
+    this.preparer?.cancel();
+    this.sceneAbort?.abort();
     this.controller.dispose();
     this.captureAbort?.abort();
     this.inboxWatcher.dispose();
@@ -750,6 +760,7 @@ export class Pipeline implements PipelineFacade {
     this.notice = undefined;
     // One owner of the engine at a time: reading stops a preparation, which then resumes nothing.
     this.preparer?.cancel();
+    this.sceneAbort = undefined;
     this.endWait();
     this.captureAbort?.abort();
     const abort = new AbortController();
@@ -801,21 +812,31 @@ export class Pipeline implements PipelineFacade {
         profile.mode === "narrated" && !this.narrationDisabledForSession
           ? await this.narratorFor(profile)
           : undefined;
-      // A warm-up is a synthesis: with several voices nothing leaves before the plan says so,
-      // and never two requests at once (ADR-018 §5.2).
-      const tts = await this.ttsFor(profile, { warmUp: !this.isCastEnabled(doc.uri ?? doc.rawText) });
+      const tts = await this.ttsFor(profile);
       this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
       this.heldTts = tts;
       const cast = await this.castReadingFor(doc, captureContext, reading, profile, tts, abort.signal, options.systemVoice === true);
       if (abort.signal.aborted) {
         return;
       }
+      // A warm-up is a synthesis: with several voices nothing leaves before the plan says so,
+      // and never two requests at once (ADR-018 §5.2). Every other reading warms up as before.
+      if (cast?.voices === undefined) {
+        await this.ttsFor(profile, { warmUp: true });
+      }
       const castPlan = cast?.voices?.plan;
       if (castPlan?.decision === "ask" && options.readAnyway !== true && cast?.voices !== undefined) {
         // Nothing leaves before the choice: no model load, no synthesis.
-        this.preparation = this.askAboutLongScene(captureContext, cast.voices, tts, abort).catch((error: unknown) => {
-          this.output.error("long scene failed", { error: messageOf(error) });
-        });
+        this.sceneAbort = abort;
+        this.preparation = this.askAboutLongScene(captureContext, cast.voices, tts, abort)
+          .catch((error: unknown) => {
+            this.output.error("long scene failed", { error: messageOf(error) });
+          })
+          .finally(() => {
+            if (this.sceneAbort === abort) {
+              this.sceneAbort = undefined;
+            }
+          });
         return;
       }
       const toRead = cast?.segments ?? segments;
@@ -945,13 +966,41 @@ export class Pipeline implements PipelineFacade {
     return this.castBible;
   }
 
-  private castDocuments(): Readonly<Record<string, boolean>> {
+  private storedCastDocuments(): Readonly<Record<string, boolean>> {
     const stored = this.context.globalState.get<unknown>(CAST_DOCUMENTS_KEY);
     return typeof stored === "object" && stored !== null ? (stored as Record<string, boolean>) : {};
   }
 
   private isCastEnabled(rawKey: string): boolean {
-    return this.castDocuments()[documentKeyOf(rawKey)] === true;
+    const key = documentKeyOf(rawKey);
+    return this.castChoices.get(key) ?? this.storedCastDocuments()[key] === true;
+  }
+
+  /**
+   * `globalState` is not a safe place to read back: each write comes back from the main
+   * process with the whole state as it was, and that echo replaces what the extension
+   * host holds, later writes included. Two writes a few milliseconds apart lose the second
+   * (118 out of 400 on VS Code 1.145). So this session's choices are kept here, and written
+   * until the store shows them.
+   */
+  private async storeCastChoices(): Promise<void> {
+    for (let attempt = 0; attempt < CAST_STORE_ATTEMPTS; attempt += 1) {
+      const documents = { ...this.storedCastDocuments() };
+      for (const [key, enabled] of this.castChoices) {
+        if (enabled) {
+          documents[key] = true;
+        } else {
+          delete documents[key];
+        }
+      }
+      await this.context.globalState.update(CAST_DOCUMENTS_KEY, documents);
+      await new Promise((resolve) => setTimeout(resolve, CAST_STORE_SETTLE_MS));
+      const stored = this.storedCastDocuments();
+      if ([...this.castChoices].every(([key, enabled]) => (stored[key] === true) === enabled)) {
+        return;
+      }
+    }
+    this.output.warn("cast: the choice of documents could not be stored, it holds for this session");
   }
 
   /** A setting, retained for this document. Nothing here can start a reading. */
@@ -961,15 +1010,9 @@ export class Pipeline implements PipelineFacade {
       void vscode.window.showInformationMessage("LLM Voice : ouvrez d'abord un document.");
       return undefined;
     }
-    const key = documentKeyOf(target);
-    const documents = { ...this.castDocuments() };
-    const enabled = documents[key] !== true;
-    if (enabled) {
-      documents[key] = true;
-    } else {
-      delete documents[key];
-    }
-    await this.context.globalState.update(CAST_DOCUMENTS_KEY, documents);
+    const enabled = !this.isCastEnabled(target);
+    this.castChoices.set(documentKeyOf(target), enabled);
+    this.castDocumentsWrite = this.castDocumentsWrite.then(() => this.storeCastChoices());
     this.player.refreshDocument();
     return enabled;
   }
@@ -981,7 +1024,7 @@ export class Pipeline implements PipelineFacade {
   /** The line of the "Document ouvert" block. A count, never a name. */
   async describeScript(document: { uri: string; languageId: string; text: string }): Promise<PlayerScriptView | undefined> {
     const markdown = document.languageId === "markdown";
-    const script = parseScript(await this.blocksOf(document.text, markdown, document.uri));
+    const script = parseScript(await this.blocksOf(document.text, markdown, document.uri), { plainText: !markdown });
     if (!script.active) {
       return script.dialogueBlocks >= 3
         ? { text: "Dialogues de roman : lus par le narrateur pour l'instant.", roles: 0, enabled: false }
@@ -998,26 +1041,33 @@ export class Pipeline implements PipelineFacade {
     return { text: faithful ? found : `${found} Réservé au mode Fidèle.`, roles: count, enabled };
   }
 
-  private offerCastVoice(): void {
-    void vscode.window.showInformationMessage(CAST_VOICE_REQUIRED, "Choisir une voix").then((answer) => {
+  private offerCastVoice(message: string): void {
+    void vscode.window.showInformationMessage(message, "Choisir une voix").then((answer) => {
       if (answer === "Choisir une voix") {
         void this.chooseVoice();
       }
     });
   }
 
-  /** The voices this engine can give, or `undefined` when it holds only one (ADR-018 §3). */
-  private async castVoicesOf(profile: VoiceProfile, tts: TtsProvider, signal?: AbortSignal): Promise<{ voices: readonly Voice[]; effective: VoiceProfile; narratorVoice: string } | undefined> {
+  /** The voices this engine can give, or why it cannot read with several (ADR-018 §3). */
+  private async castVoicesOf(
+    profile: VoiceProfile,
+    tts: TtsProvider,
+    signal?: AbortSignal
+  ): Promise<{ voices: readonly Voice[]; effective: VoiceProfile; narratorVoice: string; refused?: undefined } | { refused: string }> {
     const capabilities = await tts.getCapabilities(signal).catch(() => undefined);
     if (capabilities?.multiVoice !== true) {
-      return undefined;
+      return { refused: CAST_VOICE_REQUIRED };
     }
     const effective = await this.withDefaultVoice(profile, tts, signal);
     const narratorVoice = effective.tts.voice;
-    const voices = (await tts.listVoices?.(signal)) ?? capabilities.voices;
     // A cloning sample or "Ma voix" as the narrator: this engine does not clone.
-    if (narratorVoice === undefined || !voices.some((voice) => voice.id === narratorVoice)) {
-      return undefined;
+    if (narratorVoice === undefined || effective.tts.referenceAudio !== undefined) {
+      return { refused: CAST_VOICE_REQUIRED };
+    }
+    const voices = (await tts.listVoices?.(signal)) ?? capabilities.voices;
+    if (!voices.some((voice) => voice.id === narratorVoice)) {
+      return { refused: CAST_NARRATOR_ABSENT };
     }
     return { voices, effective, narratorVoice };
   }
@@ -1050,14 +1100,15 @@ export class Pipeline implements PipelineFacade {
     }
     const markdown = doc.sourceType === "markdown";
     const blocks = await this.blocksOf(doc.rawText, markdown, doc.uri);
-    const script = parseScript(blocks);
+    const script = parseScript(blocks, { plainText: !markdown });
     if (!script.active) {
       return undefined;
     }
-    const policy = segmentationPolicyFor(profile, this.audioFirstChunkSentences());
-    const scripted = segment(script.blocks, policy);
+    // Each source keeps its own reading: a text file says its text as written, not normalised.
+    const scripted = markdown ? segment(script.blocks, segmentationPolicyFor(profile, this.audioFirstChunkSentences())) : plainScriptSegments(script.blocks);
     const spoken = (seg: SourceSegment): string => seg.spokenText ?? seg.rawText;
-    if (!sameWordsApartFromLabels(segment(blocks, policy).map(spoken), scripted.map(spoken), script.labels)) {
+    // Against what the plain reading of this very document delivers.
+    if (!sameWordsApartFromLabels((await this.plainReadingOf(doc, profile)).map(spoken), scripted.map(spoken), script.labels)) {
       this.output.warn("cast abandoned: the reading with several voices changed words");
       void vscode.window.showWarningMessage("LLM Voice : ce découpage aurait changé des mots. Cette lecture reste à une voix.");
       return undefined;
@@ -1065,9 +1116,9 @@ export class Pipeline implements PipelineFacade {
     this.currentHeadings = scripted.filter((seg) => seg.type === "heading");
     const segments = this.withinCapture(doc, scripted);
     const engine = await this.castVoicesOf(profile, tts, signal);
-    if (engine === undefined) {
+    if (engine.refused !== undefined) {
       if (!systemVoice) {
-        this.offerCastVoice();
+        this.offerCastVoice(engine.refused);
       }
       return { segments };
     }
@@ -1121,14 +1172,18 @@ export class Pipeline implements PipelineFacade {
     if (answer === SCENE_READ_ANYWAY) {
       await this.startInternal(capture, { readAnyway: true });
     } else if (answer === SCENE_PREPARE) {
-      await this.prepareReading(capture, voices, tts);
+      await this.prepareReading(capture, voices, tts, abort);
     }
   }
 
-  /** Fills the cache and stops there: `ReadingPreparer` has nothing to play with. */
-  private async prepareReading(capture: CaptureContext, voices: NonNullable<CastReading["voices"]>, tts: TtsProvider): Promise<void> {
+  /**
+   * Fills the cache and stops there: `ReadingPreparer` has nothing to play with. The engine
+   * loads first, as for a reading: the first request's timeout must measure a synthesis.
+   */
+  private async prepareReading(capture: CaptureContext, voices: NonNullable<CastReading["voices"]>, tts: TtsProvider, abort: AbortController): Promise<void> {
     if (this.controller.getState() !== "idle") {
-      await this.stop();
+      this.stopNarration();
+      this.stopPlayer();
     }
     const preparer = new ReadingPreparer(
       { tts, cache: this.diskCache, binding: voices.binding },
@@ -1136,25 +1191,57 @@ export class Pipeline implements PipelineFacade {
     );
     this.preparer = preparer;
     const chunks = chunksFrom("preparation", voices.narration, 0);
-    const outcome = await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: "LLM Voice : préparation de la lecture", cancellable: true },
-      (progress, token) => {
-        token.onCancellationRequested(() => preparer.cancel());
-        return preparer.run(chunks, (done, total) => progress.report({ increment: 100 / total, message: `${done} passages sur ${total}` }));
+    // Anything else has taken over, or Stop was pressed: nothing more to say, nothing to start.
+    const over = (): boolean => abort.signal.aborted || this.captureAbort !== abort;
+    let outcome: PreparationOutcome;
+    try {
+      outcome = await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: "LLM Voice : préparation de la lecture", cancellable: true },
+        async (progress, token) => {
+          token.onCancellationRequested(() => {
+            preparer.cancel();
+            abort.abort();
+          });
+          await this.prepareEngine(tts, { narrated: false, narrationChars: 0, firstPassagesChars: chunks[0]?.spokenText.length ?? 0 }, abort.signal).catch((error: unknown) => {
+            if (!abort.signal.aborted) {
+              throw error;
+            }
+          });
+          // The bar of a reading: this is not one, and its first chunk is a preparation's to pay.
+          this.firstChunkPaysForLoad = false;
+          if (!over()) {
+            this.endWait();
+          }
+          return preparer.run(chunks, (done, total) => progress.report({ increment: 100 / total, message: `${done} passages sur ${total}` }));
+        }
+      );
+    } finally {
+      if (this.preparer === preparer) {
+        this.preparer = undefined;
       }
-    );
-    if (this.preparer === preparer) {
-      this.preparer = undefined;
+      if (this.captureAbort === abort) {
+        this.endWait();
+      }
     }
+    if (over()) {
+      return;
+    }
+    const stoppedAt = `Préparation arrêtée à ${outcome.done} passages sur ${outcome.total}.`;
     if (outcome.status === "ready") {
       const answer = await vscode.window.showInformationMessage(`LLM Voice : prêt, ${outcome.total} passages.`, "Lire");
-      if (answer === "Lire") {
+      if (answer === "Lire" && !over()) {
         await this.startInternal(capture);
       }
-    } else if (outcome.status === "held" || outcome.status === "failed") {
-      const why = outcome.status === "held" && outcome.holdReason === "gpu-yield" ? "La voix se met en retrait pendant le jeu" : "Le moteur de voix ne répond pas";
-      void vscode.window.showWarningMessage(`LLM Voice : ${why}. Préparation arrêtée à ${outcome.done} passages sur ${outcome.total}.`);
+    } else if (outcome.status === "held") {
+      void vscode.window.showWarningMessage(`LLM Voice : ${HOLD_NOTICES[outcome.holdReason].title}. ${stoppedAt}`);
+    } else if (outcome.status === "failed") {
+      void vscode.window.showWarningMessage(`LLM Voice : le moteur de voix a échoué sur un passage (${outcome.error}). ${stoppedAt}`);
     }
+  }
+
+  /** Not part of `PipelineFacade`: resolves once the choice of documents has reached the store. */
+  async flushCastDocumentsForTest(): Promise<void> {
+    await this.castDocumentsWrite;
   }
 
   /** Not part of `PipelineFacade`: lets the integration tests answer the long-scene question. */
@@ -1192,7 +1279,7 @@ export class Pipeline implements PipelineFacade {
     }
     const document = editor.document;
     const markdown = document.languageId === "markdown";
-    const script = parseScript(await this.blocksOf(document.getText(), markdown, document.uri.toString()));
+    const script = parseScript(await this.blocksOf(document.getText(), markdown, document.uri.toString()), { plainText: !markdown });
     if (!script.active) {
       void vscode.window.showInformationMessage("LLM Voice : aucun personnage repéré dans ce document.");
       return;
@@ -1200,8 +1287,8 @@ export class Pipeline implements PipelineFacade {
     const reading = await this.profiles.resolveReading(markdown ? "markdown" : "text", this.modesBySourceSettings());
     const tts = await this.ttsFor(reading.effective);
     const engine = await this.castVoicesOf(reading.effective, tts);
-    if (engine === undefined) {
-      this.offerCastVoice();
+    if (engine.refused !== undefined) {
+      this.offerCastVoice(engine.refused);
       return;
     }
     const { scope } = this.castScopeOf(document.uri.toString(), document.getText(), "document");
@@ -1262,6 +1349,9 @@ export class Pipeline implements PipelineFacade {
     this.waitEngineId = tts.id;
     this.firstChunkPaysForLoad = false;
     const health = await tts.health(signal).catch(() => undefined);
+    if (signal.aborted) {
+      return;
+    }
     const loading = health?.status === "degraded" && health.detail === "loading";
     const cold = loading || health?.modelLoaded === false;
     this.beginWait(cold ? "engine" : plan.narrated ? "narration" : "first-passage", {
@@ -1425,14 +1515,18 @@ export class Pipeline implements PipelineFacade {
     }
   }
 
+  /** The whole document as the plain reading says it: the reference of the cast's fidelity guard. */
+  private async plainReadingOf(doc: SourceDocument, profile: VoiceProfile): Promise<SourceSegment[]> {
+    return doc.sourceType === "markdown"
+      ? segment(
+          await parseMarkdown(doc.rawText, doc.uri),
+          segmentationPolicyFor(profile, this.audioFirstChunkSentences())
+        )
+      : plainTextSegments(doc.rawText);
+  }
+
   private async buildSegments(doc: SourceDocument, profile: VoiceProfile): Promise<SourceSegment[]> {
-    const all =
-      doc.sourceType === "markdown"
-        ? segment(
-            await parseMarkdown(doc.rawText, doc.uri),
-            segmentationPolicyFor(profile, this.audioFirstChunkSentences())
-          )
-        : plainTextSegments(doc.rawText);
+    const all = await this.plainReadingOf(doc, profile);
     this.currentHeadings = all.filter((seg) => seg.type === "heading");
     return this.withinCapture(doc, all);
   }
@@ -1577,13 +1671,22 @@ export class Pipeline implements PipelineFacade {
       this.pendingStart = undefined;
       pendingStart.abort();
     }
+    // A question still open or a preparation under way: its late answer starts nothing.
+    const scene = this.sceneAbort;
+    this.sceneAbort = undefined;
+    scene?.abort();
+    this.preparer?.cancel();
     this.stopNarration();
     if (this.controller.getState() === "idle") {
-      if (pendingStart === undefined) {
+      if (pendingStart === undefined && scene === undefined) {
         void vscode.window.showInformationMessage("LLM Voice : rien à arrêter.");
       }
       return;
     }
+    this.stopPlayer();
+  }
+
+  private stopPlayer(): void {
     this.controller.stop();
     if (this.currentUri !== undefined) {
       this.highlight.clear(this.currentUri);

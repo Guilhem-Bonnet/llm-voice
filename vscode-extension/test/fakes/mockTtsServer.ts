@@ -42,6 +42,8 @@ export interface MockTtsServerOptions {
   kyutaiVoices?: { voices: Array<{ id: string; name?: string; available: boolean }> };
   /** Milliseconds POST /tts takes, so that two requests at once would be seen. */
   ttsDelayMs?: number;
+  /** POST /tts answers 503 with this `reason`, as `deploy/kyutai16/server.py` does. */
+  ttsHold?: "gpu_yield" | "gpu_memory";
 }
 
 export interface MockTtsServerRequestLog {
@@ -71,7 +73,8 @@ export class MockTtsServer {
       healthBody: options.healthBody ?? { status: "ok" },
       uploadReference500: options.uploadReference500 ?? false,
       kyutaiVoices: options.kyutaiVoices ?? { voices: [] },
-      ttsDelayMs: options.ttsDelayMs ?? 0
+      ttsDelayMs: options.ttsDelayMs ?? 0,
+      ttsHold: options.ttsHold as "gpu_yield" | "gpu_memory"
     };
     this.server = createServer((req, res) => {
       this.handle(req, res).catch((error: unknown) => {
@@ -179,6 +182,11 @@ export class MockTtsServer {
         await new Promise((resolvePromise) => setTimeout(resolvePromise, this.options.ttsDelayMs));
       }
       this.activeTts -= 1;
+      if (this.options.ttsHold !== undefined) {
+        res.writeHead(503, { "content-type": "application/json" });
+        res.end(JSON.stringify({ detail: "mock TTS server: simulated hold", reason: this.options.ttsHold }));
+        return;
+      }
       if (this.options.fail500) {
         res.writeHead(500, { "content-type": "application/json" });
         res.end(JSON.stringify({ detail: "mock TTS server: simulated failure" }));

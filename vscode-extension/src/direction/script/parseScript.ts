@@ -11,6 +11,7 @@ import { NARRATOR_SPEAKER_ID } from "../../core/direction.js";
 import type { SourceRange } from "../../core/source.js";
 import type { SourceBlock } from "../../parser/types.js";
 import { toRoleId } from "../director/Analyst.js";
+import { isStageParenthesis, stagePosition } from "./stageDirection.js";
 
 export interface ScriptRole {
   readonly roleId: string;
@@ -46,9 +47,16 @@ const MIN_LINES_PER_NAME = 2;
 const MIN_CAPS_LINES = 4;
 const MAX_NAME_CHARS = 40;
 const MAX_NAME_WORDS = 4;
-const MAX_STAGE_WORDS = 20;
+/** Un nom présent une seule fois, en `NOM : réplique` : plus court, c'est un sigle (`FAQ`, `API`). */
+const MIN_LETTERS_ONCE = 4;
 
-const NOT_A_NAME = new Set(["NOTE", "ATTENTION", "TODO", "FIXME", "WARNING", "IMPORTANT", "INFO", "ERREUR", "ACTE", "SCÈNE", "SCENE", "PERSONNAGES"]);
+/** Les mots de la structure d'un texte, et les sigles qui ont l'air de noms. Le premier mot suffit. */
+const NOT_A_NAME = new Set([
+  "NOTE", "NOTES", "ATTENTION", "TODO", "FIXME", "WARNING", "IMPORTANT", "INFO", "ERREUR", "PERSONNAGES", "DISTRIBUTION",
+  "ACTE", "SCÈNE", "SCENE", "TABLEAU", "CHAPITRE", "PARTIE", "FIN", "RIDEAU", "PROLOGUE", "ÉPILOGUE", "EPILOGUE", "ENTRACTE", "INTERLUDE",
+  "PRÉFACE", "PREFACE", "POSTFACE", "ANNEXE", "SOMMAIRE", "INTRODUCTION", "CONCLUSION", "RÉSUMÉ", "RESUME", "REMARQUE", "RAPPEL", "EXEMPLE", "EXEMPLES", "SOURCE", "SOURCES",
+  "NB", "PS", "OK", "FAQ"
+]);
 const NARRATOR_ALIASES = new Set(["narrateur", "narratrice", "narrator", "recitant"]);
 
 const SPACE = "[\\s\\u00a0]*";
@@ -60,12 +68,18 @@ const DECLARATION = /^%[\s ]*([\p{L}\p{N}][\p{L}\p{N}'’ -]{0,39}?)[\s ]*=[\s
 const INLINE_LABEL = new RegExp(`^${BOLD}(${NAME})${BOLD}${SPACE}${PARENS}${SPACE}${BOLD}${SPACE}(?::|\\.${SPACE}[—–])${BOLD}${SPACE}`, "u");
 const ALONE_LABEL = new RegExp(`^${BOLD}(${NAME})${BOLD}${SPACE}${PARENS}${SPACE}[.:]?${BOLD}${SPACE}$`, "u");
 const CAPS = /^\p{Lu}[\p{Lu}\p{M}'’  -]*$/u;
+const VOWEL = /[AEIOUYÆŒ]/u;
 const ROMAN = /^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/;
-const WHOLE_STAGE_LINE = /^(?:\([^\n]+\)|\*[^*\n]+\*|_[^_\n]+_)[.!?…]?$/u;
+const WHOLE_STAGE_LINE = /^(?:\([^()\n]+\)|\*[^*\n]+\*|_[^_\n]+_)[.!?…]?$/u;
 /** Une parenthèse, ou un italique qui fait une phrase : `*jamais*` reste une emphase. */
 const INLINE_STAGE = /\([^()\n]{1,300}\)|(?<![*\p{L}\p{N}])\*(?=\p{Lu})[^*\n]{1,300}?[.!?…]\*(?!\*)|(?<![_\p{L}\p{N}])_(?=\p{Lu})[^_\n]{1,300}?[.!?…]_(?![_\p{L}\p{N}])/gu;
 const DIALOGUE_START = /^[—–«]/u;
 const WORD = /[\p{L}\p{N}]/u;
+/** Ce qu'une parenthèse ne peut pas ouvrir : la cible d'un lien, du code, une adresse. */
+const SHIELDED = /!?\[[^\]\n]*\]\((?:[^()\n]|\([^()\n]*\))*\)|`[^`\n]+`|<[^<>\s]+>|https?:\/\/\S+/gu;
+/** La ponctuation seule qui suit une indication : elle n'est pas à elle. */
+const PUNCTUATION_ALONE = /^[\s\u00a0]*[.!?…,;:]+(?=[\s\u00a0]|$)/u;
+const ENDS_SENTENCE = /[.!?…:]$/u;
 
 interface SourceLine {
   /** Décalage dans `rawSource`. */
@@ -79,6 +93,8 @@ interface Part {
   readonly end: number;
   /** Une indication : sa parenthèse n'est pas du texte. */
   readonly stage: boolean;
+  /** La ponctuation qui suivait l'indication et finit cette réplique : `Viens (bas) ?`. */
+  readonly closing?: string;
 }
 
 type Label =
@@ -102,20 +118,39 @@ function speakerOfName(name: string): { known: boolean; speakerId: string | unde
   return { known: roleId !== undefined, speakerId: roleId };
 }
 
-/** Des capitales, 4 mots et 40 caractères au plus, et pas un mot de structure. */
+function lettersOf(name: string): string {
+  return name.normalize("NFD").replace(/[^\p{L}]/gu, "");
+}
+
+/** Des capitales, 4 mots et 40 caractères au plus, ni mot de structure, ni sigle sans voyelle. */
 function isCapsName(rawName: string): boolean {
-  const name = rawName.replace(/ /g, " ").trim();
+  const name = rawName.replace(/\u00a0/g, " ").trim();
   if (name.length < 2 || name.length > MAX_NAME_CHARS || !CAPS.test(name)) {
     return false;
   }
   const words = name.split(/\s+/);
   const first = words[0] ?? "";
-  return words.length <= MAX_NAME_WORDS && !NOT_A_NAME.has(first) && !NOT_A_NAME.has(name) && !ROMAN.test(name);
+  return words.length <= MAX_NAME_WORDS && !NOT_A_NAME.has(first) && !NOT_A_NAME.has(name) && !ROMAN.test(name) && VOWEL.test(lettersOf(name));
 }
 
 function isStructuralLine(line: string): boolean {
-  const first = line.replace(/[*_]/g, "").trim().split(/[\s ]+/)[0] ?? "";
+  const first = line.replace(/[*_]/g, "").trim().split(/[\s\u00a0]+/)[0] ?? "";
   return first === "ACTE" || first === "SCÈNE" || first === "SCENE";
+}
+
+/** Une ligne qui a la forme d'un nom seul sans en être un : comme un titre, elle coupe le locuteur courant. */
+function isCapsCaption(line: string): boolean {
+  const alone = ALONE_LABEL.exec(line);
+  return alone !== null && CAPS.test((alone[1] ?? "").replace(/\u00a0/g, " ").trim());
+}
+
+function isInsideShield(text: string, at: number): boolean {
+  for (const match of text.matchAll(SHIELDED)) {
+    if (match.index <= at && at < match.index + match[0].length) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function asideOf(line: string, match: RegExpExecArray, group: number): { start: number; end: number } | undefined {
@@ -137,8 +172,10 @@ function linesOf(raw: string): SourceLine[] {
   return lines;
 }
 
+type NameForm = "inline" | "alone";
+
 /** Les formes d'une ligne, sans décider si le document les retient. */
-function labelOf(line: string, accept: (name: string) => boolean): Label | undefined {
+function labelOf(line: string, accept: (name: string, form: NameForm) => boolean): Label | undefined {
   const declaration = DECLARATION.exec(line);
   if (declaration !== null) {
     const { known, speakerId } = speakerOfName(declaration[1] ?? "");
@@ -156,10 +193,10 @@ function labelOf(line: string, accept: (name: string) => boolean): Label | undef
     return undefined;
   }
   const inline = INLINE_LABEL.exec(line);
-  if (inline !== null && accept(inline[1] ?? "")) {
+  const replyStart = inline?.[0].length ?? 0;
+  if (inline !== null && accept(inline[1] ?? "", line.slice(replyStart).trim().length === 0 ? "alone" : "inline")) {
     const name = (inline[1] ?? "").trim();
     const { known, speakerId } = speakerOfName(name);
-    const replyStart = inline[0].length;
     const aside = asideOf(line, inline, 2);
     if (known) {
       if (line.slice(replyStart).trim().length === 0) {
@@ -170,7 +207,7 @@ function labelOf(line: string, accept: (name: string) => boolean): Label | undef
     return undefined;
   }
   const alone = ALONE_LABEL.exec(line);
-  if (alone !== null && accept(alone[1] ?? "") && isCapsName(alone[1] ?? "")) {
+  if (alone !== null && accept(alone[1] ?? "", "alone") && isCapsName(alone[1] ?? "")) {
     const name = (alone[1] ?? "").trim();
     const { known, speakerId } = speakerOfName(name);
     const aside = asideOf(line, alone, 2);
@@ -210,16 +247,21 @@ function rangeWithin(block: SourceBlock, start: number, end: number): SourceRang
 /** Le rendu de `MarkdownParser` pour une tranche de bloc : la garde de fidélité le vérifie. */
 export function inlineText(raw: string): string {
   return raw
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/!\[([^\]]*)\]\((?:[^()\n]|\([^()\n]*\))*\)/g, "$1")
+    .replace(/\[([^\]]*)\]\((?:[^()\n]|\([^()\n]*\))*\)/g, "$1")
     .replace(/(\*\*|__)(?=\S)(.+?)(?<=\S)\1/g, "$2")
     .replace(/\*(?=\S)([^*\n]+?)(?<=\S)\*/g, "$1")
     .replace(/(?<![\p{L}\p{N}])_(?=\S)([^_\n]+?)(?<=\S)_(?![\p{L}\p{N}])/gu, "$1")
     .replace(/\\([\\`*_{}[\]()#+\-.!>~|])/g, "$1");
 }
 
-function stageText(raw: string): string {
-  return inlineText(raw).replace(/^\(\s*/, "").replace(/\s*\)([.!?…]?)$/, "$1");
+function stageText(raw: string, plainText: boolean): string {
+  const text = plainText ? raw.replace(/^([*_])(.*)\1$/su, "$2") : inlineText(raw);
+  return text.replace(/^\(\s*/, "").replace(/\s*\)([.!?…]?)$/, "$1");
+}
+
+function isStage(body: string, before: string, after: string): boolean {
+  return body.startsWith("(") ? isStageParenthesis(body, before, after) : stagePosition(before, after) !== "cut";
 }
 
 /** Une réplique, coupée autour de ses indications. */
@@ -232,14 +274,20 @@ function replyParts(text: string, offset: number, speakerId: string | undefined)
   for (const match of text.matchAll(INLINE_STAGE)) {
     const at = match.index;
     const body = match[0];
-    if (body.startsWith("(") && body.trim().split(/\s+/).length > MAX_STAGE_WORDS) {
+    const end = at + body.length;
+    const before = text.slice(cursor, at);
+    const after = text.slice(end);
+    if (isInsideShield(text, at) || !isStage(body, before, after)) {
       continue;
     }
+    const closing = PUNCTUATION_ALONE.exec(after)?.[0];
+    const said = WORD.test(before);
+    const toReply = closing !== undefined && said && !ENDS_SENTENCE.test(before.trimEnd());
     if (at > cursor) {
-      parts.push({ speakerId, start: offset + cursor, end: offset + at, stage: false });
+      parts.push({ speakerId, start: offset + cursor, end: offset + at, stage: false, ...(toReply ? { closing } : {}) });
     }
-    parts.push({ speakerId: undefined, start: offset + at, end: offset + at + body.length, stage: true });
-    cursor = at + body.length;
+    parts.push({ speakerId: undefined, start: offset + at, end: offset + end, stage: true, ...(closing !== undefined && !toReply ? { closing } : {}) });
+    cursor = end + (closing?.length ?? 0);
   }
   if (cursor < text.length) {
     parts.push({ speakerId, start: offset + cursor, end: offset + text.length, stage: false });
@@ -262,7 +310,7 @@ function mergeParts(raw: string, parts: readonly Part[]): Part[] {
   const merged: Part[] = [];
   for (const part of parts) {
     const last = merged[merged.length - 1];
-    if (last !== undefined && last.speakerId === part.speakerId && !last.stage && !part.stage && raw.slice(last.end, part.start).trim().length === 0) {
+    if (last !== undefined && last.closing === undefined && last.speakerId === part.speakerId && !last.stage && !part.stage && raw.slice(last.end, part.start).trim().length === 0) {
       merged[merged.length - 1] = { ...last, end: part.end };
     } else {
       merged.push(part);
@@ -296,7 +344,8 @@ function collectDeclaredNames(blocks: readonly SourceBlock[]): Set<string> {
   return declared;
 }
 
-function capsFormHolds(blocks: readonly SourceBlock[]): boolean {
+/** Combien de fois chaque nom en capitales apparaît, et si le document tient la forme théâtre. */
+function capsCensus(blocks: readonly SourceBlock[]): { holds: boolean; counts: ReadonlyMap<string, number> } {
   const counts = new Map<string, number>();
   let total = 0;
   for (const block of blocks) {
@@ -304,7 +353,7 @@ function capsFormHolds(blocks: readonly SourceBlock[]): boolean {
       continue;
     }
     for (const { text } of linesOf(block.rawSource)) {
-      const label = labelOf(text.trimStart(), isCapsName);
+      const label = labelOf(text.trimStart(), (name) => isCapsName(name));
       if (label !== undefined && label.kind !== "declaration" && label.source === "caps" && label.speakerId !== undefined) {
         counts.set(label.speakerId, (counts.get(label.speakerId) ?? 0) + 1);
         total += 1;
@@ -312,19 +361,29 @@ function capsFormHolds(blocks: readonly SourceBlock[]): boolean {
     }
   }
   const named = [...counts.values()].filter((count) => count >= MIN_LINES_PER_NAME).length;
-  return named >= MIN_CAPS_NAMES && total >= MIN_CAPS_LINES;
+  return { holds: named >= MIN_CAPS_NAMES && total >= MIN_CAPS_LINES, counts };
 }
 
-export function parseScript(blocks: readonly SourceBlock[]): ScriptParse {
+export interface ParseScriptOptions {
+  /** Un fichier texte : sa lecture simple dit le texte brut, sans rendu Markdown. */
+  readonly plainText?: boolean;
+}
+
+export function parseScript(blocks: readonly SourceBlock[], options: ParseScriptOptions = {}): ScriptParse {
   const dialogueBlocks = blocks.filter((block) => isAnalysed(block) && DIALOGUE_START.test(block.rawSource.trimStart())).length;
   const declared = collectDeclaredNames(blocks);
-  const caps = capsFormHolds(blocks);
-  const accept = (name: string): boolean => {
-    if (caps && isCapsName(name)) {
+  const { holds: caps, counts } = capsCensus(blocks);
+  const plainText = options.plainText === true;
+  const accept = (name: string, form: NameForm): boolean => {
+    const roleId = toRoleId(name);
+    if (roleId !== undefined && declared.has(roleId)) {
       return true;
     }
-    const roleId = toRoleId(name);
-    return roleId !== undefined && declared.has(roleId);
+    if (!caps || roleId === undefined || !isCapsName(name)) {
+      return false;
+    }
+    // Une seule apparition : un vrai personnage parle (`LE MESSAGER : …`), un mot isolé ou un sigle non.
+    return (counts.get(roleId) ?? 0) >= MIN_LINES_PER_NAME || (form === "inline" && lettersOf(name).length >= MIN_LETTERS_ONCE);
   };
 
   const roles = new Map<string, { name: string; lines: number }>();
@@ -355,7 +414,10 @@ export function parseScript(blocks: readonly SourceBlock[]): ScriptParse {
     const parts: Part[] = [];
     let current = running;
     let touched = false;
+    let firstLine = true;
     for (const { start, text } of linesOf(raw)) {
+      const opensParagraph = firstLine;
+      firstLine = false;
       const indent = text.length - text.trimStart().length;
       const line = text.slice(indent);
       const lineStart = start + indent;
@@ -393,7 +455,7 @@ export function parseScript(blocks: readonly SourceBlock[]): ScriptParse {
         }
         continue;
       }
-      if (isStructuralLine(line)) {
+      if (isStructuralLine(line) || (opensParagraph && isCapsCaption(line))) {
         current = undefined;
         running = undefined;
         parts.push({ speakerId: undefined, start: lineStart, end: lineStart + line.length, stage: false });
@@ -417,7 +479,7 @@ export function parseScript(blocks: readonly SourceBlock[]): ScriptParse {
         sourceRange: rangeWithin(block, part.start, part.end),
         startOffset: block.startOffset + part.start,
         endOffset: block.startOffset + part.end,
-        text: part.stage ? stageText(slice) : inlineText(slice),
+        text: (part.stage ? stageText(slice, plainText) : plainText ? slice : inlineText(slice)) + (part.closing ?? ""),
         rawSource: slice,
         ...(part.speakerId !== undefined && part.speakerId !== NARRATOR_SPEAKER_ID ? { speakerId: part.speakerId } : {})
       });

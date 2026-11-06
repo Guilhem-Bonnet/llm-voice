@@ -34,6 +34,22 @@ function tts(behaviour: (request: TtsRequest) => void = () => {}): { provider: T
 }
 
 describe("ReadingPreparer", () => {
+  it("un échec dit sa cause, pour que le message soit le bon", async () => {
+    const { provider } = tts(() => {
+      throw new Error("HTTP 500 du moteur");
+    });
+    const outcome = await new ReadingPreparer({ tts: provider, cache: new InMemoryAudioCache(), binding: { voice: "n" } }, { maxRetries: 0 }).run(chunks(2));
+    expect(outcome).toEqual({ status: "failed", error: "HTTP 500 du moteur", done: 0, total: 2 });
+  });
+
+  it("annulée avant de démarrer, elle n'envoie rien", async () => {
+    const { provider, requests } = tts();
+    const preparer = new ReadingPreparer({ tts: provider, cache: new InMemoryAudioCache(), binding: { voice: "n" } });
+    preparer.cancel();
+    expect(await preparer.run(chunks(2))).toEqual({ status: "cancelled", done: 0, total: 2 });
+    expect(requests).toEqual([]);
+  });
+
   it("remplit le cache dans l'ordre et rapporte un progrès réel ; la file de lecture ne génère ensuite plus rien", async () => {
     const { provider, requests } = tts();
     const cache = new InMemoryAudioCache();

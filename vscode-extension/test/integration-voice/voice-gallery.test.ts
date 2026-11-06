@@ -230,6 +230,7 @@ suite("voice-chain: voice gallery (card 0-005)", () => {
 
     // 1 échec sur 6 passes en lisant juste après l'écriture : on vérifie l'état qui se stabilise,
     // et il doit le rester deux secondes de suite pour qu'une vraie perte reste visible.
+    // Cause : l'écho de `globalState` remplace ce que l'hôte tient, voir `Pipeline.storeCastChoices`.
     const settles = async (wanted: boolean): Promise<void> => {
       const has = (): boolean => api.context.globalState.get<string[]>("llmVoice.voices.favorites")?.includes("vera") ?? false;
       const deadline = Date.now() + 5000;

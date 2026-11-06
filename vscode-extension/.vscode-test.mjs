@@ -27,7 +27,22 @@ const testRootDir = dirname(fileURLToPath(import.meta.url));
 // Every run starts from an empty profile: state kept from an earlier run (modes
 // duplicated by a test, a selection left behind) made tests fail one run out of
 // two, depending on what the previous run had left.
-function userDataDir(profileName) {
+//
+// Loading this file runs all of this for every profile, whichever label was asked for.
+// It used to wipe and re-seed them all: a second `vscode-test`, even on another label,
+// emptied the profile of the one already running, its voices, bible and audio cache, and
+// made it fail at random. Only the profile being launched is now touched; the others get
+// a throwaway folder, since the configuration still has to describe them.
+const requestedLabels = process.argv.flatMap((arg, index, all) => {
+  if (arg === "--label" || arg === "-l") {
+    return all[index + 1] !== undefined ? [all[index + 1]] : [];
+  }
+  return arg.startsWith("--label=") ? [arg.slice("--label=".length)] : [];
+});
+function userDataDir(profileName, label = profileName) {
+  if (requestedLabels.length > 0 && !requestedLabels.includes(label)) {
+    return mkdtempSync(join(tmpdir(), `llm-voice-test-unused-${profileName}-`));
+  }
   const dir = join(testRootDir, ".vscode-test", profileName);
   rmSync(dir, { recursive: true, force: true });
   return dir;
@@ -131,9 +146,9 @@ function seedAutoProfile(profileUserDataDir) {
 // the exact issue the short `userDataDir()` helper above already exists to
 // avoid for `fake-tts`. Reusing it here removes the random `mkdtemp` suffix
 // entirely, which is fine: nothing else shares these two profiles.
-const autoFallbackSucceedsUserDataDir = userDataDir("auto-succeeds");
+const autoFallbackSucceedsUserDataDir = userDataDir("auto-succeeds", "tts-auto-fallback-succeeds");
 seedAutoProfile(autoFallbackSucceedsUserDataDir);
-const autoFallbackFailsUserDataDir = userDataDir("auto-fails");
+const autoFallbackFailsUserDataDir = userDataDir("auto-fails", "tts-auto-fallback-fails");
 seedAutoProfile(autoFallbackFailsUserDataDir);
 const inboxDirAutoFallbackSucceeds = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-succeeds-"));
 const inboxDirAutoFallbackFails = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-fails-"));
@@ -151,7 +166,7 @@ const inboxDirAutoFallbackFails = mkdtempSync(join(tmpdir(), "llm-voice-test-inb
 // and profile pre-seeded *before* activation (settings are read once, at
 // `activate()`).
 const nativeRealUserDataDir = userDataDir("native-real");
-const nativeRealExtensionsDir = userDataDir("native-real-extensions");
+const nativeRealExtensionsDir = userDataDir("native-real-extensions", "native-real");
 mkdirSync(join(nativeRealUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice"), { recursive: true });
 mkdirSync(nativeRealExtensionsDir, { recursive: true });
 writeFileSync(
@@ -233,7 +248,7 @@ writeFileSync(
 // 20 s timeout (2026-09-29, while two evaluations were using Ollama). A
 // faithful `claude-code` profile (plus a closed narrator port as a second
 // guard) keeps every read local and deterministic.
-const securityUserDataDir = userDataDir("security");
+const securityUserDataDir = userDataDir("security", "integration-security");
 mkdirSync(join(securityUserDataDir, "User"), { recursive: true });
 writeFileSync(
   join(securityUserDataDir, "User", "settings.json"),
@@ -386,7 +401,7 @@ export default defineConfig([
     files: "out/test/integration-chunk-invalid/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_TEST_FAKE_TTS_FAIL_FROM: "2" },
     // See the comment on the `fake-tts` profile above re: separate cache/socket path.
-    launchArgs: [`--user-data-dir=${userDataDir("chunk-invalid")}`]
+    launchArgs: [`--user-data-dir=${userDataDir("chunk-invalid", "chunk-invalid-fake-tts")}`]
   },
   {
     ...common,
