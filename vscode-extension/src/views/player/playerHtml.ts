@@ -26,13 +26,16 @@ export interface PlayerHtmlInputs {
   cspSource: string;
   scriptUri: string;
   styleUri: string;
+  /** The block "Dernière réponse". Without them the block stays hidden. */
+  responsesScriptUri?: string;
+  responsesStyleUri?: string;
 }
 
 /**
  * The player's whole document (AC-SEC-02). Extracted from the provider so it
  * can be asserted on without a live webview: the security property here is
- * that **no untrusted value is interpolated at all** — the four inputs are
- * a nonce we generated and three URIs VS Code produced. Titles, profile
+ * that **no untrusted value is interpolated at all** — the inputs are a
+ * nonce we generated and URIs VS Code produced. Titles, profile
  * names, inbox message text and Claude output never reach this string; they
  * arrive later over `postMessage` and are written with `textContent` by
  * `media/player/player.js`.
@@ -42,7 +45,7 @@ export interface PlayerHtmlInputs {
  * the EgressGuard only has to cover the Extension Host).
  */
 export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
-  const { nonce, cspSource, scriptUri, styleUri } = inputs;
+  const { nonce, cspSource, scriptUri, styleUri, responsesScriptUri, responsesStyleUri } = inputs;
   const csp = [
     "default-src 'none'",
     `media-src ${cspSource} blob:`,
@@ -59,7 +62,8 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="${styleUri}" rel="stylesheet" />
+  <link href="${styleUri}" rel="stylesheet" />${responsesStyleUri !== undefined ? `
+  <link href="${responsesStyleUri}" rel="stylesheet" />` : ""}
   <title>LLM Voice Player</title>
 </head>
 <body data-state="idle">
@@ -143,6 +147,24 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
     </div>
   </div>
 
+  <section id="responses" aria-label="Dernière réponse" hidden>
+    <div class="response-head">
+      <h2 class="response-heading">Dernière réponse</h2>
+      <span id="response-latest-source"></span>
+    </div>
+    <p id="response-latest-title" class="response-cut"></p>
+    <p id="response-latest-where" class="response-cut"></p>
+    <p id="response-latest-duration" class="response-cut"></p>
+    <div class="response-actions">
+      <button id="btn-response-read" class="response-button response-button-primary" type="button">Tout lire</button>
+    </div>
+    <h2 id="responses-others-heading" class="response-heading"></h2>
+    <div id="responses-others" role="list" aria-label="Autres réponses"></div>
+    <div class="response-actions">
+      <button id="btn-responses-all" class="response-button" type="button"><span id="responses-all-long"></span><span id="responses-all-short"></span></button>
+    </div>
+  </section>
+
   <section id="document" aria-label="Document ouvert">
     <div id="document-open" hidden>
       <h2 id="document-heading">Document ouvert</h2>
@@ -172,7 +194,8 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
 
   <audio id="audio"></audio>
 
-  <script nonce="${nonce}" src="${scriptUri}"></script>
+  <script nonce="${nonce}" src="${scriptUri}"></script>${responsesScriptUri !== undefined ? `
+  <script nonce="${nonce}" src="${responsesScriptUri}"></script>` : ""}
 </body>
 </html>`;
 }

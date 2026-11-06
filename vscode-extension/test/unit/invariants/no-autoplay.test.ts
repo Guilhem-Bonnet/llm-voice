@@ -18,7 +18,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const SRC_ROOT = resolve(__dirname, "../../../src");
-const FORBIDDEN_DIRS = ["claude", "inbox"];
+const FORBIDDEN_DIRS = ["claude", "inbox", "views/inbox"];
 
 function listTsFiles(dir: string): string[] {
   if (!existsSync(dir)) {

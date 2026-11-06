@@ -179,7 +179,7 @@ writeFileSync(
     {
       schemaVersion: 1,
       voice:
-        process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "kyutai" || process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "cast"
+        ["kyutai", "cast", "response"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "")
           ? // No baseUrl on purpose: the provider must find its own port.
             process.env.LLM_VOICE_NATIVE_REAL_ENGINE === "kyutai16"
             ? { providerId: "kyutai-1-6b", voice: "cml-577_394", speed: 1 }
@@ -229,7 +229,7 @@ writeFileSync(
 
 // The security suite must not depend on a real local LLM: its inbox entries
 // are read with the `claude-code` default profile (Résumé LLM, narrated),
-// and a busy or cold Ollama pushed `speakLatestClaudeResponse` past mocha's
+// and a busy or cold Ollama pushed `speakLatestResponse` past mocha's
 // 20 s timeout (2026-09-29, while two evaluations were using Ollama). A
 // faithful `claude-code` profile (plus a closed narrator port as a second
 // guard) keeps every read local and deterministic.
@@ -457,7 +457,9 @@ export default defineConfig([
     env: { LLM_VOICE_TEST_FAKE_TTS: undefined },
     launchArgs: [
       `--user-data-dir=${nativeRealUserDataDir}`,
-      `--extensions-dir=${nativeRealExtensionsDir}`
+      `--extensions-dir=${nativeRealExtensionsDir}`,
+      // `--response` presses the real shortcut through the browser's debugging protocol.
+      ...(process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT ? [`--remote-debugging-port=${process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT}`] : [])
     ]
   }
 ]);

@@ -26,7 +26,7 @@ interface TestPipeline {
   getTotalChunks(): number;
 }
 
-const enabled = process.env.LLM_VOICE_NATIVE_REAL === "1" && process.env.LLM_VOICE_NATIVE_REAL_SCENARIO !== "kyutai" && process.env.LLM_VOICE_NATIVE_REAL_SCENARIO !== "cast";
+const enabled = process.env.LLM_VOICE_NATIVE_REAL === "1" && process.env.LLM_VOICE_NATIVE_REAL_SCENARIO !== "kyutai" && process.env.LLM_VOICE_NATIVE_REAL_SCENARIO !== "cast" && process.env.LLM_VOICE_NATIVE_REAL_SCENARIO !== "response";
 
 /** What a broken native path writes to the journal (field bug: `start failed … Core: enqueue refused (invalid_request)`). */
 const JOURNAL_FAILURE = /chunk failed|start failed|invalid_request/;

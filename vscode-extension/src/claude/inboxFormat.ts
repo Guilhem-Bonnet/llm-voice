@@ -1,27 +1,8 @@
 /**
- * Pure formatting helpers shared by the Quick Pick and the Tree View
- * (ADR-011): provider icon, relative time, entries. No `vscode` import so
- * these are unit-testable directly.
+ * Pure formatting helpers shared by the Quick Pick and the view "Réponses"
+ * (ADR-011): relative time, badge. No `vscode` import so these are
+ * unit-testable directly.
  */
-
-import type { InboxProviderId } from "../core/inbox.js";
-
-/** Codicon per known provider (ADR-011: codicons only, never emoji). */
-export function inboxProviderIcon(provider: InboxProviderId): string {
-  switch (provider) {
-    case "claude-code":
-      return "$(comment-discussion)";
-    case "codex":
-      return "$(terminal)";
-    case "gemini-cli":
-    case "gemini":
-      return "$(star-full)";
-    case "copilot":
-      return "$(github)";
-    default:
-      return "$(circle-outline)";
-  }
-}
 
 /** "il y a X min" (CdC's inbox UX), coarse enough to not need live refresh. */
 export function formatRelativeTime(capturedAt: number, now: number = Date.now()): string {
@@ -47,7 +28,10 @@ export interface InboxBadge {
   tooltip: string;
 }
 
-/** `undefined` clears the badge — `TreeView.badge = undefined` is how VS Code hides it once the inbox is fully read. */
+/** `undefined` clears the badge — `TreeView.badge = undefined` is how VS Code hides it once every reply is read. */
 export function computeInboxBadge(unreadCount: number): InboxBadge | undefined {
-  return unreadCount > 0 ? { value: unreadCount, tooltip: `${unreadCount} message(s) non lu(s)` } : undefined;
+  if (unreadCount <= 0) {
+    return undefined;
+  }
+  return { value: unreadCount, tooltip: unreadCount === 1 ? "1 réponse non lue" : `${unreadCount} réponses non lues` };
 }

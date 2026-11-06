@@ -51,7 +51,7 @@ export interface PipelineFacade {
   /** `LLM Voice: Clear Provider API Key` (AC-17). */
   clearProviderApiKey(): Promise<void>;
   openInbox(): Promise<void>;
-  speakLatestClaudeResponse(): Promise<void>;
+  speakLatestResponse(): Promise<void>;
   clearAudioCache(): Promise<void>;
   verifyLocalMode(): Promise<void>;
   installClaudeHook(): Promise<void>;
@@ -160,7 +160,7 @@ export class NotWiredPipeline implements PipelineFacade {
     return this.notWired();
   }
 
-  speakLatestClaudeResponse(): Promise<void> {
+  speakLatestResponse(): Promise<void> {
     return this.notWired();
   }
 

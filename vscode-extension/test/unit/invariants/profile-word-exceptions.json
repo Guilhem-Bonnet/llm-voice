@@ -16,26 +16,18 @@
       "LLM Voice: Open Profiles",
       "LLM Voice: Select Profile",
       "LLM Voice: Set Default Profile",
-      "Nombre de phrases du tout premier chunk audio d'un document, avant la taille normale du profil (CdC §63 : la lecture doit démarrer dès le premier chunk). Sans effet si ≥ à la taille de chunk du profil.",
-      "`full` (défaut depuis la révision du 2026-09-12) : icône dédiée dans la barre d'activité + View Container complet (Lecture en cours, Inbox, Profils), point d'entrée principal. `minimal` : status bar + Panel + CodeLens uniquement, pour qui préfère le lecteur dans le panneau (ADR-011)."
+      "Nombre de phrases du tout premier chunk audio d'un document, avant la taille normale du profil (CdC §63 : la lecture doit démarrer dès le premier chunk). Sans effet si ≥ à la taille de chunk du profil."
     ]
   },
   {
     "file": "package.json",
     "card": "1-005",
     "texts": [
-      "Profil par défaut pour l'inbox Claude Code.",
       "Profil par défaut pour le presse-papiers.",
+      "Profil par défaut pour les réponses.",
       "Profil par défaut pour un document Markdown.",
       "Profil par défaut pour une sélection de texte.",
-      "Profil par défaut selon la source de capture (CdC §47) : markdown, text (sélection), clipboard, claude-code. Une source non renseignée utilise le dernier profil sélectionné. Ex. par défaut : Claude Inbox → Résumé LLM."
-    ]
-  },
-  {
-    "file": "src/claude/InboxQuickPick.ts",
-    "card": "0-009",
-    "texts": [
-      "Select profile"
+      "Profil par défaut selon la source de capture (CdC §47) : markdown, text (sélection), clipboard, claude-code. Une source non renseignée utilise le dernier profil sélectionné."
     ]
   },
   {

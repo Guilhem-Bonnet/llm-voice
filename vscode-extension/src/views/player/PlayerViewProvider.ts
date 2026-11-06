@@ -10,6 +10,7 @@ import { SequencedAudioSink } from "../../playback/SequencedAudioSink.js";
 import { WebviewAudioSink } from "../../playback/WebviewAudioSink.js";
 import type { PlayerScriptView } from "../../core/playback.js";
 import { documentViewOf, type DocumentViewInput } from "./documentView.js";
+import type { PanelResponsesView } from "../../claude/responseRow.js";
 
 /** What the line of the "Document ouvert" block is told of the text; it never reaches the webview. */
 export type ScriptDescriber = (document: { uri: string; languageId: string; text: string }) => Promise<PlayerScriptView | undefined>;
@@ -30,6 +31,8 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
   private view: vscode.WebviewView | undefined;
   private readonly disposables: vscode.Disposable[] = [];
   private editorWatch: vscode.Disposable[] = [];
+  private responses: PanelResponsesView | undefined;
+  private responseHandler: ((raw: unknown) => void) | undefined;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -72,6 +75,7 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this.renderHtml(webviewView.webview);
     this.disposables.push(this.sink.attach(webviewView.webview));
+    this.disposables.push(webviewView.webview.onDidReceiveMessage((raw: unknown) => this.onResponsesMessage(raw)));
     this.followActiveEditor();
 
     webviewView.onDidDispose(() => {
@@ -79,6 +83,32 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
       this.stopFollowingEditor();
       this.view = undefined;
     });
+  }
+
+  /** The block "Dernière réponse": it draws what it gets, and starts nothing. */
+  pushResponses(view: PanelResponsesView): void {
+    this.responses = view;
+    this.postResponses();
+  }
+
+  /** Who hears the block's buttons; each one is a click. */
+  setResponseHandler(handler: (raw: unknown) => void): void {
+    this.responseHandler = handler;
+  }
+
+  private postResponses(): void {
+    if (this.responses !== undefined) {
+      void this.view?.webview.postMessage({ type: "responses", view: this.responses });
+    }
+  }
+
+  private onResponsesMessage(raw: unknown): void {
+    const type = typeof raw === "object" && raw !== null ? (raw as { type?: unknown }).type : undefined;
+    if (type === "responsesReady") {
+      this.postResponses();
+    } else if (type === "responseAction") {
+      this.responseHandler?.(raw);
+    }
   }
 
   /** Reveals the Panel view without stealing editor focus (ADR-001). */
@@ -187,6 +217,12 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
         .toString(),
       styleUri: webview
         .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "media", "player", "player.css"))
+        .toString(),
+      responsesScriptUri: webview
+        .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "media", "player", "responses.js"))
+        .toString(),
+      responsesStyleUri: webview
+        .asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "media", "player", "responses.css"))
         .toString()
     });
   }

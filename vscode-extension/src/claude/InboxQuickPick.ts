@@ -1,58 +1,41 @@
 /**
- * `openInbox` in `minimal` layout (ADR-011): a Quick Pick over inbox
- * entries, action buttons per item (Speak / Open full response / Delete /
- * Mark read), plus a "Select profile" entry. Only ever calls the injected
- * `InboxQuickPickActions` callbacks — playback itself is entirely the
- * caller's responsibility (zero autoplay, ADR-003).
+ * `openInbox` in `minimal` layout (ADR-011): the list "Réponses" as a Quick Pick. Each
+ * line has its "Lire" button, and "Autres actions" holds the rest. Only ever calls the
+ * injected `InboxQuickPickActions` callbacks: playback itself is entirely the caller's
+ * responsibility (zero autoplay, ADR-003).
  */
 
 import * as vscode from "vscode";
 import type { InboxEntry } from "../core/inbox.js";
-import { formatRelativeTime, inboxProviderIcon } from "./inboxFormat.js";
-import { inboxEntrySummary } from "./ClaudeInboxSource.js";
+import { responsePickTexts } from "./responseRow.js";
 
 export interface InboxQuickPickActions {
   speak(entry: InboxEntry): Promise<void>;
   openFull(entry: InboxEntry): Promise<void>;
   remove(entry: InboxEntry): Promise<void>;
   toggleRead(entry: InboxEntry): Promise<void>;
-  selectProfile(): Promise<void>;
+  chooseMode(): Promise<void>;
 }
 
-const BUTTON_SPEAK: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon("play"), tooltip: "Speak" };
-const BUTTON_OPEN_FULL: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon("eye"), tooltip: "Open full response" };
-const BUTTON_DELETE: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon("trash"), tooltip: "Delete" };
-const BUTTON_MARK_READ: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon("check"), tooltip: "Mark read / unread" };
-const BUTTON_SELECT_PROFILE: vscode.QuickInputButton = {
-  iconPath: new vscode.ThemeIcon("mic"),
-  tooltip: "Select profile"
-};
+const BUTTON_SPEAK: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon("play"), tooltip: "Lire" };
+const BUTTON_MORE: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon("ellipsis"), tooltip: "Autres actions" };
+const BUTTON_CHOOSE_MODE: vscode.QuickInputButton = { iconPath: new vscode.ThemeIcon("mic"), tooltip: "Changer de mode" };
+
+const ACTION_OPEN = "Ouvrir le texte";
+const ACTION_DELETE = "Supprimer";
 
 interface InboxQuickPickItem extends vscode.QuickPickItem {
   entry: InboxEntry;
 }
 
 function itemFor(entry: InboxEntry): InboxQuickPickItem {
-  const unreadDot = entry.read ? "" : "$(circle-filled) ";
-  return {
-    entry,
-    label: `${inboxProviderIcon(entry.message.provider)} ${unreadDot}${inboxEntrySummary(entry)}`,
-    description: formatRelativeTime(entry.message.capturedAt),
-    detail: entry.message.title ?? firstLine(entry.message.message),
-    buttons: [BUTTON_SPEAK, BUTTON_OPEN_FULL, BUTTON_MARK_READ, BUTTON_DELETE]
-  };
-}
-
-function firstLine(text: string): string {
-  return (text.split(/\r?\n/, 1)[0] ?? "").trim();
+  return { entry, ...responsePickTexts(entry, Date.now()), buttons: [BUTTON_SPEAK, BUTTON_MORE] };
 }
 
 /**
- * Fetches a fresh entry list via `listEntries` and renders the Quick Pick.
- * Any action that mutates the inbox (`speak` opening full response is
- * read-only, but delete/mark-read/select-profile are not) re-fetches and
- * re-renders rather than trying to patch the in-memory list, keeping this a
- * thin, always-consistent view over `InboxRepository`/`ReadStateStore`.
+ * Fetches a fresh entry list via `listEntries` and renders the Quick Pick. An action
+ * on a line that changes the list opens it again, read fresh from disk, rather than
+ * patching it: a thin, always-consistent view over `InboxRepository`/`ReadStateStore`.
  */
 export async function showInboxQuickPick(
   listEntries: () => Promise<readonly InboxEntry[]>,
@@ -61,41 +44,40 @@ export async function showInboxQuickPick(
   const entries = await listEntries();
 
   const quickPick = vscode.window.createQuickPick<InboxQuickPickItem>();
-  quickPick.title = "LLM Voice : Inbox";
+  quickPick.title = "LLM Voice : Réponses";
   quickPick.placeholder =
-    entries.length === 0 ? "Inbox vide — aucune réponse capturée pour le moment." : "Choisir un message (Entrée = Speak)";
-  quickPick.buttons = [BUTTON_SELECT_PROFILE];
+    entries.length === 0 ? "Aucune réponse pour l'instant." : "Choisir une réponse (Entrée pour lire)";
+  quickPick.matchOnDetail = true;
+  quickPick.buttons = [BUTTON_CHOOSE_MODE];
   quickPick.items = entries.map(itemFor);
 
   const dispose = () => quickPick.dispose();
 
   quickPick.onDidTriggerButton((button) => {
-    if (button === BUTTON_SELECT_PROFILE) {
+    if (button === BUTTON_CHOOSE_MODE) {
       dispose();
-      void actions.selectProfile();
+      void actions.chooseMode();
     }
   });
 
   quickPick.onDidTriggerItemButton(async (event) => {
     const { entry } = event.item;
+    dispose();
     if (event.button === BUTTON_SPEAK) {
-      dispose();
       await actions.speak(entry);
       return;
     }
-    if (event.button === BUTTON_OPEN_FULL) {
-      dispose();
+    const toggle = entry.read ? "Marquer comme non lue" : "Marquer comme lue";
+    const choice = await vscode.window.showQuickPick([ACTION_OPEN, toggle, ACTION_DELETE], {
+      title: "LLM Voice : Autres actions"
+    });
+    if (choice === undefined) {
+      await showInboxQuickPick(listEntries, actions);
+    } else if (choice === ACTION_OPEN) {
       await actions.openFull(entry);
-      return;
-    }
-    if (event.button === BUTTON_DELETE) {
-      await actions.remove(entry);
-      await refresh();
-      return;
-    }
-    if (event.button === BUTTON_MARK_READ) {
-      await actions.toggleRead(entry);
-      await refresh();
+    } else {
+      await (choice === ACTION_DELETE ? actions.remove(entry) : actions.toggleRead(entry));
+      await showInboxQuickPick(listEntries, actions);
     }
   });
 
@@ -108,18 +90,6 @@ export async function showInboxQuickPick(
   });
 
   quickPick.onDidHide(dispose);
-
-  const refresh = async (): Promise<void> => {
-    const active = quickPick.activeItems[0]?.entry.id;
-    const next = await listEntries();
-    quickPick.items = next.map(itemFor);
-    if (active !== undefined) {
-      const stillThere = quickPick.items.find((item) => item.entry.id === active);
-      if (stillThere !== undefined) {
-        quickPick.activeItems = [stillThere];
-      }
-    }
-  };
 
   quickPick.show();
 }

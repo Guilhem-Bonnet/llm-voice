@@ -62,7 +62,7 @@ const V0_3_VIEWS = ["llmVoice.player", "llmVoice.playerView", "llmVoice.inboxVie
 /** Nothing is retired by card 0-004: `profilesView.*` go with 1-002, `llmVoice.player` with 0-007. */
 const RETIRED: readonly string[] = [];
 
-const ALIASES = ["llmVoice.setupVoice", "llmVoice.browseVoices", "llmVoice.selectProfile"];
+const ALIASES = ["llmVoice.setupVoice", "llmVoice.browseVoices", "llmVoice.selectProfile", "llmVoice.speakLatestClaudeResponse"];
 
 function source(relative: string): string {
   return readFileSync(resolve(ROOT, relative), "utf8");
@@ -108,6 +108,8 @@ describe("V8: identifiers (ADR-017 §3)", () => {
     expect(call("llmVoice.openVoiceGallery")).toBe("openVoiceGallery");
     expect(call("llmVoice.chooseMode")).toBe("chooseMode");
     expect(call("llmVoice.selectProfile")).toBe("chooseMode");
+    expect(call("llmVoice.speakLatestResponse")).toBe("speakLatestResponse");
+    expect(call("llmVoice.speakLatestClaudeResponse")).toBe("speakLatestResponse");
   });
 
   it("the walkthrough step goes to chooseMode, its id unchanged", () => {

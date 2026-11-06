@@ -103,9 +103,11 @@ suite("LLM Voice dedicated sidebar (S9, ADR-011 revision 2026-09-12)", () => {
     assert.deepEqual(
       views.map((view) => view.id),
       ["llmVoice.playerView", "llmVoice.inboxView", "llmVoice.profilesView"],
-      "Lecture en cours, Inbox, Profils, in that order (CdC §6)"
+      "Lecture en cours, Réponses, Modes, in that order (CdC §6)"
     );
     assert.equal(views[0]?.type, "webview", "the player row is the same webview view type as the Panel one");
+    assert.equal(views[1]?.type, "webview", "a line of Réponses has two lines and a visible button");
+    assert.equal(views[1]?.name, "Réponses");
   });
 
   test("every view of the llmVoice container is registered and resolvable/listable", async () => {
@@ -177,6 +179,8 @@ suite("LLM Voice dedicated sidebar (S9, ADR-011 revision 2026-09-12)", () => {
 
   test("the inbox unread badge appears after a deposit and matches the unread count", async () => {
     const { pipeline } = await activateExtension();
+    // A webview view has nothing to carry a badge until it has been opened once.
+    await vscode.commands.executeCommand("llmVoice.inboxView.focus");
     const path = depositMessage({ message: "S9: badge non lu." });
 
     try {

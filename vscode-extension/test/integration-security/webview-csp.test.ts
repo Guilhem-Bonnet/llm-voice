@@ -122,7 +122,7 @@ suite("AC-SEC-02 — the live player webview", () => {
 
     await vscode.commands.executeCommand("llmVoice.inbox.refresh");
     await vscode.commands
-      .executeCommand("llmVoice.speakLatestClaudeResponse")
+      .executeCommand("llmVoice.speakLatestResponse")
       .then(undefined, () => undefined);
 
     panel = renderRealPlayer(api.context.extensionUri, "payload");

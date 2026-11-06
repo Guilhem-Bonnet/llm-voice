@@ -1,5 +1,5 @@
 /**
- * Read-only virtual document for "Open full response" (`llm-voice-inbox:`
+ * Read-only virtual document for "Ouvrir le texte" (`llm-voice-inbox:`
  * scheme). The URI path carries the entry id; content is fetched from
  * `InboxRepository` on demand, never cached — the inbox is the single
  * source of truth (ADR-004).
@@ -29,7 +29,7 @@ export class InboxContentProvider implements vscode.TextDocumentContentProvider 
     const entries = await this.repository.list();
     const entry = entries.find((candidate) => candidate.id === id);
     if (entry === undefined) {
-      return "LLM Voice : ce message d'inbox n'existe plus.";
+      return "LLM Voice : cette réponse n'existe plus.";
     }
     const header = `${entry.message.provider}${entry.message.cwd !== undefined ? ` — ${entry.message.cwd}` : ""}`;
     return `${header}\n${"=".repeat(header.length)}\n\n${entry.message.message}\n`;

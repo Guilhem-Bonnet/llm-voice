@@ -20,6 +20,7 @@ const EXPECTED_COMMANDS = [
   "llmVoice.selectProfile",
   "llmVoice.openProfiles",
   "llmVoice.openInbox",
+  "llmVoice.speakLatestResponse",
   "llmVoice.speakLatestClaudeResponse",
   "llmVoice.clearHighlight",
   "llmVoice.clearAudioCache",

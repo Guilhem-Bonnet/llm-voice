@@ -59,7 +59,7 @@ suite("LLM Voice onboarding — declarations (S7.2)", () => {
     }
   });
 
-  test("contributes.viewsWelcome covers the empty player and the empty inbox", async () => {
+  test("contributes.viewsWelcome covers the empty player; the empty list is drawn by its webview", async () => {
     const extension = await activateExtension();
     const packageJson = extension.packageJSON as PackageJson;
     const welcomes = packageJson.contributes.viewsWelcome ?? [];
@@ -69,9 +69,7 @@ suite("LLM Voice onboarding — declarations (S7.2)", () => {
     assert.match(player?.contents ?? "", /command:llmVoice\.setupVoice/);
     assert.match(player?.contents ?? "", /command:llmVoice\.speakDocument/);
 
-    const inbox = welcomes.find((entry) => entry.view === "llmVoice.inboxView");
-    assert.ok(inbox, "llmVoice.inboxView should have viewsWelcome content");
-    assert.match(inbox?.contents ?? "", /command:llmVoice\.installClaudeHook/);
+    assert.equal(welcomes.find((entry) => entry.view === "llmVoice.inboxView"), undefined);
   });
 
   test("editor/title offers to read any text file and the Markdown preview", async () => {

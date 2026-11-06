@@ -154,6 +154,8 @@ body {
 
 .welcome-button {
   appearance: none;
+  flex: none;
+  white-space: nowrap;
   border: 1px solid var(--vscode-button-border, transparent);
   border-radius: 4px;
   background-color: var(--vscode-button-secondaryBackground, var(--vscode-button-background));

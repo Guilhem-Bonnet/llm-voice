@@ -173,9 +173,9 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.setProviderApiKey", () => pipeline.setProviderApiKey()),
     vscode.commands.registerCommand("llmVoice.clearProviderApiKey", () => pipeline.clearProviderApiKey()),
     vscode.commands.registerCommand("llmVoice.openInbox", () => pipeline.openInbox()),
-    vscode.commands.registerCommand("llmVoice.speakLatestClaudeResponse", () =>
-      pipeline.speakLatestClaudeResponse()
-    ),
+    // Any tool's latest reply. The old id stays executable, ADR-017 §3.
+    vscode.commands.registerCommand("llmVoice.speakLatestResponse", () => pipeline.speakLatestResponse()),
+    vscode.commands.registerCommand("llmVoice.speakLatestClaudeResponse", () => pipeline.speakLatestResponse()),
     vscode.commands.registerCommand("llmVoice.clearHighlight", () => {
       // No silent no-op (S7.3): only the *active* editor is checked — good
       // enough to answer "was there anything visibly highlighted here?"

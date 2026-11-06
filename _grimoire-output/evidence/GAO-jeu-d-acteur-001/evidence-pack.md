@@ -20,6 +20,16 @@
 | Chaîne réelle hors GPU | `test/integration-voice/cast-voices.test.ts` | `npm run test:integration-voice` | `voice_url` par personnage reçue par `MockTtsServer`, dans l'ordre, un seul POST à la fois, relecture sans POST |
 | Textes d'essai | `docs/essais-voix/theatre-demo.md`, `06` à `12`, leurs `.attendu.json` | écrits pour cette carte | texte original, voir écarts |
 
+<!-- grimoire:observed-inventory:start -->
+## Inventaire observé
+
+Régénéré automatiquement depuis `evidence-log.jsonl` (hooks du host) — ne pas éditer à la main ; la section manuelle « Evidence inventory » ci-dessus reste éditable et prime en cas de doute.
+
+| Preuve | Détail | Source | Résultat |
+|---|---|---|---|
+| Aucune preuve observée pour l'instant |  |  |  |
+<!-- grimoire:observed-inventory:end -->
+
 ## Validation
 
 | Check | Command or method | Result | Notes |
@@ -73,3 +83,16 @@ The task can be considered complete only when mandatory evidence gates for the s
 - Rejeu : typecheck 0, lint 0, build 0, unitaires 2820 réussis, fake-tts 73, voice-chain 35 (deux passes), integration-security 8. Test des favoris renforcé : état stable 2 s exigé ; cause de l'échec isolé (1 sur 6) non établie.
 - Rendu du bloc Document ouvert à 260, 320 et 500 px : `panneau-260-320-500.png`, boutons à taille fixe, sans étirement ni retour à la ligne interne.
 - Non testé : Précédent et Suivant entre voix ; écoute de guilhem-bonnet (critère AC-002).
+
+## Relecture indépendante du commit a851b70 (2026-11-06), à corriger avant clôture
+
+1. Lien Markdown dans une réplique : la parenthèse de l'URL est prise pour une indication, le jeu d'acteurs est abandonné pour tout le document (exécuté).
+2. Mot en capitales seul (`FIN`, `RIDEAU`) : devient un personnage, avec sa voix et une entrée dans la bible (exécuté).
+3. Parenthèse d'un mot dans une réplique (`Je (ne) sais`) : la voix change au milieu de la phrase (exécuté).
+4. Ponctuation seule après une indication supprimée (`Viens (bas) ?`) (lecture du code).
+5. Fichier texte : la garde compare normalisé contre normalisé, alors que la lecture simple livre le texte brut ; mots différents sans message (exécuté).
+6. Préparer saute `prepareEngine` : à froid, seul le délai de 60 s protège le premier passage. Vérifié : `tts.timeoutMs` vaut 60000, `loadsOnDemand` vrai ; échec non observé.
+7. Stop n'arrête ni une préparation ni une question ouverte ; une réponse tardive démarre après un Stop (lecture du code).
+8. Messages trompeurs : suspension mémoire dite « ne répond pas » ; narrateur absent de `/voices` dit « demande une voix 1.6B ».
+9. `warmUp` coupé dès l'activation, même sans personnage ni mode Fidèle.
+Mode jeu : pendant la préparation, le serveur répond 503 et la préparation passe à `held` ; aucun contournement relevé côté code du commit.

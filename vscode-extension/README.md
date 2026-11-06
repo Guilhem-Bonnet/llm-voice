@@ -66,12 +66,15 @@ pour ce document et ne lance jamais la lecture. **Distribution** change la voix
 d'un personnage pour la lecture suivante. Pour essayer :
 `docs/essais-voix/theatre-demo.md`.
 
-## Inbox Claude Code
+## Réponses
 
-Les réponses de Claude Code peuvent être capturées automatiquement dans une
-inbox dédiée (**LLM Voice: Open Inbox**, **LLM Voice: Speak Latest Claude
-Response**). En attendant, **LLM Voice: Speak Clipboard** lit n'importe quel
-texte copié.
+La liste **Réponses** réunit les réponses déposées par vos outils, avec la durée
+estimée de chacune. **LLM Voice: Lire la dernière réponse** (`Ctrl+Alt+V` puis
+`R`, aussi depuis le terminal intégré) lit la plus récente, quel que soit
+l'outil. Rien ne se lit tout seul : une réponse qui arrive attend votre geste.
+Aujourd'hui, Claude Code dépose ses réponses via **LLM Voice: Install Claude
+Hook** ; pour tout autre outil, copiez la réponse puis **Lire le presse-papiers**
+(`Ctrl+Alt+V` puis `C`).
 
 ## La promesse locale
 

@@ -14,6 +14,9 @@
 # scripts/audio-spike/native-sink-play.sh) et d'un LLM_VOICE_CORE_STATE_DIR
 # jetable : jamais de rattachement au Core « réel » d'un VS Code ouvert.
 #
+# `--response` : dépose une réponse de test dans un dossier temporaire et la lit par
+# Ctrl+Alt+V puis R, vraie frappe, focus dans le terminal intégré (Kyutai 1.6B).
+#
 # `--kyutai` : même chaîne avec la voix Estelle (`pocket-tts serve --language french`
 # requis), via le chemin du bouton Test, pause de 2,5 s comprise :
 # `silence_between_sounds_ms` du JSON mesure ce silence.
@@ -68,6 +71,20 @@ if [ "${1:-}" = "--cast" ]; then
     || rm -rf "$EXT/.vscode-test/native-real/User/globalStorage/guilhem-bonnet.llm-voice/cache"
   CAST_SINCE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 fi
+RESPONSE_TEXT="Les deux pannes sont corrigées. La lecture part maintenant du raccourci. Rien ne se lit tout seul."
+if [ "${1:-}" = "--response" ]; then
+  # GAO-r-ponses-1-l-001 : une réponse de test dans un dossier temporaire, jamais l'inbox de
+  # l'utilisateur, lue par Ctrl+Alt+V puis R avec le focus dans le terminal. Kyutai 1.6B, port 8020.
+  export LLM_VOICE_NATIVE_REAL_ENGINE=kyutai16 LLM_VOICE_NATIVE_REAL_SCENARIO=response
+  export LLM_VOICE_NATIVE_REAL_CDP_PORT="${LLM_VOICE_NATIVE_REAL_CDP_PORT:-47631}"
+  curl -fs -m 3 http://localhost:8020/health >/dev/null \
+    || { echo "native-real.sh: le service kyutai16 doit tourner sur le port 8020 (deploy/README.md)" >&2; exit 2; }
+  [ -n "${LLM_VOICE_NATIVE_REAL_KEEP_CACHE:-}" ] \
+    || rm -rf "$EXT/.vscode-test/native-real/User/globalStorage/guilhem-bonnet.llm-voice/cache"
+  export LLM_VOICE_INBOX
+  LLM_VOICE_INBOX="$(mktemp -d)"
+  python3 -c 'import json,sys,time; now=int(time.time()*1000); json.dump({"schemaVersion":1,"provider":"claude-code","sessionId":"preuve-reponse","capturedAt":now,"cwd":"/tmp/preuve","message":sys.argv[2]},open(sys.argv[1]+"/"+str(now)+"-preuve.json","w",encoding="utf-8"),ensure_ascii=False)' "$LLM_VOICE_INBOX" "$RESPONSE_TEXT"
+fi
 if [ "${1:-}" = "--kyutai16" ]; then
   # Même scénario avec Kyutai TTS 1.6B et la voix Camille, service `kyutai16` démarré sur le port 8020.
   export LLM_VOICE_NATIVE_REAL_ENGINE=kyutai16
@@ -102,6 +119,9 @@ fi
 if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "cast" ]; then
   # Ce qui doit s'entendre : tout le texte, sans les noms en capitales ni le balisage.
   EXPECT="$(python3 -c 'import re,sys; t=open(sys.argv[1],encoding="utf-8").read(); t=re.sub(r"^[A-ZÉÈ]+ : ","",t,flags=re.M); t=re.sub(r"[#*]","",t); print(" ".join(t.split()))' "$LLM_VOICE_NATIVE_REAL_DOCUMENT")"
+fi
+if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "response" ]; then
+  EXPECT="$RESPONSE_TEXT"
 fi
 export LLM_VOICE_NATIVE_REAL_EXIT_FILE
 LLM_VOICE_NATIVE_REAL_EXIT_FILE="$(mktemp)"

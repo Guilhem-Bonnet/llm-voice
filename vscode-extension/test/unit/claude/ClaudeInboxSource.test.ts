@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ClaudeInboxSource, inboxEntrySummary, inboxEntryTitle } from "../../../src/claude/ClaudeInboxSource.js";
+import { ClaudeInboxSource, inboxEntryTitle } from "../../../src/claude/ClaudeInboxSource.js";
 import { InboxRepository } from "../../../src/claude/InboxRepository.js";
 import type { InboxEntry } from "../../../src/core/inbox.js";
 
@@ -26,19 +26,13 @@ function entry(overrides: Partial<InboxEntry["message"]> = {}): InboxEntry {
   };
 }
 
-describe("inboxEntrySummary / inboxEntryTitle", () => {
-  it("summary is 'provider • basename(cwd)'", () => {
-    expect(inboxEntrySummary(entry())).toBe("claude-code • backend-api");
+describe("inboxEntryTitle", () => {
+  it("is the first line of the reply, the same title as its line in the list", () => {
+    expect(inboxEntryTitle(entry())).toBe("Ligne un.");
   });
 
-  it("summary omits the cwd part when cwd is absent", () => {
-    const withoutCwd = entry();
-    delete (withoutCwd.message as { cwd?: string }).cwd;
-    expect(inboxEntrySummary(withoutCwd)).toBe("claude-code");
-  });
-
-  it("title appends the first line of the message", () => {
-    expect(inboxEntryTitle(entry())).toBe("claude-code • backend-api — Ligne un.");
+  it("names no tool: the player shows what is read", () => {
+    expect(inboxEntryTitle(entry({ title: "Fait" }))).toBe("Fait");
   });
 });
 
@@ -80,7 +74,7 @@ describe("ClaudeInboxSource", () => {
 
     expect(doc.sourceType).toBe("claude-code");
     expect(doc.rawText).toBe("Refactoring terminé.\nLes tests passent.");
-    expect(doc.title).toBe("claude-code • backend-api — Refactoring terminé.");
+    expect(doc.title).toBe("Refactoring terminé.");
     expect(doc.metadata?.provider).toBe("claude-code");
   });
 

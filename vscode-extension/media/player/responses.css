@@ -1,0 +1,261 @@
+/*
+ * The list "Réponses", in the panel's block and in its own view. Theme colours only;
+ * buttons keep their size, are never stretched and never wrap their label.
+ */
+
+.responses-page {
+  margin: 0;
+  padding: 4px 8px 8px 12px;
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-sideBar-background, transparent);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.responses-page * {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* A reading has the panel to itself; the block comes back when it ends. */
+body[data-state="preparing"] #responses,
+body[data-state="buffering"] #responses,
+body[data-state="playing"] #responses,
+body[data-state="paused"] #responses {
+  display: none;
+}
+
+#responses {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--vscode-sideBarSectionHeader-border, var(--vscode-panel-border, transparent));
+}
+
+.response-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.response-heading {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85em;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#responses-others-heading {
+  margin-top: 8px;
+}
+
+#response-latest-source {
+  flex: none;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.response-cut {
+  display: block;
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#response-latest-title {
+  font-weight: 600;
+}
+
+#response-latest-where,
+#response-latest-duration {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.response-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.response-button {
+  appearance: none;
+  flex: none;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 2px;
+  background-color: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
+  cursor: pointer;
+  font-size: var(--vscode-font-size);
+  font-family: var(--vscode-font-family);
+  white-space: nowrap;
+}
+
+.response-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
+}
+
+.response-button-primary {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.response-button-primary:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.response-button:focus-visible,
+.response-icon-button:focus-visible,
+.response-menu-item:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+
+.response-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.response-dot {
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.response-dot-unread {
+  background-color: var(--vscode-activityBarBadge-background, var(--vscode-focusBorder));
+}
+
+.response-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.response-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.response-row-read .response-title {
+  color: var(--vscode-descriptionForeground);
+}
+
+.response-line {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.response-icon-button {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.response-icon-button:hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.response-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  width: 190px;
+  padding: 4px 0;
+  border: 1px solid var(--vscode-menu-border, var(--vscode-widget-border, transparent));
+  border-radius: 3px;
+  background-color: var(--vscode-menu-background, var(--vscode-editorWidget-background));
+  box-shadow: 0 2px 8px var(--vscode-widget-shadow, transparent);
+}
+
+.response-menu-up {
+  top: auto;
+  bottom: 100%;
+}
+
+.response-menu-item {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--vscode-menu-foreground, var(--vscode-foreground));
+  cursor: pointer;
+  font-size: var(--vscode-font-size);
+  font-family: var(--vscode-font-family);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.response-menu-item:hover,
+.response-menu-item:focus {
+  background-color: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+  color: var(--vscode-menu-selectionForeground, var(--vscode-foreground));
+}
+
+.responses-empty-title {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.response-note {
+  margin: 4px 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.responses-rule {
+  margin: 12px 0;
+  border: 0;
+  border-top: 1px solid var(--vscode-sideBarSectionHeader-border, var(--vscode-panel-border, transparent));
+}
+
+/* Narrow panel: "Toutes (250)" says as much. */
+#responses-all-short {
+  display: none;
+}
+
+@media (max-width: 300px) {
+  #responses-all-long {
+    display: none;
+  }
+
+  #responses-all-short {
+    display: inline;
+  }
+}

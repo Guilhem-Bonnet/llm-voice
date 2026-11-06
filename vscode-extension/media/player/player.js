@@ -5,6 +5,8 @@
   "use strict";
 
   const vscode = acquireVsCodeApi();
+  // VS Code hands it out once per page, and responses.js needs it too.
+  window.llmVoiceApi = vscode;
 
   const audio = document.getElementById("audio");
   const body = document.body;

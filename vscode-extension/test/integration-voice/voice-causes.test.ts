@@ -32,7 +32,7 @@ interface TestPipeline {
   chooseVoiceById(voiceId: string): Promise<void>;
   applyVoiceTierChoice(tier: "system" | "piper" | "chatterbox"): Promise<void>;
   previewVoice(profile: VoiceProfile, voiceId: string): Promise<void>;
-  speakLatestClaudeResponse(): Promise<void>;
+  speakLatestResponse(): Promise<void>;
   listInboxEntriesForTest(): Promise<readonly { message: { message: string } }[]>;
   clearAudioCache(): Promise<void>;
   resetAutoTtsCacheForTest(): void;
@@ -211,7 +211,7 @@ suite("voice-chain: causes A, B, C, D (ADR-017 §1.1)", () => {
       })
     );
     await chooseVoice(pipeline, "voice-x");
-    await pipeline.speakLatestClaudeResponse();
+    await pipeline.speakLatestResponse();
     await waitFor(() => ttsBodies(main).length > 0, "a POST /tts for the reply");
     const body = ttsBodies(main)[0];
     assert.equal(body?.voice_mode, "predefined");

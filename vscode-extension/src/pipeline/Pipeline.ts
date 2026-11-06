@@ -156,8 +156,7 @@ import { ClaudeInboxSource } from "../claude/ClaudeInboxSource.js";
 import { GlobalStateReadStore } from "../claude/GlobalStateReadStore.js";
 import { InboxContentProvider, INBOX_CONTENT_SCHEME, inboxContentUri } from "../claude/InboxContentProvider.js";
 import { InboxRepository } from "../claude/InboxRepository.js";
-import { InboxTreeItem, InboxTreeProvider } from "../claude/InboxTreeProvider.js";
-import { computeInboxBadge } from "../claude/inboxFormat.js";
+import { ResponsesViewProvider } from "../views/inbox/ResponsesViewProvider.js";
 import { InboxWatcher } from "../claude/InboxWatcher.js";
 import { showInboxQuickPick } from "../claude/InboxQuickPick.js";
 import { resolveInboxPath } from "../claude/resolveInboxPath.js";
@@ -433,8 +432,8 @@ export class Pipeline implements PipelineFacade {
   // tear them down deterministically.
   private readonly inboxRepository: InboxRepository;
   private readonly inboxWatcher: InboxWatcher;
-  private readonly inboxTreeProvider: InboxTreeProvider;
-  private inboxTreeView: vscode.TreeView<InboxTreeItem> | undefined;
+  private readonly responses: ResponsesViewProvider;
+  private responsesViewRegistration: vscode.Disposable | undefined;
   private inboxContentProviderRegistration: vscode.Disposable | undefined;
 
   private readonly warnIfInstallIsNewer: () => Promise<void>;
@@ -563,7 +562,27 @@ export class Pipeline implements PipelineFacade {
         this.output.warn("inbox entry ignored", { fileName: rejection.fileName, reason: rejection.reason })
     });
     this.inboxWatcher = new InboxWatcher({ directory: this.inboxRepository.directory });
-    this.inboxTreeProvider = new InboxTreeProvider(() => this.inboxRepository.list());
+    this.responses = new ResponsesViewProvider({
+      extensionUri: this.context.extensionUri,
+      player: this.player,
+      list: () => this.inboxRepository.list(),
+      actions: {
+        speak: (entry) => this.speakInboxEntry(entry),
+        openText: (entry) => this.openInboxFullResponse(entry),
+        toggleRead: async (entry) => {
+          await this.inboxRepository.markRead(entry.id, !entry.read);
+          await this.refreshInbox();
+        },
+        remove: async (entry) => {
+          await this.inboxRepository.remove(entry.id);
+          await this.refreshInbox();
+        },
+        showAll: () => this.showAllResponses(),
+        readClipboard: async () => void (await vscode.commands.executeCommand("llmVoice.speakClipboard")),
+        connectTool: async () => void (await vscode.commands.executeCommand("llmVoice.installClaudeHook"))
+      },
+      onError: (error) => this.output.error("reply action failed", { error: messageOf(error) })
+    });
     this.setupInbox();
 
     this.sources = [
@@ -669,7 +688,7 @@ export class Pipeline implements PipelineFacade {
 
   /** S9 (ADR-011 revision 2026-09-12): the unread badge currently shown on `llmVoice.inboxView` (and, transitively, the `llmVoice` activity bar icon). */
   getInboxBadgeForTest(): { value: number; tooltip: string } | undefined {
-    return this.inboxTreeView?.badge;
+    return this.responses.shownBadge;
   }
 
   // ------------------------------------------------------------- lifecycle
@@ -679,8 +698,8 @@ export class Pipeline implements PipelineFacade {
     this.controller.dispose();
     this.captureAbort?.abort();
     this.inboxWatcher.dispose();
-    this.inboxTreeProvider.dispose();
-    this.inboxTreeView?.dispose();
+    this.responses.dispose();
+    this.responsesViewRegistration?.dispose();
     this.inboxContentProviderRegistration?.dispose();
   }
 
@@ -2425,20 +2444,28 @@ export class Pipeline implements PipelineFacade {
           await this.inboxRepository.markRead(entry.id, !entry.read);
           await this.refreshInbox();
         },
-        selectProfile: async () => this.chooseMode()
+        chooseMode: async () => this.chooseMode()
       }
     );
   }
 
-  /** CdC §47's per-source default mode, bound to `llmVoice.modes.bySource`. */
-  async speakLatestClaudeResponse(): Promise<void> {
-    const entries = await this.inboxRepository.list();
-    const latest = entries.find((entry) => entry.message.provider === "claude-code");
+  /** The latest reply of any tool, in the mode `llmVoice.modes.bySource` gives it. Only ever a user's gesture. */
+  async speakLatestResponse(): Promise<void> {
+    const [latest] = await this.inboxRepository.list();
     if (latest === undefined) {
-      void vscode.window.showInformationMessage("LLM Voice : aucune réponse Claude Code capturée pour le moment.");
+      void vscode.window.showInformationMessage("LLM Voice : aucune réponse pour l'instant.");
       return;
     }
     await this.speakInboxEntry(latest);
+  }
+
+  /** The whole list: its view, or the Quick Pick in a layout that has no view. */
+  private async showAllResponses(): Promise<void> {
+    if (vscode.workspace.getConfiguration("llmVoice").get<string>("ui.layout") === "full") {
+      await vscode.commands.executeCommand("llmVoice.inboxView.focus");
+    } else {
+      await this.openInbox();
+    }
   }
 
   async installClaudeHook(): Promise<void> {
@@ -2635,7 +2662,7 @@ export class Pipeline implements PipelineFacade {
     return choice === INSTALL_VOICE_ACTION_LABEL;
   }
 
-  /** Speaks one inbox entry (Quick Pick/Tree/`speakLatestClaudeResponse`), marking it read first — zero autoplay: only ever reached from a command the user triggered. */
+  /** Speaks one inbox entry (list, Quick Pick, `speakLatestResponse`), marking it read first — zero autoplay: only ever reached from a command the user triggered. */
   private async speakInboxEntry(entry: InboxEntry): Promise<void> {
     await this.inboxRepository.markRead(entry.id, true);
     await this.refreshInbox();
@@ -2656,25 +2683,15 @@ export class Pipeline implements PipelineFacade {
   }
 
   private async refreshInbox(): Promise<void> {
-    await this.inboxTreeProvider.refresh();
-    if (this.inboxTreeView !== undefined) {
-      // ADR-011 revision (2026-09-12): same badge, now pulled from
-      // `inboxFormat.ts` (`computeInboxBadge`) so it is unit-testable —
-      // it also surfaces on the `llmVoice` activity bar icon now that the
-      // inbox view lives in that container by default.
-      this.inboxTreeView.badge = computeInboxBadge(this.inboxTreeProvider.unreadCount);
-    }
+    await this.responses.refresh();
   }
 
   private inboxEntryFromCommandArg(arg: unknown): InboxEntry | undefined {
-    if (arg instanceof InboxTreeItem) {
-      return arg.entry;
-    }
     return arg as InboxEntry | undefined;
   }
 
   /**
-   * Registers the Tree View (`full` layout, ADR-011), the `llm-voice-inbox:`
+   * Registers the view "Réponses" (`full` layout, ADR-011), the `llm-voice-inbox:`
    * content provider, and the `llmVoice.inbox.*` commands; starts the
    * watcher. `InboxWatcher.onChange` only ever calls `refreshInbox()` — it
    * never reaches `startInternal`/`PlaybackController` (zero autoplay,
@@ -2687,9 +2704,10 @@ export class Pipeline implements PipelineFacade {
       contentProvider
     );
 
-    this.inboxTreeView = vscode.window.createTreeView("llmVoice.inboxView", {
-      treeDataProvider: this.inboxTreeProvider
-    });
+    this.responsesViewRegistration = vscode.window.registerWebviewViewProvider(
+      ResponsesViewProvider.viewType,
+      this.responses
+    );
 
     this.context.subscriptions.push(
       vscode.commands.registerCommand("llmVoice.inbox.refresh", () => void this.refreshInbox()),
