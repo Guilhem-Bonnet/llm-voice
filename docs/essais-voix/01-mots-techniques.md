@@ -1,0 +1,22 @@
+# Mots techniques
+
+- API :: A P I :: L'{x} renvoie une erreur 500 quand le jeton a expiré.
+- JSON :: djé zone :: Le fichier {x} contient la liste des voix.
+- GitHub :: guite eube :: Le dépôt est hébergé sur {x} depuis trois ans.
+- WebSocket :: ouèbe soquette :: Le client ouvre un {x} vers le serveur local.
+- Kubernetes :: coubernétisse :: Le service tourne dans un cluster {x}.
+- PostgreSQL :: poste gresse Q L :: La base {x} refuse la connexion.
+- TypeScript :: taïpe scripte :: Ce module est écrit en {x} strict.
+- npm :: N P M :: Lance {x} install avant de compiler.
+- async/await :: assinque, aouaite :: Le code utilise {x} pour attendre la réponse.
+- README :: rid mi :: Le {x} explique comment démarrer.
+- OAuth :: ô auth :: La connexion passe par {x} et un jeton court.
+- VS Code :: V S code :: Ouvre le dossier dans {x}.
+- CSP :: C S P :: La {x} bloque ce script dans la webview.
+- PipeWire :: païpe ouaillère :: Le son passe par {x} sous Linux.
+- Rust :: reuste :: Le moteur audio est écrit en {x}.
+- Ollama :: olama :: Le modèle local tourne avec {x}.
+- commit :: comite :: Ce {x} corrige le cache audio.
+- p95 :: pé quatre-vingt-quinze :: La latence {x} reste sous deux cents millisecondes.
+- v2.3.1 :: version deux, trois, un :: Nous livrons la {x} demain matin.
+- 127.0.0.1:8000 :: cent vingt-sept, zéro, zéro, un, port huit mille :: Le serveur écoute sur {x}.

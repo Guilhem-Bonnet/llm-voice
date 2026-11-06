@@ -26,6 +26,7 @@ export class ProfilesTreeProvider implements vscode.TreeDataProvider<ProfileTree
   readonly onDidChangeTreeData = this.onDidChangeTreeDataEmitter.event;
 
   private items: readonly ProfileTreeItemData[] = [];
+  private latestRefresh = 0;
 
   constructor(
     /** The modes offered, with their effective voice (`ProfileStore.listEffective`). */
@@ -35,7 +36,13 @@ export class ProfilesTreeProvider implements vscode.TreeDataProvider<ProfileTree
   ) {}
 
   async refresh(): Promise<void> {
+    // Refreshes overlap (file watcher, activation): the last one started holds
+    // the freshest state, so a slower earlier one must not overwrite it.
+    const run = ++this.latestRefresh;
     const [modes, activeId] = await Promise.all([this.listModes(), this.getActiveProfileId()]);
+    if (run !== this.latestRefresh) {
+      return;
+    }
     const ownVoiceIds = new Set(modes.filter((row) => row.voiceOrigin === "mode").map((row) => row.mode.id));
     this.items = buildProfileTreeItems(
       modes.map((row) => row.effective),
