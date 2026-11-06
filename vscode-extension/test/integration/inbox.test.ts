@@ -143,6 +143,6 @@ suite("LLM Voice inbox (S5.1, AC-12..15)", () => {
     await pipeline.speakLatestClaudeResponse();
 
     await waitFor(() => pipeline.getPlaybackState() === "playing");
-    assert.equal(pipeline.getCurrentProfileLabelForTest(), "Résumé LLM");
+    assert.equal(pipeline.getCurrentProfileLabelForTest(), "Résumé");
   });
 });

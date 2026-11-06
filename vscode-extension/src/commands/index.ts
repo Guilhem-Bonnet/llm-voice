@@ -115,7 +115,13 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.stop", () => pipeline.stop()),
     vscode.commands.registerCommand("llmVoice.previousSegment", () => pipeline.previousSegment()),
     vscode.commands.registerCommand("llmVoice.nextSegment", () => pipeline.nextSegment()),
-    vscode.commands.registerCommand("llmVoice.selectProfile", () => pipeline.selectProfile()),
+    // ADR-017 §3: an id once published stays executable, a user's shortcut may name
+    // it. An alias does the same thing and is hidden from the palette.
+    vscode.commands.registerCommand("llmVoice.chooseMode", () => pipeline.chooseMode()),
+    vscode.commands.registerCommand("llmVoice.selectProfile", () => pipeline.chooseMode()),
+    vscode.commands.registerCommand("llmVoice.chooseVoice", () => pipeline.chooseVoice()),
+    vscode.commands.registerCommand("llmVoice.setupVoice", () => pipeline.chooseVoice()),
+    vscode.commands.registerCommand("llmVoice.browseVoices", () => pipeline.chooseVoice()),
     vscode.commands.registerCommand("llmVoice.openProfiles", () => pipeline.openProfiles()),
     vscode.commands.registerCommand("llmVoice.duplicateProfile", () => pipeline.duplicateProfile()),
     vscode.commands.registerCommand("llmVoice.deleteProfile", () => pipeline.deleteProfile()),
@@ -165,7 +171,6 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.installClaudeHook", () => pipeline.installClaudeHook()),
     vscode.commands.registerCommand("llmVoice.uninstallClaudeHook", () => pipeline.uninstallClaudeHook()),
     vscode.commands.registerCommand("llmVoice.installPiperVoice", () => pipeline.installPiperVoice()),
-    vscode.commands.registerCommand("llmVoice.browseVoices", () => pipeline.browseVoices()),
     vscode.commands.registerCommand("llmVoice.useOwnVoice", () => pipeline.useOwnVoice()),
     vscode.commands.registerCommand("llmVoice.editProfile", () => pipeline.editProfile())
   ];

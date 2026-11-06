@@ -109,6 +109,7 @@ const REQUIRED = [
   "media/player/player.js",
   "media/player/player.css",
   "schemas/profile-collection.schema.json",
+  "schemas/global-voice.schema.json",
   // S7.2: the extension's Marketplace page (README) and the two other
   // files VS Code surfaces in the extension details view — a `.vscodeignore`
   // that swallows any of these silently ships a blank "no README" page

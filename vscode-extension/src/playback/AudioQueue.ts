@@ -401,8 +401,11 @@ export class AudioQueue {
     job: JobState,
     signal: AbortSignal
   ): Promise<void> {
-    const providerId = this.binding.providerId ?? this.tts.id;
+    let providerId = this.binding.providerId ?? this.tts.id;
     try {
+      if (this.binding.providerId === undefined && this.tts.cacheIdentity !== undefined) {
+        providerId = await this.tts.cacheIdentity(signal);
+      }
       const key = computeCacheKey({
         providerId,
         ...(this.binding.model !== undefined ? { model: this.binding.model } : {}),
@@ -410,6 +413,7 @@ export class AudioQueue {
         ...(this.binding.parameters !== undefined
           ? { parameters: this.binding.parameters }
           : {}),
+        ...(this.binding.speed !== undefined ? { speed: this.binding.speed } : {}),
         spokenText: chunk.spokenText
       });
       // Pin now: this index is by construction inside the prefetch window

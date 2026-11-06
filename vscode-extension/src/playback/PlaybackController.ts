@@ -35,6 +35,11 @@ export interface PlaybackStartRequest {
   profile: VoiceProfile;
   tts: TtsProvider;
   sink: AudioSink;
+  /**
+   * Speed applied by the engine (`TtsRequest.speed`), when it declares one
+   * (ADR-017 §1.4). It also enters the cache key: the audio differs.
+   */
+  engineSpeed?: number;
   /** Stable session id; generated when absent. */
   sessionId?: string;
   /**
@@ -227,7 +232,7 @@ export class PlaybackController {
       {
         tts: request.tts,
         cache: this.cache,
-        binding: bindingFrom(request.profile)
+        binding: bindingFrom(request.profile, request.engineSpeed)
       },
       this.queueOptions
     );
@@ -789,23 +794,19 @@ function chunksFrom(
 }
 
 /**
- * Extracts the synthesis binding a profile declares (ADR-005).
- *
- * `tts.providerId` is optional on the profile (fix(review): resolved against
- * `llmVoice.tts.provider` by `Pipeline.ttsFor`, `resolveTtsConfig`) — when the
- * profile omits it, `AudioQueueBinding.providerId` is left unset too, and
- * `AudioQueue` falls back to `tts.id` for the cache key, which is already the
- * *resolved* provider id (`Pipeline.ttsFor` builds the `TtsProvider.id` from
- * `resolveTtsConfig`'s output), never the unresolved, possibly-absent one.
+ * Extracts the synthesis binding a mode declares (ADR-005). `providerId` is
+ * deliberately not one of them (ADR-017 §1.5, cause B): the written id can be
+ * `auto` or absent, while `AudioQueue`'s fallback, `tts.id`, already names the
+ * resolved engine, its URL and its sample (`Pipeline.ttsFor`, `ttsInstanceKey`).
  */
-function bindingFrom(profile: VoiceProfile) {
+function bindingFrom(profile: VoiceProfile, engineSpeed: number | undefined) {
   return {
     language: profile.language,
-    ...(profile.tts.providerId !== undefined ? { providerId: profile.tts.providerId } : {}),
     ...(profile.tts.model !== undefined ? { model: profile.tts.model } : {}),
     ...(profile.tts.voice !== undefined ? { voice: profile.tts.voice } : {}),
     ...(profile.tts.parameters !== undefined
       ? { parameters: profile.tts.parameters }
-      : {})
+      : {}),
+    ...(engineSpeed !== undefined ? { speed: engineSpeed } : {})
   };
 }

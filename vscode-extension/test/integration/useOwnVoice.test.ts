@@ -13,7 +13,7 @@
  * activity possible here is the fake TTS provider, in-process.
  */
 import * as assert from "node:assert/strict";
-import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as vscode from "vscode";
@@ -71,7 +71,16 @@ function stubFileFlow(samplePath: string): () => void {
   return () => Object.assign(window, originals);
 }
 
-suite("LLM Voice: Use My Own Voice (S8.2, CdC §55)", () => {
+function voiceFile(api: ExtensionTestApi): string {
+  return join(api.context.globalStorageUri.fsPath, "global-voice.json");
+}
+
+function globalVoice(api: ExtensionTestApi): { referenceAudio?: string; providerId: string } {
+  return (JSON.parse(readFileSync(voiceFile(api), "utf8")) as { voice: { referenceAudio?: string; providerId: string } })
+    .voice;
+}
+
+suite("LLM Voice: Use My Own Voice (S8.2, CdC §55, ADR-017 §3)", () => {
   test("registers the command", async () => {
     await activateExtension();
     const commands = await vscode.commands.getCommands(true);
@@ -100,20 +109,25 @@ suite("LLM Voice: Use My Own Voice (S8.2, CdC §55)", () => {
 
     const restore = stubFileFlow(samplePath);
     const before = sink.requests.length;
+    const voiceBefore = readFileSync(voiceFile(api), "utf8");
     try {
       await pipeline.useOwnVoice();
+
+      const voice = globalVoice(api);
+      assert.ok(voice.referenceAudio, "referenceAudio should be set on the global voice");
+      assert.equal(voice.providerId, "chatterbox", "with an engine that clones");
+      assert.ok(
+        voice.referenceAudio.split(/[\\/]/).includes("voices"),
+        `expected the copy to live under a "voices" directory, got ${voice.referenceAudio}`
+      );
+      assert.ok(existsSync(voice.referenceAudio), "the copied/converted file should exist on disk");
+      assert.ok(sink.requests.length > before, "the immediate preview should reach the TTS provider");
+      const updated = await pipeline.getProfileById(imported.id);
+      assert.equal(updated.tts.referenceAudio, undefined, "the mode is left as it was");
     } finally {
       restore();
+      writeFileSync(voiceFile(api), voiceBefore);
     }
-
-    const updated = await pipeline.getProfileById(imported.id);
-    assert.ok(updated.tts.referenceAudio, "referenceAudio should be set on the profile");
-    assert.ok(
-      updated.tts.referenceAudio!.split(/[\\/]/).includes("voices"),
-      `expected the copy to live under a "voices" directory, got ${updated.tts.referenceAudio}`
-    );
-    assert.ok(existsSync(updated.tts.referenceAudio!), "the copied/converted file should exist on disk");
-    assert.ok(sink.requests.length > before, "the immediate preview should reach the TTS provider");
 
     await pipeline.deleteProfileById(imported.id);
   });
@@ -131,19 +145,19 @@ suite("LLM Voice: Use My Own Voice (S8.2, CdC §55)", () => {
     writeFileSync(samplePath, makeSilentWav(15_000, 24000));
 
     const restore = stubFileFlow(samplePath);
+    const voiceBefore = readFileSync(voiceFile(api), "utf8");
     try {
       await pipeline.useOwnVoice();
     } finally {
       restore();
     }
 
-    const updated = await pipeline.getProfileById(imported.id);
-    assert.equal(updated.tts.referenceAudio, undefined, "a silent sample must never be applied");
+    assert.equal(readFileSync(voiceFile(api), "utf8"), voiceBefore, "a silent sample must never be applied");
 
     await pipeline.deleteProfileById(imported.id);
   });
 
-  test("declining consent leaves the profile untouched", async () => {
+  test("declining consent leaves the voice untouched", async () => {
     const api = await activateExtension();
     const pipeline = testPipeline(api);
 
@@ -154,14 +168,14 @@ suite("LLM Voice: Use My Own Voice (S8.2, CdC §55)", () => {
     const window = vscode.window as unknown as Record<string, unknown>;
     const original = window.showWarningMessage;
     window.showWarningMessage = () => Promise.resolve(undefined);
+    const voiceBefore = readFileSync(voiceFile(api), "utf8");
     try {
       await pipeline.useOwnVoice();
     } finally {
       window.showWarningMessage = original;
     }
 
-    const updated = await pipeline.getProfileById(imported.id);
-    assert.equal(updated.tts.referenceAudio, undefined);
+    assert.equal(readFileSync(voiceFile(api), "utf8"), voiceBefore);
 
     await pipeline.deleteProfileById(imported.id);
   });

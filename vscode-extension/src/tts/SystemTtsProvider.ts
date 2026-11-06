@@ -678,6 +678,15 @@ export class SystemTtsProvider implements TtsProvider {
     return { providerId: this.id, status: "ok", checkedAt, latencyMs, endpoint: `local:${engine.kind}` };
   }
 
+  /**
+   * ADR-017 "Ce qui reste ouvert" 1: an `espeak-ng` reading and a Piper one of the
+   * same text are not the same audio, yet both come from this one provider id.
+   */
+  async cacheIdentity(): Promise<string> {
+    const engine = await this.detectEngine();
+    return engine === undefined ? this.id : `${this.id}#${engine.kind}`;
+  }
+
   async getCapabilities(signal?: AbortSignal): Promise<TtsCapabilities> {
     const voices = await this.listVoices(signal).catch(() => []);
     return { streaming: false, voices, parameters: SPEED_PARAMETER, formats: ["wav"], languages: [], direction: SYSTEM_DIRECTION };
@@ -741,7 +750,12 @@ export class SystemTtsProvider implements TtsProvider {
         outputPath,
         ...(request.language !== undefined ? { language: request.language } : {}),
         ...(request.speed !== undefined ? { speed: request.speed } : {}),
-        ...(request.voice !== undefined ? { voice: request.voice } : {})
+        // The Piper tier names its voice (`ttsBindingForTier`, ADR-017 §1.3); until
+        // Piper is installed the engine found here may be another one, which would
+        // refuse that name instead of reading with its own default voice.
+        ...(request.voice !== undefined && (request.voice !== PIPER_VOICE_ID || engine.kind === "piper")
+          ? { voice: request.voice }
+          : {})
       };
       let invocation: SystemTtsInvocation;
       switch (engine.kind) {

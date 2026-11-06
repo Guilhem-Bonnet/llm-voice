@@ -1,5 +1,5 @@
 import { defineConfig } from "@vscode/test-cli";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -156,11 +156,28 @@ writeFileSync(
       "llmVoice.audio.engine": "native",
       "llmVoice.audio.corePath": join(testRootDir, "..", "target", "release", "llm-voice-core"),
       "llmVoice.tts.provider": "system",
-      "llmVoice.defaultProfile": "native-real-piper",
       "llmVoice.testVoice.text": "Bonjour. Voici un exemple de ma voix. Nous allons maintenant examiner un concept technique et voir comment l'expliquer clairement.",
       "llmVoice.cache.enabled": false,
       "llmVoice.log.level": "debug",
       "security.workspace.trust.enabled": false
+    },
+    null,
+    2
+  )
+);
+// ADR-017 V15: both modes inherit, so these proofs go through the global voice,
+// which a mode naming its own voice would not. The voice follows the scenario of
+// `native-real.sh` and is written at every load, like the modes.
+writeFileSync(
+  join(nativeRealUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice", "global-voice.json"),
+  JSON.stringify(
+    {
+      schemaVersion: 1,
+      voice:
+        process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "kyutai"
+          ? // No baseUrl on purpose: the provider must find its own port.
+            { providerId: "kyutai-pocket", voice: "estelle", speed: 1 }
+          : { providerId: "system", speed: 1 }
     },
     null,
     2
@@ -171,6 +188,7 @@ writeFileSync(
   JSON.stringify(
     {
       schemaVersion: 2,
+      voiceMigration: 1,
       defaultProfileId: "native-real-piper",
       profiles: [
         {
@@ -178,23 +196,22 @@ writeFileSync(
           label: "Native real (Piper)",
           mode: "faithful",
           language: "fr-FR",
-          tts: { providerId: "system" },
+          tts: {},
           // One sentence per chunk: three sentences => three segments, so the
           // Core's per-segment ids are exercised more than once.
           chunking: { unit: "sentence", maxSentences: 1, prefetchChunks: 1 },
           playback: { rate: 1, volume: 1 },
-          description: "Test-only profile: real Piper through the system provider."
+          description: "Test-only mode: real Piper through the global system voice."
         },
         {
           id: "native-real-kyutai",
           label: "Native real (Kyutai Estelle)",
           mode: "faithful",
           language: "fr-FR",
-          // No baseUrl on purpose: the provider must find its own port.
-          tts: { providerId: "kyutai-pocket", voice: "estelle" },
+          tts: {},
           chunking: { unit: "sentence", maxSentences: 1, prefetchChunks: 1 },
           playback: { rate: 1, volume: 1 },
-          description: "Test-only profile: real Estelle voice through pocket-tts serve."
+          description: "Test-only mode: real Estelle voice through pocket-tts serve, as the global voice."
         }
       ]
     },
@@ -217,13 +234,67 @@ writeFileSync(
     {
       // Faithful profile for inbox reads: this suite tests HTML injection,
       // not narration (the narrated default would call the real Ollama).
-      "llmVoice.profiles.bySource": { "claude-code": "system-voice" },
+      "llmVoice.modes.bySource": { "claude-code": "faithful-local" },
       "llmVoice.narrator.baseUrl": "http://127.0.0.1:9"
     },
     null,
     2
   )
 );
+
+// ADR-017 § Tests, `voice-chain`: `ttsFor`, `createTtsProvider` and
+// `ChatterboxProvider` are the real ones against `MockTtsServer`; only the sink
+// is fake (`LLM_VOICE_TEST_FAKE_SINK`), because a webview decodes nothing under
+// xvfb. `--user-data-dir` is fixed and never cleaned: the cache is dropped at
+// every load, otherwise V3's first read would be a hit from the previous run.
+// The tests write `profiles.json` and `global-voice.json` themselves, before
+// each case. The narrator port stays closed and the warmup off: no Ollama, and
+// no `POST /tts` this suite did not ask for.
+const voiceChainUserDataDir = userDataDir("voice-chain");
+const voiceChainStorageDir = join(voiceChainUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice");
+const VOICE_CHAIN_AUTO_PORT = 47613;
+rmSync(voiceChainStorageDir, { recursive: true, force: true });
+mkdirSync(voiceChainStorageDir, { recursive: true });
+// Present before activation: otherwise the first `load()` of the host creates the
+// defaults, possibly after a test has already written its own file.
+writeFileSync(
+  join(voiceChainStorageDir, "global-voice.json"),
+  JSON.stringify({ schemaVersion: 1, voice: { providerId: "system", speed: 1 } })
+);
+writeFileSync(
+  join(voiceChainStorageDir, "profiles.json"),
+  JSON.stringify({
+    schemaVersion: 2,
+    voiceMigration: 1,
+    defaultProfileId: "chain-last",
+    profiles: [
+      {
+        id: "chain-last",
+        label: "chain-last",
+        mode: "faithful",
+        language: "fr-FR",
+        tts: {},
+        chunking: { unit: "sentence", maxSentences: 3, prefetchChunks: 0 },
+        playback: { rate: 1, volume: 1 }
+      }
+    ]
+  })
+);
+writeFileSync(
+  join(voiceChainUserDataDir, "User", "settings.json"),
+  JSON.stringify(
+    {
+      "llmVoice.modes.bySource": { markdown: "chain-document", "claude-code": "chain-reply" },
+      "llmVoice.narrator.baseUrl": "http://127.0.0.1:9",
+      "llmVoice.tts.warmup": false,
+      "llmVoice.tts.readyTimeoutMs": 0,
+      "security.workspace.trust.enabled": false
+    },
+    null,
+    2
+  )
+);
+const inboxDirVoiceChain = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-voice-chain-"));
 
 export default defineConfig([
   {
@@ -235,14 +306,10 @@ export default defineConfig([
     files: "out/test/integration/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirFakeTts },
     // Own `--user-data-dir` (own `globalStorageUri`, own `DiskAudioCache`
-    // root): the audio cache key only depends on the *profile's declared*
-    // `tts.providerId` ("openai-compatible"), not on which `TtsProvider`
-    // instance actually served it (ADR-005's `AudioQueueBinding`, by
-    // design — a profile never names a class). Sharing one `.vscode-test`
-    // user-data dir with the `tts-auto-fallback-*` profiles below would let
-    // audio synthesised by `FakeTtsProvider` here satisfy a cache *hit*
-    // there, silently skipping the real network/engine calls they exist to
-    // exercise.
+    // root): nothing here should ever be a cache *hit* for the
+    // `tts-auto-fallback-*` profiles below, nor land in their `profiles.json`.
+    // The audio cache key now names the real engine (ADR-017 §1.5), so this
+    // isolation is no longer what protects them from `FakeTtsProvider`'s audio.
     // fix(review): kept short — on the macOS GH Actions runner the checkout
     // path (`/Users/runner/work/<repo>/<repo>/vscode-extension/...`) is long
     // enough that `user-data-fake-tts`/`user-data-real-provider` pushed the
@@ -355,6 +422,23 @@ export default defineConfig([
     files: "out/test/integration-security/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirSecurity },
     launchArgs: [`--user-data-dir=${securityUserDataDir}`]
+  },
+  {
+    ...common,
+    label: "voice-chain",
+    // Own folder: `fake-tts` globs all of `out/test/integration/**` and would
+    // run these without a server (ADR-017 § Tests).
+    files: "out/test/integration-voice/**/*.test.js",
+    env: {
+      LLM_VOICE_TEST_FAKE_TTS: undefined,
+      LLM_VOICE_TEST_FAKE_SINK: "1",
+      LLM_VOICE_TEST_SYSTEM_RUNNER: "espeak-only",
+      LLM_VOICE_TEST_AUTO_CHATTERBOX_BASE_URL: `http://127.0.0.1:${VOICE_CHAIN_AUTO_PORT}`,
+      LLM_VOICE_TEST_AUTO_PIPER_BASE_URL: `http://127.0.0.1:${AUTO_PIPER_LOCAL_CLOSED_PORT}`,
+      LLM_VOICE_TEST_STORAGE_DIR: voiceChainStorageDir,
+      LLM_VOICE_INBOX: inboxDirVoiceChain
+    },
+    launchArgs: [`--user-data-dir=${voiceChainUserDataDir}`]
   },
   {
     ...common,

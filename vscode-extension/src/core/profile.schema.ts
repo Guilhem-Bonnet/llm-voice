@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 
-import type { VoiceProfile } from "./profile.js";
+import type { GlobalVoice, VoiceProfile } from "./profile.js";
 import { REFERENCE_AUDIO_PATTERN, SAFE_API_KEY_REF, rejectReferenceAudioPath } from "./safePath.js";
 import { CHATTERBOX_LOCAL_PRESET } from "../tts/presets.js";
 
@@ -132,7 +132,8 @@ const VoiceProfileObjectSchema = z.object({
   description: z.string().optional(),
   style: z.string().optional(),
   markdown: MarkdownPolicySchema.optional(),
-  synchronization: SynchronizationSettingsSchema.optional()
+  synchronization: SynchronizationSettingsSchema.optional(),
+  hidden: z.boolean().optional()
 });
 
 /**
@@ -175,8 +176,30 @@ export const VoiceProfileSchema = z.preprocess(migrateLegacyProfileShape, VoiceP
 export const ProfileCollectionSchema = z.object({
   schemaVersion: z.union([z.literal(1), z.literal(2)]),
   defaultProfileId: z.string().min(1),
-  profiles: z.array(VoiceProfileSchema).min(1)
+  profiles: z.array(VoiceProfileSchema).min(1),
+  voiceMigration: z.literal(1).optional()
 });
+
+/**
+ * The voice of `global-voice.json` (ADR-017 §1.2): the controls of
+ * `TtsBindingSchema` on the URL, `apiKeyRef` and `referenceAudio`, with a
+ * required engine (`"auto"` allowed, ADR-009) and the speed of the voice.
+ */
+export const GlobalVoiceSchema = TtsBindingSchema.extend({
+  providerId: z.string().min(1),
+  speed: z.number().min(0.5).max(2)
+});
+
+/** The whole `global-voice.json` document: the voice, and nothing else. */
+export const GlobalVoiceFileSchema = z.object({
+  schemaVersion: z.literal(1),
+  voice: GlobalVoiceSchema
+});
+
+/** Parses an unknown value into a global voice, throwing on the first violation. */
+export function parseGlobalVoice(value: unknown): GlobalVoice {
+  return GlobalVoiceSchema.parse(value) as GlobalVoice;
+}
 
 /** Hostnames that are always loopback without any DNS resolution. */
 /** Hostnames that are always loopback without any DNS resolution.

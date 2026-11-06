@@ -37,3 +37,26 @@ describe("collectRemoteProviderIds", () => {
     expect(collectRemoteProviderIds([noProviderId])).toEqual([OPENAI_COMPATIBLE_PRESET.id]);
   });
 });
+
+describe("collectRemoteProviderIds with the global voice (ADR-017 §1.3, V16)", () => {
+  it("proposes a remote global voice, even when every mode inherits", () => {
+    const inheriting: VoiceProfile = { ...DEFAULT_PROFILE, tts: {} };
+    expect(
+      collectRemoteProviderIds([inheriting], {
+        providerId: "corp-tts",
+        baseUrl: "https://tts.corp.example.com",
+        speed: 1
+      })
+    ).toEqual(["corp-tts"]);
+  });
+
+  it("a local global voice adds nothing", () => {
+    expect(
+      collectRemoteProviderIds([{ ...DEFAULT_PROFILE, tts: {} }], {
+        providerId: "chatterbox",
+        baseUrl: "http://localhost:8004",
+        speed: 1
+      })
+    ).toEqual([OPENAI_COMPATIBLE_PRESET.id]);
+  });
+});

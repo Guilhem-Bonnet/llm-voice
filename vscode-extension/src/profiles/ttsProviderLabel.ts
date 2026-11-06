@@ -14,11 +14,13 @@
  *
  * `providerId` is optional on `VoiceProfile["tts"]` (`core/profile.ts`,
  * `TtsBinding`) — an omitted one means "auto" (resolved elsewhere, e.g.
- * `Pipeline.resolveTtsProviderConfig`), reflected here as "Voix automatique".
+ * `Pipeline.resolveTtsProviderConfig`), reflected here as "Voix automatique",
+ * like the explicit `"auto"` (ADR-017 §1.3: it used to show up raw).
  */
 export function friendlyTtsProviderLabel(providerId: string | undefined): string {
   switch (providerId) {
     case undefined:
+    case "auto":
       return "Voix automatique";
     case "system":
       return "Voix système";

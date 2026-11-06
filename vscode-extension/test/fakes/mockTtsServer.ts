@@ -72,9 +72,14 @@ export class MockTtsServer {
     });
   }
 
-  async listen(): Promise<string> {
-    await new Promise<void>((resolvePromise) => {
-      this.server.listen(0, "127.0.0.1", resolvePromise);
+  /** `port` defaults to an ephemeral one; a fixed one serves the `auto` chain (ADR-017 § Tests). */
+  async listen(port = 0): Promise<string> {
+    await new Promise<void>((resolvePromise, rejectPromise) => {
+      this.server.once("error", rejectPromise);
+      this.server.listen(port, "127.0.0.1", () => {
+        this.server.off("error", rejectPromise);
+        resolvePromise();
+      });
     });
     const address = this.server.address();
     if (address === null || typeof address === "string") {
@@ -86,6 +91,9 @@ export class MockTtsServer {
   async close(): Promise<void> {
     await new Promise<void>((resolvePromise, rejectPromise) => {
       this.server.close((error) => (error ? rejectPromise(error) : resolvePromise()));
+      // Without this a provider's keep-alive socket holds `close()` open, and a
+      // "stopped" server would keep answering on its existing connections.
+      this.server.closeAllConnections();
     });
   }
 

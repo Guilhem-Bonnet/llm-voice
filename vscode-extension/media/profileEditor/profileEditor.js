@@ -57,6 +57,28 @@
     return typeof value === "number" && Number.isFinite(value) ? value : fallback;
   }
 
+  /** ADR-017: `tts: {}` inherits the global voice; any field in it is a voice of its own. */
+  function inheritsGlobalVoice(tts) {
+    return !tts || Object.keys(tts).every((key) => tts[key] === undefined);
+  }
+
+  function isGlobalVoiceSelected() {
+    return fields.ttsProvider.value === "global";
+  }
+
+  /**
+   * "Voix globale" leaves nothing to set here: the voice and the settings of the
+   * engine belong to it, and the form keeps `tts: {}` (ADR-017 §3).
+   */
+  function updateVoiceFieldsAvailability() {
+    const disabled = isGlobalVoiceSelected();
+    fields.ttsBaseUrl.disabled = disabled;
+    fields.ttsVoice.disabled = disabled;
+    document.getElementById("btn-check-health").disabled = disabled;
+    document.getElementById("btn-browse-voices").disabled = disabled;
+    parametersContainer.hidden = disabled;
+  }
+
   function updateNarratorVisibility() {
     narratorFields.style.display = fields.mode.value === "narrated" ? "" : "none";
   }
@@ -131,7 +153,10 @@
     fields.narratorProvider.value = textOf(profile.narrator && profile.narrator.providerId);
     fields.narratorModel.value = textOf(profile.narrator && profile.narrator.model);
     fields.style.value = textOf(profile.style);
-    fields.ttsProvider.value = textOf(profile.tts && profile.tts.providerId) || "chatterbox";
+    // A voice of its own that names no engine resolves like "auto" from the settings.
+    fields.ttsProvider.value = inheritsGlobalVoice(profile.tts)
+      ? "global"
+      : textOf(profile.tts.providerId) || "auto";
     fields.ttsBaseUrl.value = textOf(profile.tts && profile.tts.baseUrl);
     fields.ttsVoice.value = textOf(profile.tts && profile.tts.voice);
     fields.speed.value = String(numberOr(profile.playback && profile.playback.rate, 1));
@@ -144,7 +169,29 @@
     voiceWarning.textContent = "";
     parameterValues = { ...(profile.tts && profile.tts.parameters) };
     updateNarratorVisibility();
+    updateVoiceFieldsAvailability();
     renderParameters();
+  }
+
+  /** The voice of this form: nothing for "Voix globale", without a guess for what was not named. */
+  function collectFormTts(base) {
+    if (isGlobalVoiceSelected()) {
+      return {};
+    }
+    // An engine this list does not offer leaves the select empty: it is kept, not lost.
+    const provider = fields.ttsProvider.value || (base.tts && base.tts.providerId);
+    const namedNoEngine = provider === "auto" && base.tts && base.tts.providerId === undefined;
+    const tts = {
+      ...base.tts,
+      providerId: provider,
+      baseUrl: fields.ttsBaseUrl.value || undefined,
+      voice: fields.ttsVoice.value || undefined,
+      parameters: collectParameterValues()
+    };
+    if (namedNoEngine) {
+      delete tts.providerId;
+    }
+    return tts;
   }
 
   /** Builds the profile-shaped object this form can produce, merged over `loadedProfile`. */
@@ -158,13 +205,7 @@
       description: fields.description.value,
       mode: fields.mode.value === "narrated" ? "narrated" : "faithful",
       style: fields.style.value,
-      tts: {
-        ...base.tts,
-        providerId: fields.ttsProvider.value,
-        baseUrl: fields.ttsBaseUrl.value || undefined,
-        voice: fields.ttsVoice.value || undefined,
-        parameters: collectParameterValues()
-      },
+      tts: collectFormTts(base),
       playback: {
         ...base.playback,
         rate: Number(fields.speed.value)
@@ -245,6 +286,16 @@
   }
   var NORMALIZED_KNOWN_DEFAULTS = Object.values(KNOWN_DEFAULT_BASE_URLS).map(normalizeLoopbackUrl);
   fields.ttsProvider.addEventListener("change", () => {
+    // Leaving "Voix globale": its tunables described another engine, they must not
+    // be saved as this one's.
+    if (parametersContainer.hidden && !isGlobalVoiceSelected()) {
+      parameterDescriptors = [];
+      renderParameters();
+    }
+    updateVoiceFieldsAvailability();
+    if (isGlobalVoiceSelected()) {
+      return;
+    }
     const current = fields.ttsBaseUrl.value.trim();
     // Only auto-fill when the field is empty or still holds another known
     // provider's *default* (in either loopback spelling) — a URL the user
@@ -279,6 +330,9 @@
   var lastCheckedBaseUrl;
   var latestHealthRequestId = 0;
   function checkConnection() {
+    if (isGlobalVoiceSelected()) {
+      return;
+    }
     const baseUrl = fields.ttsBaseUrl.value.trim();
     if (baseUrl === lastCheckedBaseUrl) {
       // A `blur` with nothing actually changed (e.g. tabbing through

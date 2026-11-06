@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { ProfileCollectionSchema } from "../../../src/core/profile.schema.js";
+import { GlobalVoiceFileSchema, ProfileCollectionSchema } from "../../../src/core/profile.schema.js";
 
 describe("schemas/profile-collection.schema.json", () => {
   it("matches a fresh z.toJSONSchema(ProfileCollectionSchema) generation", () => {
@@ -29,5 +29,18 @@ describe("schemas/profile-collection.schema.json", () => {
     const committed = readFileSync(committedPath, "utf8");
 
     expect(committed).toBe(expected);
+  });
+});
+
+describe("schemas/global-voice.schema.json", () => {
+  it("matches a fresh z.toJSONSchema(GlobalVoiceFileSchema) generation", () => {
+    const jsonSchema = z.toJSONSchema(GlobalVoiceFileSchema, { target: "draft-7" }) as Record<string, unknown>;
+    jsonSchema.$schema = "http://json-schema.org/draft-07/schema#";
+    jsonSchema.title = "LLM Voice — global-voice.json";
+    jsonSchema.description =
+      "Generated from src/core/profile.schema.ts (GlobalVoiceFileSchema); do not edit by hand.";
+    const committed = readFileSync(resolve(__dirname, "../../../schemas/global-voice.schema.json"), "utf8");
+
+    expect(committed).toBe(`${JSON.stringify(jsonSchema, null, 2)}\n`);
   });
 });

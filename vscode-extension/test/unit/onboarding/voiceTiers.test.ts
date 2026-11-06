@@ -67,8 +67,8 @@ describe("ttsBindingForTier (bug fix: voice-selection-not-applied / infinite loo
     expect(ttsBindingForTier("system")).toEqual({ providerId: "system" });
   });
 
-  it("'piper' also resolves to providerId 'system' — SystemTtsProvider is what actually finds the installed Piper engine", () => {
-    expect(ttsBindingForTier("piper")).toEqual({ providerId: "system" });
+  it("'piper' also resolves to providerId 'system', and names its voice: that tells the two tiers apart (ADR-017 §1.3)", () => {
+    expect(ttsBindingForTier("piper")).toEqual({ providerId: "system", voice: "fr_FR-siwis-medium" });
   });
 
   it("'chatterbox' resolves to providerId 'chatterbox' at the real local preset baseUrl", () => {

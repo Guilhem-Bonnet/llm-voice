@@ -41,7 +41,7 @@ Réglage `llmVoice.ui.layout: "minimal"` (voir `docs/adr/ADR-011-ui-layout.md`).
 | **Voix française autonome (Piper, recommandé)** | Meilleure, 100 % locale | Téléchargement automatique au premier `Speak` (~60 Mo, une fois) — aucun Docker, aucun serveur |
 | **Qualité maximale (avancé)** | Meilleure, clonage de voix | Nécessite Docker (`deploy/docker-compose.tts.yml`) — pour qui le veut, jamais par défaut |
 
-**LLM Voice: Setup Voice** détecte ce qui est disponible et vous guide — jamais
+**LLM Voice: Choisir la voix** détecte ce qui est disponible et vous guide — jamais
 besoin de deviner un port ou une variable d'environnement.
 
 ## 4 profils

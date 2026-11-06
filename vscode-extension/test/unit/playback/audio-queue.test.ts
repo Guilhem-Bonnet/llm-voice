@@ -627,3 +627,58 @@ describe("AudioQueue.onChunkTiming (S6.2)", () => {
     expect(result.status).toBe("ready");
   });
 });
+
+describe("AudioQueue: what identifies the audio (ADR-017 §1.5, V3)", () => {
+  function queueOn(tts: FakeTtsProvider, cache: InMemoryAudioCache, speed?: number): AudioQueue {
+    return new AudioQueue({
+      tts,
+      cache,
+      binding: { voice: "v", ...(speed !== undefined ? { speed } : {}) }
+    });
+  }
+
+  async function read(queue: AudioQueue): Promise<void> {
+    queue.reset([
+      { id: "s:0", sessionId: "s", spokenText: "Même texte.", sourceRanges: [], status: "pending" }
+    ]);
+    await queue.waitFor(0);
+    queue.dispose();
+  }
+
+  it("with no written provider id, the key falls back on `tts.id`, which names the resolved engine", async () => {
+    const cache = new InMemoryAudioCache();
+    const tts = new FakeTtsProvider();
+    await read(queueOn(tts, cache));
+    const key = computeCacheKey({ providerId: tts.id, voice: "v", spokenText: "Même texte." });
+    expect(await cache.get(key)).toBeDefined();
+  });
+
+  it("the identity an engine gives wins over its id: same provider, other engine, a new synthesis", async () => {
+    const cache = new InMemoryAudioCache();
+    let engine = "espeak-ng";
+    const tts = new FakeTtsProvider();
+    const identified = Object.assign(tts, { cacheIdentity: async () => `system@#${engine}` });
+
+    await read(queueOn(identified, cache));
+    await read(queueOn(identified, cache));
+    expect(tts.requests).toHaveLength(1);
+
+    engine = "piper";
+    await read(queueOn(identified, cache));
+    expect(tts.requests).toHaveLength(2);
+  });
+
+  it("the speed goes to the engine and in the key", async () => {
+    const cache = new InMemoryAudioCache();
+    const tts = new FakeTtsProvider();
+    await read(queueOn(tts, cache, 1.5));
+    expect(tts.requests[0]?.speed).toBe(1.5);
+
+    await read(queueOn(tts, cache, 1.5));
+    expect(tts.requests).toHaveLength(1);
+
+    await read(queueOn(tts, cache, 2));
+    expect(tts.requests).toHaveLength(2);
+    expect(tts.requests[1]?.speed).toBe(2);
+  });
+});

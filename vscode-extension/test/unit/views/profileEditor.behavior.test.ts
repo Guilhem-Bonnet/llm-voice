@@ -56,7 +56,7 @@ function makeElement(id: string) {
     },
     dispatch(type: string) {
       for (const handler of listeners.get(type) ?? []) {
-        handler({});
+        handler({ preventDefault: () => undefined });
       }
     },
     appendChild(child: unknown) {
@@ -320,5 +320,93 @@ describe("profileEditor.js — live connection check (GAO durable fix, 2026-11-0
 
     expect(status.textContent).toBe("");
     expect(status.className).toBe("");
+  });
+});
+
+describe("profileEditor.js — the option 'Voix globale' (ADR-017 §3, V10)", () => {
+  const INHERITING = {
+    id: "m",
+    label: "M",
+    mode: "faithful",
+    language: "fr-FR",
+    tts: {},
+    chunking: { unit: "sentence", maxSentences: 3, prefetchChunks: 2 },
+    playback: { rate: 1, volume: 1 }
+  };
+
+  function lastSaved(posted: unknown[]): { tts: Record<string, unknown> } {
+    const saves = posted.filter((message) => (message as { type: string }).type === "save");
+    return (saves[saves.length - 1] as { profile: { tts: Record<string, unknown> } }).profile;
+  }
+
+  it("V10: saving a mode that inherits, without touching the voice, keeps `tts: {}`", () => {
+    const { elements, posted, send } = runProfileEditor();
+    send({
+      type: "load",
+      profile: INHERITING,
+      parameters: [{ name: "exaggeration", label: "Exaggeration", type: "number", default: 0.5 }]
+    });
+
+    expect(elements.get("field-tts-provider")!.value).toBe("global");
+    elements.get("profile-form")!.dispatch("submit");
+
+    expect(lastSaved(posted).tts).toEqual({});
+  });
+
+  it("the option disables the fields of the voice and the settings of the engine", () => {
+    const { elements, send } = runProfileEditor();
+    send({ type: "load", profile: INHERITING, parameters: [] });
+
+    expect((elements.get("field-tts-base-url") as unknown as { disabled: boolean }).disabled).toBe(true);
+    expect((elements.get("field-tts-voice") as unknown as { disabled: boolean }).disabled).toBe(true);
+    expect((elements.get("btn-browse-voices") as unknown as { disabled: boolean }).disabled).toBe(true);
+    expect((elements.get("btn-check-health") as unknown as { disabled: boolean }).disabled).toBe(true);
+    expect(elements.get("tts-parameters")!.hidden).toBe(true);
+  });
+
+  it("no connection check runs for a voice this form does not hold", () => {
+    const { elements, posted, send } = runProfileEditor();
+    send({ type: "load", profile: INHERITING, parameters: [] });
+    elements.get("field-tts-base-url")!.dispatch("blur");
+    expect(posted.filter((message) => (message as { type: string }).type === "checkHealth")).toEqual([]);
+  });
+
+  it("choosing an engine gives the mode a voice of its own, and fields to set it", () => {
+    const { elements, posted, send } = runProfileEditor();
+    send({ type: "load", profile: INHERITING, parameters: [] });
+    const provider = elements.get("field-tts-provider")!;
+    provider.value = "kyutai-pocket";
+    provider.dispatch("change");
+
+    expect((elements.get("field-tts-voice") as unknown as { disabled: boolean }).disabled).toBe(false);
+    expect(elements.get("field-tts-base-url")!.value).toBe("http://localhost:8000");
+    elements.get("profile-form")!.dispatch("submit");
+    expect(lastSaved(posted).tts).toMatchObject({ providerId: "kyutai-pocket", baseUrl: "http://localhost:8000" });
+  });
+
+  it("choosing 'Voix globale' on a mode that has its own gives `tts: {}` back: nothing survives under it", () => {
+    const { elements, posted, send } = runProfileEditor();
+    send({
+      type: "load",
+      profile: { ...INHERITING, tts: { providerId: "chatterbox", voice: "x", referenceAudio: "/a.wav" } },
+      parameters: []
+    });
+    expect(elements.get("field-tts-provider")!.value).toBe("chatterbox");
+    const provider = elements.get("field-tts-provider")!;
+    provider.value = "global";
+    provider.dispatch("change");
+    elements.get("profile-form")!.dispatch("submit");
+
+    expect(lastSaved(posted).tts).toEqual({});
+  });
+
+  it("a voice of its own with no engine named stays without one: `auto` is not a guess of chatterbox", () => {
+    const { elements, posted, send } = runProfileEditor();
+    send({ type: "load", profile: { ...INHERITING, tts: { format: "mp3" } }, parameters: [] });
+    expect(elements.get("field-tts-provider")!.value).toBe("auto");
+    elements.get("profile-form")!.dispatch("submit");
+    const { tts } = lastSaved(posted);
+    expect(tts["format"]).toBe("mp3");
+    expect(tts["providerId"]).toBeUndefined();
   });
 });

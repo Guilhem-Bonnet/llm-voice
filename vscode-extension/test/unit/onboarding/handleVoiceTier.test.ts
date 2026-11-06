@@ -167,7 +167,7 @@ describe("handleVoiceTier persists the choice (bug fix: voice-selection-not-appl
     const actions = fakeActions();
     await handleVoiceTier("piper", actions);
     expect(actions.calls.applyProviderChoice).toEqual(["piper"]);
-    expect(ttsBindingForTier("piper")).toEqual({ providerId: "system" });
+    expect(ttsBindingForTier("piper")).toEqual({ providerId: "system", voice: "fr_FR-siwis-medium" });
   });
 
   it("'chatterbox': applies the choice even when the install-instructions dialog is dismissed without a button", async () => {

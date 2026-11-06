@@ -13,6 +13,20 @@ Ce fichier est la seule source de vérité (voir `CONTRIBUTING.md`) ; le
 
 ## [Unreleased]
 
+**ADR-017 — la voix choisie est celle qu'on entend, partout : voix globale séparée du mode de lecture.**
+
+### Changed
+
+- **Voix globale** : la voix vit dans `global-voice.json`, à côté de `profiles.json`. Un mode `tts: {}` en hérite ; tout autre `tts` est une voix propre, affichée « Voix propre : X ». Moteur et voix se remplacent ensemble.
+- **Commandes** : nouvelles `LLM Voice: Choisir la voix` et `LLM Voice: Choisir le mode`. `setupVoice`, `browseVoices` et `selectProfile` restent exécutables, comme alias masqués de la palette.
+- **Réglages** : `llmVoice.modes.bySource` remplace `llmVoice.profiles.bySource` (encore lu tant que le nouveau n'est pas défini) ; `llmVoice.defaultProfile` est retiré ; `llmVoice.tts.provider` et `llmVoice.tts.baseUrl` sont dépréciés.
+- **Vitesse** : voix × facteur du mode, appliquée par le moteur quand il déclare `speed`. La clé du cache audio identifie enfin la voix réelle : le cache existant est reconstruit une fois.
+
+### Migration et retour arrière
+
+- Au premier chargement, `profiles.json` est copié à l'identique dans `profiles.pre-adr-017.json`, jamais réécrit ensuite. `schemaVersion` reste à 2.
+- Revenir à la 0.3 : réinstaller la 0.3 fonctionne sans geste ; les modes hérités y passent par `llmVoice.tts.*`, la voix peut donc différer. Pour retrouver l'état exact, copier `profiles.pre-adr-017.json` sur `profiles.json`. `global-voice.json` peut rester : la 0.3 l'ignore, et une nouvelle montée reclasse le fichier.
+
 **S8.2 — le parcours de découverte de voix devient autonome : plus besoin d'un agent pour choisir la bonne voix (CdC §72, version 0.2).**
 
 ### Added

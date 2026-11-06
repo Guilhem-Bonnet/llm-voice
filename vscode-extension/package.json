@@ -51,6 +51,10 @@
       {
         "fileMatch": "profiles.json",
         "url": "./schemas/profile-collection.schema.json"
+      },
+      {
+        "fileMatch": "global-voice.json",
+        "url": "./schemas/global-voice.schema.json"
       }
     ],
     "commands": [
@@ -59,6 +63,16 @@
         "title": "LLM Voice: Speak Document",
         "category": "LLM Voice",
         "icon": "$(unmute)"
+      },
+      {
+        "command": "llmVoice.chooseVoice",
+        "title": "LLM Voice: Choisir la voix",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.chooseMode",
+        "title": "LLM Voice: Choisir le mode",
+        "category": "LLM Voice"
       },
       {
         "command": "llmVoice.setupVoice",
@@ -350,7 +364,7 @@
         },
         {
           "id": "llmVoice.profilesView",
-          "name": "Profils",
+          "name": "Modes",
           "when": "config.llmVoice.ui.layout == full"
         }
       ]
@@ -377,6 +391,18 @@
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "llmVoice.setupVoice",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.browseVoices",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.selectProfile",
+          "when": "false"
+        },
         {
           "command": "llmVoice.statusBar.openMenu",
           "when": "false"
@@ -564,13 +590,35 @@
     "configuration": {
       "title": "LLM Voice",
       "properties": {
-        "llmVoice.defaultProfile": {
-          "type": "string",
-          "default": "",
-          "description": "Identifiant du profil utilisé par défaut pour une nouvelle session de lecture."
+        "llmVoice.modes.bySource": {
+          "type": "object",
+          "default": {
+            "claude-code": "llm-summary"
+          },
+          "description": "Mode de lecture selon la source : markdown, text (sélection), clipboard, claude-code. Une source non renseignée utilise le dernier mode choisi. Une source choisit un mode, jamais une voix.",
+          "properties": {
+            "markdown": {
+              "type": "string",
+              "description": "Mode pour un document Markdown."
+            },
+            "text": {
+              "type": "string",
+              "description": "Mode pour une sélection de texte."
+            },
+            "clipboard": {
+              "type": "string",
+              "description": "Mode pour le presse-papiers."
+            },
+            "claude-code": {
+              "type": "string",
+              "description": "Mode pour les réponses de Claude."
+            }
+          },
+          "additionalProperties": false
         },
         "llmVoice.profiles.bySource": {
           "type": "object",
+          "deprecationMessage": "Remplacé par llmVoice.modes.bySource. Ce réglage reste lu tant que le nouveau n'est pas défini.",
           "default": {
             "claude-code": "llm-summary"
           },
@@ -602,11 +650,13 @@
         },
         "llmVoice.tts.baseUrl": {
           "type": "string",
+          "deprecationMessage": "L'adresse appartient à la voix : « Choisir la voix ». Ce réglage ne sert plus qu'à une voix propre sans adresse.",
           "default": "http://127.0.0.1:8004",
           "description": "URL de base du service de synthèse vocale (TTS), doit rester locale par défaut (D2, D10). Port 8004 = Chatterbox (ADR-009 niveau 1). Kokoro utilise le port 8880 tant que ce réglage reste vide ou sur le port de Chatterbox."
         },
         "llmVoice.tts.provider": {
           "type": "string",
+          "deprecationMessage": "Le moteur appartient à la voix : « Choisir la voix ». Ce réglage ne sert plus qu'à une voix propre sans moteur.",
           "default": "auto",
           "enum": [
             "auto",
@@ -807,14 +857,14 @@
           },
           {
             "id": "chooseProfile",
-            "title": "Choisir un profil",
-            "description": "Un profil fixe la voix, le provider TTS et le narrateur. Quatre profils sont fournis par défaut : Lecture fidèle, Professeur technique, Résumé LLM, Révision rapide.\n[Choisir un profil](command:llmVoice.selectProfile)",
+            "title": "Choisir un mode",
+            "description": "Un mode fixe la façon de lire le texte, la voix reste celle que vous avez choisie. Quatre modes sont fournis : Fidèle, Professeur, Résumé, Révision.\n[Choisir un mode](command:llmVoice.chooseMode)",
             "media": {
               "image": "media/walkthrough/choose-profile.svg",
-              "altText": "Quatre profils de lecture au choix"
+              "altText": "Quatre modes de lecture au choix"
             },
             "completionEvents": [
-              "onCommand:llmVoice.selectProfile"
+              "onCommand:llmVoice.chooseMode"
             ]
           },
           {
@@ -841,6 +891,7 @@
     "test:unit": "vitest run --config vitest.config.ts",
     "test:integration-real": "vitest run --config vitest.integration-real.config.ts",
     "test:integration-security": "npm run build && vscode-test --label integration-security",
+    "test:integration-voice": "npm run build && xvfb-run -a vscode-test --label voice-chain",
     "bundle": "node scripts/esbuild.mjs",
     "generate:icon": "node scripts/generate-icon.mjs",
     "generate:profile-schema": "node scripts/generate-profile-schema.mjs",

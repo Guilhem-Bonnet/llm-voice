@@ -83,6 +83,19 @@ export function resolveTtsConfig(tts: TtsBinding, settings: TtsSettings): Resolv
 }
 
 /**
+ * What identifies one speech engine instance, and therefore its audio (ADR-017
+ * §1.5, cause B): the resolved engine, never the written `auto`; its URL; its
+ * cloning sample. It is `TtsProvider.id`, which `AudioQueue` hashes into the cache
+ * key, and the registry key of `Pipeline.ttsFor`. `system` makes no network call,
+ * so a URL left in the settings must not split its audio in two.
+ */
+export function ttsInstanceKey(resolved: ResolvedTtsConfig, referenceAudioPath: string | undefined): string {
+  const endpoint = resolved.providerId === "system" ? "" : resolved.baseUrl;
+  const base = `${resolved.providerId}@${endpoint}`;
+  return referenceAudioPath !== undefined ? `${base}@ref:${referenceAudioPath}` : base;
+}
+
+/**
  * Same fallback for the narrator binding. `undefined` in ⇒ `undefined` out:
  * a profile with no narrator at all still means "faithful reading only"
  * (ADR-005) — settings never conjure a narrator binding out of nothing.

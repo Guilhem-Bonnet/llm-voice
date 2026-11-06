@@ -22,7 +22,9 @@ import {
   type SpeechPlanItem
 } from "../../../../src/direction/translator/index.js";
 import { FakeTtsProvider } from "../../../fakes/FakeTtsProvider.js";
-import { makeSegments } from "../../playback/helpers.js";
+import { makeProfile, makeSegments } from "../../playback/helpers.js";
+import type { TtsBinding } from "../../../../src/core/profile.js";
+import { withEffectiveVoice } from "../../../../src/profiles/voiceResolution.js";
 import { cue, loadRealCapabilities, type RealCapabilities } from "./support.js";
 
 const META = { documentKey: "a".repeat(64), bibleRevision: 0 };
@@ -133,6 +135,33 @@ const BINDINGS: Array<[string, SynthesisBinding]> = [
     }
   ]
 ];
+
+describe("ADR-017 V12: the session binding comes from the effective voice, the contract does not change", () => {
+  const GLOBAL = { providerId: "kyutai-pocket", baseUrl: "http://localhost:8000", voice: "estelle", speed: 1 };
+  const segments = makeSegments(3, "narrated-");
+  const partition = narrationSegmentsToNeutralPartition(segments, META);
+
+  function bindingOf(tts: TtsBinding): SynthesisBinding {
+    const mode = makeProfile({ tts });
+    const { voice, parameters } = withEffectiveVoice(mode, GLOBAL).tts;
+    return { ...(voice !== undefined ? { voice } : {}), ...(parameters !== undefined ? { parameters } : {}) };
+  }
+
+  it("a mode that inherits narrates with the global voice, the neutral partition being today's requests", async () => {
+    const binding = bindingOf({});
+    expect(binding.voice).toBe("estelle");
+    const plan = translatePartition(partition, { binding });
+    expect(speech(plan.items).map((item) => item.request)).toEqual(await todaysRequests(segments, binding));
+  });
+
+  it("the narrator is the voice of the mode when it has its own", async () => {
+    const binding = bindingOf({ providerId: "chatterbox", voice: "propre", parameters: { exaggeration: 0.7 } });
+    expect(binding.voice).toBe("propre");
+    const plan = translatePartition(partition, { binding });
+    expect(speech(plan.items).map((item) => item.request)).toEqual(await todaysRequests(segments, binding));
+    expect(speech(plan.items)[0]?.cacheVoice).toBe("propre");
+  });
+});
 
 describe("test 2: a neutral partition is today's request list, no silence segment (ADR-015 §9)", () => {
   const segments = makeSegments(5, "narrated-");

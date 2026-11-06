@@ -1,111 +1,35 @@
 /**
- * `profiles.json` storage (ADR-004): created with the four default profiles
- * (CdC §19) on first launch, read/written under `globalStorageUri`, and
- * revalidated with `ProfileCollectionSchema` (AC-SEC-05) on every read — an
- * externally hand-edited file that no longer parses or validates is
- * surfaced as an error rather than silently overwritten with defaults.
- *
- * The last selected profile id lives in `globalState`
- * (`llmVoice.profiles.lastSelectedId`), like every other "perte tolérable"
- * fact in ADR-004's storage table.
+ * `ProfileStore` with what needs a real VS Code: the settings the migration reads,
+ * its messages, and opening the file in an editor.
  */
 
-import * as fs from "node:fs/promises";
-import { randomBytes } from "node:crypto";
-import * as path from "node:path";
 import * as vscode from "vscode";
-import type { ProfileCollection, VoiceProfile } from "../core/profile.js";
-import { ProfileCollectionSchema, parseVoiceProfile } from "../core/profile.schema.js";
-import type { SourceType } from "../core/source.js";
-import { DEFAULT_PROFILES, SYSTEM_VOICE_PROFILE } from "./defaults.js";
-import { resolveDefaultProfileId, type BySourceSetting } from "./bySource.js";
-import { CURRENT_PROFILE_SCHEMA_VERSION, migrateProfileCollection } from "./migrations.js";
+import { readModesBySource } from "./bySource.js";
+import type { VoiceNotice } from "./migrations.js";
+import { ProfileStore, type ProfileStoreEnvironment, type StateStore } from "./profileStore.js";
+import { describeVoice } from "./voiceResolution.js";
 
-const LAST_SELECTED_KEY = "llmVoice.profiles.lastSelectedId";
+const KEEP_SAMPLE_LABEL = "Garder mon échantillon";
 
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error;
-}
-
-function isEnoent(error: unknown): boolean {
-  return isNodeError(error) && error.code === "ENOENT";
-}
-
-export class ProfileRepository {
-  private readonly filePath: string;
-
-  constructor(
-    private readonly globalStorageDir: string,
-    private readonly globalState: vscode.Memento
-  ) {
-    this.filePath = path.join(globalStorageDir, "profiles.json");
+export class ProfileRepository extends ProfileStore {
+  constructor(globalStorageDir: string, globalState: StateStore) {
+    const environment: ProfileStoreEnvironment = {
+      ttsSettings: () => {
+        const config = vscode.workspace.getConfiguration("llmVoice");
+        return {
+          provider: config.get<string>("tts.provider", "auto"),
+          baseUrl: config.get<string>("tts.baseUrl", "http://127.0.0.1:8880")
+        };
+      },
+      modesBySource: () => readModesBySource(vscode.workspace.getConfiguration("llmVoice")),
+      legacyDefaultProfile: () => vscode.workspace.getConfiguration("llmVoice").get<string>("defaultProfile"),
+      onVoiceNotice: (notice) => this.showVoiceNotice(notice)
+    };
+    super(globalStorageDir, globalState, environment);
   }
 
   get uri(): vscode.Uri {
     return vscode.Uri.file(this.filePath);
-  }
-
-  /**
-   * Reads `profiles.json`, creating it with the defaults on first launch.
-   *
-   * Bug fix (voice-selection-not-applied, defect 2): a file still at
-   * `schemaVersion: 1` (written before `"auto"`/the Chatterbox → Piper →
-   * système fallback chain existed) is migrated in place
-   * (`migrateProfileCollection`) and the result persisted immediately —
-   * every *other* read of a `schemaVersion: 1` file (a concurrent
-   * `ProfileRepository` instance, a crash between migrate and write) redoes
-   * the same idempotent migration rather than reading half-migrated state,
-   * since the migration only ever runs against what is actually on disk.
-   */
-  async load(): Promise<ProfileCollection> {
-    await fs.mkdir(this.globalStorageDir, { recursive: true });
-    let raw: string;
-    try {
-      raw = await fs.readFile(this.filePath, "utf8");
-    } catch (error) {
-      if (!isEnoent(error)) {
-        throw error;
-      }
-      const initial = this.defaultCollection();
-      await this.write(initial);
-      return initial;
-    }
-    // Throws (SyntaxError or a Zod error) on malformed content: a broken
-    // profiles.json must be fixed by the user, never silently replaced.
-    const parsed = ProfileCollectionSchema.parse(JSON.parse(raw)) as ProfileCollection;
-    const { collection, migrated } = migrateProfileCollection(parsed);
-    if (migrated) {
-      await this.write(collection);
-    }
-    return collection;
-  }
-
-  async list(): Promise<readonly VoiceProfile[]> {
-    return (await this.load()).profiles;
-  }
-
-  /**
-   * The profile to use for a new session: an explicit `bySource` default for
-   * `sourceType` (CdC §47), else the last selected profile, else the
-   * collection's own default — falling further back to the first profile if
-   * that id no longer exists (a deleted or renamed profile must never throw
-   * here).
-   */
-  async getSelected(sourceType?: SourceType, bySource?: BySourceSetting): Promise<VoiceProfile> {
-    const collection = await this.load();
-    const lastSelectedId = this.globalState.get<string>(LAST_SELECTED_KEY);
-    const wantedId = resolveDefaultProfileId(sourceType, bySource, lastSelectedId, collection.defaultProfileId);
-    const byId = (id: string | undefined): VoiceProfile | undefined =>
-      id === undefined ? undefined : collection.profiles.find((profile) => profile.id === id);
-    const found = byId(wantedId) ?? byId(collection.defaultProfileId) ?? collection.profiles[0];
-    if (found === undefined) {
-      throw new Error("profiles.json contains no profile");
-    }
-    return found;
-  }
-
-  async select(id: string): Promise<void> {
-    await this.globalState.update(LAST_SELECTED_KEY, id);
   }
 
   /** Opens `profiles.json` for manual editing (`Open Profiles` command). */
@@ -115,165 +39,34 @@ export class ProfileRepository {
     await vscode.window.showTextDocument(document);
   }
 
-  /** `Set Default Profile` (CdC §47): rejects an unknown id rather than silently ignoring it. */
-  async setDefault(id: string): Promise<void> {
-    const collection = await this.load();
-    if (!collection.profiles.some((profile) => profile.id === id)) {
-      throw new Error(`LLM Voice : profil inconnu « ${id} ».`);
-    }
-    await this.write({ ...collection, defaultProfileId: id });
-  }
-
-  /** `Duplicate Profile` (CdC §47): copies with a unique id, "(copie)" suffixed label. */
-  async duplicate(id: string): Promise<VoiceProfile> {
-    const collection = await this.load();
-    const source = collection.profiles.find((profile) => profile.id === id);
-    if (source === undefined) {
-      throw new Error(`LLM Voice : profil inconnu « ${id} ».`);
-    }
-    const newId = this.uniqueId(`${source.id}-copie`, collection.profiles);
-    const copy: VoiceProfile = { ...source, id: newId, label: `${source.label} (copie)` };
-    await this.write({ ...collection, profiles: [...collection.profiles, copy] });
-    return copy;
-  }
-
-  /**
-   * `LLM Voice: Browse Voices` / `Use My Own Voice` / the profile editor
-   * (S8.2): the one generic, validated write path for "change this existing
-   * profile's fields" — `duplicate`/`delete`/`import`/`export` above cover
-   * every other kind of edit, none of them "replace profile X in place".
-   * `updater` receives the current profile and returns the next one;
-   * `parseVoiceProfile` re-validates the result before it ever reaches
-   * disk (AC-SEC-05 applies to a hand-built edit exactly like an import),
-   * and the id may not change here — `duplicate`/`import` are what create a
-   * new id.
-   */
-  async update(id: string, updater: (profile: VoiceProfile) => VoiceProfile): Promise<VoiceProfile> {
-    const collection = await this.load();
-    const index = collection.profiles.findIndex((profile) => profile.id === id);
-    if (index === -1) {
-      throw new Error(`LLM Voice : profil inconnu « ${id} ».`);
-    }
-    const current = collection.profiles[index]!;
-    const candidate = updater(current);
-    if (candidate.id !== id) {
-      throw new Error("LLM Voice : l'identifiant d'un profil ne peut pas changer via update().");
-    }
-    const updated = parseVoiceProfile(candidate);
-    const profiles = [...collection.profiles];
-    profiles[index] = updated;
-    await this.write({ ...collection, profiles });
-    return updated;
-  }
-
-  /**
-   * `Delete Profile` (CdC §47). Refuses to empty `profiles.json` (a
-   * `ProfileCollection` always needs at least one profile — the same
-   * invariant `ProfileCollectionSchema.profiles` enforces, `.min(1)`), and
-   * reassigns `defaultProfileId` to the first remaining profile when the one
-   * deleted was the default.
-   */
-  async delete(id: string): Promise<void> {
-    const collection = await this.load();
-    if (collection.profiles.length <= 1) {
-      throw new Error("LLM Voice : impossible de supprimer le dernier profil.");
-    }
-    const profiles = collection.profiles.filter((profile) => profile.id !== id);
-    if (profiles.length === collection.profiles.length) {
-      throw new Error(`LLM Voice : profil inconnu « ${id} ».`);
-    }
-    const first = profiles[0];
-    if (first === undefined) {
-      throw new Error("LLM Voice : impossible de supprimer le dernier profil.");
-    }
-    const defaultProfileId = collection.defaultProfileId === id ? first.id : collection.defaultProfileId;
-    await this.write({ ...collection, profiles, defaultProfileId });
-  }
-
-  /**
-   * `Import Profile` (AC-SEC-05): validates against `VoiceProfileSchema`
-   * before touching `profiles.json` — an invalid profile never lands on
-   * disk. A colliding id is disambiguated rather than silently overwriting
-   * an existing profile; the caller (`Pipeline.importProfile`) is
-   * responsible for the "☁ Remote provider" warning (`isRemoteProfile`).
-   */
-  async import(rawJson: string): Promise<VoiceProfile> {
-    const parsed: unknown = JSON.parse(rawJson);
-    const profile = parseVoiceProfile(parsed);
-    const collection = await this.load();
-    const id = this.uniqueId(profile.id, collection.profiles);
-    const imported: VoiceProfile = id === profile.id ? profile : { ...profile, id };
-    await this.write({ ...collection, profiles: [...collection.profiles, imported] });
-    return imported;
-  }
-
-  /** `Export Profile`: the profile alone, pretty-printed, ready to write to a `.json` file. */
-  async export(id: string): Promise<string> {
-    const collection = await this.load();
-    const profile = collection.profiles.find((candidate) => candidate.id === id);
-    if (profile === undefined) {
-      throw new Error(`LLM Voice : profil inconnu « ${id} ».`);
-    }
-    return `${JSON.stringify(profile, null, 2)}\n`;
-  }
-
-  private uniqueId(base: string, existing: readonly VoiceProfile[]): string {
-    if (!existing.some((profile) => profile.id === base)) {
-      return base;
-    }
-    let suffix = 2;
-    while (existing.some((profile) => profile.id === `${base}-${suffix}`)) {
-      suffix += 1;
-    }
-    return `${base}-${suffix}`;
-  }
-
-  /**
-   * S7.1: `SYSTEM_VOICE_PROFILE` is the first-launch default — a fresh
-   * install must produce sound with zero server/config (the user problem
-   * this story exists to fix), not silently fail against a Chatterbox
-   * server that was never started.
-   */
-  private defaultCollection(): ProfileCollection {
-    return {
-      schemaVersion: CURRENT_PROFILE_SCHEMA_VERSION,
-      defaultProfileId: SYSTEM_VOICE_PROFILE.id,
-      profiles: [...DEFAULT_PROFILES]
-    };
-  }
-
-  private async write(collection: ProfileCollection): Promise<void> {
-    // `pid` + `Date.now()` alone can collide: two writes issued in quick
-    // succession from the same process (e.g. two profile imports awaited
-    // back to back) can land in the same millisecond, so the second
-    // `rename()` fails ENOENT once the first has already consumed that tmp
-    // path. A random suffix makes every write's tmp path unique regardless
-    // of timing.
-    const tmp = `${this.filePath}.tmp-${process.pid}-${Date.now()}-${randomBytes(4).toString("hex")}`;
-    await fs.writeFile(tmp, `${JSON.stringify(collection, null, 2)}\n`, "utf8");
-    await renameWithRetry(tmp, this.filePath);
-  }
-}
-
-/**
- * Windows can transiently hold a brief exclusive handle on the destination
- * of a rename (AV/indexer scan, a previous `load()`'s read not yet
- * released), which surfaces as `EPERM`/`EBUSY` even though nothing in this
- * process still has the file open — the retry is the fix, not a real
- * conflict to resolve. Linux/macOS `rename(2)` never raises these for a
- * same-volume replace, so the loop is a no-op there.
- */
-async function renameWithRetry(tmp: string, dest: string, attempts = 5, delayMs = 25): Promise<void> {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      await fs.rename(tmp, dest);
+  private showVoiceNotice(notice: VoiceNotice): void {
+    if (notice.kind === "voice-reset") {
+      void vscode.window.showInformationMessage(
+        "LLM Voice : Voix réinitialisée, la voix système parle désormais. « Choisir la voix » pour en changer."
+      );
       return;
-    } catch (error) {
-      const retryable = isNodeError(error) && (error.code === "EPERM" || error.code === "EBUSY");
-      if (!retryable || attempt >= attempts) {
-        throw error;
-      }
-      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
     }
+    void this.askSampleOrVoice(notice.voice);
+  }
+
+  /**
+   * ADR-017 §2: we cannot know which of the two the user set last, so nothing
+   * changes until they say; `chooseVoice` then keeps them exclusive.
+   */
+  private async askSampleOrVoice(voiceId: string): Promise<void> {
+    const label = describeVoice({ voice: voiceId });
+    const useVoice = `Utiliser la voix ${label}`;
+    const choice = await vscode.window.showInformationMessage(
+      `LLM Voice : votre échantillon est utilisé à la place de la voix ${label}.`,
+      useVoice,
+      KEEP_SAMPLE_LABEL
+    );
+    if (choice !== useVoice && choice !== KEEP_SAMPLE_LABEL) {
+      return;
+    }
+    const { speed: _speed, ...current } = await this.getGlobalVoice();
+    const { referenceAudio: _sample, ...withoutSample } = current;
+    const { voice: _voice, ...withoutVoice } = current;
+    await this.setGlobalVoice(choice === useVoice ? withoutSample : withoutVoice);
   }
 }

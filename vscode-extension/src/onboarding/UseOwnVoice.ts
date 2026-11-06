@@ -75,9 +75,9 @@ function convertWithFfmpeg(inputPath: string, outputPath: string): Promise<boole
 
 export interface UseOwnVoiceHost {
   extensionContext: vscode.ExtensionContext;
-  /** Sets `profile.tts.referenceAudio` on the currently selected profile and saves it. */
+  /** Makes this sample the global voice (ADR-017 §3). */
   applyReferenceAudio(absolutePath: string): Promise<void>;
-  /** Plays the current profile's test text with the newly applied reference. */
+  /** Plays the test text with the newly applied reference. */
   previewCurrentProfile(): Promise<void>;
 }
 

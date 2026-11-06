@@ -6,6 +6,8 @@
 
 export * from "./defaults.js";
 export * from "./ProfileRepository.js";
+export * from "./profileStore.js";
+export * from "./voiceResolution.js";
 export * from "./bySource.js";
 export * from "./profileQuickPick.js";
 export * from "./remoteProviders.js";

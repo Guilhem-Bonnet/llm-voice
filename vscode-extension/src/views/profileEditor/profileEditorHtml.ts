@@ -93,6 +93,8 @@ export function buildProfileEditorHtml(inputs: ProfileEditorHtmlInputs): string 
       <legend>Voix (TTS) — qui prononce le texte à voix haute</legend>
       <label for="field-tts-provider">Provider</label>
       <select id="field-tts-provider" name="ttsProvider">
+        <option value="global">Voix globale — la voix choisie pour tous les modes</option>
+        <option value="auto">Voix automatique — le premier moteur disponible</option>
         <option value="system">Voix système — déjà installée, aucune configuration</option>
         <option value="chatterbox">Chatterbox — voix clonée, qualité maximale (nécessite Docker)</option>
         <option value="kokoro">Kokoro — voix locale rapide</option>

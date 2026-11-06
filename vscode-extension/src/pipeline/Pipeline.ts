@@ -22,7 +22,7 @@ import * as vscode from "vscode";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
 import type { PlaybackState } from "../core/playback.js";
-import type { SyncMode, VoiceProfile } from "../core/profile.js";
+import type { SyncMode, TtsBinding, VoiceProfile } from "../core/profile.js";
 import { isRemoteProfile } from "../core/profile.schema.js";
 import type { NarratorProvider } from "../core/narration.js";
 import type { ProviderHealth } from "../core/health.js";
@@ -68,10 +68,20 @@ import { ClipboardSource, MarkdownDocumentSource, TextSelectionSource, readCaptu
 import {
   ProfileRepository,
   apiKeySecretKey,
+  bindingForEngineVoice,
+  bindingOfGlobalVoice,
   collectRemoteProviderIds,
+  declaredVoiceLanguage,
+  describeSpeedGap,
+  describeVoice,
   formatProfileQuickPickItem,
-  friendlyTtsProviderLabel,
-  type BySourceSetting
+  formatVoiceLanguageWarning,
+  readModesBySource,
+  requestedSpeed,
+  resolveEngineSpeed,
+  type BySourceSetting,
+  type EngineSpeed,
+  type ReadingResolution
 } from "../profiles/index.js";
 import {
   ChatterboxProvider,
@@ -105,6 +115,7 @@ import {
   resolveNarratorConfig,
   resolveTtsConfig,
   selectAutoTtsProvider,
+  ttsInstanceKey,
   type NarratorSettings,
   type ResolvedTtsConfig,
   type TtsSettings
@@ -123,9 +134,15 @@ import {
   installClaudeHook as runInstallClaudeHook,
   uninstallClaudeHook as runUninstallClaudeHook
 } from "../claude/ClaudeHookCommand.js";
-import { buildVoiceQuickPickItems, defaultVoiceFor, previewButton } from "../profiles/voiceBrowser.js";
+import {
+  buildVoiceQuickPickItems,
+  defaultVoiceFor,
+  previewButton,
+  voiceLanguageDiffers
+} from "../profiles/voiceBrowser.js";
 import { useOwnVoice as runUseOwnVoice } from "../onboarding/UseOwnVoice.js";
-import { ttsBindingForTier, type VoiceTier } from "../onboarding/voiceTiers.js";
+import { handleVoiceTier, type VoiceTierActions } from "../onboarding/handleVoiceTier.js";
+import { ttsBindingForTier, VOICE_TIER_OPTIONS, type VoiceTier } from "../onboarding/voiceTiers.js";
 import {
   ProfileEditorPanel,
   type ProfileEditorDeps,
@@ -145,6 +162,11 @@ const READY_POLL_INTERVAL_MS = 500;
  * the lookup (see that method's own doc comment).
  */
 const DEFAULT_VOICE_LOOKUP_TIMEOUT_MS = 3_000;
+/**
+ * ADR-017 §1.4: asking an engine what it can do before a reading must not delay
+ * one on an unreachable server: same bound as the voice lookup above.
+ */
+const ENGINE_CAPABILITIES_TIMEOUT_MS = 3_000;
 
 /**
  * Mirrors `package.json#llmVoice.testVoice.text`'s default (CdC §50's French
@@ -161,7 +183,7 @@ const HEALTH_CACHE_TTL_MS = 30_000;
 
 /**
  * S7.3's "TTS indisponible" dialog, "Choisir une voix" button: opened only
- * when `llmVoice.setupVoice` (a parallel onboarding story's command) is not
+ * when `llmVoice.chooseVoice` (a parallel onboarding story's command) is not
  * registered — checked at runtime via `vscode.commands.getCommands()`
  * rather than assumed, so this pipeline never depends on that story landing
  * first.
@@ -318,6 +340,8 @@ export class Pipeline implements PipelineFacade {
    * a transitory toast confirmed it.
    */
   private currentVoiceLabel = "";
+  /** ADR-017 §1.4: why what is heard differs from the speed asked; displayed by the header of card 0-007. */
+  private currentSpeedGap: string | undefined;
   /** S8.2: `profile.synchronization.mode` for the session in progress, `"highlight-scroll"` (0.1 behaviour) until a session sets it. */
   private currentSyncMode: SyncMode = "highlight-scroll";
   private lastCaptureContext: CaptureContext | undefined;
@@ -528,6 +552,11 @@ export class Pipeline implements PipelineFacade {
     return this.currentProfileLabel;
   }
 
+  /** ADR-017 V3: forgets the memoised `auto` resolution, as if `HEALTH_CACHE_TTL_MS` had elapsed. */
+  resetAutoTtsCacheForTest(): void {
+    this.autoTtsCache = undefined;
+  }
+
   /** S9 (ADR-011 revision 2026-09-12): the unread badge currently shown on `llmVoice.inboxView` (and, transitively, the `llmVoice` activity bar icon). */
   getInboxBadgeForTest(): { value: number; tooltip: string } | undefined {
     return this.inboxTreeView?.badge;
@@ -573,9 +602,12 @@ export class Pipeline implements PipelineFacade {
       }
 
       const doc = await source.capture(captureContext, abort.signal);
-      const profile = await this.profiles.getSelected(doc.sourceType, this.bySourceSettings());
+      const reading = await this.profiles.resolveReading(doc.sourceType, this.modesBySourceSettings());
+      // ADR-017 §1.3: everything downstream receives the effective mode, whichever
+      // voice it speaks with, and never needs to know where that voice came from.
+      const profile = reading.effective;
       this.currentProfileLabel = profile.label;
-      this.currentVoiceLabel = friendlyTtsProviderLabel(profile.tts.providerId);
+      this.currentVoiceLabel = describeVoice(profile.tts);
       this.currentSyncMode = profile.synchronization?.mode ?? "highlight-scroll";
 
       // S8.3 (no Docker by default): a fresh install with no local engine
@@ -627,6 +659,7 @@ export class Pipeline implements PipelineFacade {
       // voice on their own. Never persisted to `profiles.json` — a
       // session-scoped default only, exactly like `forceFaithful` above.
       const effectiveProfile = await this.withDefaultVoice(profile, tts, abort.signal);
+      const engineSpeed = await this.engineSpeedFor(tts, requestedSpeed(reading.voice, reading.mode), abort.signal);
       if (abort.signal.aborted) {
         return;
       }
@@ -636,7 +669,8 @@ export class Pipeline implements PipelineFacade {
         profile: effectiveProfile,
         tts,
         sink,
-        sealed: true
+        sealed: true,
+        ...(engineSpeed !== undefined ? { engineSpeed } : {})
       });
     } catch (error) {
       // A reading cancelled while preparing unwinds through here: the user asked for it.
@@ -858,30 +892,61 @@ export class Pipeline implements PipelineFacade {
 
   // ------------------------------------------------------------- profiles
 
-  async selectProfile(): Promise<void> {
-    const profiles = await this.profiles.list();
+  /**
+   * `LLM Voice: Choisir le mode` (ADR-017 §3): how the text is read, never who
+   * reads it: `global-voice.json` is not touched here. The Auto line is a separator:
+   * the slot is reserved and inactive until ADR-013 is accepted (ADR-017 §4).
+   */
+  async chooseMode(): Promise<void> {
+    const modes = await this.profiles.listEffective();
     const selected = await this.profiles.getSelected();
-    const picked = await vscode.window.showQuickPick(
-      profiles.map((profile) => formatProfileQuickPickItem(profile, profile.id === selected.id)),
-      { placeHolder: "LLM Voice : choisir un profil" }
-    );
-    if (picked === undefined) {
+    const items: (vscode.QuickPickItem & { id?: string })[] = [
+      { label: "Auto : bientôt disponible", kind: vscode.QuickPickItemKind.Separator },
+      ...modes.map((row) => formatProfileQuickPickItem(row.effective, row.mode.id === selected.id, row.voiceOrigin))
+    ];
+    const picked = await vscode.window.showQuickPick(items, { placeHolder: "LLM Voice : choisir le mode" });
+    if (picked?.id === undefined) {
       return;
     }
     await this.selectProfileById(picked.id);
+    const reading = await this.profiles.resolveReading();
+    this.warnIfVoiceLanguageDiffers(reading, declaredVoiceLanguage(reading.effective.tts));
   }
 
-  /** Non-interactive selection (CdC §47); also what `selectProfile`'s Quick Pick calls into. */
+  /** Non-interactive selection (CdC §47); also what `chooseMode`'s Quick Pick calls into. */
   async selectProfileById(id: string): Promise<void> {
     const profiles = await this.profiles.list();
     const next = profiles.find((profile) => profile.id === id);
     if (next === undefined) {
-      throw new Error(`LLM Voice : profil inconnu « ${id} ».`);
+      throw new Error(`LLM Voice : mode inconnu « ${id} ».`);
     }
     await this.profiles.select(id);
     this.currentProfileLabel = next.label;
-    this.currentVoiceLabel = friendlyTtsProviderLabel(next.tts.providerId);
     await this.refreshLocalModeBadge();
+  }
+
+  /**
+   * ADR-017 §1.3 "Langue": inheritance does not depend on the language, or the voice
+   * would change without having been asked to. A declared difference is said, with
+   * the way out, and blocks nothing; an unknown language says nothing.
+   */
+  private warnIfVoiceLanguageDiffers(reading: ReadingResolution, voiceLanguage: string | undefined): void {
+    if (voiceLanguage === undefined) {
+      return;
+    }
+    const label = describeVoice(reading.effective.tts);
+    const voice = { id: reading.effective.tts.voice ?? label, label, language: voiceLanguage };
+    if (!voiceLanguageDiffers(voice, reading.mode.language)) {
+      return;
+    }
+    const action = "Donner une voix propre à ce mode";
+    void vscode.window
+      .showWarningMessage(formatVoiceLanguageWarning(label, voiceLanguage, reading.mode.language), action)
+      .then((choice) => {
+        if (choice === action) {
+          void this.openProfileEditorById(reading.mode.id);
+        }
+      });
   }
 
   async openProfiles(): Promise<void> {
@@ -989,9 +1054,9 @@ export class Pipeline implements PipelineFacade {
   private async pickProfile(
     placeHolder: string
   ): Promise<{ id: string; label: string } | undefined> {
-    const profiles = await this.profiles.list();
+    const modes = await this.profiles.listEffective();
     return vscode.window.showQuickPick(
-      profiles.map((profile) => formatProfileQuickPickItem(profile, false)),
+      modes.map((row) => formatProfileQuickPickItem(row.effective, false, row.voiceOrigin)),
       { placeHolder }
     );
   }
@@ -1019,7 +1084,7 @@ export class Pipeline implements PipelineFacade {
     this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
     const sink = this.sinkOverride ?? this.player.playbackSink;
     this.currentProfileLabel = profile.label;
-    this.currentVoiceLabel = friendlyTtsProviderLabel(profile.tts.providerId);
+    this.currentVoiceLabel = describeVoice(profile.tts);
     this.notificationGate.clear("playbackFailed");
     void this.warnIfInstallIsNewer();
     this.player.reveal();
@@ -1029,62 +1094,219 @@ export class Pipeline implements PipelineFacade {
     // must not be the one path left able to send a voice-less "predefined"
     // request.
     const effectiveProfile = await this.withDefaultVoice(profile, tts);
-    await this.controller.start({ segments: build.segments, profile: effectiveProfile, tts, sink, sealed: true });
+    const voice = await this.profiles.getGlobalVoice();
+    const engineSpeed = await this.engineSpeedFor(tts, requestedSpeed(voice, profile));
+    await this.controller.start({
+      segments: build.segments,
+      profile: effectiveProfile,
+      tts,
+      sink,
+      sealed: true,
+      ...(engineSpeed !== undefined ? { engineSpeed } : {})
+    });
   }
 
   /** `LLM Voice: Test Voice` (CdC §50): faithful reading of a short reference text via the pipeline. */
   async testVoice(): Promise<void> {
     try {
-      const profile = await this.profiles.getSelected();
-      await this.speakTestText(profile);
+      const reading = await this.profiles.resolveReading();
+      await this.speakTestText(reading.effective);
     } catch (error) {
       this.output.error("testVoice failed", { error: messageOf(error) });
       void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
     }
   }
 
-  // ------------------------------------------------------- S8.2 voice browser
+  // ---------------------------------------------------------- ADR-017 voice
 
-  /** `LLM Voice: Browse Voices` (CdC §72): applies and saves the picked voice on the current profile. */
-  /** Test-castable, non-interactive counterpart of `browseVoices()` (`ProfileEditorDeps`-free): applies a voice by id without the Quick Pick. */
-  async applyVoiceToProfileById(id: string, voiceId: string): Promise<VoiceProfile> {
-    const updated = await this.profiles.update(id, (current) => ({
-      ...current,
-      tts: { ...current.tts, voice: voiceId }
-    }));
-    this.currentProfileLabel = updated.label;
-    this.currentVoiceLabel = friendlyTtsProviderLabel(updated.tts.providerId);
-    return updated;
-  }
-
-  async browseVoices(): Promise<void> {
+  /**
+   * `LLM Voice: Choisir la voix` (ADR-017 §3): the quality tiers and the voices of
+   * the engine the global voice resolves to, in one list. Everything it writes goes
+   * to the global voice, whichever mode is active. `setupVoice` and `browseVoices`
+   * are aliases of this command.
+   */
+  async chooseVoice(): Promise<void> {
     try {
-      const profile = await this.profiles.getSelected();
-      const picked = await this.pickVoiceForProfile(profile);
+      const candidate = await this.globalVoiceCandidate();
+      const voices = await this.listVoicesQuietly(candidate);
+      const picked = await this.pickVoiceOrTier(candidate, voices);
       if (picked === undefined) {
         return;
       }
-      const updated = await this.profiles.update(profile.id, (current) => ({
-        ...current,
-        tts: { ...current.tts, voice: picked.id }
-      }));
-      this.currentProfileLabel = updated.label;
-      this.currentVoiceLabel = friendlyTtsProviderLabel(updated.tts.providerId);
-      // Same fix as `applyVoiceTierChoice` just above: without this, the
-      // toast stayed the only visible effect of this command too.
-      await this.refreshLocalModeBadge();
-      this.pushPlayerState();
-      void vscode.window.showInformationMessage(
-        `LLM Voice : voix « ${picked.label} » appliquée à « ${updated.label} ».`
-      );
+      if (picked.kind === "tier") {
+        await handleVoiceTier(picked.tier, this.voiceTierActions());
+        return;
+      }
+      await this.applyEngineVoice(candidate, picked.voice);
     } catch (error) {
       void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
     }
   }
 
+  /** Non-interactive counterpart of `chooseVoice()`'s voice rows: same write, same effects. */
+  async chooseVoiceById(voiceId: string): Promise<void> {
+    await this.applyEngineVoice(await this.globalVoiceCandidate(), { id: voiceId, label: voiceId });
+  }
+
+  /** The active mode as it would read with the global voice, its own voice left aside. */
+  private async globalVoiceCandidate(): Promise<VoiceProfile> {
+    const reading = await this.profiles.resolveReading();
+    return { ...reading.mode, tts: bindingOfGlobalVoice(reading.voice) };
+  }
+
+  /** Cause D (ADR-017 §1.1): the engine the voice was listed by is saved with it. */
+  private async applyEngineVoice(candidate: VoiceProfile, voice: Voice): Promise<void> {
+    const resolved = await this.resolveTtsProviderConfig(candidate);
+    const binding = bindingForEngineVoice(candidate.tts, resolved, voice.id);
+    await this.profiles.setGlobalVoice({ ...binding, providerId: resolved.providerId });
+    await this.afterGlobalVoiceChange(voice.language);
+  }
+
+  /**
+   * Makes the choice visible at once, instead of leaving a toast its only effect
+   * (real-user bug found by testing GAO-impl-mente-l-001), and says on the spot when
+   * the active mode will not speak with it: the one case left where a chosen voice is
+   * not heard, and it has to show (ADR-017 §1.3). A reading in progress keeps its voice.
+   */
+  private async afterGlobalVoiceChange(voiceLanguage?: string): Promise<void> {
+    await this.refreshLocalModeBadge();
+    this.pushPlayerState();
+    const reading = await this.profiles.resolveReading();
+    const chosen = describeVoice(bindingOfGlobalVoice(reading.voice));
+    if (reading.voiceOrigin === "mode") {
+      const action = "Utiliser la voix globale";
+      void vscode.window
+        .showInformationMessage(
+          `LLM Voice : voix « ${chosen} » choisie. Le mode « ${reading.mode.label} » garde sa voix propre : ` +
+            `${describeVoice(reading.effective.tts)}.`,
+          action
+        )
+        .then((choice) => {
+          if (choice === action) {
+            void this.useGlobalVoiceForMode(reading.mode.id);
+          }
+        });
+      return;
+    }
+    void vscode.window.showInformationMessage(`LLM Voice : voix « ${chosen} » choisie.`);
+    this.warnIfVoiceLanguageDiffers(reading, voiceLanguage ?? declaredVoiceLanguage(reading.effective.tts));
+  }
+
+  /** "Utiliser la voix globale": the mode inherits again, its own voice is dropped. */
+  async useGlobalVoiceForMode(id: string): Promise<void> {
+    await this.profiles.setModeVoice(id, undefined);
+    await this.refreshLocalModeBadge();
+    this.pushPlayerState();
+  }
+
+  private async listVoicesQuietly(candidate: VoiceProfile): Promise<Voice[]> {
+    try {
+      const tts = await this.ttsFor(candidate);
+      if (tts.listVoices === undefined) {
+        return [];
+      }
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), DEFAULT_VOICE_LOOKUP_TIMEOUT_MS);
+      try {
+        return await tts.listVoices(controller.signal);
+      } finally {
+        clearTimeout(timer);
+      }
+    } catch (error) {
+      // The tiers stay offered: an engine that does not answer must not close the way out of it.
+      this.output.debug("voice list unavailable", { error: messageOf(error) });
+      return [];
+    }
+  }
+
+  private pickVoiceOrTier(
+    candidate: VoiceProfile,
+    voices: readonly Voice[]
+  ): Promise<{ kind: "tier"; tier: VoiceTier } | { kind: "voice"; voice: Voice } | undefined> {
+    type Row = vscode.QuickPickItem & { tier?: VoiceTier; voiceId?: string };
+    const voiceRows = buildVoiceQuickPickItems(voices, candidate.language, candidate.tts.voice).map(
+      (row): Row => ({
+        label: row.label,
+        description: row.description,
+        voiceId: row.voiceId,
+        buttons: [previewButton()]
+      })
+    );
+    const rows: Row[] = [
+      { label: "Niveau de qualité", kind: vscode.QuickPickItemKind.Separator },
+      ...VOICE_TIER_OPTIONS.map(
+        (option): Row => ({
+          label: option.label,
+          description: option.description,
+          detail: option.detail,
+          tier: option.tier
+        })
+      ),
+      ...(voiceRows.length > 0
+        ? [{ label: "Voix de ce moteur", kind: vscode.QuickPickItemKind.Separator } as Row, ...voiceRows]
+        : [])
+    ];
+    return new Promise((resolve) => {
+      const quickPick = vscode.window.createQuickPick<Row>();
+      quickPick.title = "LLM Voice : choisir la voix";
+      quickPick.placeholder = "Choisir un niveau ou une voix : bouton lecture pour l'écouter";
+      quickPick.matchOnDescription = true;
+      quickPick.matchOnDetail = true;
+      quickPick.items = rows;
+      let settled = false;
+      const finish = (
+        result: { kind: "tier"; tier: VoiceTier } | { kind: "voice"; voice: Voice } | undefined
+      ): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        quickPick.dispose();
+        resolve(result);
+      };
+      quickPick.onDidTriggerItemButton((event) => {
+        if (event.item.voiceId !== undefined) {
+          void this.previewVoice(candidate, event.item.voiceId);
+        }
+      });
+      quickPick.onDidAccept(() => {
+        const selected = quickPick.selectedItems[0];
+        if (selected?.tier !== undefined) {
+          finish({ kind: "tier", tier: selected.tier });
+          return;
+        }
+        const voice = voices.find((row) => row.id === selected?.voiceId);
+        finish(voice !== undefined ? { kind: "voice", voice } : undefined);
+      });
+      quickPick.onDidHide(() => finish(undefined));
+      quickPick.show();
+    });
+  }
+
+  private voiceTierActions(): VoiceTierActions {
+    return {
+      showMessage: (message, options, ...items) =>
+        vscode.window.showInformationMessage(message, options, ...items),
+      executeCommand: (command) => vscode.commands.executeCommand(command),
+      openExternal: (url) => vscode.env.openExternal(vscode.Uri.parse(url)),
+      writeClipboardText: (text) => vscode.env.clipboard.writeText(text),
+      applyProviderChoice: (tier) => this.applyVoiceTierChoice(tier),
+      browseVoices: () => this.chooseEngineVoice()
+    };
+  }
+
+  /** The voices of the engine just chosen, once its tier is settled (`handleVoiceTier`). */
+  private async chooseEngineVoice(): Promise<void> {
+    const candidate = await this.globalVoiceCandidate();
+    const picked = await this.pickVoiceForProfile(candidate);
+    if (picked !== undefined) {
+      await this.applyEngineVoice(candidate, picked);
+    }
+  }
+
   /**
    * Quick Pick over `profile`'s TTS provider's voices, one immediate-preview
-   * button per row (S8.2) — shared by `browseVoices()` (interactive command)
+   * button per row (S8.2) — shared by `chooseEngineVoice()` (after a tier)
    * and the profile editor's "Parcourir les voix" (`ProfileEditorDeps.pickVoice`,
    * which applies the result to its own unsaved form instead of writing to
    * disk). Resolves to `undefined` when the user cancels or the provider has
@@ -1110,7 +1332,7 @@ export class Pipeline implements PipelineFacade {
 
     return new Promise<Voice | undefined>((resolve) => {
       const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { voiceId: string }>();
-      quickPick.title = "LLM Voice : parcourir les voix";
+      quickPick.title = "LLM Voice : choisir la voix";
       quickPick.placeholder = "Choisir une voix — bouton lecture pour l'écouter";
       const rows = buildVoiceQuickPickItems(voices, profile.language, profile.tts.voice);
       quickPick.items = rows.map((row) => ({
@@ -1145,31 +1367,43 @@ export class Pipeline implements PipelineFacade {
     });
   }
 
-  /** Plays the test text with `voiceId` substituted, without leaving the Quick Pick and without saving (S8.2). */
-  private async previewVoice(profile: VoiceProfile, voiceId: string): Promise<void> {
+  /**
+   * Plays the test text with the candidate voice, without leaving the Quick Pick and
+   * without saving (S8.2). The `tts` is replaced whole, as the write would: the
+   * preview used to replay the old sample even before anything was saved (cause A).
+   */
+  async previewVoice(profile: VoiceProfile, voiceId: string): Promise<void> {
     try {
-      await this.speakTestText({ ...profile, tts: { ...profile.tts, voice: voiceId } });
+      const resolved = await this.resolveTtsProviderConfig(profile);
+      await this.speakTestText({ ...profile, tts: bindingForEngineVoice(profile.tts, resolved, voiceId) });
     } catch (error) {
       void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
     }
   }
 
-  /** `LLM Voice: Use My Own Voice` (S8.2, CdC §55). */
+  /**
+   * `LLM Voice: Use My Own Voice` (S8.2, CdC §55): the sample becomes the global voice
+   * (ADR-017 §3), on the one engine that clones. A named voice goes with what it
+   * replaces: the two are exclusive once chosen (ADR-017 §2).
+   */
   async useOwnVoice(): Promise<void> {
     await runUseOwnVoice({
       extensionContext: this.context,
       applyReferenceAudio: async (absolutePath) => {
-        const profile = await this.profiles.getSelected();
-        const updated = await this.profiles.update(profile.id, (current) => ({
-          ...current,
-          tts: { ...current.tts, referenceAudio: absolutePath }
-        }));
-        this.currentProfileLabel = updated.label;
-        this.currentVoiceLabel = friendlyTtsProviderLabel(updated.tts.providerId);
+        const { speed: _speed, voice: _voice, ...current } = await this.profiles.getGlobalVoice();
+        const binding: TtsBinding & { providerId: string } =
+          current.providerId === "chatterbox"
+            ? { ...current, referenceAudio: absolutePath }
+            : {
+                providerId: "chatterbox",
+                baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl,
+                referenceAudio: absolutePath
+              };
+        await this.profiles.setGlobalVoice(binding);
+        await this.afterGlobalVoiceChange();
       },
       previewCurrentProfile: async () => {
-        const profile = await this.profiles.getSelected();
-        await this.speakTestText(profile);
+        await this.speakTestText(await this.globalVoiceCandidate());
       }
     });
   }
@@ -1190,10 +1424,12 @@ export class Pipeline implements PipelineFacade {
       saveProfile: (profileId, next) => this.profiles.update(profileId, () => next),
       duplicateProfile: (profileId) => this.duplicateProfileById(profileId),
       deleteProfile: (profileId) => this.deleteProfileById(profileId),
-      testProfile: (profile) => this.speakTestText(profile),
-      listParameters: (profile) => this.ttsParametersFor(profile),
-      pickVoice: (profile) => this.pickVoiceForProfile(profile),
-      checkHealth: (profile) => this.checkTtsHealth(profile)
+      // The form may hold a mode that inherits: it speaks, lists and connects with
+      // the voice it would read with. What it saves stays what the form says.
+      testProfile: async (profile) => this.speakTestText(await this.profiles.effectiveOf(profile)),
+      listParameters: async (profile) => this.ttsParametersFor(await this.profiles.effectiveOf(profile)),
+      pickVoice: async (profile) => this.pickVoiceForProfile(await this.profiles.effectiveOf(profile)),
+      checkHealth: async (profile) => this.checkTtsHealth(await this.profiles.effectiveOf(profile))
     };
     await ProfileEditorPanel.open(deps, this.context.extensionUri, id);
   }
@@ -1270,7 +1506,7 @@ export class Pipeline implements PipelineFacade {
     if (!force && this.healthCache !== undefined && this.healthCache.expiresAt > now) {
       return this.healthCache.entries;
     }
-    const profile = await this.profiles.getSelected();
+    const { effective: profile } = await this.profiles.resolveReading();
     const resolvedTts = await this.resolveTtsProviderConfig(profile);
     const tts = await this.ttsFor(profile);
     const providers: { label: string; provider: HealthCheckable }[] = [
@@ -1338,14 +1574,17 @@ export class Pipeline implements PipelineFacade {
   }
 
   private async pickRemoteProviderId(placeHolder: string): Promise<string | undefined> {
-    const profiles = await this.profiles.list();
-    const candidates = collectRemoteProviderIds(profiles);
+    const modes = await this.profiles.listEffective();
+    const candidates = collectRemoteProviderIds(
+      modes.map((row) => row.effective),
+      await this.profiles.getGlobalVoice()
+    );
     return vscode.window.showQuickPick(candidates, { placeHolder });
   }
 
-  /** `llmVoice.profiles.bySource` (CdC §47). */
-  private bySourceSettings(): BySourceSetting {
-    return vscode.workspace.getConfiguration("llmVoice").get<BySourceSetting>("profiles.bySource", {});
+  /** `llmVoice.modes.bySource`, or the deprecated `llmVoice.profiles.bySource` (CdC §47, ADR-017 §2). */
+  private modesBySourceSettings(): BySourceSetting {
+    return readModesBySource(vscode.workspace.getConfiguration("llmVoice"));
   }
 
   // ------------------------------------------------------------------ misc
@@ -1377,7 +1616,7 @@ export class Pipeline implements PipelineFacade {
   }
 
   async verifyLocalMode(): Promise<void> {
-    const profile = await this.profiles.getSelected();
+    const { effective: profile } = await this.profiles.resolveReading();
     const result = await this.computeLocalModeResult(profile);
     this.statusBar.update(this.statusBarModel(this.controller.getState()));
 
@@ -1419,9 +1658,9 @@ export class Pipeline implements PipelineFacade {
   /** Recomputes the 🔒/☁ badge without opening the `Verify Local Mode` Quick Pick. */
   private async refreshLocalModeBadge(): Promise<void> {
     try {
-      const profile = await this.profiles.getSelected();
+      const { effective: profile } = await this.profiles.resolveReading();
       this.currentProfileLabel = profile.label;
-      this.currentVoiceLabel = friendlyTtsProviderLabel(profile.tts.providerId);
+      this.currentVoiceLabel = describeVoice(profile.tts);
       await this.computeLocalModeResult(profile);
     } catch (error) {
       this.output.error("failed to refresh local mode badge", { error: messageOf(error) });
@@ -1446,12 +1685,12 @@ export class Pipeline implements PipelineFacade {
           await this.inboxRepository.markRead(entry.id, !entry.read);
           await this.refreshInbox();
         },
-        selectProfile: async () => this.selectProfile()
+        selectProfile: async () => this.chooseMode()
       }
     );
   }
 
-  /** CdC §47's per-source default profile, bound to `llmVoice.profiles.bySource`. */
+  /** CdC §47's per-source default mode, bound to `llmVoice.modes.bySource`. */
   async speakLatestClaudeResponse(): Promise<void> {
     const entries = await this.inboxRepository.list();
     const latest = entries.find((entry) => entry.message.provider === "claude-code");
@@ -1757,11 +1996,8 @@ export class Pipeline implements PipelineFacade {
     // Two profiles sharing `providerId@baseUrl` but cloning different
     // reference voices must never share a `ChatterboxProvider` instance —
     // the upload (and the filename it memoises) is per-instance, so the
-    // reference path is part of the registry/cache key too.
-    const key =
-      referenceAudioPath !== undefined
-        ? `${resolved.providerId}@${resolved.baseUrl}@ref:${referenceAudioPath}`
-        : `${resolved.providerId}@${resolved.baseUrl}`;
+    // reference path is part of the registry/cache key too (ADR-017 §1.5).
+    const key = ttsInstanceKey(resolved, referenceAudioPath);
     const existing = this.registry.get(key);
     if (existing !== undefined) {
       return existing;
@@ -1998,39 +2234,47 @@ export class Pipeline implements PipelineFacade {
   }
 
   /**
-   * `LLM Voice: Setup Voice` (S7.2), bug fix (voice-selection-not-applied /
-   * infinite loop, 2026-09-12): applies `ttsBindingForTier(tier)` to the
-   * *active* profile (`ProfileRepository.getSelected`), replacing its
-   * entire `tts` binding — a fresh, clean choice rather than a merge, so a
-   * profile previously stuck on a stale `baseUrl`/`voice` from a different
-   * provider never survives underneath the new one (`browseVoices()`
-   * merges because it only ever changes `voice` on an already-correct
-   * provider; this changes the provider itself). Called by
-   * `extension.ts`'s `llmVoice.setupVoice` wiring — never by
-   * `SetupVoice.ts` directly, which has no `ProfileRepository` access.
+   * ADR-017 §1.4, first choice of the order: the speed the engine should apply, when
+   * it declares one. `undefined` otherwise, and when nothing but ×1 is asked: no
+   * capability request on the way to a reading that needs none.
+   */
+  private async engineSpeedFor(tts: TtsProvider, requested: number, signal?: AbortSignal): Promise<number | undefined> {
+    if (requested === 1) {
+      this.currentSpeedGap = undefined;
+      return undefined;
+    }
+    const controller = new AbortController();
+    const onAbort = (): void => controller.abort();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    const timer = setTimeout(() => controller.abort(), ENGINE_CAPABILITIES_TIMEOUT_MS);
+    let speed: EngineSpeed;
+    try {
+      const capabilities = await tts.getCapabilities(controller.signal);
+      speed = resolveEngineSpeed(requested, capabilities.parameters);
+    } catch (error) {
+      this.output.debug("engine capabilities unavailable", { error: messageOf(error) });
+      speed = { route: "none", requested };
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+    }
+    this.currentSpeedGap = describeSpeedGap(speed);
+    return speed.route === "engine" ? speed.speed : undefined;
+  }
+
+  /** ADR-017 V11: the gap the header of card 0-007 will show. */
+  getSpeedGapForTest(): string | undefined {
+    return this.currentSpeedGap;
+  }
+
+  /**
+   * The quality tiers of `chooseVoice` (S7.2): the whole binding of the tier replaces
+   * the global voice, a fresh, clean choice rather than a merge, so a stale
+   * `baseUrl`/`voice` from another engine never survives under the new one.
    */
   async applyVoiceTierChoice(tier: VoiceTier): Promise<void> {
-    const profile = await this.profiles.getSelected();
-    const binding = ttsBindingForTier(tier);
-    const updated = await this.profiles.update(profile.id, (current) => ({
-      ...current,
-      tts: { ...binding }
-    }));
-    this.currentProfileLabel = updated.label;
-    this.currentVoiceLabel = friendlyTtsProviderLabel(updated.tts.providerId);
-    // Real-user bug found by testing GAO-impl-mente-l-001 (2026-11-05):
-    // the field above was updated, but nothing told the player panel or the
-    // status bar to actually re-render — the toast below stayed the only
-    // visible effect, exactly the original complaint this card was meant to
-    // fix. `refreshLocalModeBadge()` is the established pattern that already
-    // does this after a profile-affecting change (`selectProfileById`);
-    // `pushPlayerState()` additionally updates the player panel even before
-    // any reading session has started, so the choice is visible immediately.
-    await this.refreshLocalModeBadge();
-    this.pushPlayerState();
-    void vscode.window.showInformationMessage(
-      `LLM Voice : voix « ${titleCaseProviderId(binding.providerId)} » appliquée au profil « ${updated.label} ».`
-    );
+    await this.profiles.setGlobalVoice(ttsBindingForTier(tier));
+    await this.afterGlobalVoiceChange();
   }
 
   /**
@@ -2218,7 +2462,7 @@ export class Pipeline implements PipelineFacade {
   }
 
   /**
-   * S7.3: "Choisir une voix" runs `llmVoice.setupVoice` when that command is
+   * S7.3: "Choisir une voix" runs `llmVoice.chooseVoice` when that command is
    * registered (a parallel onboarding story) — checked with
    * `vscode.commands.getCommands()` rather than assumed, so this file never
    * depends on that story merging first — and falls back to the provider
@@ -2237,8 +2481,8 @@ export class Pipeline implements PipelineFacade {
     }
     if (choice === "setupVoice") {
       const commands = await vscode.commands.getCommands(true);
-      if (commands.includes("llmVoice.setupVoice")) {
-        await vscode.commands.executeCommand("llmVoice.setupVoice");
+      if (commands.includes("llmVoice.chooseVoice")) {
+        await vscode.commands.executeCommand("llmVoice.chooseVoice");
       } else {
         await vscode.env.openExternal(vscode.Uri.parse(TTS_SETUP_DOCS_URL));
       }

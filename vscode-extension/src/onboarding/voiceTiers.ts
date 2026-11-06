@@ -1,11 +1,12 @@
 /**
- * Pure data behind `LLM Voice: Setup Voice` (S7.2). Kept free of any
+ * Pure data behind the tiers of `chooseVoice` (S7.2, ADR-017 §3). Kept free of any
  * `vscode` import so it can run under plain-Node vitest (see
  * `vitest.config.ts`'s comment on what can/cannot be unit tested);
- * `SetupVoice.ts` is the thin `vscode`-wiring layer on top of this.
+ * `Pipeline.chooseVoice` is the thin `vscode`-wiring layer on top of this.
  */
 
 import { CHATTERBOX_LOCAL_PRESET } from "../tts/presets.js";
+import { PIPER_VOICE_ID } from "../tts/SystemTtsProvider.js";
 
 export type VoiceTier = "system" | "piper" | "chatterbox";
 
@@ -88,15 +89,16 @@ export const INSTALL_PIPER_VOICE_COMMAND = "llmVoice.installPiperVoice";
  * profile by `Pipeline.applyVoiceTierChoice` right after the Quick Pick
  * choice (never deferred to "once Docker/the download finishes" — the
  * choice itself, not its installation outcome, is what a profile must
- * record, exactly like `browseVoices()`/`applyVoiceToProfileById` already
+ * record, exactly like `chooseVoice` already
  * do for an explicit voice):
  *
  *  - `"system"` and `"piper"` both resolve to `providerId: "system"`
  *    (`SystemTtsProvider`, S7.1) — "piper" only changes *which engine*
  *    `SystemTtsProvider.detectEngine()` finds on this machine (Piper once
  *    installed vs. `espeak-ng`/`say`/SAPI), never which provider class the
- *    profile names; `SystemTtsProvider` needs no `baseUrl`/`voice` at all
- *    (its own file header — it picks and reports its own engine).
+ *    profile names. "piper" also names its voice (ADR-017 §1.3): that is what
+ *    tells the two tiers apart once chosen, `SystemTtsProvider` ignoring the name
+ *    for any other engine.
  *  - `"chatterbox"` resolves to `providerId: "chatterbox"` at
  *    `CHATTERBOX_LOCAL_PRESET.baseUrl` — set immediately, without waiting
  *    for the Docker container the user may not have started yet (starting
@@ -110,13 +112,15 @@ export const INSTALL_PIPER_VOICE_COMMAND = "llmVoice.installPiperVoice";
 export interface TtsTierBinding {
   providerId: string;
   baseUrl?: string;
+  voice?: string;
 }
 
 export function ttsBindingForTier(tier: VoiceTier): TtsTierBinding {
   switch (tier) {
     case "system":
-    case "piper":
       return { providerId: "system" };
+    case "piper":
+      return { providerId: "system", voice: PIPER_VOICE_ID };
     case "chatterbox":
       return { providerId: "chatterbox", baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl };
   }

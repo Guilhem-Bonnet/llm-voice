@@ -85,6 +85,10 @@ tests observent l'état de lecture (`FakeAudioSink.loads`/`.commands`,
 supporte un tableau de configs, chacune lançant sa propre instance de
 VS Code) :
 
+Le profil `voice-chain` (`npm run test:integration-voice`, ADR-017 § Tests) garde les vrais
+`ttsFor`, `createTtsProvider` et `ChatterboxProvider` contre `MockTtsServer` ; seul le puits est
+factice (`LLM_VOICE_TEST_FAKE_SINK=1`, même garde que le faux TTS).
+
 | Profil | `LLM_VOICE_TEST_FAKE_TTS` | Fichiers | Ce qu'il prouve |
 |---|---|---|---|
 | `fake-tts` | `1` | `out/test/integration/**` | AC-01..06 : session, highlight, pause, stop, Speak Selection — via `FakeTtsProvider` + `FakeAudioSink`. |

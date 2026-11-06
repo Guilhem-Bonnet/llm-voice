@@ -116,6 +116,8 @@ export interface AudioCacheKeyMaterial {
   model?: string;
   voice?: string;
   parameters?: Readonly<Record<string, unknown>>;
+  /** Only when the engine applies the speed: the audio differs (ADR-017 §1.5). */
+  speed?: number;
   spokenText: string;
 }
 
@@ -133,6 +135,12 @@ export interface AudioCacheEntry {
 /** Replaceable speech engine: local, enterprise or cloud behind one contract (D9). */
 export interface TtsProvider {
   readonly id: string;
+  /**
+   * What the audio cache should identify this engine by when `id` is not enough:
+   * one instance that may speak through different engines over time
+   * (`SystemTtsProvider`, ADR-017 "Ce qui reste ouvert" 1). Defaults to `id`.
+   */
+  cacheIdentity?(signal?: AbortSignal): Promise<string>;
   health(signal?: AbortSignal): Promise<ProviderHealth>;
   getCapabilities(signal?: AbortSignal): Promise<TtsCapabilities>;
   listVoices?(signal?: AbortSignal): Promise<Voice[]>;
