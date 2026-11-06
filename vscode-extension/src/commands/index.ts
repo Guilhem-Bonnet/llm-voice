@@ -4,6 +4,7 @@
  * `clearHighlight` is the only one handled purely locally.
  */
 
+import { matchPreviewSource, previewFileName } from "./previewSource.js";
 import * as vscode from "vscode";
 import type { CaptureContext, CaptureScope, SourceRange } from "../core/source.js";
 import type { HighlightController } from "../highlight/HighlightController.js";
@@ -37,6 +38,37 @@ function activeEditorContext(): Pick<CaptureContext, "uri" | "languageId"> {
   };
 }
 
+/** The document behind the focused Markdown preview, which is a webview with no text editor. */
+async function markdownPreviewContext(): Promise<Pick<CaptureContext, "uri" | "languageId">> {
+  const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+  if (!(tab?.input instanceof vscode.TabInputWebview) || !tab.input.viewType.includes("markdown.preview")) {
+    return {};
+  }
+  const name = previewFileName(tab.label);
+  if (name === undefined) {
+    return {};
+  }
+  const open = vscode.workspace.textDocuments.map((document) => document.uri.toString());
+  const inTabs = vscode.window.tabGroups.all
+    .flatMap((group) => group.tabs)
+    .flatMap((other) => (other.input instanceof vscode.TabInputText ? [other.input.uri.toString()] : []));
+  let source = matchPreviewSource(name, [...open, ...inTabs]);
+  if (source.kind === "none") {
+    const glob = `**/${name.replace(/[[\]{}*?]/g, "?")}`;
+    const files = await vscode.workspace.findFiles(glob, "**/node_modules/**", 5);
+    source = matchPreviewSource(name, files.map((uri) => uri.toString()));
+  }
+  if (source.kind === "found") {
+    return { uri: source.uri, languageId: "markdown" };
+  }
+  void vscode.window.showInformationMessage(
+    source.kind === "ambiguous"
+      ? `LLM Voice : plusieurs fichiers s'appellent « ${name} ». Ouvrez le bon fichier, puis lancez la lecture.`
+      : `LLM Voice : fichier « ${name} » introuvable. Ouvrez-le, puis lancez la lecture.`
+  );
+  return {};
+}
+
 /** Registers all `llmVoice.*` commands and returns their disposables. */
 export function registerCommands(deps: CommandDependencies): vscode.Disposable[] {
   const { pipeline, highlight, player } = deps;
@@ -45,9 +77,10 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     scope: CaptureScope,
     extra: Partial<CaptureContext> = {}
   ): Promise<void> => {
+    const editorContext = activeEditorContext();
     const context: CaptureContext = {
       scope,
-      ...activeEditorContext(),
+      ...(editorContext.uri === undefined && scope === "document" ? await markdownPreviewContext() : editorContext),
       ...extra
     };
     player.reveal();

@@ -74,14 +74,14 @@ suite("LLM Voice onboarding — declarations (S7.2)", () => {
     assert.match(inbox?.contents ?? "", /command:llmVoice\.installClaudeHook/);
   });
 
-  test("editor/title exposes Speak Document for Markdown files only", async () => {
+  test("editor/title offers to read any text file and the Markdown preview", async () => {
     const extension = await activateExtension();
     const packageJson = extension.packageJSON as PackageJson;
     const entries = packageJson.contributes.menus?.["editor/title"] ?? [];
     const entry = entries.find((candidate) => candidate.command === "llmVoice.speakDocument");
 
     assert.ok(entry, "llmVoice.speakDocument should appear in editor/title");
-    assert.match(entry?.when ?? "", /resourceLangId == markdown/);
+    assert.equal(entry?.when, "resourceLangId || activeWebviewPanelId == 'markdown.preview'");
   });
 });
 

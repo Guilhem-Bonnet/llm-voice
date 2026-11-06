@@ -240,3 +240,7 @@
 ### [2026-11-06] Essai de Qwen3-TTS autorisé
 - **Décision** : télécharger et exécuter Qwen3-TTS dans un dossier à part (`~/.llm-voice/voices-lab/qwen3/`), texte local uniquement. Voix cherchées dans les deux registres, grave et posé, clair et neutre, avec le choix dans l'interface si elles conviennent. Aucune imitation de Jarvis ou Gemini.
 - **Agent** : concierge, sur accord de guilhem-bonnet (« oui pour qwen3 », « les deux »)
+
+### [2026-11-06] Lecture, attente, lexique, reprise et jeu d'acteurs
+- **Décision** : direction UX validée (gestes de lecture visibles, étapes d'attente sans faux pourcentage, lexique, reprise, bloc de code, fichiers texte). Qwen3-TTS non retenu pour l'instant : on reste sur les moteurs Kyutai. Nouvelle priorité : jeu d'acteurs à plusieurs voix (théâtre, livre avec narrateur et personnages). Application hors VS Code visée ensuite : garder la logique de lecture indépendante de VS Code.
+- **Agent** : concierge, sur décision de guilhem-bonnet

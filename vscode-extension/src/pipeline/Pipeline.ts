@@ -407,6 +407,7 @@ export class Pipeline implements PipelineFacade {
    */
   private narrationDisabledForSession = false;
   private currentSessionBuild: SessionBuild | undefined;
+  private disconnectNarration: (() => void) | undefined;
   /**
    * S8.3: once the user declines (or a download fails) the one-action
    * auto-install prompt, `ensureVoiceReady` stops re-asking for the rest of
@@ -658,6 +659,7 @@ export class Pipeline implements PipelineFacade {
         signal: abort.signal,
         onWarning: (warning) => this.handleNarratorWarning(warning)
       });
+      this.stopNarration();
       this.currentSessionBuild = build;
       const tts = await this.ttsFor(profile, { warmUp: true });
       this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
@@ -685,14 +687,30 @@ export class Pipeline implements PipelineFacade {
         return;
       }
       this.pendingStart = undefined;
-      await this.controller.start({
-        segments: build.segments,
+      // A narrated reading starts on its first group: the others arrive while it plays,
+      // and only the end of the narration may end the reading.
+      const narrating = narrator !== undefined;
+      const starting = this.controller.start({
+        segments: [...build.segments],
         profile: effectiveProfile,
         tts,
         sink,
-        sealed: true,
+        sealed: !narrating,
         ...(engineSpeed !== undefined ? { engineSpeed } : {})
       });
+      if (narrating) {
+        this.disconnectNarration = build.onSegmentsAppended((added) => {
+          if (this.currentSessionBuild === build) {
+            this.controller.appendSegments(added);
+          }
+        });
+        void build.completion.then(() => {
+          if (this.currentSessionBuild === build) {
+            this.controller.sealSegments();
+          }
+        });
+      }
+      await starting;
     } catch (error) {
       // A reading cancelled while preparing unwinds through here: the user asked for it.
       if (abort.signal.aborted) {
@@ -872,6 +890,14 @@ export class Pipeline implements PipelineFacade {
     this.controller.pause();
   }
 
+  /** The narration of the next groups stops with the reading, or the local model keeps working for nothing. */
+  private stopNarration(): void {
+    this.disconnectNarration?.();
+    this.disconnectNarration = undefined;
+    this.currentSessionBuild?.cancel();
+    this.currentSessionBuild = undefined;
+  }
+
   /** S7.3: same "no silent no-op" treatment as `pause()`. */
   async stop(): Promise<void> {
     // The controller stays idle while a reading is being prepared: without
@@ -881,6 +907,7 @@ export class Pipeline implements PipelineFacade {
       this.pendingStart = undefined;
       pendingStart.abort();
     }
+    this.stopNarration();
     if (this.controller.getState() === "idle") {
       if (pendingStart === undefined) {
         void vscode.window.showInformationMessage("LLM Voice : rien à arrêter.");

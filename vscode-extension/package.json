@@ -60,9 +60,9 @@
     "commands": [
       {
         "command": "llmVoice.speakDocument",
-        "title": "LLM Voice: Speak Document",
+        "title": "LLM Voice: Lire le document",
         "category": "LLM Voice",
-        "icon": "$(unmute)"
+        "icon": "$(play)"
       },
       {
         "command": "llmVoice.chooseVoice",
@@ -92,17 +92,17 @@
       },
       {
         "command": "llmVoice.speakSelection",
-        "title": "LLM Voice: Speak Selection",
+        "title": "LLM Voice: Lire la sélection",
         "category": "LLM Voice"
       },
       {
         "command": "llmVoice.speakFromCursor",
-        "title": "LLM Voice: Speak From Cursor",
+        "title": "LLM Voice: Lire à partir d'ici",
         "category": "LLM Voice"
       },
       {
         "command": "llmVoice.speakSection",
-        "title": "LLM Voice: Speak Section",
+        "title": "LLM Voice: Lire la section",
         "category": "LLM Voice"
       },
       {
@@ -392,7 +392,7 @@
     "submenus": [
       {
         "id": "llmVoice.markdownContextMenu",
-        "label": "LLM Voice"
+        "label": "Lire à voix haute"
       }
     ],
     "menus": {
@@ -453,19 +453,18 @@
       "editor/context": [
         {
           "submenu": "llmVoice.markdownContextMenu",
-          "when": "resourceLangId == markdown",
+          "when": "editorTextFocus",
           "group": "llmVoice"
         }
       ],
       "llmVoice.markdownContextMenu": [
         {
           "command": "llmVoice.speakSelection",
-          "when": "resourceLangId == markdown && editorHasSelection",
+          "when": "editorHasSelection",
           "group": "1_speak@1"
         },
         {
           "command": "llmVoice.speakFromCursor",
-          "when": "resourceLangId == markdown",
           "group": "1_speak@2"
         },
         {
@@ -475,14 +474,20 @@
         },
         {
           "command": "llmVoice.speakDocument",
-          "when": "resourceLangId == markdown",
           "group": "1_speak@4"
         }
       ],
       "editor/title": [
         {
           "command": "llmVoice.speakDocument",
-          "when": "resourceLangId == markdown",
+          "when": "resourceLangId || activeWebviewPanelId == 'markdown.preview'",
+          "group": "navigation"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "llmVoice.speakDocument",
+          "when": "webviewId == 'markdown.preview'",
           "group": "navigation"
         }
       ],
