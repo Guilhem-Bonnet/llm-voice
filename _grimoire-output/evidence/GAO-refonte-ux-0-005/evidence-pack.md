@@ -69,3 +69,9 @@ The task can be considered complete only when mandatory evidence gates for the s
 - Échantillons réencodés depuis les WAV d'origine (`scripts/encode-voice-samples.sh`, Ogg Vorbis, 496 Ko au total), plus de double compression. Le test d'intégration `canplay` des 20 fichiers est rejoué sur ces fichiers.
 - Texte des échantillons : « Bonjour. Je lis ce document à voix haute pour vous aider à le comprendre. »
 - Contrôles du lancement ci-dessous consignés dans le message de livraison ; installé dans le VS Code de l'utilisateur.
+
+## Stabilité des tests (2026-11-06)
+
+- Deux causes distinctes. État conservé entre exécutions : dossier de test vidé à chaque lancement (`.vscode-test.mjs`). Écrasement de sélection par la migration : `profileStore.ts`, test `migrationSelectionRace.test.ts`, échec constaté sans le correctif (`expected 'faithful-local' to be 'technical-teacher'`).
+- Rafraîchissements croisés de la liste : `profilesTreeRefresh.test.ts`, échec constaté sans le correctif.
+- `fake-tts` : 12 passes de suite à 66 sur 66, puis 3 sur la version finale. Une erreur de compilation d'un test avait interrompu la construction pendant plusieurs passes : résultats écartés et rejoués.

@@ -109,17 +109,19 @@ export class ProfileStore {
   }
 
   private async migrateVoiceModel(raw: Buffer, collection: ProfileCollection): Promise<ProfileCollection> {
+    const selectedBefore = this.lastSelectedId();
     const outcome = await runVoiceMigration(this.globalStorageDir, {
       rawProfiles: raw,
       collection,
-      lastSelectedId: this.lastSelectedId(),
+      lastSelectedId: selectedBefore,
       settings: this.environment.ttsSettings(),
       sourceTargets: Object.values(this.environment.modesBySource()).filter(
         (id): id is string => typeof id === "string"
       ),
       legacyDefaultProfile: this.environment.legacyDefaultProfile()
     });
-    if (outcome.lastSelectedId !== undefined) {
+    // The migration takes time: a mode chosen in the meantime wins over what it computed.
+    if (outcome.lastSelectedId !== undefined && this.lastSelectedId() === selectedBefore) {
       await this.globalState.update(LAST_SELECTED_KEY, outcome.lastSelectedId);
     }
     if (outcome.notice !== undefined) {

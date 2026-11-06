@@ -12,8 +12,6 @@ vi.mock("vscode", () => ({
   MarkdownString: class {}
 }));
 
-const { ProfilesTreeProvider } = await import("../../../../src/views/profiles/ProfilesTreeProvider.js");
-
 function mode(id: string) {
   const effective = { id, label: id, mode: "faithful", language: "fr-FR", tts: {}, chunking: { unit: "sentence", maxSentences: 3, prefetchChunks: 2 }, playback: { rate: 1, volume: 1 } };
   return { mode: effective, effective, voiceOrigin: "global" };
@@ -21,6 +19,7 @@ function mode(id: string) {
 
 describe("ProfilesTreeProvider.refresh", () => {
   it("keeps the newest state when an earlier refresh finishes last", async () => {
+    const { ProfilesTreeProvider } = await import("../../../../src/views/profiles/ProfilesTreeProvider.js");
     const modes = [mode("a"), mode("b")] as never;
     const resolvers: Array<(id: string) => void> = [];
     const provider = new ProfilesTreeProvider(
