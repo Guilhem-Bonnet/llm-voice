@@ -87,7 +87,7 @@ describe("V8: identifiers (ADR-017 §3)", () => {
   });
 
   it("the two new commands are declared, registered and in the palette", () => {
-    for (const id of ["llmVoice.chooseVoice", "llmVoice.chooseMode"]) {
+    for (const id of ["llmVoice.chooseVoice", "llmVoice.chooseMode", "llmVoice.openVoiceGallery"]) {
       expect(declared.has(id)).toBe(true);
       expect(registered).toContain(`"${id}"`);
       expect(manifest.contributes.menus.commandPalette.find((entry) => entry.command === id)).toBeUndefined();
@@ -104,7 +104,8 @@ describe("V8: identifiers (ADR-017 §3)", () => {
       new RegExp(`registerCommand\\("${id.replace(".", "\\.")}", \\(\\) => pipeline\\.(\\w+)\\(\\)\\)`).exec(commands)?.[1];
     expect(call("llmVoice.chooseVoice")).toBe("chooseVoice");
     expect(call("llmVoice.setupVoice")).toBe("chooseVoice");
-    expect(call("llmVoice.browseVoices")).toBe("chooseVoice");
+    expect(call("llmVoice.browseVoices")).toBe("openVoiceGallery");
+    expect(call("llmVoice.openVoiceGallery")).toBe("openVoiceGallery");
     expect(call("llmVoice.chooseMode")).toBe("chooseMode");
     expect(call("llmVoice.selectProfile")).toBe("chooseMode");
   });

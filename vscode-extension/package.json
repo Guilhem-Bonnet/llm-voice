@@ -70,6 +70,12 @@
         "category": "LLM Voice"
       },
       {
+        "command": "llmVoice.openVoiceGallery",
+        "title": "LLM Voice: Ouvrir la galerie de voix",
+        "category": "LLM Voice",
+        "icon": "$(list-selection)"
+      },
+      {
         "command": "llmVoice.chooseMode",
         "title": "LLM Voice: Choisir le mode",
         "category": "LLM Voice"
@@ -240,7 +246,7 @@
       },
       {
         "command": "llmVoice.browseVoices",
-        "title": "LLM Voice: Browse Voices",
+        "title": "LLM Voice: Ouvrir la galerie de voix",
         "category": "LLM Voice",
         "icon": "$(list-selection)"
       },

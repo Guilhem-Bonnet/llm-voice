@@ -54,7 +54,7 @@ export interface VoiceTierActions {
    * picker. `Pipeline.chooseEngineVoice()` (ADR-017) is that picker — called here right after "system"
    * and "piper" settle (both reach a locally-reachable `SystemTtsProvider`
    * synchronously, no server to wait for), never after "chatterbox" (its
-   * server may not even be running yet — `handleChatterbox`'s dialog is
+   * server may not even be running yet — `showChatterboxInstructions`'s dialog is
    * instructions, not a ready signal).
    */
   browseVoices: () => PromiseLike<void>;
@@ -63,7 +63,10 @@ export interface VoiceTierActions {
 const COPY_COMMAND_LABEL = "Copier la commande";
 const OPEN_DOCS_LABEL = "Ouvrir la documentation";
 
-async function handleChatterbox(actions: VoiceTierActions): Promise<void> {
+/** The instructions alone, writing nothing: "Préparer" in the gallery (card 0-005). */
+export async function showChatterboxInstructions(
+  actions: Pick<VoiceTierActions, "showMessage" | "openExternal" | "writeClipboardText">
+): Promise<void> {
   const choice = await actions.showMessage(
     "Chatterbox offre la meilleure qualité de voix (clonage inclus) mais nécessite Docker. " +
       `Démarrez le service localement :\n\n${CHATTERBOX_COMPOSE_COMMAND}`,
@@ -96,7 +99,7 @@ export async function handleVoiceTier(tier: VoiceTier, actions: VoiceTierActions
       await actions.browseVoices();
       return;
     case "chatterbox":
-      await handleChatterbox(actions);
+      await showChatterboxInstructions(actions);
       return;
   }
 }

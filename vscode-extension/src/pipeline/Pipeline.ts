@@ -17,6 +17,7 @@
  * status bar switches to `error`, never an unhandled rejection.
  */
 
+import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as vscode from "vscode";
 import { createGpuYieldProbe } from "../direction/director/gpuYield.js";
@@ -26,7 +27,7 @@ import type { PlaybackState } from "../core/playback.js";
 import type { SyncMode, TtsBinding, VoiceProfile } from "../core/profile.js";
 import { isRemoteProfile } from "../core/profile.schema.js";
 import type { NarratorProvider } from "../core/narration.js";
-import type { ProviderHealth } from "../core/health.js";
+import type { ProviderHealth, ProviderHealthStatus } from "../core/health.js";
 import type { TtsParameterDescriptor, TtsProvider, Voice } from "../core/tts.js";
 import type { MarkdownPolicy, SegmentationPolicy } from "../parser/types.js";
 import { parseMarkdown } from "../parser/MarkdownParser.js";
@@ -142,8 +143,21 @@ import {
   voiceLanguageDiffers
 } from "../profiles/voiceBrowser.js";
 import { useOwnVoice as runUseOwnVoice } from "../onboarding/UseOwnVoice.js";
-import { handleVoiceTier, type VoiceTierActions } from "../onboarding/handleVoiceTier.js";
-import { ttsBindingForTier, VOICE_TIER_OPTIONS, type VoiceTier } from "../onboarding/voiceTiers.js";
+import { isPiperAlreadyInstalled } from "../tts/PiperSetup.js";
+import { showChatterboxInstructions } from "../onboarding/handleVoiceTier.js";
+import { INSTALL_PIPER_VOICE_COMMAND, ttsBindingForTier, type VoiceTier } from "../onboarding/voiceTiers.js";
+import {
+  activeEntryId,
+  activeLabel,
+  bindingForEntry,
+  buildVoiceMenuRows,
+  galleryEntry,
+  rememberRecent,
+  type PrepareTarget,
+  type VoiceMenuAction
+} from "../views/voiceGallery/galleryModel.js";
+import { findTrial, storeTrial, trialKey } from "../views/voiceGallery/trialAudioStore.js";
+import { VoiceGalleryPanel } from "../views/voiceGallery/VoiceGalleryPanel.js";
 import {
   ProfileEditorPanel,
   type ProfileEditorDeps,
@@ -153,6 +167,12 @@ import {
 /** Default `llmVoice.tts.readyTimeoutMs` (CdC §51's "Loading" health status):
  *  how long `start()` waits for a still-warming-up TTS server before
  *  attempting the first synthesis anyway, instead of failing immediately. */
+/** `globalState` keys of the voice menu and the gallery (card 0-005). */
+const RECENT_VOICES_KEY = "llmVoice.voices.recent";
+const FAVORITE_VOICES_KEY = "llmVoice.voices.favorites";
+/** Under `globalStorageUri`: the gallery's trial phrases, and nothing else. */
+const GALLERY_TRIALS_FOLDER = "gallery-trials";
+
 const DEFAULT_READY_TIMEOUT_MS = 30_000;
 /** Polling interval while `start()` waits on a `"Loading"` provider. */
 const READY_POLL_INTERVAL_MS = 500;
@@ -1121,27 +1141,148 @@ export class Pipeline implements PipelineFacade {
   // ---------------------------------------------------------- ADR-017 voice
 
   /**
-   * `LLM Voice: Choisir la voix` (ADR-017 §3): the quality tiers and the voices of
-   * the engine the global voice resolves to, in one list. Everything it writes goes
-   * to the global voice, whichever mode is active. `setupVoice` and `browseVoices`
-   * are aliases of this command.
+   * `LLM Voice: Choisir la voix` (ADR-017 §3, card 0-005): the recent voices, then the
+   * way to the gallery and to one's own voice. Asks no engine anything: the whole
+   * list and the listening live in the gallery. `setupVoice` is an alias of this.
    */
   async chooseVoice(): Promise<void> {
     try {
-      const candidate = await this.globalVoiceCandidate();
-      const voices = await this.listVoicesQuietly(candidate);
-      const picked = await this.pickVoiceOrTier(candidate, voices);
-      if (picked === undefined) {
-        return;
+      const voice = await this.profiles.getGlobalVoice();
+      const binding = bindingOfGlobalVoice(voice);
+      type Row = vscode.QuickPickItem & { action?: VoiceMenuAction };
+      const rows = buildVoiceMenuRows({
+        activeId: activeEntryId(binding),
+        activeLabel: activeLabel(binding),
+        recents: this.recentVoices()
+      }).map(
+        (row): Row =>
+          row.separator === true
+            ? { label: row.label, kind: vscode.QuickPickItemKind.Separator }
+            : {
+                label: row.label,
+                ...(row.description !== undefined ? { description: row.description } : {}),
+                ...(row.action !== undefined ? { action: row.action } : {})
+              }
+      );
+      const picked = await vscode.window.showQuickPick(rows, {
+        title: "LLM Voice : changer de voix",
+        placeHolder: "Changer de voix"
+      });
+      switch (picked?.action?.kind) {
+        case "voice":
+          await this.chooseGalleryVoice(picked.action.entryId);
+          return;
+        case "gallery":
+          await this.openVoiceGallery();
+          return;
+        case "ownVoice":
+          await this.useOwnVoice();
+          return;
+        default:
+          return;
       }
-      if (picked.kind === "tier") {
-        await handleVoiceTier(picked.tier, this.voiceTierActions());
-        return;
-      }
-      await this.applyEngineVoice(candidate, picked.voice);
     } catch (error) {
       void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
     }
+  }
+
+  private recentVoices(): readonly string[] {
+    return this.context.globalState.get<readonly string[]>(RECENT_VOICES_KEY, []);
+  }
+
+  /** A recent voice of the menu: the same whole binding as its card in the gallery. */
+  private async chooseGalleryVoice(entryId: string): Promise<void> {
+    const entry = galleryEntry(entryId);
+    if (entry === undefined) {
+      return;
+    }
+    const binding = bindingForEntry(entry, bindingOfGlobalVoice(await this.profiles.getGlobalVoice()));
+    await this.profiles.setGlobalVoice(binding);
+    await this.afterGlobalVoiceChange(declaredVoiceLanguage(binding));
+  }
+
+  /** `LLM Voice: Ouvrir la galerie de voix`, one tab whatever the number of calls. Plays and synthesizes nothing. */
+  async openVoiceGallery(): Promise<void> {
+    const trialDir = vscode.Uri.joinPath(this.context.globalStorageUri, GALLERY_TRIALS_FOLDER);
+    await vscode.workspace.fs.createDirectory(trialDir);
+    VoiceGalleryPanel.open(
+      {
+        trialDir,
+        getGlobalVoice: () => this.profiles.getGlobalVoice(),
+        applyBinding: async (binding) => {
+          await this.profiles.setGlobalVoice(binding);
+          await this.afterGlobalVoiceChange(declaredVoiceLanguage(binding));
+        },
+        checkHealth: (target, signal) => this.checkGalleryHealth(target, signal),
+        isPiperInstalled: async () => (await isPiperAlreadyInstalled(this.piperInstallDir())) !== undefined,
+        synthesizeToFile: (binding, text, signal) => this.synthesizeGalleryTrial(binding, text, signal, trialDir.fsPath),
+        getFavorites: () => this.context.globalState.get<readonly string[]>(FAVORITE_VOICES_KEY, []),
+        setFavorites: async (ids) => {
+          await this.context.globalState.update(FAVORITE_VOICES_KEY, ids);
+        },
+        writeClipboard: async (text) => {
+          await vscode.env.clipboard.writeText(text);
+        },
+        openExternal: async (url) => {
+          await vscode.env.openExternal(vscode.Uri.parse(url, true));
+        },
+        prepare: (target) => this.prepareGalleryVoice(target),
+        log: (message) => this.output.warn(message)
+      },
+      this.context.extensionUri
+    );
+  }
+
+  private async prepareGalleryVoice(target: PrepareTarget): Promise<void> {
+    switch (target) {
+      case "piper":
+        await vscode.commands.executeCommand(INSTALL_PIPER_VOICE_COMMAND);
+        return;
+      case "ownVoice":
+        await this.useOwnVoice();
+        return;
+      case "chatterbox":
+        await showChatterboxInstructions({
+          showMessage: (message, options, ...items) => vscode.window.showInformationMessage(message, options, ...items),
+          openExternal: (url) => vscode.env.openExternal(vscode.Uri.parse(url)),
+          writeClipboardText: (text) => vscode.env.clipboard.writeText(text)
+        });
+        return;
+    }
+  }
+
+  private async checkGalleryHealth(
+    target: { providerId: string; baseUrl: string },
+    signal: AbortSignal
+  ): Promise<ProviderHealthStatus> {
+    const candidate = await this.globalVoiceCandidate();
+    const tts = await this.ttsFor({ ...candidate, tts: target });
+    return (await tts.health(signal)).status;
+  }
+
+  /**
+   * A trial phrase of the gallery: straight to the engine, without going through the
+   * reading pipeline (`speakTestText`), so that it can be cancelled and plays in the
+   * page. Same phrase on the same voice: the file already made, no second request.
+   */
+  private async synthesizeGalleryTrial(
+    binding: TtsBinding & { providerId: string },
+    text: string,
+    signal: AbortSignal,
+    trialDir: string
+  ): Promise<string> {
+    const candidate = await this.globalVoiceCandidate();
+    const key = trialKey(binding, candidate.language, text);
+    const existing = await findTrial(trialDir, key);
+    if (existing !== undefined) {
+      return existing;
+    }
+    const tts = await this.ttsFor({ ...candidate, tts: binding });
+    const audio = await tts.synthesize(
+      { text, language: candidate.language, ...(binding.voice !== undefined ? { voice: binding.voice } : {}) },
+      signal
+    );
+    return storeTrial(trialDir, key, audio.format, audio.data);
   }
 
   /** Non-interactive counterpart of `chooseVoice()`'s voice rows: same write, same effects. */
@@ -1173,6 +1314,11 @@ export class Pipeline implements PipelineFacade {
     await this.refreshLocalModeBadge();
     this.pushPlayerState();
     const reading = await this.profiles.resolveReading();
+    const chosenId = activeEntryId(bindingOfGlobalVoice(reading.voice));
+    if (chosenId !== undefined) {
+      await this.context.globalState.update(RECENT_VOICES_KEY, rememberRecent(this.recentVoices(), chosenId));
+    }
+    VoiceGalleryPanel.notifyVoiceChanged();
     const chosen = describeVoice(bindingOfGlobalVoice(reading.voice));
     if (reading.voiceOrigin === "mode") {
       const action = "Utiliser la voix globale";
@@ -1200,117 +1346,11 @@ export class Pipeline implements PipelineFacade {
     this.pushPlayerState();
   }
 
-  private async listVoicesQuietly(candidate: VoiceProfile): Promise<Voice[]> {
-    try {
-      const tts = await this.ttsFor(candidate);
-      if (tts.listVoices === undefined) {
-        return [];
-      }
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), DEFAULT_VOICE_LOOKUP_TIMEOUT_MS);
-      try {
-        return await tts.listVoices(controller.signal);
-      } finally {
-        clearTimeout(timer);
-      }
-    } catch (error) {
-      // The tiers stay offered: an engine that does not answer must not close the way out of it.
-      this.output.debug("voice list unavailable", { error: messageOf(error) });
-      return [];
-    }
-  }
-
-  private pickVoiceOrTier(
-    candidate: VoiceProfile,
-    voices: readonly Voice[]
-  ): Promise<{ kind: "tier"; tier: VoiceTier } | { kind: "voice"; voice: Voice } | undefined> {
-    type Row = vscode.QuickPickItem & { tier?: VoiceTier; voiceId?: string };
-    const voiceRows = buildVoiceQuickPickItems(voices, candidate.language, candidate.tts.voice).map(
-      (row): Row => ({
-        label: row.label,
-        description: row.description,
-        voiceId: row.voiceId,
-        buttons: [previewButton()]
-      })
-    );
-    const rows: Row[] = [
-      { label: "Niveau de qualité", kind: vscode.QuickPickItemKind.Separator },
-      ...VOICE_TIER_OPTIONS.map(
-        (option): Row => ({
-          label: option.label,
-          description: option.description,
-          detail: option.detail,
-          tier: option.tier
-        })
-      ),
-      ...(voiceRows.length > 0
-        ? [{ label: "Voix de ce moteur", kind: vscode.QuickPickItemKind.Separator } as Row, ...voiceRows]
-        : [])
-    ];
-    return new Promise((resolve) => {
-      const quickPick = vscode.window.createQuickPick<Row>();
-      quickPick.title = "LLM Voice : choisir la voix";
-      quickPick.placeholder = "Choisir un niveau ou une voix : bouton lecture pour l'écouter";
-      quickPick.matchOnDescription = true;
-      quickPick.matchOnDetail = true;
-      quickPick.items = rows;
-      let settled = false;
-      const finish = (
-        result: { kind: "tier"; tier: VoiceTier } | { kind: "voice"; voice: Voice } | undefined
-      ): void => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        quickPick.dispose();
-        resolve(result);
-      };
-      quickPick.onDidTriggerItemButton((event) => {
-        if (event.item.voiceId !== undefined) {
-          void this.previewVoice(candidate, event.item.voiceId);
-        }
-      });
-      quickPick.onDidAccept(() => {
-        const selected = quickPick.selectedItems[0];
-        if (selected?.tier !== undefined) {
-          finish({ kind: "tier", tier: selected.tier });
-          return;
-        }
-        const voice = voices.find((row) => row.id === selected?.voiceId);
-        finish(voice !== undefined ? { kind: "voice", voice } : undefined);
-      });
-      quickPick.onDidHide(() => finish(undefined));
-      quickPick.show();
-    });
-  }
-
-  private voiceTierActions(): VoiceTierActions {
-    return {
-      showMessage: (message, options, ...items) =>
-        vscode.window.showInformationMessage(message, options, ...items),
-      executeCommand: (command) => vscode.commands.executeCommand(command),
-      openExternal: (url) => vscode.env.openExternal(vscode.Uri.parse(url)),
-      writeClipboardText: (text) => vscode.env.clipboard.writeText(text),
-      applyProviderChoice: (tier) => this.applyVoiceTierChoice(tier),
-      browseVoices: () => this.chooseEngineVoice()
-    };
-  }
-
-  /** The voices of the engine just chosen, once its tier is settled (`handleVoiceTier`). */
-  private async chooseEngineVoice(): Promise<void> {
-    const candidate = await this.globalVoiceCandidate();
-    const picked = await this.pickVoiceForProfile(candidate);
-    if (picked !== undefined) {
-      await this.applyEngineVoice(candidate, picked);
-    }
-  }
-
   /**
    * Quick Pick over `profile`'s TTS provider's voices, one immediate-preview
-   * button per row (S8.2) — shared by `chooseEngineVoice()` (after a tier)
-   * and the profile editor's "Parcourir les voix" (`ProfileEditorDeps.pickVoice`,
-   * which applies the result to its own unsaved form instead of writing to
-   * disk). Resolves to `undefined` when the user cancels or the provider has
+   * button per row (S8.2), for the profile editor's "Parcourir les voix"
+   * (`ProfileEditorDeps.pickVoice`, which applies the result to its own unsaved
+   * form instead of writing to disk). Resolves to `undefined` when the user cancels or the provider has
    * no voice list at all.
    */
   private async pickVoiceForProfile(profile: VoiceProfile): Promise<Voice | undefined> {
@@ -1459,6 +1499,22 @@ export class Pipeline implements PipelineFacade {
     ProfileEditorPanel.testOnlyClose(id);
   }
 
+  getVoiceGalleryHtmlForTest(): string | undefined {
+    return VoiceGalleryPanel.testOnlyHtml();
+  }
+
+  async dispatchVoiceGalleryMessageForTest(message: unknown): Promise<void> {
+    await VoiceGalleryPanel.testOnlyDispatch(message);
+  }
+
+  observeVoiceGalleryForTest(observer: ((message: unknown) => void) | undefined): void {
+    VoiceGalleryPanel.testOnlyObserve(observer);
+  }
+
+  closeVoiceGalleryForTest(): void {
+    VoiceGalleryPanel.testOnlyClose();
+  }
+
   /** Test-castable read of a single profile by id (no Quick Pick). */
   async getProfileById(id: string): Promise<VoiceProfile> {
     const profiles = await this.profiles.list();
@@ -1605,6 +1661,11 @@ export class Pipeline implements PipelineFacade {
    * resolving.
    */
   async clearAudioCache(): Promise<void> {
+    // The gallery's trial phrases are audio cached on this machine too.
+    await fs.rm(vscode.Uri.joinPath(this.context.globalStorageUri, GALLERY_TRIALS_FOLDER).fsPath, {
+      recursive: true,
+      force: true
+    });
     const bytesBefore = await this.diskCache.size();
     if (bytesBefore === 0) {
       void vscode.window.showInformationMessage("LLM Voice : le cache audio est déjà vide.");

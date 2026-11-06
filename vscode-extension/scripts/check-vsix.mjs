@@ -19,7 +19,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { statSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -108,6 +108,13 @@ const REQUIRED = [
   "dist/extension.js",
   "media/player/player.js",
   "media/player/player.css",
+  "media/voiceGallery/voiceGallery.js",
+  "media/voiceGallery/voiceGallery.css",
+  "media/voices/CREDITS.md",
+  // Every sample the catalogue names: `Écouter` plays them with no server at all.
+  ...[...readFileSync(resolve(root, "src/tts/kyutaiVoiceCatalog.ts"), "utf8").matchAll(/^ {2}(?:vctk|voiceZero|voice)\("([a-z_]+)"/gm)].map(
+    (match) => `media/voices/${match[1]}.ogg`
+  ),
   "schemas/profile-collection.schema.json",
   "schemas/global-voice.schema.json",
   // S7.2: the extension's Marketplace page (README) and the two other

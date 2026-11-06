@@ -66,18 +66,18 @@ describe("V9: the word, as a ratchet (ADR-017)", () => {
       contributes: { commands: { command: string; title: string }[] };
     };
     for (const entry of manifest.contributes.commands) {
-      if (entry.command === "llmVoice.chooseVoice" || entry.command === "llmVoice.chooseMode") {
+      if (entry.command === "llmVoice.openVoiceGallery" || entry.command === "llmVoice.chooseVoice" || entry.command === "llmVoice.chooseMode") {
         expect(entry.title).not.toMatch(WORD);
       }
     }
     expect(frozenTexts("package.json").join("\n")).not.toMatch(/llmVoice\.modes\.bySource.*profil/i);
     expect(manifestSentences().join("\n")).not.toContain("Choisir un profil");
     const pipeline = readFileSync(resolve(ROOT, "src/pipeline/Pipeline.ts"), "utf8");
-    for (const marker of ["async chooseMode(", "private warnIfVoiceLanguageDiffers(", "async chooseVoice(", "private voiceTierActions("]) {
+    for (const marker of ["async chooseMode(", "private warnIfVoiceLanguageDiffers(", "async chooseVoice(", "private recentVoices("]) {
       expect(pipeline.indexOf(marker), `bornes du contrôle : ${marker}`).toBeGreaterThanOrEqual(0);
     }
     const chooseMode = pipeline.slice(pipeline.indexOf("async chooseMode("), pipeline.indexOf("private warnIfVoiceLanguageDiffers("));
-    const chooseVoice = pipeline.slice(pipeline.indexOf("async chooseVoice("), pipeline.indexOf("private voiceTierActions("));
+    const chooseVoice = pipeline.slice(pipeline.indexOf("async chooseVoice("), pipeline.indexOf("private recentVoices("));
     expect(/"[^"\n]*profil[^"\n]*"/i.test(chooseMode)).toBe(false);
     expect(/"[^"\n]*profil[^"\n]*"/i.test(chooseVoice)).toBe(false);
   });

@@ -38,13 +38,23 @@ describe("V14: nothing of the voice model starts a reading", () => {
     "private async afterGlobalVoiceChange(",
     "async applyVoiceTierChoice(",
     "async useGlobalVoiceForMode(",
-    "private async chooseEngineVoice("
+    "private async chooseGalleryVoice(",
+    "async openVoiceGallery(",
+    "private async prepareGalleryVoice(",
+    "private async checkGalleryHealth(",
+    "private async synthesizeGalleryTrial("
   ])("Pipeline.%s never starts a reading", (signature) => {
     expect(methodBody(pipeline, signature)).not.toMatch(READING);
   });
 
+  it("the gallery's page and its host start no reading of the pipeline", () => {
+    for (const file of ["views/voiceGallery/VoiceGalleryController.ts", "views/voiceGallery/VoiceGalleryPanel.ts", "views/voiceGallery/galleryModel.ts"]) {
+      expect(readFileSync(resolve(SRC, file), "utf8"), file).not.toMatch(READING);
+    }
+  });
+
   it("the preview of a voice row only runs from its own button", () => {
-    const pick = methodBody(pipeline, "private pickVoiceOrTier(");
+    const pick = methodBody(pipeline, "private async pickVoiceForProfile(");
     const previews = pick.match(/this\.previewVoice\(/g) ?? [];
     expect(previews).toHaveLength(1);
     expect(pick.indexOf("onDidTriggerItemButton")).toBeLessThan(pick.indexOf("this.previewVoice("));

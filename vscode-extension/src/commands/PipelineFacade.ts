@@ -60,6 +60,8 @@ export interface PipelineFacade {
   installPiperVoice(): Promise<void>;
   /** `LLM Voice: Choisir la voix` (ADR-017 §3): writes the global voice. */
   chooseVoice(): Promise<void>;
+  /** `LLM Voice: Ouvrir la galerie de voix` (card 0-005): one tab, plays nothing by itself. */
+  openVoiceGallery(): Promise<void>;
   /** `LLM Voice: Use My Own Voice` (S8.2, CdC §55). */
   useOwnVoice(): Promise<void>;
   /** `LLM Voice: Edit Profile` (S8.2, CdC §49). */
@@ -183,6 +185,10 @@ export class NotWiredPipeline implements PipelineFacade {
   }
 
   chooseVoice(): Promise<void> {
+    return this.notWired();
+  }
+
+  openVoiceGallery(): Promise<void> {
     return this.notWired();
   }
 

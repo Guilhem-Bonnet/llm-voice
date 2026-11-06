@@ -16,6 +16,7 @@ const EXPECTED_COMMANDS = [
   "llmVoice.nextSegment",
   "llmVoice.chooseMode",
   "llmVoice.chooseVoice",
+  "llmVoice.openVoiceGallery",
   "llmVoice.selectProfile",
   "llmVoice.openProfiles",
   "llmVoice.openInbox",

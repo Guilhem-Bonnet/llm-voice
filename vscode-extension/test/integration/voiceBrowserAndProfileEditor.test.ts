@@ -34,6 +34,8 @@ interface TestPipeline {
   getProfileEditorHtmlForTest(id: string): string | undefined;
   dispatchProfileEditorMessageForTest(id: string, message: { type: string; profile?: unknown }): Promise<void>;
   closeProfileEditorForTest(id: string): void;
+  getVoiceGalleryHtmlForTest(): string | undefined;
+  closeVoiceGalleryForTest(): void;
 }
 
 function testPipeline(api: ExtensionTestApi): TestPipeline {
@@ -60,12 +62,23 @@ suite("LLM Voice: Choisir la voix, alias Browse Voices (S8.2, CdC §72, ADR-017 
     assert.ok(commands.includes("llmVoice.browseVoices"));
   });
 
-  test("opens a Quick Pick and does not throw when dismissed", async () => {
+  test("the voice menu opens as a Quick Pick and does not throw when dismissed", async () => {
     await activateExtension();
-    const opened = vscode.commands.executeCommand("llmVoice.browseVoices");
+    const opened = vscode.commands.executeCommand("llmVoice.chooseVoice");
     await new Promise((resolve) => setTimeout(resolve, 300));
     await vscode.commands.executeCommand("workbench.action.closeQuickOpen");
     await assert.doesNotReject(Promise.resolve(opened));
+  });
+
+  test("the alias opens the gallery, its id unchanged (ADR-017 §3)", async () => {
+    const api = await activateExtension();
+    const pipeline = testPipeline(api);
+    await vscode.commands.executeCommand("llmVoice.browseVoices");
+    try {
+      assert.ok(pipeline.getVoiceGalleryHtmlForTest()?.includes("Choisir une voix"));
+    } finally {
+      pipeline.closeVoiceGalleryForTest();
+    }
   });
 
   test("choosing a voice writes the global voice, never a mode (ADR-017 §1.3)", async () => {
