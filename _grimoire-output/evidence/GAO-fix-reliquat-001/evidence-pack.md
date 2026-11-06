@@ -21,6 +21,16 @@
 | Mutations de `installFreshness.ts` | 5 mutations appliquées puis annulées, `diff` final identique | exécution réelle | chacune fait échouer de 1 à 2 tests : `<=`→`<` 2, sans garde `warned` 2, sans capture du `stat` 2, garde consommée à vide 1, condition de rechargement inversée 2 |
 | `piper-local` (hors périmètre, non corrigé) | `node` sur `out/src/pipeline/resolveProviderConfig.js` | exécution réelle | `{providerId:"piper-local"}` et `llmVoice.tts.provider: "piper-local"` donnent `http://127.0.0.1:8004`, alors que `package.json` annonce le port 5000 |
 
+<!-- grimoire:observed-inventory:start -->
+## Inventaire observé
+
+Régénéré automatiquement depuis `evidence-log.jsonl` (hooks du host) — ne pas éditer à la main ; la section manuelle « Evidence inventory » ci-dessus reste éditable et prime en cas de doute.
+
+| Preuve | Détail | Source | Résultat |
+|---|---|---|---|
+| Aucune preuve observée pour l'instant |  |  |  |
+<!-- grimoire:observed-inventory:end -->
+
 ## Validation
 
 | Check | Command or method | Result | Notes |

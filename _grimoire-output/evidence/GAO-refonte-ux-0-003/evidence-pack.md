@@ -13,6 +13,16 @@
 |---|---|---|---|
 | Point de départ git | HEAD de4d8b5 | git rev-parse --short HEAD | référence (2026-11-06) |
 
+<!-- grimoire:observed-inventory:start -->
+## Inventaire observé
+
+Régénéré automatiquement depuis `evidence-log.jsonl` (hooks du host) — ne pas éditer à la main ; la section manuelle « Evidence inventory » ci-dessus reste éditable et prime en cas de doute.
+
+| Preuve | Détail | Source | Résultat |
+|---|---|---|---|
+| Aucune preuve observée pour l'instant |  |  |  |
+<!-- grimoire:observed-inventory:end -->
+
 ## Validation
 
 | Check | Command or method | Result | Notes |
