@@ -236,3 +236,7 @@
 ### [2026-11-06] Voix : aucun service cloud
 - **Décision** : le texte lu ne sort pas de la machine. Gemini, Voxtral API et les autres services distants sont écartés pour la recherche de voix de narration ; seules des solutions locales sont étudiées.
 - **Agent** : concierge, sur décision de guilhem-bonnet (« je n'accepte pas que le texte sorte de la machine »)
+
+### [2026-11-06] Essai de Qwen3-TTS autorisé
+- **Décision** : télécharger et exécuter Qwen3-TTS dans un dossier à part (`~/.llm-voice/voices-lab/qwen3/`), texte local uniquement. Voix cherchées dans les deux registres, grave et posé, clair et neutre, avec le choix dans l'interface si elles conviennent. Aucune imitation de Jarvis ou Gemini.
+- **Agent** : concierge, sur accord de guilhem-bonnet (« oui pour qwen3 », « les deux »)
