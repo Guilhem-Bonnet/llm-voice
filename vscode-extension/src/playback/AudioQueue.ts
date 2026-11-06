@@ -25,7 +25,7 @@
  */
 
 import { isTtsHoldError } from "../core/tts.js";
-import type { AudioChunk } from "../core/playback.js";
+import type { AudioChunk, ChunkVoice } from "../core/playback.js";
 import type { TtsProvider, TtsRequest } from "../core/tts.js";
 import { computeCacheKey, type AudioCacheStore } from "./AudioCache.js";
 
@@ -59,6 +59,36 @@ export interface AudioQueueBinding {
   speed?: number;
   format?: TtsRequest["format"];
   parameters?: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * The binding of one passage (ADR-018 §4.1): the session's, with what `cast` names replacing
+ * it. `speakerId` goes no further than here. Without a voice of its own the very same object
+ * comes back, so a reading with one voice cannot differ from what it was.
+ */
+export function bindingForChunk(binding: AudioQueueBinding, cast: ChunkVoice | undefined): AudioQueueBinding {
+  if (cast === undefined || (cast.voice === undefined && cast.model === undefined && cast.parameters === undefined)) {
+    return binding;
+  }
+  return {
+    ...binding,
+    ...(cast.voice !== undefined ? { voice: cast.voice } : {}),
+    ...(cast.model !== undefined ? { model: cast.model } : {}),
+    ...(cast.parameters !== undefined ? { parameters: cast.parameters } : {})
+  };
+}
+
+/** The cache key of a text under a resolved binding; the queue and the reading plan share it. */
+export function cacheKeyFor(providerId: string, binding: AudioQueueBinding, spokenText: string): string {
+  return computeCacheKey({
+    providerId,
+    ...(binding.model !== undefined ? { model: binding.model } : {}),
+    ...(binding.voice !== undefined ? { voice: binding.voice } : {}),
+    ...(binding.parameters !== undefined ? { parameters: binding.parameters } : {}),
+    ...(binding.speed !== undefined ? { speed: binding.speed } : {}),
+    ...(binding.language !== undefined ? { language: binding.language } : {}),
+    spokenText
+  });
 }
 
 /** Tunables of the queue; the defaults are the ones CdC §32 and §65 recommend. */
@@ -403,22 +433,13 @@ export class AudioQueue {
     job: JobState,
     signal: AbortSignal
   ): Promise<void> {
-    let providerId = this.binding.providerId ?? this.tts.id;
+    const binding = this.bindingFor(chunk);
+    let providerId = binding.providerId ?? this.tts.id;
     try {
-      if (this.binding.providerId === undefined && this.tts.cacheIdentity !== undefined) {
+      if (binding.providerId === undefined && this.tts.cacheIdentity !== undefined) {
         providerId = await this.tts.cacheIdentity(signal);
       }
-      const key = computeCacheKey({
-        providerId,
-        ...(this.binding.model !== undefined ? { model: this.binding.model } : {}),
-        ...(this.binding.voice !== undefined ? { voice: this.binding.voice } : {}),
-        ...(this.binding.parameters !== undefined
-          ? { parameters: this.binding.parameters }
-          : {}),
-        ...(this.binding.speed !== undefined ? { speed: this.binding.speed } : {}),
-        ...(this.binding.language !== undefined ? { language: this.binding.language } : {}),
-        spokenText: chunk.spokenText
-      });
+      const key = cacheKeyFor(providerId, binding, chunk.spokenText);
       // Pin now: this index is by construction inside the prefetch window
       // (`nextPendingIndex` only ever selects from it), so its audio must
       // survive eviction until `reconcilePins()` sees the cursor move past it.
@@ -564,19 +585,21 @@ export class AudioQueue {
     this.retryTimers.set(index, timer);
   }
 
+  /** The one place a chunk's voice is resolved: the key and the request both read it. */
+  private bindingFor(chunk: AudioChunk): AudioQueueBinding {
+    return bindingForChunk(this.binding, chunk.cast);
+  }
+
   private requestFor(chunk: AudioChunk): TtsRequest {
+    const binding = this.bindingFor(chunk);
     return {
       text: chunk.spokenText,
-      ...(this.binding.language !== undefined
-        ? { language: this.binding.language }
-        : {}),
-      ...(this.binding.voice !== undefined ? { voice: this.binding.voice } : {}),
-      ...(this.binding.model !== undefined ? { model: this.binding.model } : {}),
-      ...(this.binding.speed !== undefined ? { speed: this.binding.speed } : {}),
-      ...(this.binding.format !== undefined ? { format: this.binding.format } : {}),
-      ...(this.binding.parameters !== undefined
-        ? { parameters: this.binding.parameters }
-        : {})
+      ...(binding.language !== undefined ? { language: binding.language } : {}),
+      ...(binding.voice !== undefined ? { voice: binding.voice } : {}),
+      ...(binding.model !== undefined ? { model: binding.model } : {}),
+      ...(binding.speed !== undefined ? { speed: binding.speed } : {}),
+      ...(binding.format !== undefined ? { format: binding.format } : {}),
+      ...(binding.parameters !== undefined ? { parameters: binding.parameters } : {})
     };
   }
 

@@ -252,3 +252,7 @@
 ### [2026-11-06] Studio et jeu d'acteurs validés
 - **Décision** : plan d'intégration validé (panneau pour écouter, Studio pour régler). ADR-018 accepté avec ses choix recommandés : activation proposée et retenue par document ; étiquettes non lues, indications scéniques lues par le narrateur ; « Préparer » ou « Lire quand même » au-delà de 20 s ; mode jeu annoncé, sans bascule ; distribution automatique stable sans déduire de genre, ordre fixe ; voix changée à la lecture suivante. Rythme de Camille : réglage actuel par défaut.
 - **Agent** : concierge, sur accord de guilhem-bonnet (« ça me va bien, on peut continuer »)
+
+### [2026-11-06] Écouter les réponses de tout LLM
+- **Décision** : une seule liste « Réponses » et un raccourci « Lire la dernière réponse », sans lecture automatique. Par défaut tout est lu, adapté à l'oral (balisage retiré, code ignoré) ; « l'essentiel » déterministe est proposé avec sa durée, après écoute sur de vraies réponses ; le résumé par IA reste à la demande et étiqueté. Capture : hook pour Claude Code, `notify` avec accord pour Codex, geste Copier puis raccourci pour Copilot Chat et les chats web, CLI `llm-voice-inbox` à rendre installable. Antigravity à confirmer. Écartés : participant `@voice`, historiques privés, extension navigateur.
+- **Agent** : concierge, sur accord de guilhem-bonnet (« Oui, je valide ton plan. OK avec toutes tes propositions. »)

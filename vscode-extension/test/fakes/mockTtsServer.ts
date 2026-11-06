@@ -38,6 +38,10 @@ export interface MockTtsServerOptions {
   healthBody?: Record<string, unknown>;
   /** If true, POST /upload_reference always responds 500 (CdC §55 upload failure path). */
   uploadReference500?: boolean;
+  /** Body of GET /voices (`deploy/kyutai16/server.py`); absent = 404. */
+  kyutaiVoices?: { voices: Array<{ id: string; name?: string; available: boolean }> };
+  /** Milliseconds POST /tts takes, so that two requests at once would be seen. */
+  ttsDelayMs?: number;
 }
 
 export interface MockTtsServerRequestLog {
@@ -52,6 +56,9 @@ export class MockTtsServer {
   readonly requests: MockTtsServerRequestLog[] = [];
   /** Filenames received by POST /upload_reference, in call order (CdC §55). */
   readonly uploadedReferenceFilenames: string[] = [];
+  /** The most POST /tts ever in progress at once. */
+  maxConcurrentTts = 0;
+  private activeTts = 0;
 
   constructor(options: MockTtsServerOptions = {}) {
     this.options = {
@@ -62,7 +69,9 @@ export class MockTtsServer {
       voices404: options.voices404 ?? false,
       predefinedVoices: options.predefinedVoices ?? [],
       healthBody: options.healthBody ?? { status: "ok" },
-      uploadReference500: options.uploadReference500 ?? false
+      uploadReference500: options.uploadReference500 ?? false,
+      kyutaiVoices: options.kyutaiVoices ?? { voices: [] },
+      ttsDelayMs: options.ttsDelayMs ?? 0
     };
     this.server = createServer((req, res) => {
       this.handle(req, res).catch((error: unknown) => {
@@ -126,6 +135,12 @@ export class MockTtsServer {
       return;
     }
 
+    if (req.method === "GET" && url === "/voices" && this.options.kyutaiVoices.voices.length > 0) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(this.options.kyutaiVoices));
+      return;
+    }
+
     if (req.method === "GET" && url === "/get_predefined_voices") {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify(this.options.predefinedVoices));
@@ -158,6 +173,12 @@ export class MockTtsServer {
     // field instead of `input`, and no `redirectExternal` case (nothing
     // exercises that egress-guard path through this route today).
     if (req.method === "POST" && url === "/tts") {
+      this.activeTts += 1;
+      this.maxConcurrentTts = Math.max(this.maxConcurrentTts, this.activeTts);
+      if (this.options.ttsDelayMs > 0) {
+        await new Promise((resolvePromise) => setTimeout(resolvePromise, this.options.ttsDelayMs));
+      }
+      this.activeTts -= 1;
       if (this.options.fail500) {
         res.writeHead(500, { "content-type": "application/json" });
         res.end(JSON.stringify({ detail: "mock TTS server: simulated failure" }));

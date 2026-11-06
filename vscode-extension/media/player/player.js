@@ -41,6 +41,7 @@
 
   const readingLine = document.getElementById("reading-line");
   const readingEl = document.getElementById("reading");
+  const speakerEl = document.getElementById("speaker");
   const aheadEl = document.getElementById("ahead");
 
   const notice = {
@@ -59,7 +60,12 @@
     readDocument: document.getElementById("btn-read-document"),
     readSelection: document.getElementById("btn-read-selection"),
     readFromHere: document.getElementById("btn-read-from-here"),
-    readClipboard: document.getElementById("btn-read-clipboard")
+    readClipboard: document.getElementById("btn-read-clipboard"),
+    script: document.getElementById("document-script"),
+    scriptText: document.getElementById("document-script-text"),
+    scriptActions: document.getElementById("document-script-actions"),
+    toggleCast: document.getElementById("btn-toggle-cast"),
+    castVoices: document.getElementById("btn-cast-voices")
   };
 
   let currentChunkId = null;
@@ -151,7 +157,8 @@
     const ahead = aheadText(state);
     readingEl.textContent = typeof reading === "string" ? reading : "";
     aheadEl.textContent = ahead;
-    readingLine.hidden = readingEl.textContent.length === 0 && ahead.length === 0;
+    speakerEl.textContent = typeof state.speaker === "string" ? state.speaker : "";
+    readingLine.hidden = readingEl.textContent.length === 0 && ahead.length === 0 && speakerEl.textContent.length === 0;
   }
 
   function renderNotice(view) {
@@ -175,6 +182,15 @@
     const text = typeof view.passagesText === "string" ? view.passagesText : "";
     documentBlock.passages.textContent = text;
     documentBlock.passages.hidden = text.length === 0;
+    const script = view.script !== null && typeof view.script === "object" ? view.script : undefined;
+    documentBlock.script.hidden = script === undefined;
+    if (script !== undefined) {
+      const roles = Number(script.roles) || 0;
+      documentBlock.scriptText.textContent = typeof script.text === "string" ? script.text : "";
+      documentBlock.scriptActions.hidden = roles === 0;
+      documentBlock.toggleCast.textContent = script.enabled === true ? "Lire à une voix" : "Lire à plusieurs voix";
+      documentBlock.castVoices.hidden = script.enabled !== true;
+    }
   }
 
   function updateProgress(positionMs, durationMs) {
@@ -356,6 +372,10 @@
   documentBlock.readSelection.addEventListener("click", () => post({ type: "userAction", action: "speakSelection" }));
   documentBlock.readFromHere.addEventListener("click", () => post({ type: "userAction", action: "speakFromCursor" }));
   documentBlock.readClipboard.addEventListener("click", () => post({ type: "userAction", action: "speakClipboard" }));
+
+  // A setting and a list: neither one starts a reading.
+  documentBlock.toggleCast.addEventListener("click", () => post({ type: "userAction", action: "toggleCast" }));
+  documentBlock.castVoices.addEventListener("click", () => post({ type: "userAction", action: "chooseCastVoices" }));
 
   post({ type: "ready" });
 })();

@@ -74,6 +74,8 @@ export interface TtsCapabilities {
   maxTextLength?: number;
   /** ADR-015: optional and additive; absent = "voice and pauses only". */
   direction?: DirectionCapabilities;
+  /** ADR-018 §3: one loaded model speaks every voice of `voices`, request by request. */
+  multiVoice?: boolean;
 }
 
 /** One synthesis request for a single chunk of spoken text (CdC §23). */

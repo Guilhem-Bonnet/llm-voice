@@ -58,6 +58,16 @@ if [ "${1:-}" = "--inner" ]; then
   exit 0   # le verdict du test est combiné à celui du banc plus bas
 fi
 
+if [ "${1:-}" = "--cast" ]; then
+  # ADR-018 : une scène à plusieurs voix, Kyutai TTS 1.6B, service `kyutai16` démarré sur le port 8020.
+  export LLM_VOICE_NATIVE_REAL_ENGINE=kyutai16 LLM_VOICE_NATIVE_REAL_SCENARIO=cast
+  export LLM_VOICE_NATIVE_REAL_DOCUMENT="$REPO/docs/essais-voix/theatre-demo.md"
+  curl -fs -m 3 http://localhost:8020/health >/dev/null \
+    || { echo "native-real.sh: le service kyutai16 doit tourner sur le port 8020 (deploy/README.md)" >&2; exit 2; }
+  [ -n "${LLM_VOICE_NATIVE_REAL_KEEP_CACHE:-}" ] \
+    || rm -rf "$EXT/.vscode-test/native-real/User/globalStorage/guilhem-bonnet.llm-voice/cache"
+  CAST_SINCE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+fi
 if [ "${1:-}" = "--kyutai16" ]; then
   # Même scénario avec Kyutai TTS 1.6B et la voix Camille, service `kyutai16` démarré sur le port 8020.
   export LLM_VOICE_NATIVE_REAL_ENGINE=kyutai16
@@ -89,6 +99,10 @@ EXPECT="$(tr '\n' ' ' < "$MARKDOWN" | sed 's/  */ /g; s/ *$//')"
 if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "kyutai" ]; then
   EXPECT="Bonjour. Voici un exemple de ma voix. Nous allons maintenant examiner un concept technique et voir comment l'expliquer clairement."
 fi
+if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "cast" ]; then
+  # Ce qui doit s'entendre : tout le texte, sans les noms en capitales ni le balisage.
+  EXPECT="$(python3 -c 'import re,sys; t=open(sys.argv[1],encoding="utf-8").read(); t=re.sub(r"^[A-ZÉÈ]+ : ","",t,flags=re.M); t=re.sub(r"[#*]","",t); print(" ".join(t.split()))' "$LLM_VOICE_NATIVE_REAL_DOCUMENT")"
+fi
 export LLM_VOICE_NATIVE_REAL_EXIT_FILE
 LLM_VOICE_NATIVE_REAL_EXIT_FILE="$(mktemp)"
 trap 'rm -f "$LLM_VOICE_NATIVE_REAL_EXIT_FILE"' EXIT
@@ -106,6 +120,15 @@ if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "kyutai" ] && [ "$PROVE_EXIT" = "0"
     || { echo "native-real.sh: la pause n'a pas laissé 2 s de silence dans la capture" >&2; PROVE_EXIT=1; }
 fi
 TEST_EXIT="$(cat "$LLM_VOICE_NATIVE_REAL_EXIT_FILE")"
+if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "cast" ]; then
+  # Le journal du serveur dit quelles voix ont vraiment été demandées, et le temps de chaque passage.
+  docker logs --since "$CAST_SINCE" deploy-kyutai16-1 2>/dev/null | python3 -c 'import json,sys
+rows=[json.loads(l) for l in sys.stdin if l.startswith("{") and "\"/tts\"" in l]
+voices={r["voice"] for r in rows}
+print(json.dumps({"requetes":len(rows),"voix":sorted(voices),"passages":[[r["voice"],r["text_chars"],r["duration_s"],r["status"]] for r in rows]},ensure_ascii=False))
+sys.exit(0 if len(voices)>=4 and all(r["status"]==200 for r in rows) else 1)' \
+    || { echo "native-real.sh: quatre voix différentes attendues dans le journal du serveur" >&2; PROVE_EXIT=1; }
+fi
 
 echo "native-real.sh: test vscode-test exit=$TEST_EXIT ; banc prove.sh exit=$PROVE_EXIT" >&2
 if [ "$TEST_EXIT" = "0" ] && [ "$PROVE_EXIT" = "0" ]; then

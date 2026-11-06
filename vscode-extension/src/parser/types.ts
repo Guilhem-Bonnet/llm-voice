@@ -55,6 +55,10 @@ export interface SourceBlock {
   table?: TableContent;
   /** Nested blocks: `list` → `listItem[]`, `blockquote` → its content blocks. */
   children?: SourceBlock[];
+  /** Role that speaks this block (`parseScript`, ADR-018 §1); absent = the narrator. */
+  speakerId?: string;
+  /** A line of novel dialogue, kept for the attribution of ADR-018 §2: read by the narrator. */
+  dialogue?: boolean;
 }
 
 /** Reading mode for fenced code blocks (CdC §13). */

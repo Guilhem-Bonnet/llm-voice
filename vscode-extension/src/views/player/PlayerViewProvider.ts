@@ -8,10 +8,20 @@ import * as vscode from "vscode";
 import type { AudioSink } from "../../playback/AudioSink.js";
 import { SequencedAudioSink } from "../../playback/SequencedAudioSink.js";
 import { WebviewAudioSink } from "../../playback/WebviewAudioSink.js";
+import type { PlayerScriptView } from "../../core/playback.js";
 import { documentViewOf, type DocumentViewInput } from "./documentView.js";
+
+/** What the line of the "Document ouvert" block is told of the text; it never reaches the webview. */
+export type ScriptDescriber = (document: { uri: string; languageId: string; text: string }) => Promise<PlayerScriptView | undefined>;
+
+/** Past this, a document is not scanned for a script when it is merely shown. */
+const MAX_SCRIPT_CHARS = 4_000_000;
 import { buildPlayerHtml, getNonce } from "./playerHtml.js";
 
 export class PlayerViewProvider implements vscode.WebviewViewProvider {
+  private scriptDescriber: ScriptDescriber | undefined;
+  private scriptSeen: { key: string; script: PlayerScriptView | undefined } | undefined;
+  private scriptPending: string | undefined;
   static readonly viewType = "llmVoice.player";
 
   private readonly sink = new WebviewAudioSink();
@@ -105,6 +115,41 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
     this.editorWatch = [];
   }
 
+  /** The script line comes later than the rest: it reads the text, and the panel must not wait. */
+  setScriptDescriber(describer: ScriptDescriber): void {
+    this.scriptDescriber = describer;
+  }
+
+  /** A setting changed: the block is pushed again. Starts nothing. */
+  refreshDocument(): void {
+    this.scriptSeen = undefined;
+    this.scriptPending = undefined;
+    this.sink.pushDocument(this.activeDocumentView());
+  }
+
+  private scriptOf(document: vscode.TextDocument): PlayerScriptView | undefined {
+    if (this.scriptDescriber === undefined) {
+      return undefined;
+    }
+    const key = `${document.uri.toString()}#${document.version}`;
+    if (this.scriptSeen?.key === key) {
+      return this.scriptSeen.script;
+    }
+    if (this.scriptPending !== key && document.getText().length <= MAX_SCRIPT_CHARS) {
+      this.scriptPending = key;
+      void this.scriptDescriber({ uri: document.uri.toString(), languageId: document.languageId, text: document.getText() })
+        .catch(() => undefined)
+        .then((script) => {
+          if (this.scriptPending === key) {
+            this.scriptPending = undefined;
+            this.scriptSeen = { key, script };
+            this.sink.pushDocument(this.activeDocumentView());
+          }
+        });
+    }
+    return undefined;
+  }
+
   private activeDocumentView(): ReturnType<typeof documentViewOf> {
     const editor = vscode.window.activeTextEditor;
     if (editor === undefined) {
@@ -120,7 +165,9 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
         endColumn: selection.end.character
       }))
     };
-    return documentViewOf(input);
+    const view = documentViewOf(input);
+    const script = view !== null ? this.scriptOf(editor.document) : undefined;
+    return view !== null && script !== undefined ? { ...view, script } : view;
   }
 
   dispose(): void {

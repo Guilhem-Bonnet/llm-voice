@@ -13,6 +13,10 @@ Ce fichier est la seule source de vérité (voir `CONTRIBUTING.md`) ; le
 
 ## [Unreleased]
 
+### Ajouté
+
+- **Jeu d'acteurs, première tranche (ADR-018)** : une pièce de théâtre ou un texte balisé se lit avec un narrateur et une voix par personnage, sur Kyutai TTS 1.6B. Le bloc « Document ouvert » propose « Lire à plusieurs voix » quand une forme est reconnue ; ce bouton change un réglage retenu par document et ne lance jamais la lecture. `ROMÉO :` et `@nom:` ne sont pas lus, les indications scéniques vont au narrateur. La distribution est automatique, stable par document, sans genre déduit, et se change par « Distribution » ; une voix changée s'applique à la lecture suivante. Au-delà de 20 s d'attente estimée, une scène non préparée propose « Préparer » ou « Lire quand même ». Une lecture à une voix garde son cache et ses requêtes.
+
 **Attente lisible et gestes de lecture.**
 
 ### Added

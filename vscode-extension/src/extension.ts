@@ -340,8 +340,11 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   }, statusBarMenuCommand);
   context.subscriptions.push(statusBar);
   context.subscriptions.push(
-    vscode.commands.registerCommand(statusBarMenuCommand, () => statusBar.openMenu())
+    vscode.commands.registerCommand(statusBarMenuCommand, () => statusBar.openMenu()),
+    vscode.commands.registerCommand("llmVoice.toggleCast", () => pipeline.toggleCast()),
+    vscode.commands.registerCommand("llmVoice.chooseCastVoices", () => pipeline.chooseCastVoices())
   );
+  player.setScriptDescriber((document) => pipeline.describeScript(document));
 
   context.subscriptions.push(
     vscode.commands.registerCommand("llmVoice.walkthroughOpenExample", () => openWalkthroughExample(context))
@@ -413,6 +416,12 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
           break;
         case "readWithSystemVoice":
           void pipeline.readWithSystemVoice();
+          break;
+        case "toggleCast":
+          void pipeline.toggleCast();
+          break;
+        case "chooseCastVoices":
+          void pipeline.chooseCastVoices();
           break;
         default:
           break;

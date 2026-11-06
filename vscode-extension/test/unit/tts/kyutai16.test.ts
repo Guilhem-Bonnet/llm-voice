@@ -145,7 +145,7 @@ describe("the provider: KyutaiPocketProvider, with another catalogue", () => {
     expect(tts.id).toBe("kyutai-1-6b@http://localhost:8020");
   });
 
-  it("lists its 36 voices without a call, Camille first, and declares French", async () => {
+  it("keeps its 36 voices when the server does not say which it holds, Camille first, and declares French", async () => {
     const { calls, tts } = provider(() => new Response());
     const voices = await tts.listVoices?.();
     expect(voices).toHaveLength(36);
@@ -153,7 +153,33 @@ describe("the provider: KyutaiPocketProvider, with another catalogue", () => {
     const capabilities = await tts.getCapabilities();
     expect(capabilities.languages).toEqual(["fr"]);
     expect(capabilities.voices).toBe(KYUTAI16_VOICE_CATALOG);
-    expect(calls).toEqual([]);
+    expect(calls).toHaveLength(1);
+  });
+
+  it("ADR-018 §3 : ne garde que les voix que le serveur tient réellement", async () => {
+    const { tts } = provider(() =>
+      Response.json({
+        default: "cml-577_394",
+        voices: [
+          { id: "cml-577_394", name: "Camille", available: true },
+          { id: "estelle", name: "Estelle", available: false },
+          { id: "cml-928_486", name: "Val", available: true },
+          { id: "inconnue", name: "Hors catalogue", available: true }
+        ]
+      })
+    );
+    expect((await tts.listVoices?.())?.map((voice) => voice.id)).toEqual(["cml-577_394", "cml-928_486"]);
+  });
+
+  it("ADR-018 §3 : déclare `multiVoice` et le GPU ; Pocket ne déclare rien", async () => {
+    const { tts } = provider(() => new Response());
+    const capabilities = await tts.getCapabilities();
+    expect(capabilities.multiVoice).toBe(true);
+    expect(capabilities.direction?.usesGpu).toBe(true);
+    const { egress } = recordingEgress(() => new Response());
+    const pocket = await createTtsProvider({ kind: "kyutai-pocket", baseUrl: "http://localhost:8000" }, { egress }).getCapabilities();
+    expect(pocket.multiVoice).toBeUndefined();
+    expect(pocket.direction).toBeUndefined();
   });
 
   it("leaves Pocket's catalogue as it was", async () => {

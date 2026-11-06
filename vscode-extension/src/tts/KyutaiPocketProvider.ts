@@ -28,7 +28,7 @@
  */
 
 import type { ProviderHealth } from "../core/health.js";
-import { TtsHoldError, type AudioResult, type TtsCapabilities, type TtsHoldReason, type TtsProvider, type TtsRequest, type Voice } from "../core/tts.js";
+import { TtsHoldError, type AudioResult, type DirectionCapabilities, type TtsCapabilities, type TtsHoldReason, type TtsProvider, type TtsRequest, type Voice } from "../core/tts.js";
 import { repairStreamedWavSizes } from "../core/wavRepair.js";
 import type { EgressGuardHandle } from "../net/EgressGuard.js";
 import { KYUTAI_POCKET_VOICE_CATALOG } from "./kyutaiVoiceCatalog.js";
@@ -38,6 +38,10 @@ const DEFAULT_ID = "kyutai-pocket";
 export { KYUTAI_POCKET_VOICE_CATALOG };
 
 export interface KyutaiPocketProviderOptions {
+  /** ADR-018 §3: declares several voices per reading, and reads which ones the server holds. */
+  multiVoice?: boolean;
+  /** What the bench has measured of a reading direction on this engine (ADR-015 §5.2). */
+  direction?: DirectionCapabilities;
   /** Defaults to `"kyutai-pocket"`. */
   id?: string;
   baseUrl: string;
@@ -105,6 +109,8 @@ export class KyutaiPocketProvider implements TtsProvider {
   private readonly catalog: readonly Voice[];
   private readonly engineName: string;
   private readonly loadsOnDemand: boolean;
+  private readonly multiVoice: boolean;
+  private readonly direction: DirectionCapabilities | undefined;
 
   constructor(options: KyutaiPocketProviderOptions) {
     this.id = options.id ?? DEFAULT_ID;
@@ -115,6 +121,8 @@ export class KyutaiPocketProvider implements TtsProvider {
     this.catalog = options.catalog ?? KYUTAI_POCKET_VOICE_CATALOG;
     this.engineName = options.engineName ?? "KyutaiPocketProvider";
     this.loadsOnDemand = options.loadsOnDemand === true;
+    this.multiVoice = options.multiVoice === true;
+    this.direction = options.direction;
   }
 
   /** `GET /health` → `{"status":"healthy"}`; anything else is `unreachable`, never a false `ok` (ADR-005 D10). */
@@ -199,8 +207,10 @@ export class KyutaiPocketProvider implements TtsProvider {
       voices: this.catalog,
       parameters: [],
       formats: ["wav"],
-      languages: this.languages
-      // ADR-016 §5: no `direction` — the bench (R6) has measured nothing
+      languages: this.languages,
+      ...(this.multiVoice ? { multiVoice: true } : {}),
+      ...(this.direction !== undefined ? { direction: this.direction } : {})
+      // ADR-016 §5: no `direction` on Pocket — the bench (R6) has measured nothing
       // yet; no word-level timestamps either (R4, closed negative: neither
       // Pocket TTS nor TTS 1.6B produce them officially). Both stay absent
       // rather than falsely advertised (ADR-005 "capacités lues, jamais
@@ -217,8 +227,27 @@ export class KyutaiPocketProvider implements TtsProvider {
    * disabled for this provider even once it is selectable — found by real
    * testing after GAO-fix-voix-fra-001 (fixed here, GAO-fix-provider-001).
    */
-  async listVoices(_signal?: AbortSignal): Promise<Voice[]> {
-    return [...this.catalog];
+  async listVoices(signal?: AbortSignal): Promise<Voice[]> {
+    if (!this.multiVoice) {
+      return [...this.catalog];
+    }
+    // ADR-018 §3: a voice absent from the server's cache would answer 503, so a skipped
+    // line. `GET /voices` says which ones it holds; no answer falls back on the catalogue.
+    try {
+      const response = await this.egress.fetch(`${this.baseUrl}/voices`, signal !== undefined ? { signal } : {});
+      if (!response.ok) {
+        return [...this.catalog];
+      }
+      const body = (await response.json()) as { voices?: { id?: unknown; available?: unknown }[] };
+      const available = new Set((body.voices ?? []).filter((row) => row.available === true).map((row) => row.id));
+      const voices = this.catalog.filter((voice) => available.has(voice.id));
+      return voices.length > 0 ? voices : [...this.catalog];
+    } catch (error) {
+      if (signal?.aborted === true) {
+        throw error;
+      }
+      return [...this.catalog];
+    }
   }
 
   /**

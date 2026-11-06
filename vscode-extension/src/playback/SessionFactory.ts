@@ -252,7 +252,8 @@ function toFaithfulSegment(segment: SourceSegment): NarrationSegment {
     id: `faithful-${segment.id}`,
     spokenText: segment.spokenText ?? segment.rawText,
     sourceSegmentIds: [segment.id],
-    sourceRanges: segment.sourceRange ? [segment.sourceRange] : []
+    sourceRanges: segment.sourceRange ? [segment.sourceRange] : [],
+    ...(segment.speakerId !== undefined ? { metadata: { speakerId: segment.speakerId } } : {})
   };
 }
 

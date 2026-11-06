@@ -49,7 +49,10 @@ Placement final par élément :
 | Bouton des blocs de code | Panneau, état lecture, une puce à bascule (« Code : lu / ignoré ») ; défaut dans Style |
 | Incidents | Panneau, état incident |
 | Crédits, diagnostic, service distant | Réglages |
-| Réponses de Claude, accueil | Inchangés ; l'accueil gagne un lien Studio |
+| Dernière réponse et deux lignes | Panneau, sous le lecteur (planche Reponses-liste) |
+| Toutes les réponses, tous outils | Vue « Réponses » (remplace « Inbox » et « Réponses de Claude ») |
+| Ce qu'on lit, arrivée, outils connectés | Studio > Réponses, 5e section (planche Reponses-options) |
+| Accueil | Inchangé ; gagne un lien Studio |
 
 ## 2. Anatomie du panneau par état (largeur 320 px)
 

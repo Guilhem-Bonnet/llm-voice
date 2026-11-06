@@ -179,7 +179,7 @@ writeFileSync(
     {
       schemaVersion: 1,
       voice:
-        process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "kyutai"
+        process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "kyutai" || process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "cast"
           ? // No baseUrl on purpose: the provider must find its own port.
             process.env.LLM_VOICE_NATIVE_REAL_ENGINE === "kyutai16"
             ? { providerId: "kyutai-1-6b", voice: "cml-577_394", speed: 1 }

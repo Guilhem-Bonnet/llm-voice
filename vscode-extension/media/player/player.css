@@ -317,3 +317,8 @@ body[data-state="playing"] #document,
 body[data-state="paused"] #document {
   display: none;
 }
+
+#document-script[hidden],
+#document-script-actions[hidden] {
+  display: none;
+}

@@ -228,11 +228,26 @@ suite("voice-chain: voice gallery (card 0-005)", () => {
   test("favorites live in globalState", async () => {
     await vscode.commands.executeCommand("llmVoice.openVoiceGallery");
 
+    // 1 échec sur 6 passes en lisant juste après l'écriture : on vérifie l'état qui se stabilise,
+    // et il doit le rester deux secondes de suite pour qu'une vraie perte reste visible.
+    const settles = async (wanted: boolean): Promise<void> => {
+      const has = (): boolean => api.context.globalState.get<string[]>("llmVoice.voices.favorites")?.includes("vera") ?? false;
+      const deadline = Date.now() + 5000;
+      let stableSince = Date.now();
+      while (Date.now() - stableSince < 2000) {
+        if (has() !== wanted) {
+          stableSince = Date.now();
+        }
+        assert.ok(Date.now() < deadline, `favori attendu : ${String(wanted)}, lu : ${String(has())}`);
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    };
+
     await pipeline.dispatchVoiceGalleryMessageForTest({ type: "favorite", voiceId: "vera", favorite: true });
-    assert.ok(api.context.globalState.get<string[]>("llmVoice.voices.favorites")?.includes("vera"));
+    await settles(true);
 
     await pipeline.dispatchVoiceGalleryMessageForTest({ type: "favorite", voiceId: "vera", favorite: false });
-    assert.ok(!api.context.globalState.get<string[]>("llmVoice.voices.favorites")?.includes("vera"));
+    await settles(false);
   });
 
   test("the voice menu is short and leads to the gallery", async () => {

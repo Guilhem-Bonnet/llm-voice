@@ -56,6 +56,16 @@ besoin de deviner un port ou une variable d'environnement.
 **LLM Voice: Select Profile** change de profil ; **LLM Voice: Open Profiles**
 édite `profiles.json` (validé par schéma JSON).
 
+## Jeu d'acteurs
+
+Une pièce de théâtre (`ROMÉO : réplique`, `NOM` seul sur sa ligne) ou un texte
+balisé (`@nom: réplique`, `% nom = voix`) se lit avec un narrateur et une voix
+par personnage, sur Kyutai TTS 1.6B et en mode Fidèle. Le bloc « Document
+ouvert » propose **Lire à plusieurs voix** : ce bouton change un réglage retenu
+pour ce document et ne lance jamais la lecture. **Distribution** change la voix
+d'un personnage pour la lecture suivante. Pour essayer :
+`docs/essais-voix/theatre-demo.md`.
+
 ## Inbox Claude Code
 
 Les réponses de Claude Code peuvent être capturées automatiquement dans une

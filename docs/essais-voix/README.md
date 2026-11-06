@@ -10,6 +10,8 @@ Ces textes servent à écouter et à comparer les voix de LLM Voice. Les fichier
 | `03-personnages.md` | Une scène à plusieurs voix |
 | `04-documents.md` | Des passages longs : documentation, récit, réponse de Claude |
 | `05-francophonies.md` | Des tournures de France, du Québec, de Belgique et de Suisse |
+| `theatre-demo.md` | **À ouvrir pour essayer le jeu d'acteurs** : une courte scène à trois personnages |
+| `06` à `12` | Les formes du jeu d'acteurs (ADR-018) : théâtre, balises, roman, pièges, répliques courtes, chacune avec son `.attendu.json` |
 
 ## Format
 

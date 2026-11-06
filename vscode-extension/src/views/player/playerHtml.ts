@@ -118,6 +118,7 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
   </div>
 
   <div id="reading-line" hidden>
+    <div id="speaker" class="wait-line"></div>
     <div id="reading" class="wait-line"></div>
     <div id="ahead" class="wait-line"></div>
   </div>
@@ -152,6 +153,13 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
         <button id="btn-read-from-here" class="action-button" type="button">Lire à partir d'ici</button>
       </div>
       <p id="document-passages" class="wait-line" hidden></p>
+      <div id="document-script" hidden>
+        <p id="document-script-text" class="wait-line"></p>
+        <div id="document-script-actions" class="actions" role="group" aria-label="Lecture à plusieurs voix">
+          <button id="btn-toggle-cast" class="action-button" type="button">Lire à plusieurs voix</button>
+          <button id="btn-cast-voices" class="action-button" type="button" hidden>Distribution</button>
+        </div>
+      </div>
     </div>
     <div id="document-empty">
       <p id="document-empty-text">Ouvrez un fichier pour le lire</p>

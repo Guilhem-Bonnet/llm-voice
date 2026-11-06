@@ -83,6 +83,8 @@ export interface WaitEstimateInput {
   narrationChars: number;
   /** Characters of the passages generated before the first sound. */
   firstPassagesChars: number;
+  /** A floor for those passages, when each one costs more than its length (ADR-018 §1.3). */
+  firstPassagesMinMs?: number;
 }
 
 export interface WaitEstimate {
@@ -99,8 +101,10 @@ export function estimateWait(input: WaitEstimateInput): WaitEstimate {
   const loadMs = input.modelLoaded ? 0 : Math.max(0, load - (input.loadingSinceMs ?? 0));
   const narrationRate = input.measures?.narrationMsPerChar;
   const narrationMs = input.narrated && narrationRate !== undefined ? input.narrationChars * narrationRate : 0;
-  const generationMs =
-    input.firstPassagesChars * (input.measures?.synthesisMsPerChar ?? DEFAULT_SYNTHESIS_MS_PER_CHAR);
+  const generationMs = Math.max(
+    input.firstPassagesChars * (input.measures?.synthesisMsPerChar ?? DEFAULT_SYNTHESIS_MS_PER_CHAR),
+    input.firstPassagesMinMs ?? 0
+  );
   return {
     totalMs: loadMs + narrationMs + generationMs,
     loadMs,

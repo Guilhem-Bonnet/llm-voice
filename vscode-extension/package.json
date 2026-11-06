@@ -70,6 +70,16 @@
         "category": "LLM Voice"
       },
       {
+        "command": "llmVoice.toggleCast",
+        "title": "LLM Voice: Lire ce document à plusieurs voix (activer ou désactiver)",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.chooseCastVoices",
+        "title": "LLM Voice: Distribution, changer la voix d'un personnage",
+        "category": "LLM Voice"
+      },
+      {
         "command": "llmVoice.openVoiceGallery",
         "title": "LLM Voice: Ouvrir la galerie de voix",
         "category": "LLM Voice",

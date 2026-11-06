@@ -15,8 +15,7 @@
 
 ## Statut
 
-**Accepté (2026-11-06) par guilhem-bonnet, avec les choix recommandés.** Carte du Mission Ledger : `GAO-jeu-d-acteur-001`. Rien n'est implémenté,
-aucune vérification de ce document n'a été exécutée.
+**Accepté (2026-11-06) par guilhem-bonnet, avec les choix recommandés.** Carte du Mission Ledger : `GAO-jeu-d-acteur-001`. Étapes 1 à 4 implémentées le 2026-11-06 ; preuve réelle à quatre voix dans `_grimoire-output/evidence/GAO-jeu-d-acteur-001/` (WER 0,119, au-dessus de l'objectif de 10 %, écoute humaine à faire). Étapes 5 et suivantes non commencées.
 
 - **Précise la livraison d'ADR-015**, sans le réécrire : partition, `speakerId`, bible, traducteur et
   invariants restent les siens. Écarts assumés : §2.4 (attribution sans texte, hors du chemin de lecture)
@@ -63,7 +62,7 @@ plusieurs personnages. » Il veut le voir apparaître vite. Le texte ne sort jam
 | Metteur en scène `qwen2.5:7b`, avec format imposé | environ 30 ms par jeton ; analyste 3,3 à 6,6 s | `GAO-adr-015-5-an-001/direction-eval/latency-diagnosis.md:25, 45` |
 | Pocket : 43,5 s de scène en 13,1 s | **ne s'applique plus** ; prouve seulement le principe « une synthèse par réplique » | `GAO-essais-voix-001/evidence-pack.md:47` |
 
-**Modèle de coût (déduit, à confirmer à l'étape 0)** : temps de synthèse ≈ 1,8 s + 0,84 × durée audio.
+**Modèle de coût (déduit, confirmé en ordre de grandeur le 2026-11-06)** : temps de synthèse ≈ 1,8 s + 0,84 × durée audio. Sur 29 passages réels : 96,8 s prédites pour 103,3 s mesurées ; ajustement mesuré 2,28 s + 0,0412 s par caractère.
 Calculé sur les points ci-dessus, pas ajusté sur tout le fichier ; il retombe sur les 8,7 et 7,9 s du service.
 
 | Passage | Synthèse estimée | Facteur |

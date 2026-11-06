@@ -1,0 +1,7 @@
+{
+  "active": true,
+  "roles": ["madeleine", "anselme", "lucien"],
+  "absent": ["MADELEINE :", "ANSELME :", "LUCIEN :"],
+  "narrateur": ["essoufflé", "Lucien entre", "à part", "La lanterne s'éteint"],
+  "repliques": { "anselme": ["J'ai couru depuis le pont"], "lucien": ["Il ne se doute de rien"] }
+}

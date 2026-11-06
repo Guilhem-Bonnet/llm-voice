@@ -19,6 +19,18 @@ export type AudioChunkStatus =
   | "played"
   | "error";
 
+/**
+ * The voice of one passage (ADR-018 §4.1). `speakerId` says who speaks: it never enters a
+ * request or a cache key, and it is never logged with a name. No `voice`: the voice of the
+ * session, which is how a narrator's passage keeps today's key.
+ */
+export interface ChunkVoice {
+  readonly speakerId: string;
+  readonly voice?: string;
+  readonly model?: string;
+  readonly parameters?: Readonly<Record<string, unknown>>;
+}
+
 /** One synthesised unit of audio and the source it highlights (CdC §30). */
 export interface AudioChunk {
   id: string;
@@ -33,6 +45,8 @@ export interface AudioChunk {
   error?: string;
   /** Set when the engine refused for a reason only the user can lift (`TtsHoldError`). */
   holdReason?: TtsHoldReason;
+  /** Who speaks, and with which voice, when a reading has several (ADR-018). */
+  cast?: ChunkVoice;
 }
 
 /**
@@ -89,6 +103,8 @@ export interface PlayerStateView {
   reading?: string;
   /** Why the reading stopped, with what can be done about it. */
   notice?: PlayerNotice;
+  /** "Juliette · voix Camille", in a reading with several voices (ADR-018 §4.3). */
+  speaker?: string;
 }
 
 /** What the panel shows when the engine holds back (mode jeu, memory). */
@@ -104,6 +120,16 @@ export interface PlayerDocumentView {
   passages: number;
   /** "Passages : lignes 12-18, 40-44 et 90.", from two passages up. */
   passagesText?: string;
+  /** What was recognised of a script in it; a proposal, which never starts a reading. */
+  script?: PlayerScriptView;
+}
+
+/** The "Document ouvert" line about several voices (ADR-018 §6). No name, only a count. */
+export interface PlayerScriptView {
+  text: string;
+  /** Shows the buttons; absent when there is nothing to activate. */
+  roles: number;
+  enabled: boolean;
 }
 
 /** Buttons the Webview can report; the Extension Host decides what they mean. */
@@ -124,7 +150,10 @@ export type PlayerUserAction =
   | "speakClipboard"
   // The notice shown when the engine holds back.
   | "retryHold"
-  | "readWithSystemVoice";
+  | "readWithSystemVoice"
+  // The script line of the "Document ouvert" block: a setting and a list, never a reading.
+  | "toggleCast"
+  | "chooseCastVoices";
 
 /** Commands sent Extension Host → Webview (D4). */
 export type ExtensionToWebviewMessage =

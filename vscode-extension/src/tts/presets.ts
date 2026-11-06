@@ -304,6 +304,8 @@ export function createTtsProvider(
         catalog: KYUTAI16_VOICE_CATALOG,
         engineName: "Kyutai narration",
         loadsOnDemand: true,
+        multiVoice: true,
+        direction: { instructions: false, nonverbal: [], usesGpu: true },
         ...(options.defaultVoice !== undefined ? { defaultVoice: options.defaultVoice } : {})
       });
     case "openai-compatible":

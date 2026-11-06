@@ -60,6 +60,8 @@ export interface SourceSegment {
   rawText: string;
   /** Normalised text actually handed to the narrator or the TTS engine. */
   spokenText?: string;
+  /** Role that speaks this segment (ADR-018 §1); absent = the narrator. */
+  speakerId?: string;
 }
 
 /** What part of the environment a capture request targets. */

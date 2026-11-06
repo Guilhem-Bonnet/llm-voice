@@ -75,10 +75,6 @@ export interface SpeechPlanItem {
   readonly sourceIds: readonly string[];
   readonly sourceRanges: readonly SourceRange[];
   readonly request: TtsRequest;
-  /** `parameters` as the audio cache must hash them (adds the applied `speed`, which today's key ignores). */
-  readonly cacheParameters: Readonly<Record<string, unknown>> | undefined;
-  /** `voice` as the audio cache must hash it (adds the reference sample when one is used). */
-  readonly cacheVoice: string | undefined;
   readonly referenceAudio?: string | null;
   readonly navigable: true;
 }
@@ -304,13 +300,7 @@ function translateSpeech(
   if (touched) {
     request.parameters = parameters;
   }
-  const speedApplied = request.speed !== base.speed;
-  const cacheParameters = touched || speedApplied ? { ...parameters, ...(speedApplied ? { speed: request.speed } : {}) } : undefined;
   const referenceAudio = choice?.referenceAudio;
-  const cacheVoice =
-    typeof referenceAudio === "string" && referenceAudio.length > 0
-      ? `${request.voice ?? ""}@${referenceAudio}`
-      : request.voice;
 
   return {
     kind: "speech",
@@ -320,8 +310,6 @@ function translateSpeech(
     sourceIds: [...cue.sourceIds],
     sourceRanges: [...(options.rangesFor?.(cue.sourceIds) ?? [])],
     request,
-    cacheParameters,
-    cacheVoice,
     ...(referenceAudio !== undefined ? { referenceAudio } : {}),
     navigable: true
   };

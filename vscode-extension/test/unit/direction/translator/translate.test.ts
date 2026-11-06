@@ -11,7 +11,7 @@ import {
   type SynthesisBinding
 } from "../../../../src/core/direction.js";
 import type { AudioChunk, NarrationSegment, TtsCapabilities, TtsRequest } from "../../../../src/core/index.js";
-import { AudioQueue, InMemoryAudioCache, computeCacheKey } from "../../../../src/playback/index.js";
+import { AudioQueue, InMemoryAudioCache } from "../../../../src/playback/index.js";
 import { CHATTERBOX_DIRECTION } from "../../../../src/tts/ChatterboxProvider.js";
 import {
   buildSilence,
@@ -159,7 +159,7 @@ describe("ADR-017 V12: the session binding comes from the effective voice, the c
     expect(binding.voice).toBe("propre");
     const plan = translatePartition(partition, { binding });
     expect(speech(plan.items).map((item) => item.request)).toEqual(await todaysRequests(segments, binding));
-    expect(speech(plan.items)[0]?.cacheVoice).toBe("propre");
+    expect(speech(plan.items)[0]?.request.voice).toBe("propre");
   });
 });
 
@@ -187,8 +187,6 @@ describe("test 2: a neutral partition is today's request list, no silence segmen
         expect(speech(plan.items).map((item) => item.request)).toEqual(expected);
         // The audio cache hashes what it hashed before (same voice, same parameters, same id).
         for (const item of speech(plan.items)) {
-          expect(item.cacheVoice).toBe(binding.voice);
-          expect(item.cacheParameters).toEqual(binding.parameters);
           expect(item.referenceAudio).toBeUndefined();
         }
         expect(speech(plan.items).map((item) => item.segmentId)).toEqual(segments.map((segment) => segment.id));
@@ -249,14 +247,15 @@ describe("voice per role", () => {
     expect(plan.trace.unknownSpeakers).toBe(1);
   });
 
-  it("two roles that share a voice id but not a reference sample never share a cache voice", () => {
+  it("two roles that share a voice id keep their own reference sample: the engine instance, `tts.id`, identifies a clone in the cache", () => {
     const plan = translateCues([cue("a", { speakerId: "marie" }), cue("b", { speakerId: "paul" })], {
       binding: { voice: "v" },
       voiceFor: (id) => (id === "marie" ? { referenceAudio: "/voix/marie.wav" } : { referenceAudio: "/voix/paul.wav" })
     });
     const [a, b] = speech(plan.items);
-    expect(a?.cacheVoice).not.toBe(b?.cacheVoice);
-    expect(a?.cacheVoice).toBe("v@/voix/marie.wav");
+    expect(a?.referenceAudio).toBe("/voix/marie.wav");
+    expect(b?.referenceAudio).toBe("/voix/paul.wav");
+    expect(a?.request.voice).toBe("v");
   });
 });
 
@@ -348,19 +347,11 @@ describe("Piper / system: speed carries the tempo, bounded by the engine; everyt
     expect(plan.trace.ignored).toEqual({ emotion: 1, direction: 1, nonverbal: 1 });
   });
 
-  it("the applied speed is part of the cache material (today's key ignores `speed`)", () => {
+  it("the applied speed goes in the request, where `AudioQueue` reads it for the key and the synthesis alike", () => {
     const plan = translateCues([styled(1.2), cue("q")], { binding: { speed: 1 }, capabilities: caps.system });
     const [directed, plain] = speech(plan.items);
-    const keyOf = (item: SpeechPlanItem | undefined) =>
-      computeCacheKey({
-        providerId: "system",
-        ...(item?.cacheVoice !== undefined ? { voice: item.cacheVoice } : {}),
-        ...(item?.cacheParameters !== undefined ? { parameters: item.cacheParameters } : {}),
-        spokenText: "même texte"
-      });
-    expect(keyOf(directed)).not.toBe(keyOf(plain));
-    expect(directed?.cacheParameters).toEqual({ speed: 1.2 });
-    expect(plain?.cacheParameters).toBeUndefined();
+    expect(directed?.request.speed).toBe(1.2);
+    expect(plain?.request.speed).toBe(1);
   });
 });
 

@@ -19,6 +19,7 @@
  *    next chunk that was not ready in time.
  */
 
+import type { ChunkVoice } from "../core/playback.js";
 import type { AudioChunk, PlaybackState } from "../core/playback.js";
 import type { NarrationSegment } from "../core/narration.js";
 import type { VoiceProfile } from "../core/profile.js";
@@ -52,6 +53,11 @@ export interface PlaybackStartRequest {
    * exchange for no cut right after it. Needs a prefetch window at least this wide.
    */
   startAhead?: number;
+  /**
+   * Overrides the queue's window for this session: passages of a few seconds with several
+   * voices need more of them ahead than a narrator's long ones (ADR-018 §5.1).
+   */
+  prefetchChunks?: number;
 }
 
 /** Emitted whenever the state machine moves (CdC §34). */
@@ -241,7 +247,7 @@ export class PlaybackController {
         cache: this.cache,
         binding: bindingFrom(request.profile, request.engineSpeed)
       },
-      this.queueOptions
+      request.prefetchChunks !== undefined ? { ...this.queueOptions, prefetchChunks: request.prefetchChunks } : this.queueOptions
     );
     queue.reset(chunks);
 
@@ -796,19 +802,29 @@ function sinkChunkFrom(chunk: AudioChunk, src: string): AudioSinkChunk {
   };
 }
 
+/** `NarrationSegment.metadata` is free-form: only a well-formed voice reaches a chunk. */
+function castOf(segment: NarrationSegment): ChunkVoice | undefined {
+  const cast = segment.metadata?.["cast"] as ChunkVoice | undefined;
+  return typeof cast?.speakerId === "string" ? cast : undefined;
+}
+
 /** Maps narration segments to queue chunks 1:1; chunking happened upstream. */
-function chunksFrom(
+export function chunksFrom(
   sessionId: string,
   segments: readonly NarrationSegment[],
   offset: number
 ): AudioChunk[] {
-  return segments.map((segment, position) => ({
-    id: `${sessionId}:${offset + position}`,
-    sessionId,
-    spokenText: segment.spokenText,
-    sourceRanges: segment.sourceRanges,
-    status: "pending" as const
-  }));
+  return segments.map((segment, position) => {
+    const cast = castOf(segment);
+    return {
+      id: `${sessionId}:${offset + position}`,
+      sessionId,
+      spokenText: segment.spokenText,
+      sourceRanges: segment.sourceRanges,
+      status: "pending" as const,
+      ...(cast !== undefined ? { cast } : {})
+    };
+  });
 }
 
 /**
@@ -817,7 +833,7 @@ function chunksFrom(
  * `auto` or absent, while `AudioQueue`'s fallback, `tts.id`, already names the
  * resolved engine, its URL and its sample (`Pipeline.ttsFor`, `ttsInstanceKey`).
  */
-function bindingFrom(profile: VoiceProfile, engineSpeed: number | undefined) {
+export function bindingFrom(profile: VoiceProfile, engineSpeed: number | undefined) {
   return {
     language: profile.language,
     ...(profile.tts.model !== undefined ? { model: profile.tts.model } : {}),

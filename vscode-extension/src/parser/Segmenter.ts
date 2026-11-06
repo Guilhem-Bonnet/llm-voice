@@ -240,7 +240,9 @@ export function segment(blocks: readonly SourceBlock[], policy: SegmentationPoli
     if (produced.length > 0) {
       state.firstConsumed = true;
     }
-    segments.push(...produced);
+    segments.push(
+      ...(block.speakerId !== undefined ? produced.map((seg) => ({ ...seg, speakerId: block.speakerId as string })) : produced)
+    );
   }
   return segments;
 }

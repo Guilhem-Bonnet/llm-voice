@@ -1,0 +1,6 @@
+{
+  "active": true,
+  "roles": ["alma", "bruno"],
+  "absent": ["ALMA :", "BRUNO :"],
+  "repliques": { "alma": ["Tu viens"], "bruno": ["Il pleut"] }
+}
