@@ -218,3 +218,13 @@
 - **Contexte** : demande utilisateur — pas de règles de prosodie codées en dur (effet robot) ; consigne de jeu par phrase venue d'un LLM qui voit tout le contexte ; mémoire des personnages ; narrateur distinct ; valable aussi pour la documentation et les réponses d'IA. Architecture multi-agents proposée par le concierge, ADR rédigée par platform-architect (Opus), relue par un vérificateur indépendant (accepter avec corrections, appliquées).
 - **Décision** : cinq rôles (analyste, bible des personnages, metteur en scène, traducteur moteur, contrôleur) ; partition par segment indépendante du moteur ; mémoire en ajout seul, le LLM n'écrit que dans la portée du document ; garde-fous en bornes, jamais en règles de style ; repli non dirigé en cas de panne, de retard ou de mode jeu (gpu-yield) ; désactivée par défaut jusqu'à une écoute A/B ≥ 7/10. Moteur à consignes non choisi : banc d'une journée (Qwen3-TTS, Fish S2 Pro, Kyutai Pocket TTS, témoin Chatterbox).
 - **Agent** : concierge, sur validation de guilhem-bonnet (« ok je valide »)
+
+### [2026-11-05] Refonte UX : voix et mode de lecture séparés, périmètre resserré
+- **Contexte** : l'utilisateur ne comprend pas qu'il faille passer par un profil pour choisir une voix ; audit `docs/ux/audit-2026-11-05.md` et maquette https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj (mission MIS-refonte-ux-llm-voice-002).
+- **Décision** : voix globale séparée du mode de lecture ; le mot « profil » quitte l'interface (profils et identifiants conservés, commandes en alias, ADR-017 à rédiger). Une seule maquette, la nouvelle, qui reprend de celle de septembre le thème clair, la planche système et les états déjà dessinés. Mode Auto et badges de direction en emplacements réservés. Livraison par étapes : galerie et panneau testables dès qu'ils sont prêts.
+- **Hors périmètre** : Documents et Dialogue (proposition, derrière ADR-014), tri des réponses (après le mode Auto), client bureau (cartes S3 et S4).
+- **Agent** : concierge, sur validation de guilhem-bonnet (« ok je valide »)
+
+### [2026-11-05] Refonte UX : maquette validée, échantillons embarqués
+- **Décision** : maquette https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj validée ; courts échantillons compressés des voix inclus dans le VSIX (pas de modèle) ; catalogue limité à 20 voix Kyutai ; pas d'option « nouvelle interface », chaque écran refait remplace l'ancien.
+- **Agent** : concierge, sur validation de guilhem-bonnet (« oui pour le tout »)

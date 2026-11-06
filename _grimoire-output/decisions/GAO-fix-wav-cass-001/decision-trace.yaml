@@ -1,0 +1,5 @@
+$schema: grimoire-agentic-standard-decision-trace/v1
+generated_at: '2026-11-05T22:28:30.714651+00:00'
+profile: controlled
+records: []
+task_id: GAO-fix-wav-cass-001

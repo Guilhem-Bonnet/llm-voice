@@ -1,0 +1,11 @@
+{
+  "$schema": "grimoire-review-receipt/v1",
+  "task_id": "GAO-fix-voix-fra-001",
+  "verdict": "READY",
+  "findings": [],
+  "reviewer_id": "cli",
+  "model": "",
+  "tree_fingerprint": "5ed43170df60cc82a98e6f912931f1fa48e45d90c1f624409a90492f10582262",
+  "evidence_pack_sha256": null,
+  "written_at": "2026-11-05T18:36:34.430493+00:00"
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "grimoire-review-receipt/v1",
+  "task_id": "GAO-kyutai-pocke-001",
+  "verdict": "READY",
+  "findings": [],
+  "reviewer_id": "cli",
+  "model": "",
+  "tree_fingerprint": "446ffab3fd9238ce7c6942cc7fd3ab89767123033f5a4e903aad429e9664b7dd",
+  "evidence_pack_sha256": null,
+  "written_at": "2026-11-05T16:13:58.357697+00:00"
+}
