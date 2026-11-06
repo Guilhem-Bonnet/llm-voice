@@ -54,3 +54,11 @@ _grimoire-output/evidence/GAO-essais-voix-001/ecoute-france/wav/
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-france/*.ogg
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute/index.html
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-france/index.html
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-narrateurs/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-narrateurs/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-narrateurs/index.html
+
+# Banc Kyutai TTS 1.6B : audio régénérable par scripts/voice-lab/kyutai16.py
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-kyutai16/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-kyutai16/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-kyutai16/index.html

@@ -232,3 +232,7 @@
 ### [2026-11-05] ADR-017 : choix validés
 - **Décision** : voix globale dans un fichier séparé ; vitesse = voix × mode ; fin de la disposition `minimal` ; mode dans une autre langue : voix globale conservée, avec avertissement et action « Donner une voix propre à ce mode ».
 - **Agent** : concierge, sur validation de guilhem-bonnet (« Ok, vas-y. Envoie pour le tout. »)
+
+### [2026-11-06] Voix : aucun service cloud
+- **Décision** : le texte lu ne sort pas de la machine. Gemini, Voxtral API et les autres services distants sont écartés pour la recherche de voix de narration ; seules des solutions locales sont étudiées.
+- **Agent** : concierge, sur décision de guilhem-bonnet (« je n'accepte pas que le texte sorte de la machine »)

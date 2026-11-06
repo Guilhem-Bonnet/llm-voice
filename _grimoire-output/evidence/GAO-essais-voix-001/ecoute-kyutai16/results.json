@@ -1,0 +1,1704 @@
+{
+ "items": [
+  {
+   "section": "Phrase courte",
+   "id": "court-estelle",
+   "title": "estelle (voix Unmute)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-estelle.ogg",
+   "measures": {
+    "duration_s": 7.68,
+    "speech_ratio": 0.57,
+    "pause_count": 5,
+    "pause_total_s": 1.47,
+    "pitch_hz": 237.62,
+    "pitch_spread_hz": 31.37,
+    "loudness_spread_db": 5.12
+   },
+   "note": "cpu : facteur temps réel 7.16, premier son après 12.17 s",
+   "synth_s": 55.01,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangea ses cordages sans se presser, comme il le faisait depuis 40 ans.",
+   "wer": 0.074
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-4193_3103",
+   "title": "cml-4193_3103 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-4193_3103.ogg",
+   "measures": {
+    "duration_s": 10.08,
+    "speech_ratio": 0.6,
+    "pause_count": 6,
+    "pause_total_s": 1.83,
+    "pitch_hz": 80.54,
+    "pitch_spread_hz": 91.58,
+    "loudness_spread_db": 5.49
+   },
+   "note": "cuda : facteur temps réel 1.03, premier son après 1.83 s, VRAM crête 4303 Mo",
+   "synth_s": 10.34,
+   "heard": "La pluie avait cessé peu avant l'aube, sur le quai le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "wer": 0.037
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-5790_4893",
+   "title": "cml-5790_4893 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-5790_4893.ogg",
+   "measures": {
+    "duration_s": 9.2,
+    "speech_ratio": 0.48,
+    "pause_count": 8,
+    "pause_total_s": 2.25,
+    "pitch_hz": 112.94,
+    "pitch_spread_hz": 49.5,
+    "loudness_spread_db": 4.98
+   },
+   "note": "cuda : facteur temps réel 1.03, premier son après 1.82 s, VRAM crête 4298 Mo",
+   "synth_s": 9.49,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "wer": 0.037
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-9834_9697",
+   "title": "cml-9834_9697 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-9834_9697.ogg",
+   "measures": {
+    "duration_s": 8.72,
+    "speech_ratio": 0.63,
+    "pause_count": 4,
+    "pause_total_s": 1.41,
+    "pitch_hz": 96.0,
+    "pitch_spread_hz": 17.46,
+    "loudness_spread_db": 5.14
+   },
+   "note": "cuda : facteur temps réel 3.84, premier son après 15.13 s, VRAM crête 4196 Mo",
+   "synth_s": 33.45,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "wer": 0.037
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-1406_1028",
+   "title": "cml-1406_1028 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-1406_1028.ogg",
+   "measures": {
+    "duration_s": 7.6,
+    "speech_ratio": 0.74,
+    "pause_count": 2,
+    "pause_total_s": 0.57,
+    "pitch_hz": 105.26,
+    "pitch_spread_hz": 61.79,
+    "loudness_spread_db": 5.75
+   },
+   "note": "cpu : facteur temps réel 6.51, premier son après 8.75 s",
+   "synth_s": 49.44,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans.",
+   "wer": 0.074
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-1770_1028",
+   "title": "cml-1770_1028 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-1770_1028.ogg",
+   "measures": {
+    "duration_s": 8.08,
+    "speech_ratio": 0.63,
+    "pause_count": 3,
+    "pause_total_s": 1.41,
+    "pitch_hz": 125.65,
+    "pitch_spread_hz": 32.76,
+    "loudness_spread_db": 5.69
+   },
+   "note": "cuda : facteur temps réel 1.07, premier son après 1.84 s, VRAM crête 4309 Mo",
+   "synth_s": 8.63,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans.",
+   "wer": 0.074
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-2114_1656",
+   "title": "cml-2114_1656 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-2114_1656.ogg",
+   "measures": {
+    "duration_s": 10.08,
+    "speech_ratio": 0.58,
+    "pause_count": 6,
+    "pause_total_s": 2.25,
+    "pitch_hz": 121.83,
+    "pitch_spread_hz": 27.67,
+    "loudness_spread_db": 5.15
+   },
+   "note": "cuda : facteur temps réel 1.02, premier son après 1.8 s, VRAM crête 4309 Mo",
+   "synth_s": 10.25,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans.",
+   "wer": 0.074
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-12080_11650",
+   "title": "cml-12080_11650 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-12080_11650.ogg",
+   "measures": {
+    "duration_s": 8.4,
+    "speech_ratio": 0.53,
+    "pause_count": 7,
+    "pause_total_s": 2.04,
+    "pitch_hz": 216.22,
+    "pitch_spread_hz": 20.61,
+    "loudness_spread_db": 4.23
+   },
+   "note": "cpu : facteur temps réel 7.44, premier son après 12.26 s",
+   "synth_s": 62.47,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "wer": 0.037
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-5207_3078",
+   "title": "cml-5207_3078 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-5207_3078.ogg",
+   "measures": {
+    "duration_s": 9.2,
+    "speech_ratio": 0.53,
+    "pause_count": 11,
+    "pause_total_s": 2.85,
+    "pitch_hz": 184.62,
+    "pitch_spread_hz": 27.01,
+    "loudness_spread_db": 5.84
+   },
+   "note": "cuda : facteur temps réel 1.04, premier son après 1.83 s, VRAM crête 4298 Mo",
+   "synth_s": 9.55,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "wer": 0.037
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-5476_3103",
+   "title": "cml-5476_3103 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-5476_3103.ogg",
+   "measures": {
+    "duration_s": 8.32,
+    "speech_ratio": 0.58,
+    "pause_count": 4,
+    "pause_total_s": 1.59,
+    "pitch_hz": 196.72,
+    "pitch_spread_hz": 26.02,
+    "loudness_spread_db": 5.02
+   },
+   "note": "cuda : facteur temps réel 1.06, premier son après 1.85 s, VRAM crête 4298 Mo",
+   "synth_s": 8.82,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "wer": 0.037
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-577_394",
+   "title": "cml-577_394 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-577_394.ogg",
+   "measures": {
+    "duration_s": 9.6,
+    "speech_ratio": 0.61,
+    "pause_count": 7,
+    "pause_total_s": 2.13,
+    "pitch_hz": 218.18,
+    "pitch_spread_hz": 37.34,
+    "loudness_spread_db": 6.0
+   },
+   "note": "cuda : facteur temps réel 1.05, premier son après 1.94 s, VRAM crête 4298 Mo",
+   "synth_s": 10.05,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "wer": 0.037
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-10179_11051",
+   "title": "cml-10179_11051 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-10179_11051.ogg",
+   "measures": {
+    "duration_s": 8.72,
+    "speech_ratio": 0.61,
+    "pause_count": 4,
+    "pause_total_s": 1.5,
+    "pitch_hz": 258.06,
+    "pitch_spread_hz": 33.19,
+    "loudness_spread_db": 5.26
+   },
+   "note": "cpu : facteur temps réel 6.77, premier son après 8.9 s",
+   "synth_s": 59.01,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans.",
+   "wer": 0.074
+  },
+  {
+   "section": "Phrase courte",
+   "id": "court-cml-12977_10625",
+   "title": "cml-12977_10625 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "court-cml-12977_10625.ogg",
+   "measures": {
+    "duration_s": 8.64,
+    "speech_ratio": 0.74,
+    "pause_count": 2,
+    "pause_total_s": 0.84,
+    "pitch_hz": 236.46,
+    "pitch_spread_hz": 68.49,
+    "loudness_spread_db": 5.97
+   },
+   "note": "cpu : facteur temps réel 7.42, premier son après 14.27 s",
+   "synth_s": 64.11,
+   "heard": "La pluie avait cessé peu avant l'aube, sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans.",
+   "wer": 0.074
+  },
+  {
+   "section": "Récit",
+   "id": "recit-estelle",
+   "title": "estelle (voix Unmute)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-estelle.ogg",
+   "measures": {
+    "duration_s": 16.8,
+    "speech_ratio": 0.62,
+    "pause_count": 8,
+    "pause_total_s": 3.72,
+    "pitch_hz": 237.62,
+    "pitch_spread_hz": 27.84,
+    "loudness_spread_db": 5.26
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.54 s, VRAM crête 4298 Mo",
+   "synth_s": 15.49,
+   "heard": "l'appui avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.069
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-4193_3103",
+   "title": "cml-4193_3103 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-4193_3103.ogg",
+   "measures": {
+    "duration_s": 18.96,
+    "speech_ratio": 0.6,
+    "pause_count": 13,
+    "pause_total_s": 4.47,
+    "pitch_hz": 86.64,
+    "pitch_spread_hz": 64.86,
+    "loudness_spread_db": 4.72
+   },
+   "note": "cpu : facteur temps réel 6.45, premier son après 13.46 s",
+   "synth_s": 122.23,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.034
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-5790_4893",
+   "title": "cml-5790_4893 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-5790_4893.ogg",
+   "measures": {
+    "duration_s": 18.24,
+    "speech_ratio": 0.58,
+    "pause_count": 11,
+    "pause_total_s": 4.17,
+    "pitch_hz": 109.59,
+    "pitch_spread_hz": 38.67,
+    "loudness_spread_db": 5.03
+   },
+   "note": "cpu : facteur temps réel 6.4, premier son après 10.5 s",
+   "synth_s": 116.71,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à Sa cabane.",
+   "wer": 0.034
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-9834_9697",
+   "title": "cml-9834_9697 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-9834_9697.ogg",
+   "measures": {
+    "duration_s": 21.84,
+    "speech_ratio": 0.65,
+    "pause_count": 14,
+    "pause_total_s": 4.26,
+    "pitch_hz": 96.39,
+    "pitch_spread_hz": 25.12,
+    "loudness_spread_db": 4.66
+   },
+   "note": "cpu : facteur temps réel 8.1, premier son après 8.86 s",
+   "synth_s": 176.81,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire puis retourna à sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-1406_1028",
+   "title": "cml-1406_1028 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-1406_1028.ogg",
+   "measures": {
+    "duration_s": 17.36,
+    "speech_ratio": 0.67,
+    "pause_count": 8,
+    "pause_total_s": 2.91,
+    "pitch_hz": 98.77,
+    "pitch_spread_hz": 63.01,
+    "loudness_spread_db": 4.59
+   },
+   "note": "cuda : facteur temps réel 0.91, premier son après 1.58 s, VRAM crête 4298 Mo",
+   "synth_s": 15.86,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à Sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-1770_1028",
+   "title": "cml-1770_1028 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-1770_1028.ogg",
+   "measures": {
+    "duration_s": 17.04,
+    "speech_ratio": 0.62,
+    "pause_count": 8,
+    "pause_total_s": 3.51,
+    "pitch_hz": 138.73,
+    "pitch_spread_hz": 35.46,
+    "loudness_spread_db": 5.05
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.65 s, VRAM crête 4298 Mo",
+   "synth_s": 15.64,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à Saka-ban.",
+   "wer": 0.086
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-2114_1656",
+   "title": "cml-2114_1656 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-2114_1656.ogg",
+   "measures": {
+    "duration_s": 18.24,
+    "speech_ratio": 0.65,
+    "pause_count": 8,
+    "pause_total_s": 3.6,
+    "pitch_hz": 103.9,
+    "pitch_spread_hz": 17.2,
+    "loudness_spread_db": 5.05
+   },
+   "note": "cuda : facteur temps réel 0.91, premier son après 1.6 s, VRAM crête 4298 Mo",
+   "synth_s": 16.61,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire puis retourna à sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-12080_11650",
+   "title": "cml-12080_11650 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-12080_11650.ogg",
+   "measures": {
+    "duration_s": 16.56,
+    "speech_ratio": 0.64,
+    "pause_count": 7,
+    "pause_total_s": 2.97,
+    "pitch_hz": 235.29,
+    "pitch_spread_hz": 42.81,
+    "loudness_spread_db": 4.69
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.59 s, VRAM crête 4298 Mo",
+   "synth_s": 15.21,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-5207_3078",
+   "title": "cml-5207_3078 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-5207_3078.ogg",
+   "measures": {
+    "duration_s": 17.84,
+    "speech_ratio": 0.57,
+    "pause_count": 11,
+    "pause_total_s": 4.02,
+    "pitch_hz": 182.51,
+    "pitch_spread_hz": 21.76,
+    "loudness_spread_db": 4.91
+   },
+   "note": "cuda : facteur temps réel 0.91, premier son après 1.62 s, VRAM crête 4298 Mo",
+   "synth_s": 16.25,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau à marée cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-5476_3103",
+   "title": "cml-5476_3103 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-5476_3103.ogg",
+   "measures": {
+    "duration_s": 16.72,
+    "speech_ratio": 0.62,
+    "pause_count": 8,
+    "pause_total_s": 3.69,
+    "pitch_hz": 188.98,
+    "pitch_spread_hz": 28.46,
+    "loudness_spread_db": 5.58
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.55 s, VRAM crête 4292 Mo",
+   "synth_s": 15.33,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à Sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-577_394",
+   "title": "cml-577_394 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-577_394.ogg",
+   "measures": {
+    "duration_s": 17.52,
+    "speech_ratio": 0.64,
+    "pause_count": 11,
+    "pause_total_s": 3.54,
+    "pitch_hz": 218.18,
+    "pitch_spread_hz": 40.08,
+    "loudness_spread_db": 5.2
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.61 s, VRAM crête 4291 Mo",
+   "synth_s": 16.09,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangé ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.034
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-10179_11051",
+   "title": "cml-10179_11051 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-10179_11051.ogg",
+   "measures": {
+    "duration_s": 18.48,
+    "speech_ratio": 0.71,
+    "pause_count": 7,
+    "pause_total_s": 3.03,
+    "pitch_hz": 269.66,
+    "pitch_spread_hz": 42.25,
+    "loudness_spread_db": 5.2
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.6 s, VRAM crête 4291 Mo",
+   "synth_s": 16.95,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à Saqaban.",
+   "wer": 0.086
+  },
+  {
+   "section": "Récit",
+   "id": "recit-cml-12977_10625",
+   "title": "cml-12977_10625 (CML-TTS, CC BY 4.0)",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-cml-12977_10625.ogg",
+   "measures": {
+    "duration_s": 16.64,
+    "speech_ratio": 0.67,
+    "pause_count": 7,
+    "pause_total_s": 3.03,
+    "pitch_hz": 200.0,
+    "pitch_spread_hz": 42.49,
+    "loudness_spread_db": 5.38
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.62 s, VRAM crête 4291 Mo",
+   "synth_s": 15.34,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-estelle",
+   "title": "estelle (voix Unmute)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-estelle.ogg",
+   "measures": {
+    "duration_s": 17.68,
+    "speech_ratio": 0.67,
+    "pause_count": 7,
+    "pause_total_s": 2.43,
+    "pitch_hz": 242.42,
+    "pitch_spread_hz": 26.23,
+    "loudness_spread_db": 5.14
+   },
+   "note": "cuda : facteur temps réel 0.93, premier son après 1.75 s, VRAM crête 4291 Mo",
+   "synth_s": 16.38,
+   "heard": "pour installer le service ouvrir un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.018
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-4193_3103",
+   "title": "cml-4193_3103 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-4193_3103.ogg",
+   "measures": {
+    "duration_s": 20.64,
+    "speech_ratio": 0.62,
+    "pause_count": 13,
+    "pause_total_s": 4.05,
+    "pitch_hz": 78.18,
+    "pitch_spread_hz": 58.56,
+    "loudness_spread_db": 4.24
+   },
+   "note": "cuda : facteur temps réel 0.9, premier son après 1.62 s, VRAM crête 4291 Mo",
+   "synth_s": 18.66,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-5790_4893",
+   "title": "cml-5790_4893 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-5790_4893.ogg",
+   "measures": {
+    "duration_s": 21.04,
+    "speech_ratio": 0.59,
+    "pause_count": 13,
+    "pause_total_s": 4.08,
+    "pitch_hz": 112.68,
+    "pitch_spread_hz": 31.96,
+    "loudness_spread_db": 4.62
+   },
+   "note": "cuda : facteur temps réel 0.9, premier son après 1.62 s, VRAM crête 4290 Mo",
+   "synth_s": 19.02,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.018
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-9834_9697",
+   "title": "cml-9834_9697 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-9834_9697.ogg",
+   "measures": {
+    "duration_s": 20.56,
+    "speech_ratio": 0.65,
+    "pause_count": 16,
+    "pause_total_s": 3.51,
+    "pitch_hz": 114.83,
+    "pitch_spread_hz": 30.25,
+    "loudness_spread_db": 4.41
+   },
+   "note": "cuda : facteur temps réel 0.91, premier son après 1.66 s, VRAM crête 4290 Mo",
+   "synth_s": 18.64,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-1406_1028",
+   "title": "cml-1406_1028 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-1406_1028.ogg",
+   "measures": {
+    "duration_s": 19.68,
+    "speech_ratio": 0.71,
+    "pause_count": 10,
+    "pause_total_s": 2.46,
+    "pitch_hz": 90.23,
+    "pitch_spread_hz": 48.46,
+    "loudness_spread_db": 4.71
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.7 s, VRAM crête 4290 Mo",
+   "synth_s": 18.16,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-1770_1028",
+   "title": "cml-1770_1028 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-1770_1028.ogg",
+   "measures": {
+    "duration_s": 20.24,
+    "speech_ratio": 0.72,
+    "pause_count": 8,
+    "pause_total_s": 2.46,
+    "pitch_hz": 123.71,
+    "pitch_spread_hz": 27.32,
+    "loudness_spread_db": 5.07
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.82 s, VRAM crête 4290 Mo",
+   "synth_s": 18.63,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet, lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-2114_1656",
+   "title": "cml-2114_1656 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-2114_1656.ogg",
+   "measures": {
+    "duration_s": 19.28,
+    "speech_ratio": 0.71,
+    "pause_count": 4,
+    "pause_total_s": 1.47,
+    "pitch_hz": 120.6,
+    "pitch_spread_hz": 17.71,
+    "loudness_spread_db": 4.8
+   },
+   "note": "cuda : facteur temps réel 0.96, premier son après 1.77 s, VRAM crête 4290 Mo",
+   "synth_s": 18.61,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-12080_11650",
+   "title": "cml-12080_11650 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-12080_11650.ogg",
+   "measures": {
+    "duration_s": 17.92,
+    "speech_ratio": 0.6,
+    "pause_count": 11,
+    "pause_total_s": 3.42,
+    "pitch_hz": 237.62,
+    "pitch_spread_hz": 41.95,
+    "loudness_spread_db": 4.07
+   },
+   "note": "cuda : facteur temps réel 0.92, premier son après 1.71 s, VRAM crête 4289 Mo",
+   "synth_s": 16.55,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-5207_3078",
+   "title": "cml-5207_3078 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-5207_3078.ogg",
+   "measures": {
+    "duration_s": 19.2,
+    "speech_ratio": 0.58,
+    "pause_count": 16,
+    "pause_total_s": 3.69,
+    "pitch_hz": 192.0,
+    "pitch_spread_hz": 25.78,
+    "loudness_spread_db": 5.18
+   },
+   "note": "cuda : facteur temps réel 0.91, premier son après 1.64 s, VRAM crête 4283 Mo",
+   "synth_s": 17.53,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-5476_3103",
+   "title": "cml-5476_3103 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-5476_3103.ogg",
+   "measures": {
+    "duration_s": 18.24,
+    "speech_ratio": 0.73,
+    "pause_count": 6,
+    "pause_total_s": 2.31,
+    "pitch_hz": 192.0,
+    "pitch_spread_hz": 20.16,
+    "loudness_spread_db": 5.25
+   },
+   "note": "cuda : facteur temps réel 0.94, premier son après 1.97 s, VRAM crête 4277 Mo",
+   "synth_s": 17.09,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-577_394",
+   "title": "cml-577_394 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-577_394.ogg",
+   "measures": {
+    "duration_s": 18.56,
+    "speech_ratio": 0.66,
+    "pause_count": 9,
+    "pause_total_s": 2.31,
+    "pitch_hz": 224.3,
+    "pitch_spread_hz": 22.69,
+    "loudness_spread_db": 4.73
+   },
+   "note": "cuda : facteur temps réel 0.93, premier son après 1.69 s, VRAM crête 4270 Mo",
+   "synth_s": 17.23,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-10179_11051",
+   "title": "cml-10179_11051 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-10179_11051.ogg",
+   "measures": {
+    "duration_s": 20.08,
+    "speech_ratio": 0.7,
+    "pause_count": 6,
+    "pause_total_s": 1.89,
+    "pitch_hz": 315.79,
+    "pitch_spread_hz": 50.59,
+    "loudness_spread_db": 4.46
+   },
+   "note": "cuda : facteur temps réel 0.93, premier son après 1.98 s, VRAM crête 4265 Mo",
+   "synth_s": 18.69,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Documentation",
+   "id": "documentation-cml-12977_10625",
+   "title": "cml-12977_10625 (CML-TTS, CC BY 4.0)",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-cml-12977_10625.ogg",
+   "measures": {
+    "duration_s": 18.32,
+    "speech_ratio": 0.68,
+    "pause_count": 7,
+    "pause_total_s": 2.49,
+    "pitch_hz": 218.18,
+    "pitch_spread_hz": 56.4,
+    "loudness_spread_db": 5.33
+   },
+   "note": "cuda : facteur temps réel 2.47, premier son après 18.04 s, VRAM crête 4196 Mo",
+   "synth_s": 45.31,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  }
+ ],
+ "summary": {
+  "Phrase courte": [
+   "Voix retenues parmi 36 : les 6 mieux comprises de chaque moitié de hauteur (coupure vers 183 Hz). Aucun genre n'est déduit.",
+   "Voix graves : cml-4193_3103, cml-5790_4893, cml-9834_9697, cml-1406_1028, cml-1770_1028, cml-2114_1656",
+   "Voix aiguës : cml-12080_11650, cml-5207_3078, cml-5476_3103, cml-577_394, cml-10179_11051, cml-12977_10625"
+  ],
+  "Récit": [
+   "Kyutai TTS 1.6B en_fr, voix précalculées, température 0,6. Les voix CML-TTS sont CC BY 4.0, usage personnel à ce stade."
+  ]
+ },
+ "errors": [],
+ "elapsed_s": 104.5,
+ "count": 39,
+ "selected": [
+  "estelle",
+  "cml-4193_3103",
+  "cml-5790_4893",
+  "cml-9834_9697",
+  "cml-1406_1028",
+  "cml-1770_1028",
+  "cml-2114_1656",
+  "cml-12080_11650",
+  "cml-5207_3078",
+  "cml-5476_3103",
+  "cml-577_394",
+  "cml-10179_11051",
+  "cml-12977_10625"
+ ],
+ "screening": [
+  {
+   "voice": "cml-4193_3103",
+   "wer": 0.037,
+   "pitch_hz": 80.53691275167785,
+   "heard": "La pluie avait cessé peu avant l'aube, sur le quai le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans."
+  },
+  {
+   "voice": "cml-7601_7727",
+   "wer": 0.111,
+   "pitch_hz": 94.11764705882354,
+   "heard": "La pluie avait cessé, peu avant l'aube, sur lequel le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans."
+  },
+  {
+   "voice": "cml-9834_9697",
+   "wer": 0.037,
+   "pitch_hz": 96.0,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans."
+  },
+  {
+   "voice": "cml-4482_3103",
+   "wer": 0.074,
+   "pitch_hz": 103.00618921308578,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-1406_1028",
+   "wer": 0.074,
+   "pitch_hz": 105.26315789473684,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-2216_1745",
+   "wer": 0.074,
+   "pitch_hz": 112.14953271028037,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-5790_4893",
+   "wer": 0.037,
+   "pitch_hz": 112.94180175391975,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans."
+  },
+  {
+   "voice": "cml-4724_3731",
+   "wer": 0.074,
+   "pitch_hz": 116.78901255031968,
+   "heard": "La pluie avait cessé peu avant l'aube, sur le quai le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-928_486",
+   "wer": 0.148,
+   "pitch_hz": 120.90756814374905,
+   "heard": "l'appui avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-2114_1656",
+   "wer": 0.074,
+   "pitch_hz": 121.8274111675127,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-2223_1745",
+   "wer": 0.074,
+   "pitch_hz": 124.35233160621762,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-4937_3731",
+   "wer": 0.148,
+   "pitch_hz": 124.35233160621762,
+   "heard": "La pluie avait cessé peu avant l'aube, sur lequel le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-1770_1028",
+   "wer": 0.074,
+   "pitch_hz": 125.6544502617801,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-8128_7016",
+   "wer": 0.074,
+   "pitch_hz": 129.72972972972974,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-7142_2432",
+   "wer": 0.074,
+   "pitch_hz": 130.43478260869566,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-296_1028",
+   "wer": 0.074,
+   "pitch_hz": 132.59668508287294,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-12205_11650",
+   "wer": 0.185,
+   "pitch_hz": 166.66666666666666,
+   "heard": "l'appui avait cessé peu avant l'aube, sur lequel le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans."
+  },
+  {
+   "voice": "cml-10177_10625",
+   "wer": 0.148,
+   "pitch_hz": 177.77777777777777,
+   "heard": "l'appui avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-2154_2576",
+   "wer": 0.074,
+   "pitch_hz": 183.206106870229,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-5207_3078",
+   "wer": 0.037,
+   "pitch_hz": 184.6153846153846,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans."
+  },
+  {
+   "voice": "cml-6318_7016",
+   "wer": 0.074,
+   "pitch_hz": 184.6153846153846,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-7400_2928",
+   "wer": 0.074,
+   "pitch_hz": 186.04651162790697,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-7762_8734",
+   "wer": 0.148,
+   "pitch_hz": 189.7262842144732,
+   "heard": "La pluie avait cessé peu avant l'aube, sur lequel le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-5476_3103",
+   "wer": 0.037,
+   "pitch_hz": 196.72131147540983,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans."
+  },
+  {
+   "voice": "cml-5830_4703",
+   "wer": 0.074,
+   "pitch_hz": 198.34710743801654,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-2465_1943",
+   "wer": 0.074,
+   "pitch_hz": 200.0,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-7591_6742",
+   "wer": 0.074,
+   "pitch_hz": 200.0,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-10087_11650",
+   "wer": 0.148,
+   "pitch_hz": 200.84033613445376,
+   "heard": "La pluie avait cessé peu avant l'aube, sur lequel le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-579_2548",
+   "wer": 0.074,
+   "pitch_hz": 210.52631578947367,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-12080_11650",
+   "wer": 0.037,
+   "pitch_hz": 216.21621621621622,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans."
+  },
+  {
+   "voice": "cml-577_394",
+   "wer": 0.037,
+   "pitch_hz": 218.1818181818182,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans."
+  },
+  {
+   "voice": "cml-1591_1028",
+   "wer": 0.074,
+   "pitch_hz": 228.57142857142858,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-3267_1902",
+   "wer": 0.074,
+   "pitch_hz": 233.0097087378641,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-12977_10625",
+   "wer": 0.074,
+   "pitch_hz": 236.45894001164822,
+   "heard": "La pluie avait cessé peu avant l'aube, sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "estelle",
+   "wer": 0.074,
+   "pitch_hz": 237.62376237623764,
+   "heard": "la pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangea ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  },
+  {
+   "voice": "cml-10179_11051",
+   "wer": 0.074,
+   "pitch_hz": 258.06451612903226,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis 40 ans."
+  }
+ ],
+ "generation": [
+  {
+   "id": "court-cml-10087_11650",
+   "device": "cpu",
+   "gen_s": 65.67,
+   "total_s": 68.32,
+   "audio_s": 8.4,
+   "rtf": 8.13,
+   "first_frame_s": 11.78,
+   "load_s": 3.0
+  },
+  {
+   "id": "court-cml-10177_10625",
+   "device": "cpu",
+   "gen_s": 71.8,
+   "total_s": 75.54,
+   "audio_s": 7.92,
+   "rtf": 9.54,
+   "first_frame_s": 17.01,
+   "load_s": 3.0
+  },
+  {
+   "id": "court-cml-10179_11051",
+   "device": "cpu",
+   "gen_s": 55.13,
+   "total_s": 59.01,
+   "audio_s": 8.72,
+   "rtf": 6.77,
+   "first_frame_s": 8.9,
+   "load_s": 3.0
+  },
+  {
+   "id": "court-cml-12080_11650",
+   "device": "cpu",
+   "gen_s": 59.92,
+   "total_s": 62.47,
+   "audio_s": 8.4,
+   "rtf": 7.44,
+   "first_frame_s": 12.26,
+   "load_s": 3.0
+  },
+  {
+   "id": "court-cml-12205_11650",
+   "device": "cpu",
+   "gen_s": 74.03,
+   "total_s": 77.08,
+   "audio_s": 8.88,
+   "rtf": 8.68,
+   "first_frame_s": 9.16,
+   "load_s": 3.0
+  },
+  {
+   "id": "court-cml-12977_10625",
+   "device": "cpu",
+   "gen_s": 61.52,
+   "total_s": 64.11,
+   "audio_s": 8.64,
+   "rtf": 7.42,
+   "first_frame_s": 14.27,
+   "load_s": 3.0
+  },
+  {
+   "id": "court-cml-1406_1028",
+   "device": "cpu",
+   "gen_s": 47.15,
+   "total_s": 49.44,
+   "audio_s": 7.6,
+   "rtf": 6.51,
+   "first_frame_s": 8.75,
+   "load_s": 3.0
+  },
+  {
+   "id": "court-cml-1591_1028",
+   "device": "cuda",
+   "gen_s": 6.85,
+   "total_s": 7.49,
+   "audio_s": 6.96,
+   "rtf": 1.08,
+   "first_frame_s": 1.78,
+   "load_s": 6.7,
+   "vram_peak_mb": 4309
+  },
+  {
+   "id": "court-cml-1770_1028",
+   "device": "cuda",
+   "gen_s": 7.78,
+   "total_s": 8.63,
+   "audio_s": 8.08,
+   "rtf": 1.07,
+   "first_frame_s": 1.84,
+   "load_s": 6.7,
+   "vram_peak_mb": 4309
+  },
+  {
+   "id": "court-cml-2114_1656",
+   "device": "cuda",
+   "gen_s": 9.21,
+   "total_s": 10.25,
+   "audio_s": 10.08,
+   "rtf": 1.02,
+   "first_frame_s": 1.8,
+   "load_s": 6.7,
+   "vram_peak_mb": 4309
+  },
+  {
+   "id": "court-cml-2154_2576",
+   "device": "cuda",
+   "gen_s": 8.45,
+   "total_s": 9.41,
+   "audio_s": 9.04,
+   "rtf": 1.04,
+   "first_frame_s": 1.81,
+   "load_s": 6.7,
+   "vram_peak_mb": 4309
+  },
+  {
+   "id": "court-cml-2216_1745",
+   "device": "cuda",
+   "gen_s": 8.48,
+   "total_s": 9.45,
+   "audio_s": 9.12,
+   "rtf": 1.04,
+   "first_frame_s": 1.78,
+   "load_s": 6.7,
+   "vram_peak_mb": 4303
+  },
+  {
+   "id": "court-cml-2223_1745",
+   "device": "cuda",
+   "gen_s": 7.85,
+   "total_s": 8.67,
+   "audio_s": 8.08,
+   "rtf": 1.07,
+   "first_frame_s": 1.91,
+   "load_s": 6.7,
+   "vram_peak_mb": 4303
+  },
+  {
+   "id": "court-cml-2465_1943",
+   "device": "cuda",
+   "gen_s": 7.51,
+   "total_s": 8.34,
+   "audio_s": 7.76,
+   "rtf": 1.08,
+   "first_frame_s": 1.81,
+   "load_s": 6.7,
+   "vram_peak_mb": 4303
+  },
+  {
+   "id": "court-cml-296_1028",
+   "device": "cuda",
+   "gen_s": 9.45,
+   "total_s": 10.52,
+   "audio_s": 10.4,
+   "rtf": 1.01,
+   "first_frame_s": 1.81,
+   "load_s": 6.7,
+   "vram_peak_mb": 4303
+  },
+  {
+   "id": "court-cml-3267_1902",
+   "device": "cuda",
+   "gen_s": 7.89,
+   "total_s": 8.77,
+   "audio_s": 8.24,
+   "rtf": 1.06,
+   "first_frame_s": 1.83,
+   "load_s": 6.7,
+   "vram_peak_mb": 4303
+  },
+  {
+   "id": "court-cml-4193_3103",
+   "device": "cuda",
+   "gen_s": 9.29,
+   "total_s": 10.34,
+   "audio_s": 10.08,
+   "rtf": 1.03,
+   "first_frame_s": 1.83,
+   "load_s": 6.7,
+   "vram_peak_mb": 4303
+  },
+  {
+   "id": "court-cml-4482_3103",
+   "device": "cuda",
+   "gen_s": 7.95,
+   "total_s": 8.8,
+   "audio_s": 8.0,
+   "rtf": 1.1,
+   "first_frame_s": 2.06,
+   "load_s": 6.7,
+   "vram_peak_mb": 4303
+  },
+  {
+   "id": "court-cml-4724_3731",
+   "device": "cuda",
+   "gen_s": 9.78,
+   "total_s": 10.93,
+   "audio_s": 10.56,
+   "rtf": 1.04,
+   "first_frame_s": 1.8,
+   "load_s": 6.7,
+   "vram_peak_mb": 4303
+  },
+  {
+   "id": "court-cml-4937_3731",
+   "device": "cuda",
+   "gen_s": 8.68,
+   "total_s": 9.67,
+   "audio_s": 9.44,
+   "rtf": 1.02,
+   "first_frame_s": 1.77,
+   "load_s": 6.7,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "court-cml-5207_3078",
+   "device": "cuda",
+   "gen_s": 8.58,
+   "total_s": 9.55,
+   "audio_s": 9.2,
+   "rtf": 1.04,
+   "first_frame_s": 1.83,
+   "load_s": 6.7,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "court-cml-5476_3103",
+   "device": "cuda",
+   "gen_s": 7.96,
+   "total_s": 8.82,
+   "audio_s": 8.32,
+   "rtf": 1.06,
+   "first_frame_s": 1.85,
+   "load_s": 6.7,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "court-cml-577_394",
+   "device": "cuda",
+   "gen_s": 9.04,
+   "total_s": 10.05,
+   "audio_s": 9.6,
+   "rtf": 1.05,
+   "first_frame_s": 1.94,
+   "load_s": 6.7,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "court-cml-5790_4893",
+   "device": "cuda",
+   "gen_s": 8.54,
+   "total_s": 9.49,
+   "audio_s": 9.2,
+   "rtf": 1.03,
+   "first_frame_s": 1.82,
+   "load_s": 6.7,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "court-cml-579_2548",
+   "device": "cuda",
+   "gen_s": 9.25,
+   "total_s": 10.28,
+   "audio_s": 10.16,
+   "rtf": 1.01,
+   "first_frame_s": 1.78,
+   "load_s": 6.7,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "court-cml-5830_4703",
+   "device": "cuda",
+   "gen_s": 9.98,
+   "total_s": 11.25,
+   "audio_s": 11.12,
+   "rtf": 1.01,
+   "first_frame_s": 1.79,
+   "load_s": 6.7,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "court-cml-6318_7016",
+   "device": "cuda",
+   "gen_s": 7.63,
+   "total_s": 8.47,
+   "audio_s": 8.0,
+   "rtf": 1.06,
+   "first_frame_s": 1.75,
+   "load_s": 6.7,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "court-cml-7142_2432",
+   "device": "cuda",
+   "gen_s": 8.51,
+   "total_s": 9.49,
+   "audio_s": 9.12,
+   "rtf": 1.04,
+   "first_frame_s": 1.82,
+   "load_s": 6.7,
+   "vram_peak_mb": 4293
+  },
+  {
+   "id": "court-cml-7400_2928",
+   "device": "cuda",
+   "gen_s": 9.17,
+   "total_s": 10.19,
+   "audio_s": 10.08,
+   "rtf": 1.01,
+   "first_frame_s": 1.76,
+   "load_s": 6.7,
+   "vram_peak_mb": 4289
+  },
+  {
+   "id": "court-cml-7591_6742",
+   "device": "cuda",
+   "gen_s": 7.56,
+   "total_s": 8.37,
+   "audio_s": 7.92,
+   "rtf": 1.06,
+   "first_frame_s": 1.77,
+   "load_s": 6.7,
+   "vram_peak_mb": 4283
+  },
+  {
+   "id": "court-cml-7601_7727",
+   "device": "cuda",
+   "gen_s": 9.62,
+   "total_s": 10.7,
+   "audio_s": 10.72,
+   "rtf": 1.0,
+   "first_frame_s": 1.74,
+   "load_s": 6.7,
+   "vram_peak_mb": 4277
+  },
+  {
+   "id": "court-cml-7762_8734",
+   "device": "cuda",
+   "gen_s": 9.19,
+   "total_s": 10.22,
+   "audio_s": 10.0,
+   "rtf": 1.02,
+   "first_frame_s": 1.83,
+   "load_s": 6.7,
+   "vram_peak_mb": 4270
+  },
+  {
+   "id": "court-cml-8128_7016",
+   "device": "cuda",
+   "gen_s": 8.88,
+   "total_s": 9.9,
+   "audio_s": 9.68,
+   "rtf": 1.02,
+   "first_frame_s": 1.77,
+   "load_s": 6.7,
+   "vram_peak_mb": 4265
+  },
+  {
+   "id": "court-cml-928_486",
+   "device": "cuda",
+   "gen_s": 27.86,
+   "total_s": 42.63,
+   "audio_s": 9.04,
+   "rtf": 4.72,
+   "first_frame_s": 21.24,
+   "load_s": 6.7,
+   "vram_peak_mb": 4196
+  },
+  {
+   "id": "court-cml-9834_9697",
+   "device": "cuda",
+   "gen_s": 21.47,
+   "total_s": 33.45,
+   "audio_s": 8.72,
+   "rtf": 3.84,
+   "first_frame_s": 15.13,
+   "load_s": 4.8,
+   "vram_peak_mb": 4196
+  },
+  {
+   "id": "court-estelle",
+   "device": "cpu",
+   "gen_s": 52.27,
+   "total_s": 55.01,
+   "audio_s": 7.68,
+   "rtf": 7.16,
+   "first_frame_s": 12.17,
+   "load_s": 3.0
+  },
+  {
+   "id": "documentation-cml-10179_11051",
+   "device": "cuda",
+   "gen_s": 16.74,
+   "total_s": 18.69,
+   "audio_s": 20.08,
+   "rtf": 0.93,
+   "first_frame_s": 1.98,
+   "load_s": 5.9,
+   "vram_peak_mb": 4265
+  },
+  {
+   "id": "documentation-cml-12080_11650",
+   "device": "cuda",
+   "gen_s": 14.88,
+   "total_s": 16.55,
+   "audio_s": 17.92,
+   "rtf": 0.92,
+   "first_frame_s": 1.71,
+   "load_s": 5.9,
+   "vram_peak_mb": 4289
+  },
+  {
+   "id": "documentation-cml-12977_10625",
+   "device": "cuda",
+   "gen_s": 31.49,
+   "total_s": 45.31,
+   "audio_s": 18.32,
+   "rtf": 2.47,
+   "first_frame_s": 18.04,
+   "load_s": 5.9,
+   "vram_peak_mb": 4196
+  },
+  {
+   "id": "documentation-cml-1406_1028",
+   "device": "cuda",
+   "gen_s": 16.17,
+   "total_s": 18.16,
+   "audio_s": 19.68,
+   "rtf": 0.92,
+   "first_frame_s": 1.7,
+   "load_s": 5.9,
+   "vram_peak_mb": 4290
+  },
+  {
+   "id": "documentation-cml-1770_1028",
+   "device": "cuda",
+   "gen_s": 16.72,
+   "total_s": 18.63,
+   "audio_s": 20.24,
+   "rtf": 0.92,
+   "first_frame_s": 1.82,
+   "load_s": 5.9,
+   "vram_peak_mb": 4290
+  },
+  {
+   "id": "documentation-cml-2114_1656",
+   "device": "cuda",
+   "gen_s": 16.75,
+   "total_s": 18.61,
+   "audio_s": 19.28,
+   "rtf": 0.96,
+   "first_frame_s": 1.77,
+   "load_s": 5.9,
+   "vram_peak_mb": 4290
+  },
+  {
+   "id": "documentation-cml-4193_3103",
+   "device": "cuda",
+   "gen_s": 16.76,
+   "total_s": 18.66,
+   "audio_s": 20.64,
+   "rtf": 0.9,
+   "first_frame_s": 1.62,
+   "load_s": 5.9,
+   "vram_peak_mb": 4291
+  },
+  {
+   "id": "documentation-cml-5207_3078",
+   "device": "cuda",
+   "gen_s": 15.75,
+   "total_s": 17.53,
+   "audio_s": 19.2,
+   "rtf": 0.91,
+   "first_frame_s": 1.64,
+   "load_s": 5.9,
+   "vram_peak_mb": 4283
+  },
+  {
+   "id": "documentation-cml-5476_3103",
+   "device": "cuda",
+   "gen_s": 15.39,
+   "total_s": 17.09,
+   "audio_s": 18.24,
+   "rtf": 0.94,
+   "first_frame_s": 1.97,
+   "load_s": 5.9,
+   "vram_peak_mb": 4277
+  },
+  {
+   "id": "documentation-cml-577_394",
+   "device": "cuda",
+   "gen_s": 15.33,
+   "total_s": 17.23,
+   "audio_s": 18.56,
+   "rtf": 0.93,
+   "first_frame_s": 1.69,
+   "load_s": 5.9,
+   "vram_peak_mb": 4270
+  },
+  {
+   "id": "documentation-cml-5790_4893",
+   "device": "cuda",
+   "gen_s": 17.08,
+   "total_s": 19.02,
+   "audio_s": 21.04,
+   "rtf": 0.9,
+   "first_frame_s": 1.62,
+   "load_s": 5.9,
+   "vram_peak_mb": 4290
+  },
+  {
+   "id": "documentation-cml-9834_9697",
+   "device": "cuda",
+   "gen_s": 16.74,
+   "total_s": 18.64,
+   "audio_s": 20.56,
+   "rtf": 0.91,
+   "first_frame_s": 1.66,
+   "load_s": 5.9,
+   "vram_peak_mb": 4290
+  },
+  {
+   "id": "documentation-estelle",
+   "device": "cuda",
+   "gen_s": 14.77,
+   "total_s": 16.38,
+   "audio_s": 17.68,
+   "rtf": 0.93,
+   "first_frame_s": 1.75,
+   "load_s": 5.9,
+   "vram_peak_mb": 4291
+  },
+  {
+   "id": "recit-cml-10179_11051",
+   "device": "cuda",
+   "gen_s": 15.14,
+   "total_s": 16.95,
+   "audio_s": 18.48,
+   "rtf": 0.92,
+   "first_frame_s": 1.6,
+   "load_s": 5.9,
+   "vram_peak_mb": 4291
+  },
+  {
+   "id": "recit-cml-12080_11650",
+   "device": "cuda",
+   "gen_s": 13.72,
+   "total_s": 15.21,
+   "audio_s": 16.56,
+   "rtf": 0.92,
+   "first_frame_s": 1.59,
+   "load_s": 5.9,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "recit-cml-12977_10625",
+   "device": "cuda",
+   "gen_s": 13.84,
+   "total_s": 15.34,
+   "audio_s": 16.64,
+   "rtf": 0.92,
+   "first_frame_s": 1.62,
+   "load_s": 5.9,
+   "vram_peak_mb": 4291
+  },
+  {
+   "id": "recit-cml-1406_1028",
+   "device": "cuda",
+   "gen_s": 14.29,
+   "total_s": 15.86,
+   "audio_s": 17.36,
+   "rtf": 0.91,
+   "first_frame_s": 1.58,
+   "load_s": 5.9,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "recit-cml-1770_1028",
+   "device": "cuda",
+   "gen_s": 14.12,
+   "total_s": 15.64,
+   "audio_s": 17.04,
+   "rtf": 0.92,
+   "first_frame_s": 1.65,
+   "load_s": 5.9,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "recit-cml-2114_1656",
+   "device": "cuda",
+   "gen_s": 14.95,
+   "total_s": 16.61,
+   "audio_s": 18.24,
+   "rtf": 0.91,
+   "first_frame_s": 1.6,
+   "load_s": 5.9,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "recit-cml-4193_3103",
+   "device": "cpu",
+   "gen_s": 115.33,
+   "total_s": 122.23,
+   "audio_s": 18.96,
+   "rtf": 6.45,
+   "first_frame_s": 13.46,
+   "load_s": 3.6
+  },
+  {
+   "id": "recit-cml-5207_3078",
+   "device": "cuda",
+   "gen_s": 14.65,
+   "total_s": 16.25,
+   "audio_s": 17.84,
+   "rtf": 0.91,
+   "first_frame_s": 1.62,
+   "load_s": 5.9,
+   "vram_peak_mb": 4298
+  },
+  {
+   "id": "recit-cml-5476_3103",
+   "device": "cuda",
+   "gen_s": 13.79,
+   "total_s": 15.33,
+   "audio_s": 16.72,
+   "rtf": 0.92,
+   "first_frame_s": 1.55,
+   "load_s": 5.9,
+   "vram_peak_mb": 4292
+  },
+  {
+   "id": "recit-cml-577_394",
+   "device": "cuda",
+   "gen_s": 14.5,
+   "total_s": 16.09,
+   "audio_s": 17.52,
+   "rtf": 0.92,
+   "first_frame_s": 1.61,
+   "load_s": 5.9,
+   "vram_peak_mb": 4291
+  },
+  {
+   "id": "recit-cml-5790_4893",
+   "device": "cpu",
+   "gen_s": 110.94,
+   "total_s": 116.71,
+   "audio_s": 18.24,
+   "rtf": 6.4,
+   "first_frame_s": 10.5,
+   "load_s": 3.6
+  },
+  {
+   "id": "recit-cml-9834_9697",
+   "device": "cpu",
+   "gen_s": 167.36,
+   "total_s": 176.81,
+   "audio_s": 21.84,
+   "rtf": 8.1,
+   "first_frame_s": 8.86,
+   "load_s": 3.6
+  },
+  {
+   "id": "recit-estelle",
+   "device": "cuda",
+   "gen_s": 13.84,
+   "total_s": 15.49,
+   "audio_s": 16.8,
+   "rtf": 0.92,
+   "first_frame_s": 1.54,
+   "load_s": 5.9,
+   "vram_peak_mb": 4298
+  }
+ ],
+ "rtf_mean": 2.31
+}
