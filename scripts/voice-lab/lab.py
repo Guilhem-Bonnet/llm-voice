@@ -7,6 +7,7 @@ la qualité se juge à l'oreille. Aucune requête ne sort de la machine.
 from __future__ import annotations
 
 import argparse
+import base64
 import html
 import json
 import os
@@ -206,7 +207,15 @@ document.getElementById('copy').addEventListener('click',()=>{const o=document.g
 """
 
 
-def render_page(items: list[dict], summary: dict) -> str:
+def audio_source(item: dict, audio_dir: Path | None) -> str:
+    """Audio dans la page : Firefox en Flatpak ne voit que le fichier ouvert, pas ses voisins."""
+    if audio_dir is None:
+        return item["file"]
+    encoded = base64.b64encode((audio_dir / item["file"]).read_bytes()).decode("ascii")
+    return f"data:audio/ogg;base64,{encoded}"
+
+
+def render_page(items: list[dict], summary: dict, audio_dir: Path | None = None) -> str:
     esc = html.escape
     parts = ["<!doctype html><html lang=fr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Écoute des voix</title><style>", STYLE, "</style></head><body><main>",
              "<h1>Écoute des voix</h1><p>Note de 1 à 5 et commente, puis copie tes notes et colle-les à Claude. Rien ne se lit tout seul et rien ne sort de cette page.</p><p>Les mesures sont indicatives : la hauteur peut se tromper d'une octave, et la transcription juge mal les mots techniques et les régionalismes.</p>",
@@ -226,7 +235,7 @@ def render_page(items: list[dict], summary: dict) -> str:
             meta.append(f"généré en {item['synth_s']} s")
         if "wer" in item:
             meta.append(f"erreurs de transcription {round(item['wer'] * 100)} %")
-        parts.append(f"<div class=item data-id='{esc(item['id'], quote=True)}'><h3>{esc(item['title'])}</h3><audio controls preload=\"none\" src='{esc(item['file'], quote=True)}'></audio><div class=text>{esc(item['text'])}</div>")
+        parts.append(f"<div class=item data-id='{esc(item['id'], quote=True)}'><h3>{esc(item['title'])}</h3><audio controls preload=\"none\" src='{esc(audio_source(item, audio_dir), quote=True)}'></audio><div class=text>{esc(item['text'])}</div>")
         if item.get("note"):
             parts.append(f"<div class=meta>{esc(item['note'])}</div>")
         if item.get("heard"):
@@ -273,7 +282,7 @@ def main() -> int:
         previous["errors"] = [error for error in previous["errors"] if not error.startswith("température")] + bench.errors
         previous["count"] = len(previous["items"])
         (args.out / "results.json").write_text(json.dumps(previous, ensure_ascii=False, indent=1), encoding="utf-8")
-        (args.out / "index.html").write_text(render_page(previous["items"], previous["summary"]), encoding="utf-8")
+        (args.out / "index.html").write_text(render_page(previous["items"], previous["summary"], args.out), encoding="utf-8")
         print(json.dumps({"errors": previous["errors"], "added": bench.items}, ensure_ascii=False)[:1500])
         return 1 if previous["errors"] else 0
     tones(bench, texts["02-ton-et-style"])
@@ -302,7 +311,7 @@ def main() -> int:
             if rows:
                 result[f"wer_mots_{kind}"] = round(sum(rows) / len(rows), 3)
     (args.out / "results.json").write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
-    (args.out / "index.html").write_text(render_page(bench.items, summary), encoding="utf-8")
+    (args.out / "index.html").write_text(render_page(bench.items, summary, args.out), encoding="utf-8")
     print(json.dumps({key: value for key, value in result.items() if key != "items"}, ensure_ascii=False, indent=1))
     return 1 if bench.errors else 0
 

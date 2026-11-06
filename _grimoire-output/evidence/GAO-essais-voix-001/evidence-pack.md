@@ -47,3 +47,9 @@ The task can be considered complete only when mandatory evidence gates for the s
 - Scène à 4 voix : 43,5 s d'audio générés en 13,1 s.
 - Mots techniques : erreurs de transcription 53 % tels quels, 45 % en phonétique, indicatif car la transcription juge mal ces mots. Chiffres : 59,5 %.
 - Limites : hauteur sujette aux erreurs d'octave, écoute de guilhem-bonnet non encore faite.
+
+## Page d'écoute en un seul fichier (2026-11-06)
+
+- Signalement : aucun son et pause impossible dans Firefox. Cause : Firefox 159 en Flatpak ouvre le fichier par le portail `/run/user/1000/doc/<id>/`, qui ne contient que `index.html`.
+- Correctif : audio inclus dans la page (`lab.audio_source`), test `test_the_page_carries_its_audio_and_needs_no_neighbour_file`.
+- Preuve : Firefox 159 Flatpak en mode headless, copie seule dans un dossier vide : `canplay=28 erreur=0 total=28`. Le son réel reste à confirmer par guilhem-bonnet.

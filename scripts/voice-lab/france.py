@@ -81,7 +81,7 @@ def main() -> int:
                 bench.add("Piper, France", f"{slug}-{kind}", f"{label} · {kind}", text, pcm, None, f"licence : {licence} ; accent non vérifié au-delà du code fr_FR")
                 target.replace(args.out / "wav" / target.name)
     (args.out / "results.json").write_text(json.dumps({"items": bench.items, "errors": bench.errors}, ensure_ascii=False, indent=1), encoding="utf-8")
-    (args.out / "index.html").write_text(lab.render_page(bench.items, {}).replace("<title>Écoute des voix</title>", "<title>Voix de France</title>").replace("llm-voice-ecoute", "llm-voice-ecoute-france"), encoding="utf-8")
+    (args.out / "index.html").write_text(lab.render_page(bench.items, {}, args.out).replace("<title>Écoute des voix</title>", "<title>Voix de France</title>").replace("llm-voice-ecoute", "llm-voice-ecoute-france"), encoding="utf-8")
     print(json.dumps({"count": len(bench.items), "errors": bench.errors}, ensure_ascii=False))
     return 1 if bench.errors else 0
 

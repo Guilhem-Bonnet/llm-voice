@@ -102,6 +102,15 @@ class SafetyTest(unittest.TestCase):
         self.assertNotIn("autoplay", page)
         self.assertIn('preload="none"', page)
 
+    def test_the_page_carries_its_audio_and_needs_no_neighbour_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            Path(folder, "a.ogg").write_bytes(b"OggS-test")
+            item = {"section": "S", "id": "a", "title": "t", "text": "x", "file": "a.ogg", "measures": {}, "note": ""}
+            page = lab.render_page([item], {}, Path(folder))
+        self.assertIn("src='data:audio/ogg;base64,T2dnUy10ZXN0'", page)
+        self.assertNotIn("src='a.ogg'", page)
+
+
 
 if __name__ == "__main__":
     unittest.main()
