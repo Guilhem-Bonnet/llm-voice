@@ -178,3 +178,30 @@ citées en Contexte (« Views... keep the number to a minimum ») avaient fait
   `shouldOpenWalkthroughOnActivation`, déjà couverte par
   `test/unit/onboarding/Walkthrough.test.ts` (jamais sous
   `ExtensionMode.Test`, jamais deux fois).
+
+## Révision du 2026-11-06
+
+### Statut
+
+Accepté (2026-11-06), par ADR-017 §5. Révise les sections ci-dessus ; ne réécrit pas l'historique.
+S'applique carte par carte : tant qu'une carte n'est pas livrée, le comportement précédent reste en place.
+
+### Décision
+
+1. **`llmVoice.ui.layout` est retiré**, avec ses deux valeurs et le mini-player de panneau
+   `llmVoice.player`. Remplace « le Panel `minimal` n'est pas retiré » et le paragraphe
+   « Limite connue », qui disparaît avec sa cause.
+2. **Contenu du conteneur `llmVoice`** : Lecture en cours (`llmVoice.playerView`, enregistrée une
+   fois), Réponses de Claude. La vue Profils devient Modes, puis laisse place à l'écran Réglages et modes.
+3. **Barre d'état** : les exemples `$(unmute) Professeur` deviennent la voix effective et l'état. Le
+   mode va au survol et au menu ; texte exact fixé par la carte `GAO-refonte-ux-0-009`. Menu :
+   Changer de voix, Changer de mode, à la place de « changer de profil ».
+4. **Quick Picks** : « sélection de profil » devient deux choix, voix et mode.
+5. **Lecteur** : l'en-tête permanent (voix, état) remplace « jamais affichée vide » et l'invite
+   d'une ligne ; `#profile` n'est plus l'information principale. Glyphes remplacés par des Codicons
+   (carte `GAO-refonte-ux-0-007`).
+6. **Actions de titre** : « parcourir les voix » devient `llmVoice.chooseVoice`.
+7. **Premier lancement** : la vue s'ouvre toujours une seule fois, avec l'accueil de la carte
+   `GAO-refonte-ux-1-001` au lieu du parcours.
+8. **Tests** : ceux qui portent sur `layout` et les trois vues sont remplacés par V8 et V9 d'ADR-017.
+   CodeLens, décorations, raccourcis, thème et accessibilité restent.

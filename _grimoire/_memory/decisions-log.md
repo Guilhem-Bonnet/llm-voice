@@ -228,3 +228,7 @@
 ### [2026-11-05] Refonte UX : maquette validée, échantillons embarqués
 - **Décision** : maquette https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj validée ; courts échantillons compressés des voix inclus dans le VSIX (pas de modèle) ; catalogue limité à 20 voix Kyutai ; pas d'option « nouvelle interface », chaque écran refait remplace l'ancien.
 - **Agent** : concierge, sur validation de guilhem-bonnet (« oui pour le tout »)
+
+### [2026-11-05] ADR-017 : choix validés
+- **Décision** : voix globale dans un fichier séparé ; vitesse = voix × mode ; fin de la disposition `minimal` ; mode dans une autre langue : voix globale conservée, avec avertissement et action « Donner une voix propre à ce mode ».
+- **Agent** : concierge, sur validation de guilhem-bonnet (« Ok, vas-y. Envoie pour le tout. »)

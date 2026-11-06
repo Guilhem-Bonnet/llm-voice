@@ -11,17 +11,19 @@
 7. **Commandes** : nouvelles `llmVoice.chooseVoice` et `llmVoice.chooseMode` ; `setupVoice`, `browseVoices`, `selectProfile` deviennent des alias masqués ; aucun identifiant en usage ne disparaît sans ligne du §3.
 8. **Vues** : une seule vue de lecture, `llmVoice.playerView` ; `llmVoice.player` et son conteneur de panneau sont retirés ; la vue Profils disparaît avec la carte 1-002.
 9. **Compatibilité** : Auto (ADR-013) choisit un mode, jamais une voix ; la direction (ADR-015) garde son contrat, le narrateur prend la voix effective.
-10. **À décider par guilhem-bonnet** : accepter cet ADR (critère AC-002 de la carte), en particulier les quatre choix du § « Choix soumis ».
+10. **Décidé par guilhem-bonnet** le 2026-11-05 : ADR accepté, avec les quatre choix du § « Choix validés ».
 
 ## Statut
 
-**Proposé (2026-11-05), corrigé après relecture indépendante**
-(`_grimoire-output/reviews/GAO-refonte-ux-0-002/revue-adr-017.md`). Carte du Mission
+**Accepté (2026-11-06) par guilhem-bonnet**, avec ses quatre choix, après deux relectures
+indépendantes (`_grimoire-output/reviews/GAO-refonte-ux-0-002/`, `revue-adr-017.md` et
+`revue-adr-017-tour-2.md`). Rien n'est encore exécuté : les vérifications V1 à V19 restent à
+écrire avec la carte 0-004 et les suivantes. Carte du Mission
 Ledger : `GAO-refonte-ux-0-002`. Le choix de séparer voix et mode est celui de
 guilhem-bonnet (`decisions-log.md`, 2026-11-05, deux entrées) ; cet ADR décide comment le
 réaliser, il ne rouvre pas ce choix.
 
-- **Amende** : ADR-011 (§5 ci-dessous, à reporter dans son fichier à l'acceptation).
+- **Amende** : ADR-011 (§5 ci-dessous, reporté dans son fichier, révision du 2026-11-06).
 - **Étend** : ADR-004 (nouveau fichier de stockage ; clé du cache audio, §1.5).
 - **Ajuste** : ADR-016 §1, « les deux paliers Kyutai se choisissent par profil » :
   ils se choisissent désormais comme voix globale ou voix propre d'un mode.
@@ -257,7 +259,14 @@ les clés inconnues). **`CURRENT_PROFILE_SCHEMA_VERSION` reste à 2.**
 
 **Où** : une fonction pure dans `profiles/migrations.ts`, qui rend
 `{ collection, voice?, lastSelectedId? }`, et sa séquence d'écriture dans un module sans
-`vscode` (`profiles/globalVoiceStore.ts`, `node:fs` seul), donc testable sous vitest.
+`vscode` (`profiles/globalVoiceStore.ts`, `node:fs` seul), donc testable sous vitest. La fonction reçoit
+les `TtsSettings` en paramètre, puisque `resolveTtsConfig` en a besoin.
+
+**À déclarer, sinon Zod les retire à chaque `load()`** (`profile.schema.ts:175-179`,
+`ProfileRepository.ts:75`) : `voiceMigration` dans `ProfileCollectionSchema`, `hidden` dans
+`VoiceProfileObjectSchema`, les types de `core/profile.ts`, et la régénération de
+`schemas/profile-collection.schema.json`. V7 ajoute un test de `ProfileRepository` : `setDefault`,
+`update` et `duplicate`, puis relecture, marque et `hidden` toujours présents.
 `ProfileRepository.load()` l'appelle après la migration v1 vers v2 existante. `lastSelectedId`
 vit dans `globalState` (`ProfileRepository.ts:24`) : l'appelant l'écrit, jamais la sauvegarde.
 
@@ -281,6 +290,7 @@ vit dans `globalState` (`ProfileRepository.ts:24`) : l'appelant l'écrit, jamais
 | La 0.3 a réécrit le fichier (marque et `hidden` perdus) | Reclassé : modes d'origine revidés, `system-voice` remasqué, voix globale gardée. Ce que la 0.3 a choisi dans un mode reste une voix propre. |
 | Sauvegarde restaurée puis nouvelle montée | Reclassé contre la voix globale actuelle : les modes d'origine héritent de nouveau, les autres s'affichent « Voix propre : X ». Aucune procédure à suivre. |
 | `global-voice.json` supprimé, marque présente | **Pas de reclassement ni de recalcul** depuis des `tts` vides : voix `{ providerId: "system", speed: 1 }` et message « Voix réinitialisée ». |
+| Marque absente, `global-voice.json` absent et `tts` vides (fichier réécrit par la 0.3 après suppression de la voix) | Pas de recalcul depuis des `tts` vides : voix `{ providerId: "system", speed: 1 }` et message « Voix réinitialisée ». |
 | `global-voice.json` supprimé et sauvegarde restaurée | Voix recalculée depuis le fichier restauré : c'est la remise à zéro complète. |
 | Un mode devenu voix propre, marque présente | Jamais revidé : le classement ne tourne plus. |
 
@@ -289,7 +299,9 @@ vit dans `globalState` (`ProfileRepository.ts:24`) : l'appelant l'écrit, jamais
 Complétée par `resolveTtsConfig` (sans résoudre `auto`) pour garder le même comportement ;
 `speed: 1`. Installation neuve : `{ providerId: "system", speed: 1 }`, comme aujourd'hui
 (`defaults.ts:51-62`), avec quatre modes qui héritent, `faithful-local` par défaut et la
-marque déjà posée ; `system-voice` n'est plus créé.
+marque déjà posée ; `system-voice` n'est plus créé. `defaultCollection()`
+(`ProfileRepository.ts:237-243`) crée `global-voice.json` en même temps que cette marque : une
+installation neuve n'affiche donc jamais « Voix réinitialisée ».
 
 **Échantillon déjà présent (la migration ne fige pas la cause A)** :
 
@@ -502,6 +514,8 @@ VS Code : sans `test:integration-voice` dans ses contrôles, le gate passerait s
 - **Changements audibles assumés** : un mode d'origine prend la voix globale ; Révision
   devient réellement plus rapide (×1,1) là où une voie de vitesse existe.
 - Le cache audio est reconstruit une fois (temps de synthèse à la première relecture).
+- Un mode laissé volontairement à sa forme d'origine est revidé après un passage par la 0.3 : il
+  reprend la voix globale.
 - Qui utilisait `minimal` voit l'icône d'activité et doit déplacer la vue pour retrouver le
   lecteur dans le panneau.
 - Un réglage déprécié reste déclaré (`profiles.bySource`) et son libellé contient le mot
@@ -526,9 +540,9 @@ VS Code : sans `test:integration-voice` dans ses contrôles, le gate passerait s
    `_grimoire-output/design/refonte-ux-2026-11.md`. Les libellés exacts relèvent des cartes.
 6. **`playback.volume`** : même absence d'effet probable que la vitesse, non traitée ici.
 
-## Choix soumis à guilhem-bonnet
+## Choix validés par guilhem-bonnet
 
-Non validés à ce jour ; ils ne rouvrent pas la séparation voix et mode.
+Validés le 2026-11-05 (`decisions-log.md`, « ADR-017 : choix validés »).
 
 1. **Fichier séparé** plutôt que `globalState` ou `profiles.json` (§1.2).
 2. **Vitesse** = globale × facteur du mode, donc Révision réellement à ×1,1 (§1.4).
@@ -580,7 +594,14 @@ B : `ttsFor` le rend avant de calculer échantillon et moteur (`Pipeline.ts:1751
   (`extension.ts:80-85`), pour le seul `FakeAudioSink` : aucune dépendance au son sous xvfb ;
 - port fixe pour la chaîne `auto` (`LLM_VOICE_TEST_AUTO_CHATTERBOX_BASE_URL`, comme
   `.vscode-test.mjs:90`), ce qui demande une option de port à `MockTtsServer.listen`, et
-  `LLM_VOICE_TEST_SYSTEM_RUNNER=espeak-only` pour faire changer le moteur résolu.
+  `LLM_VOICE_TEST_SYSTEM_RUNNER=espeak-only` pour faire changer le moteur résolu ;
+- `--user-data-dir` est fixe et jamais nettoyé (`.vscode-test.mjs:26-29`) : chaque chargement
+  réécrit `profiles.json` et `global-voice.json` et neutralise le cache, sinon V3 échoue à la
+  deuxième exécution ;
+- `modes.bySource.claude-code` vise un mode fidèle et le port du narrateur reste fermé : V1 ne
+  dépend jamais d'Ollama ;
+- ses tests ont leur propre dossier, car `fake-tts` prend `out/test/integration/**`
+  (`.vscode-test.mjs:235`). V2 vérifie le corps de la requête, pas le compteur d'envois.
 
 | # | Vérification | Forme | Carte |
 |---|---|---|---|
