@@ -17,6 +17,16 @@
 | Extension | `vscode-extension/src/tts/kyutai16VoiceCatalog.ts`, `test/unit/tts/kyutai16.test.ts`, provider, presets, galerie | backend-engineer | sorties ci-dessous |
 | VSIX | `vscode-extension/llm-voice-linux-x64.vsix` (1 940 949 octets, 2026-11-06 11:38:19) | `npm run package:linux-x64` | aucun fichier `cml-*`, `577_394`, `kyutai16/` ni `deploy/` |
 
+<!-- grimoire:observed-inventory:start -->
+## Inventaire observé
+
+Régénéré automatiquement depuis `evidence-log.jsonl` (hooks du host) — ne pas éditer à la main ; la section manuelle « Evidence inventory » ci-dessus reste éditable et prime en cas de doute.
+
+| Preuve | Détail | Source | Résultat |
+|---|---|---|---|
+| Aucune preuve observée pour l'instant |  |  |  |
+<!-- grimoire:observed-inventory:end -->
+
 ## Validation
 
 | Check | Command or method | Result | Notes |
@@ -71,3 +81,10 @@ The task can be considered complete only when mandatory evidence gates for the s
 - Service réel `kyutai16` sur le GPU : Camille, 3 essais. Avec Chatterbox, le banc et Ollama en mémoire : deux réponses 503, `OutOfMemoryError` (VRAM 15,8 sur 17,1 Go). Après arrêt de Chatterbox : 200, 38,7 s au premier appel, puis 8,7 s et 7,9 s pour 7 à 8,5 s d'audio, avec le banc actif.
 - `scripts/audio-proof/native-real.sh --kyutai16` : exit 0, WER 0,0, silence de pause 2460 ms, capture sur sink nul, sortie par défaut inchangée (`native-real-camille.log`).
 - Reste : silence maximal de 21,9 s dans la capture, à relier au temps d'attente du premier son ; écoute de guilhem-bonnet.
+
+## Après relecture indépendante (2026-11-06)
+
+- B1 corrigé : libération hors du bloc `except` (`deploy/kyutai16/server.py`). 4 tests `ReleaseTest` en échec sur l'ancien code, verts sur le nouveau.
+- Mesure réelle, instance de test et drapeau factice : départ 1,22 Go ; modèle chargé 6,21 Go ; jeu pendant une synthèse : 503 en 3,4 s, mémoire 1,90 Go ; drapeau retiré : 200 en 10,9 s, 6,18 Go.
+- Conteneur durci : `cap_drop: ALL`, `no-new-privileges`, retrait de `ipc: host`, `seccomp=unconfined`, `shm_size`. La synthèse réelle fonctionne.
+- Reportés : carte « Prête » pendant un jeu (I1), reprises sur 503 (I2), latence du WAV entier (I3).

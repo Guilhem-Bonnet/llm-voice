@@ -6,6 +6,9 @@
 from __future__ import annotations
 
 import contextlib
+import gc
+import gc
+import weakref
 import http.client
 import io
 import json
@@ -21,6 +24,7 @@ import time
 import types
 import unittest
 import wave
+import weakref
 from pathlib import Path
 from unittest import mock
 from urllib.parse import quote
@@ -575,6 +579,94 @@ class RealAdapter(unittest.TestCase):
             engine.unload()
             self.assertFalse(engine.loaded)
             self.assertEqual(calls.emptied, 1)
+
+
+class Weights:
+    """Remplace les poids : un `weakref` dit si plus rien ne les retient."""
+
+
+class HoldingEngine:
+    """Comme `MoshiEngine` : `synthesize` garde le modèle dans une variable locale."""
+
+    def __init__(self, on_synthesize=None, on_load=None) -> None:
+        self.model = None
+        self.loaded = False
+        self.on_synthesize = on_synthesize
+        self.on_load = on_load
+        self.freed_at_unload: list[bool] = []
+        self.reference = None
+
+    def load(self) -> None:
+        if self.on_load is not None:
+            self.on_load()
+        self.model = Weights()
+        self.reference = weakref.ref(self.model)
+        self.loaded = True
+
+    def unload(self) -> None:
+        self.model = None
+        self.loaded = False
+        gc.collect()
+        self.freed_at_unload.append(self.reference is None or self.reference() is None)
+
+    def synthesize(self, text, voice_file, checkpoint):
+        model = self.model
+        self.on_synthesize(checkpoint)
+        return (repr(model).encode(), 24000)
+
+
+class ReleaseTest(unittest.TestCase):
+    """La mémoire ne se libère que si plus rien ne retient le modèle au moment de `unload`."""
+
+    def setUp(self) -> None:
+        self.dir = Path(tempfile.mkdtemp(prefix="kyutai16-release-"))
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        self.flag = self.dir / "active"
+
+    def service(self, engine) -> srv.Kyutai16Service:
+        catalog = srv.load_catalog()
+        files = {voice: self.dir / voice for voice in catalog}
+        return srv.Kyutai16Service(engine, catalog, files, self.flag, log=lambda *_a, **_k: None)
+
+    def test_game_mode_during_synthesis_really_frees_the_model(self):
+        def start_game(checkpoint) -> None:
+            self.flag.touch()
+            checkpoint()
+
+        engine = HoldingEngine(start_game)
+        with self.assertRaises(srv.GpuYielded):
+            self.service(engine).synthesize("texte", "cml-577_394", lambda: False)
+        self.assertEqual(engine.freed_at_unload, [True])
+
+    def test_out_of_memory_during_synthesis_really_frees_the_model(self):
+        class OutOfMemoryError(Exception):
+            pass
+
+        def explode(_checkpoint) -> None:
+            raise OutOfMemoryError("le texte secret")
+
+        engine = HoldingEngine(explode)
+        with self.assertRaises(srv.GpuUnavailable):
+            self.service(engine).synthesize("texte", "cml-577_394", lambda: False)
+        self.assertEqual(engine.freed_at_unload, [True])
+
+    def test_out_of_memory_during_the_load_still_empties_the_cache(self):
+        def explode() -> None:
+            raise RuntimeError("HIP error: out of memory")
+
+        engine = HoldingEngine(on_load=explode)
+        with self.assertRaises(srv.GpuUnavailable):
+            self.service(engine).synthesize("texte", "cml-577_394", lambda: False)
+        self.assertEqual(engine.freed_at_unload, [True])
+
+    def test_an_unreadable_flag_leaves_the_gpu_to_the_game(self):
+        class Unreadable:
+            def exists(self) -> bool:
+                raise PermissionError
+
+        service = self.service(HoldingEngine())
+        service.yield_flag = Unreadable()
+        self.assertTrue(service.yielding())
 
 
 if __name__ == "__main__":

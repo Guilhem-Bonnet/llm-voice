@@ -210,6 +210,11 @@ def validated_request(form: dict[str, str], catalog: dict[str, str]) -> tuple[st
     return text, voice
 
 
+def is_out_of_memory(error: BaseException) -> bool:
+    """Par le type ou par le message HIP ; le message n'est jamais journalisé, il peut citer le texte."""
+    return "OutOfMemory" in type(error).__name__ or "out of memory" in str(error).lower()
+
+
 class Kyutai16Service:
     """Tout ce qui ne dépend pas de HTTP : file, mode jeu, modèle."""
 
@@ -231,7 +236,11 @@ class Kyutai16Service:
         self._running = False
 
     def yielding(self) -> bool:
-        return self.yield_flag.exists()
+        try:
+            return self.yield_flag.exists()
+        except OSError:
+            # Illisible : dans le doute, le GPU reste au jeu.
+            return True
 
     def health(self) -> dict[str, object]:
         """Ne charge rien : le serveur répond, ce qui ne dit rien du GPU."""
@@ -269,8 +278,7 @@ class Kyutai16Service:
             self._condition.notify_all()
 
     def _release_model(self) -> None:
-        if not self.engine.loaded:
-            return
+        # Même sans modèle chargé : un chargement interrompu laisse des blocs réservés.
         try:
             self.engine.unload()
             self.log("model_unloaded")
@@ -291,28 +299,32 @@ class Kyutai16Service:
         checkpoint()
         self._enter(checkpoint)
         try:
-            checkpoint()
-            if not self.engine.loaded:
-                started = time.monotonic()
-                self.engine.load()
-                self.log("model_loaded", duration_s=round(time.monotonic() - started, 1))
-                # Le chargement ne s'interrompt pas : le mode jeu a pu commencer pendant.
+            failure: ServiceError
+            try:
                 checkpoint()
-            pcm, rate = self.engine.synthesize(text, voice_file, checkpoint)
-            return wav_bytes(pcm, rate)
-        except GpuYielded:
+                if not self.engine.loaded:
+                    started = time.monotonic()
+                    self.engine.load()
+                    self.log("model_loaded", duration_s=round(time.monotonic() - started, 1))
+                    # Le chargement ne s'interrompt pas : le mode jeu a pu commencer pendant.
+                    checkpoint()
+                pcm, rate = self.engine.synthesize(text, voice_file, checkpoint)
+                return wav_bytes(pcm, rate)
+            except GpuYielded:
+                failure = GpuYielded()
+            except (Cancelled, ServiceError):
+                raise
+            except Exception as error:  # noqa: BLE001
+                # Le type seul : un message d'exception peut citer le texte.
+                name = type(error).__name__
+                self.log("synthesis_failed", error=name)
+                if not is_out_of_memory(error):
+                    raise ServiceError() from None
+                failure = GpuUnavailable()
+            # Hors du `except` : tant qu'il dure, la trace de l'exception retient le
+            # modèle, et ni `gc.collect` ni `empty_cache` ne libéreraient sa mémoire.
             self._release_model()
-            raise
-        except (Cancelled, ServiceError):
-            raise
-        except Exception as error:  # noqa: BLE001
-            # Le type seul : un message d'exception peut citer le texte.
-            name = type(error).__name__
-            self.log("synthesis_failed", error=name)
-            if "OutOfMemory" in name:
-                self._release_model()
-                raise GpuUnavailable() from None
-            raise ServiceError() from None
+            raise failure
         finally:
             self._leave()
 

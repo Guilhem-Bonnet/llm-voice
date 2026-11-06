@@ -238,10 +238,11 @@ services:
     group_add:
       - "${LLM_VOICE_VIDEO_GID:-39}"
       - "${LLM_VOICE_RENDER_GID:-105}"
-    ipc: host
-    shm_size: 8g
+    # Aucun droit de plus que nécessaire pour un service qui lit du texte.
+    cap_drop:
+      - ALL
     security_opt:
-      - seccomp=unconfined
+      - no-new-privileges:true
     environment:
       # Dans le conteneur seulement : le port n'est publié que sur 127.0.0.1,
       # ci-dessus. Lancé hors conteneur, le serveur écoute 127.0.0.1.
