@@ -71,3 +71,6 @@ deploy/kyutai16/__pycache__/
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-qwen3/wav/
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-qwen3/*.ogg
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-qwen3/index.html
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-rythme/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-rythme/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-rythme/index.html

@@ -347,83 +347,6 @@ tasks:
   context_bundle_ref: _grimoire-output/context/GAO-packaging-5-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-packaging-5-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-packaging-5-001/evidence-pack.md
-- task_id: GAO-refonte-ux-0-004
-  title: 'Refonte UX 04 · Modèle voix globale et modes : migration des profils et sélection unifiée'
-  status: proposed
-  priority: medium
-  owner: guilhem-bonnet
-  agent_roles:
-  - implementation
-  acceptance_criteria:
-  - 'test: migration couverte sur un profiles.json existant, sans perte'
-  - 'test: la voix choisie est bien celle utilisée à la lecture du document'
-  - 'test: npm --prefix vscode-extension run test:unit vert'
-  - 'gate: grimoire standard gate check --strict vert'
-  verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'test: migration couverte sur un profiles.json existant, sans perte'"
-    criteria:
-    - criterion: 'test: migration couverte sur un profiles.json existant, sans perte'
-      pattern:
-    - criterion: 'test: la voix choisie est bien celle utilisée à la lecture du document'
-      pattern:
-    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
-      pattern: test
-    - criterion: 'gate: grimoire standard gate check --strict vert'
-      pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-002
-    target: GAO-refonte-ux-0-002
-  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-004/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-004/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-004/evidence-pack.md
-  description: 'Dépend de 02. Implémente la migration et fusionne selectProfile et setupVoice en Choisir la voix et Choisir
-    le mode, avec alias. Corrige la cause de la plainte : voix enregistrée dans le profil mais inchangée à la lecture.'
-- task_id: GAO-refonte-ux-0-005
-  title: "Refonte UX 05 · Galerie de voix en onglet : cartes, écoute, préparation, recherche, favorites, phrase d'essai"
-  status: proposed
-  priority: medium
-  owner: guilhem-bonnet
-  agent_roles:
-  - implementation
-  acceptance_criteria:
-  - "test: l'écoute ne se lance jamais sans clic"
-  - "test: aucun bouton ne passe à la ligne ni ne s'étire à 260, 320 et 500 px"
-  - 'revue: écoute et validation par guilhem-bonnet'
-  - 'test: npm --prefix vscode-extension run test:unit vert'
-  - 'gate: grimoire standard gate check --strict vert'
-  verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : \"test: l'écoute ne se lance jamais sans clic\""
-    criteria:
-    - criterion: "test: l'écoute ne se lance jamais sans clic"
-      pattern:
-    - criterion: "test: aucun bouton ne passe à la ligne ni ne s'étire à 260, 320 et 500 px"
-      pattern: test
-    - criterion: 'revue: écoute et validation par guilhem-bonnet'
-      pattern: revue
-    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
-      pattern: test
-    - criterion: 'gate: grimoire standard gate check --strict vert'
-      pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-001
-    target: GAO-refonte-ux-0-001
-  - reason: dépend de GAO-refonte-ux-0-003
-    target: GAO-refonte-ux-0-003
-  - reason: dépend de GAO-refonte-ux-0-004
-    target: GAO-refonte-ux-0-004
-  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-005/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-005/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-005/evidence-pack.md
-  description: 'Maquette : https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj . Audit : docs/ux/audit-2026-11-05.md. Dépend
-    de 03. createWebviewPanel, CSP stricte, textContent seul, couleurs --vscode-*, codicons. Écoute dans la webview, pas via
-    speakTestText ; état avec temps écoulé et annulation ; cache local. Quick Pick réduit aux récentes plus « Ouvrir la galerie
-    ».'
 - task_id: GAO-refonte-ux-0-006
   title: "Refonte UX 06 · Service Kyutai : préparer, démarrer et arrêter depuis l'interface"
   status: proposed
@@ -453,9 +376,7 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-003
-    target: GAO-refonte-ux-0-003
+  blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-006/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-006/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-006/evidence-pack.md
@@ -493,11 +414,7 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-001
-    target: GAO-refonte-ux-0-001
-  - reason: dépend de GAO-refonte-ux-0-004
-    target: GAO-refonte-ux-0-004
+  blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-007/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-007/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-007/evidence-pack.md
@@ -505,6 +422,8 @@ tasks:
     de 04. Webview Console : en-tête 28-36 px voix + état, 00:00 orphelin retiré (player.css:155, playerHtml.ts:94), glyphes
     remplacés par des codicons (playerHtml.ts:98), boutons fixes (player.css:104,128). Bandeau persistant pour les erreurs
     TTS, narrateur, passage illisible. viewsWelcome mort à retirer (package.json:358). Inclure le bouton sans effet en préparation.'
+  directives_pending: 1
+  directives_unacknowledged: 1
 - task_id: GAO-refonte-ux-0-008
   title: 'Refonte UX 08 · Réponses de Claude : liste lisible, activation expliquée et actions par ligne'
   status: proposed
@@ -531,9 +450,7 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-001
-    target: GAO-refonte-ux-0-001
+  blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-008/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-008/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-008/evidence-pack.md
@@ -564,9 +481,7 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-004
-    target: GAO-refonte-ux-0-004
+  blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-009/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-009/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-009/evidence-pack.md
@@ -599,8 +514,6 @@ tasks:
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
   blockers:
-  - reason: dépend de GAO-refonte-ux-0-005
-    target: GAO-refonte-ux-0-005
   - reason: dépend de GAO-refonte-ux-0-007
     target: GAO-refonte-ux-0-007
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-1-001/context-bundle.yaml
@@ -634,15 +547,15 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-004
-    target: GAO-refonte-ux-0-004
+  blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-1-002/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-1-002/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-1-002/evidence-pack.md
   description: 'Maquette : https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj . Audit : docs/ux/audit-2026-11-05.md. Dépend
     de 04. Remplace views/profileEditor et la vue Profils. Aucune fonction perdue : bySource, défaut, narrateur, Markdown,
     synchronisation, vitesse. Réécriture des descriptions : voir GAO-s2-design-r-001.'
+  directives_pending: 1
+  directives_unacknowledged: 1
 - task_id: GAO-refonte-ux-1-003
   title: 'Refonte UX 12 · Parcours Ma voix : accord, échantillon, écoute et erreurs dans une seule vue'
   status: proposed
@@ -669,9 +582,7 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-005
-    target: GAO-refonte-ux-0-005
+  blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-1-003/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-1-003/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-1-003/evidence-pack.md
@@ -700,9 +611,7 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-001
-    target: GAO-refonte-ux-0-001
+  blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-1-004/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-1-004/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-1-004/evidence-pack.md
@@ -735,8 +644,6 @@ tasks:
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
   blockers:
-  - reason: dépend de GAO-refonte-ux-0-005
-    target: GAO-refonte-ux-0-005
   - reason: dépend de GAO-refonte-ux-0-006
     target: GAO-refonte-ux-0-006
   - reason: dépend de GAO-refonte-ux-0-007
@@ -753,8 +660,6 @@ tasks:
     target: GAO-refonte-ux-1-003
   - reason: dépend de GAO-refonte-ux-1-004
     target: GAO-refonte-ux-1-004
-  - reason: dépend de GAO-fix-reliquat-001
-    target: GAO-fix-reliquat-001
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-1-005/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-1-005/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-1-005/evidence-pack.md
@@ -922,6 +827,8 @@ tasks:
   context_bundle_ref: _grimoire-output/context/GAO-s3-macos-por-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-s3-macos-por-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-s3-macos-por-001/evidence-pack.md
+  directives_pending: 1
+  directives_unacknowledged: 1
 - task_id: GAO-s4-windows-f-001
   title: S4 Windows (futur) · Port audio WASAPI, cible win32-x64, signature SmartScreen, tray Windows
   status: proposed
@@ -951,6 +858,153 @@ tasks:
   context_bundle_ref: _grimoire-output/context/GAO-s4-windows-f-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-s4-windows-f-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-s4-windows-f-001/evidence-pack.md
+- task_id: GAO-style-de-lec-001
+  title: 'Style de lecture : préréglages, curseurs et consigne libre par mode, essai immédiat'
+  status: proposed
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: une consigne libre atteint le LLM et ne sort jamais du contrôle de fidélité'
+  - 'revue: écoute et validation de guilhem-bonnet consignées'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'test: une consigne libre atteint le LLM et ne sort jamais du contrôle de fidélité'"
+    criteria:
+    - criterion: 'test: une consigne libre atteint le LLM et ne sort jamais du contrôle de fidélité'
+      pattern:
+    - criterion: 'revue: écoute et validation de guilhem-bonnet consignées'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-style-de-lec-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-style-de-lec-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-style-de-lec-001/evidence-pack.md
+  description: "Demande du 2026-11-06. Champ style déjà présent dans les modes. Mode Fidèle : ponctuation et pauses seulement.
+    Dépend du moteur pour l'intonation réelle (GAO-banc-d-une-j-001)."
+- task_id: GAO-voix-fran-ai-001
+  title: 'Voix françaises par région : catalogue étendu, France, Québec, Belgique, Suisse, avec accent documenté'
+  status: proposed
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: chaque voix du catalogue porte région, licence et source, aucune région sans preuve'
+  - 'revue: écoute par guilhem-bonnet consignée dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'test: chaque voix du catalogue porte région, licence et source, aucune région
+      sans preuve'"
+    criteria:
+    - criterion: 'test: chaque voix du catalogue porte région, licence et source, aucune région sans preuve'
+      pattern:
+    - criterion: 'revue: écoute par guilhem-bonnet consignée dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-voix-fran-ai-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-voix-fran-ai-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-voix-fran-ai-001/evidence-pack.md
+  description: 'Demande du 2026-11-06 : plus de voix FR, différencier FR, FR-CA et autres régions. Filtre par région dans
+    la galerie. Une voix sans accent documenté reste non étiquetée. Articuler avec GAO-adr-015-1-te-001.'
+  directives_pending: 2
+  directives_unacknowledged: 2
+- task_id: GAO-attente-lisi-001
+  title: 'Attente lisible et gestes de lecture : délai du premier chargement, étapes sans faux pourcentage, bloc Document
+    ouvert, sélections multiples'
+  status: ready
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-attente-lisi-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-attente-lisi-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-attente-lisi-001/evidence-pack.md
+  description: 'Vues : Panneau-preparation, Panneau-attente-incidents, Panneau-document, Lancer-lecture, Panneau-lecture-detail.
+    Validé le 2026-11-06.'
+- task_id: GAO-jeu-d-acteur-001
+  title: "Jeu d'acteurs : plusieurs voix pour le théâtre et le livre, narrateur et personnages"
+  status: ready
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-jeu-d-acteur-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-jeu-d-acteur-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-jeu-d-acteur-001/evidence-pack.md
+  description: Demande du 2026-11-06. S'appuie sur ADR-015 (bible, partition) ; moteurs Kyutai. Texte local uniquement.
+- task_id: GAO-lexique-de-p-001
+  title: Lexique de prononciation, reprise de lecture et bouton pour les blocs de code
+  status: ready
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-lexique-de-p-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-lexique-de-p-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-lexique-de-p-001/evidence-pack.md
+  description: 'Vues : Lexique, Panneau-reprise, Panneau-lecture-detail. Validé le 2026-11-06.'
 - task_id: GAO-mode-auto-im-001
   title: "Mode Auto — implémentation : DecisionProvider dans src/core, OllamaLogprobsDecisionProvider, pseudo-profil Auto
     (barre d'état + vue Profils), repli bySource — 0.4, après ADR-012 et spike gagnant"
@@ -1004,42 +1058,6 @@ tasks:
   evidence_pack_ref: _grimoire-output/evidence/GAO-orchestratio-001/evidence-pack.md
   directives_pending: 0
   directives_unacknowledged: 0
-- task_id: GAO-refonte-ux-0-002
-  title: "Refonte UX 02 · ADR-017 Voix et mode de lecture : retrait du mot profil, migration, amendement d'ADR-011"
-  status: ready
-  priority: medium
-  owner: guilhem-bonnet
-  agent_roles:
-  - implementation
-  acceptance_criteria:
-  - 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'
-  - 'revue: accord de guilhem-bonnet consigné'
-  - 'gate: grimoire standard gate check --strict vert'
-  verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'"
-    criteria:
-    - criterion: 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'
-      pattern:
-    - criterion: 'revue: accord de guilhem-bonnet consigné'
-      pattern: revue
-    - criterion: 'gate: grimoire standard gate check --strict vert'
-      pattern: gate
-  blockers:
-  - reason: dépend de GAO-refonte-ux-0-001
-    target: GAO-refonte-ux-0-001
-  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-002/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-002/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-002/evidence-pack.md
-  description: "Maquette : https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj . Audit : docs/ux/audit-2026-11-05.md. Décision
-    encore à confirmer par l'utilisateur. Dépend de 01. Voix = qui parle, globale ; mode = Fidèle, Professeur, Résumé, Révision.
-    Migration : profiles.json et ids conservés, voix globale héritée sans tts propre, sinon « Voix propre : X » ; commandes
-    gardées en alias ; placer la vitesse de lecture ; rapport avec le mode Auto (ADR-013) et la distribution des voix (ADR-015)
-    ; vues llmVoice.player et llmVoice.playerView à fusionner."
-  directives_pending: 1
-  directives_unacknowledged: 1
 - task_id: GAO-adr-015-5-an-001
   title: 'ADR-015 · 5 Analyste et metteur en scène (LLM local) : anticipation, cache de partition, repli mode jeu'
   status: in_progress
@@ -1088,127 +1106,39 @@ tasks:
   context_bundle_ref: _grimoire-output/context/GAO-diagnostic-s-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-diagnostic-s-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-diagnostic-s-001/evidence-pack.md
-- task_id: GAO-fix-reliquat-001
-  title: 'Fix · Reliquats voix : port par défaut de Kokoro, bouton sans effet en préparation, avertissement de fenêtre périmée
-    non testé'
+- task_id: GAO-essais-voix-001
+  title: "Essais voix : textes d'essai et banc d'écoute pour le ton, les personnages et les mots techniques"
   status: in_progress
   priority: medium
   owner: guilhem-bonnet
   agent_roles:
   - implementation
   acceptance_criteria:
-  - 'test: warnIfInstallIsNewer couvert'
-  - 'test: action visible et efficace en preparing et buffering'
-  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'test: python3 -m unittest discover scripts/voice-lab vert'
+  - 'test: scripts/voice-lab/run.sh code de sortie 0 sur le serveur Pocket local, mesures dans evidence-pack'
+  - "revue: notes d'écoute de guilhem-bonnet consignées dans acceptance-record"
   - 'gate: grimoire standard gate check --strict vert'
   verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'test: warnIfInstallIsNewer couvert'"
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : \"revue: notes d'écoute de guilhem-bonnet consignées dans acceptance-record\""
     criteria:
-    - criterion: 'test: warnIfInstallIsNewer couvert'
-      pattern:
-    - criterion: 'test: action visible et efficace en preparing et buffering'
-      pattern:
-    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+    - criterion: 'test: python3 -m unittest discover scripts/voice-lab vert'
       pattern: test
+    - criterion: 'test: scripts/voice-lab/run.sh code de sortie 0 sur le serveur Pocket local, mesures dans evidence-pack'
+      pattern: commande_code_sortie
+    - criterion: "revue: notes d'écoute de guilhem-bonnet consignées dans acceptance-record"
+      pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
   blockers: []
-  context_bundle_ref: _grimoire-output/context/GAO-fix-reliquat-001/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-fix-reliquat-001/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-fix-reliquat-001/evidence-pack.md
-  description: Constats de la session du 2026-11-05. warnIfInstallIsNewer dans Pipeline.ts ; Kokoro et le réglage 
-    partagent le port par défaut.
-- task_id: GAO-maquette-com-001
-  title: 'Maquette complète avec design (Claude Design) : vue dédiée, lecteur unique, inbox, documents, dialogue, profils
-    — revue utilisateur'
-  status: in_progress
-  priority: medium
-  owner: guilhem-bonnet
-  agent_roles:
-  - implementation
-  acceptance_criteria:
-  - 'gate : maquette versée dans _grimoire-output/design/ et décision utilisateur consignée dans acceptance-record'
-  - 'gate : grimoire standard gate check --strict vert'
-  verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate : maquette versée dans _grimoire-output/design/ et décision utilisateur
-      consignée dans acceptance-record'"
-    criteria:
-    - criterion: 'gate : maquette versée dans _grimoire-output/design/ et décision utilisateur consignée dans acceptance-record'
-      pattern:
-    - criterion: 'gate : grimoire standard gate check --strict vert'
-      pattern: gate
-  blockers: []
-  context_bundle_ref: _grimoire-output/context/GAO-maquette-com-001/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-maquette-com-001/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-maquette-com-001/evidence-pack.md
-- task_id: GAO-refonte-ux-0-003
-  title: 'Refonte UX 03 · Catalogue de voix Kyutai : 24 voix, licence vérifiée voix par voix, statut et échantillon'
-  status: in_progress
-  priority: medium
-  owner: guilhem-bonnet
-  agent_roles:
-  - implementation
-  acceptance_criteria:
-  - 'test: chaque voix du catalogue porte une licence vérifiée et sa source, aucune voix NC'
-  - 'test: npm --prefix vscode-extension run test:unit vert'
-  - 'gate: grimoire standard gate check --strict vert'
-  verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'test: chaque voix du catalogue porte une licence vérifiée et sa source, aucune
-      voix NC'"
-    criteria:
-    - criterion: 'test: chaque voix du catalogue porte une licence vérifiée et sa source, aucune voix NC'
-      pattern:
-    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
-      pattern: test
-    - criterion: 'gate: grimoire standard gate check --strict vert'
-      pattern: gate
-  blockers: []
-  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-003/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-003/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-003/evidence-pack.md
-  description: "ADR-016 §4. Le catalogue n'a aujourd'hui qu'estelle et alba. Mesure du 2026-11-05 : 27 voix testées, Lola
-    écartée (43 % d'erreurs de transcription), Cosette et Jean exclues (NC). Les licences par voix ne sont PAS vérifiées :
-    si une licence bloque, retirer la voix. Étendre Voice avec quality, engineId, status, license, sampleUrl. Articuler avec
-    GAO-adr-015-1-te-001 (bibliothèque, fiches de traçabilité)."
-  directives_pending: 1
-  directives_unacknowledged: 1
-- task_id: GAO-s2-design-ma-001
-  title: 'S2 Design · Maquette v2 : corriger la revue (3 bloquants, 8 importants), boutons à taille fixe sans retour à la
-    ligne'
-  status: in_progress
-  priority: medium
-  owner: guilhem-bonnet
-  agent_roles:
-  - implementation
-  acceptance_criteria:
-  - 'gate : aucun bouton ne passe à la ligne à 260, 320 et 500 px (vérification automatisée sur les artboards)'
-  - 'gate : décision utilisateur consignée dans acceptance-record'
-  - 'gate : grimoire standard gate check --strict vert'
-  verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate : décision utilisateur consignée dans acceptance-record'"
-    criteria:
-    - criterion: 'gate : aucun bouton ne passe à la ligne à 260, 320 et 500 px (vérification automatisée sur les artboards)'
-      pattern: gate
-    - criterion: 'gate : décision utilisateur consignée dans acceptance-record'
-      pattern:
-    - criterion: 'gate : grimoire standard gate check --strict vert'
-      pattern: gate
-  blockers: []
-  context_bundle_ref: _grimoire-output/context/GAO-s2-design-ma-001/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-s2-design-ma-001/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-s2-design-ma-001/evidence-pack.md
+  context_bundle_ref: _grimoire-output/context/GAO-essais-voix-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-essais-voix-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-essais-voix-001/evidence-pack.md
+  description: "Retour du 2026-11-06 : voix convaincantes, accrochages sur des mots techniques ; demande de jouer avec le
+    ton, l'intonation, le style, et plusieurs personnages. Alimente GAO-adr-015-6-ba-001 et GAO-banc-d-une-j-001 sans les
+    remplacer."
 - task_id: GAO-valuation-m-001
   title: 'Évaluation · Mode Auto : jeu de 45 cas variés étiqueté, amélioration du score au-delà du témoin à règles'
   status: in_progress
@@ -1266,6 +1196,39 @@ tasks:
     qu'appliquer un palier de provider, sans jamais ouvrir de sélecteur de voix. Corrigé : handleVoiceTier ouvre désormais
     le vrai sélecteur (Pipeline.browseVoices, déjà existant) juste après les paliers système et Piper (joignables localement
     sans attendre un serveur)."
+- task_id: GAO-fix-la-lectu-001
+  title: "Fix : la lecture s'arrête après le premier groupe en mode narré ; lecture de tout fichier texte et depuis l'aperçu
+    Markdown"
+  status: review
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'test: scripts/audio-proof/native-real.sh vert sur un document de plusieurs sections'
+  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'test: scripts/audio-proof/native-real.sh vert sur un document de plusieurs sections'
+      pattern: test
+    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-fix-la-lectu-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-fix-la-lectu-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-fix-la-lectu-001/evidence-pack.md
+  description: "Signalement du 2026-11-06 : tous les boutons de lecture s'arrêtent à la section. Cause : Pipeline démarre
+    sealed avec build.segments et n'écoute pas onSegmentsAppended."
 - task_id: GAO-fix-wav-cass-001
   title: 'fix: WAV cassés en cache et fenêtre sur code périmé empêchent la voix choisie de parler'
   status: review
@@ -1294,43 +1257,38 @@ tasks:
   description: "Retour utilisateur 2026-11-05 : la voix enregistrée ne s'entend pas à la lecture d'un document. Journal et
     cache : fenêtre non rechargée depuis 16:58 (correctif installé 17:14), 5 WAV cassés créés à 17:23. Un WAV cassé en cache
     échoue indéfiniment, et rien ne signale qu'une fenêtre tourne sur un code périmé."
-- task_id: GAO-refonte-ux-0-001
-  title: 'Refonte UX 01 · Compléter la maquette : vues manquantes et thème clair, reprise de la maquette de septembre'
+- task_id: GAO-moteur-kyuta-001
+  title: "Moteur Kyutai TTS 1.6B dans l'extension : serveur local sur carte AMD, voix françaises prénommées, galerie"
   status: review
   priority: medium
   owner: guilhem-bonnet
   agent_roles:
   - implementation
   acceptance_criteria:
-  - 'gate: maquette publiée couvrant les vues listées dans la description'
-  - 'revue: validation de guilhem-bonnet consignée dans acceptance-record'
+  - 'test: npm --prefix vscode-extension run test:unit et test:integration-voice verts'
+  - 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'
+  - 'revue: écoute par guilhem-bonnet consignée dans acceptance-record'
   - 'gate: grimoire standard gate check --strict vert'
   verifiability:
     class: V2
     explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
       : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate: maquette publiée couvrant les vues listées dans la description'"
+    reason: "critère sans verdict reconnu : 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'"
     criteria:
-    - criterion: 'gate: maquette publiée couvrant les vues listées dans la description'
+    - criterion: 'test: npm --prefix vscode-extension run test:unit et test:integration-voice verts'
+      pattern: test
+    - criterion: 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'
       pattern:
-    - criterion: 'revue: validation de guilhem-bonnet consignée dans acceptance-record'
+    - criterion: 'revue: écoute par guilhem-bonnet consignée dans acceptance-record'
       pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
   blockers: []
-  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-001/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-001/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-001/evidence-pack.md
-  description: "Maquette : https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj . Audit : docs/ux/audit-2026-11-05.md. Vues à
-    ajouter : lecteur en pause avec vitesse de lecture ; document modifié pendant la lecture ; aucun document ouvert ; préparation
-    par l'IA ; mode Auto (ADR-013) ; badges et préparation de la direction (ADR-015 §8) ; deux fenêtres ; extension à recharger
-    ; menu clic droit de l'éditeur et raccourcis ; actions d'une réponse de Claude ; liste des modes (dupliquer, importer,
-    exporter, supprimer, mode par source) ; résultats du diagnostic ; service distant bloqué et clés API ; erreurs de Ma voix
-    (micro, ffmpeg, échantillon refusé) ; planche système ; thème clair. Reprendre, sans l'écraser, la maquette de septembre
-    https://claude.ai/artifact/28tcdY8BgnvMLoFQmSxyVJ (cartes GAO-maquette-com-001 et GAO-s2-design-ma-001) ; trancher avec
-    l'utilisateur Documents, Dialogue, triage et client bureau."
-  directives_pending: 1
-  directives_unacknowledged: 1
+  context_bundle_ref: _grimoire-output/context/GAO-moteur-kyuta-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-moteur-kyuta-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-moteur-kyuta-001/evidence-pack.md
+  description: "Choix du 2026-11-06 : qualité jugée bonne, essayer cml-577_394. Serveur local à l'API de Pocket, mode jeu
+    respecté, texte jamais hors machine."
 - task_id: GAO-s1-fedora-pa-001
   title: 'S1 Fedora · Packaging linux-x64 seul : cargo + vsce package --target linux-x64, gate VSIX, smoke /health'
   status: review
@@ -1975,6 +1933,39 @@ tasks:
     kyutai-pocket dans l'éditeur de profil — son <select> provider est une liste figée (chatterbox/kokoro/system/openai-compatible)
     sans kyutai-pocket, et KyutaiPocketProvider n'implémente pas listVoices() donc le bouton « Parcourir les voix » resterait
     inopérant même si l'option existait."
+- task_id: GAO-fix-reliquat-001
+  title: 'Fix · Reliquats voix : port par défaut de Kokoro, bouton sans effet en préparation, avertissement de fenêtre périmée
+    non testé'
+  status: accepted
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: warnIfInstallIsNewer couvert'
+  - 'test: action visible et efficace en preparing et buffering'
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'test: warnIfInstallIsNewer couvert'"
+    criteria:
+    - criterion: 'test: warnIfInstallIsNewer couvert'
+      pattern:
+    - criterion: 'test: action visible et efficace en preparing et buffering'
+      pattern:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-fix-reliquat-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-fix-reliquat-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-fix-reliquat-001/evidence-pack.md
+  description: Constats de la session du 2026-11-05. warnIfInstallIsNewer dans Pipeline.ts ; Kokoro et le réglage 
+    partagent le port par défaut.
 - task_id: GAO-fix-test-de-001
   title: 'fix: test de la voix Estelle et bouton pause inopérants avec le moteur audio natif'
   status: accepted
@@ -2257,6 +2248,182 @@ tasks:
   context_bundle_ref: _grimoire-output/context/GAO-protocole-co-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-protocole-co-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-protocole-co-001/evidence-pack.md
+- task_id: GAO-refonte-ux-0-001
+  title: 'Refonte UX 01 · Compléter la maquette : vues manquantes et thème clair, reprise de la maquette de septembre'
+  status: accepted
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'gate: maquette publiée couvrant les vues listées dans la description'
+  - 'revue: validation de guilhem-bonnet consignée dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'gate: maquette publiée couvrant les vues listées dans la description'"
+    criteria:
+    - criterion: 'gate: maquette publiée couvrant les vues listées dans la description'
+      pattern:
+    - criterion: 'revue: validation de guilhem-bonnet consignée dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-001/evidence-pack.md
+  description: "Maquette : https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj . Audit : docs/ux/audit-2026-11-05.md. Vues à
+    ajouter : lecteur en pause avec vitesse de lecture ; document modifié pendant la lecture ; aucun document ouvert ; préparation
+    par l'IA ; mode Auto (ADR-013) ; badges et préparation de la direction (ADR-015 §8) ; deux fenêtres ; extension à recharger
+    ; menu clic droit de l'éditeur et raccourcis ; actions d'une réponse de Claude ; liste des modes (dupliquer, importer,
+    exporter, supprimer, mode par source) ; résultats du diagnostic ; service distant bloqué et clés API ; erreurs de Ma voix
+    (micro, ffmpeg, échantillon refusé) ; planche système ; thème clair. Reprendre, sans l'écraser, la maquette de septembre
+    https://claude.ai/artifact/28tcdY8BgnvMLoFQmSxyVJ (cartes GAO-maquette-com-001 et GAO-s2-design-ma-001) ; trancher avec
+    l'utilisateur Documents, Dialogue, triage et client bureau."
+  directives_pending: 1
+  directives_unacknowledged: 0
+- task_id: GAO-refonte-ux-0-002
+  title: "Refonte UX 02 · ADR-017 Voix et mode de lecture : retrait du mot profil, migration, amendement d'ADR-011"
+  status: accepted
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'
+  - 'revue: accord de guilhem-bonnet consigné'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'"
+    criteria:
+    - criterion: 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'
+      pattern:
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-002/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-002/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-002/evidence-pack.md
+  description: "Maquette : https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj . Audit : docs/ux/audit-2026-11-05.md. Décision
+    encore à confirmer par l'utilisateur. Dépend de 01. Voix = qui parle, globale ; mode = Fidèle, Professeur, Résumé, Révision.
+    Migration : profiles.json et ids conservés, voix globale héritée sans tts propre, sinon « Voix propre : X » ; commandes
+    gardées en alias ; placer la vitesse de lecture ; rapport avec le mode Auto (ADR-013) et la distribution des voix (ADR-015)
+    ; vues llmVoice.player et llmVoice.playerView à fusionner."
+  directives_pending: 1
+  directives_unacknowledged: 0
+- task_id: GAO-refonte-ux-0-003
+  title: 'Refonte UX 03 · Catalogue de voix Kyutai : 24 voix, licence vérifiée voix par voix, statut et échantillon'
+  status: accepted
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: chaque voix du catalogue porte une licence vérifiée et sa source, aucune voix NC'
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'test: chaque voix du catalogue porte une licence vérifiée et sa source, aucune
+      voix NC'"
+    criteria:
+    - criterion: 'test: chaque voix du catalogue porte une licence vérifiée et sa source, aucune voix NC'
+      pattern:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-003/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-003/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-003/evidence-pack.md
+  description: "ADR-016 §4. Le catalogue n'a aujourd'hui qu'estelle et alba. Mesure du 2026-11-05 : 27 voix testées, Lola
+    écartée (43 % d'erreurs de transcription), Cosette et Jean exclues (NC). Les licences par voix ne sont PAS vérifiées :
+    si une licence bloque, retirer la voix. Étendre Voice avec quality, engineId, status, license, sampleUrl. Articuler avec
+    GAO-adr-015-1-te-001 (bibliothèque, fiches de traçabilité)."
+  directives_pending: 1
+  directives_unacknowledged: 0
+- task_id: GAO-refonte-ux-0-004
+  title: 'Refonte UX 04 · Modèle voix globale et modes : migration des profils et sélection unifiée'
+  status: accepted
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: migration couverte sur un profiles.json existant, sans perte'
+  - 'test: la voix choisie est bien celle utilisée à la lecture du document'
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'test: migration couverte sur un profiles.json existant, sans perte'"
+    criteria:
+    - criterion: 'test: migration couverte sur un profiles.json existant, sans perte'
+      pattern:
+    - criterion: 'test: la voix choisie est bien celle utilisée à la lecture du document'
+      pattern:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-004/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-004/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-004/evidence-pack.md
+  description: 'Dépend de 02. Implémente la migration et fusionne selectProfile et setupVoice en Choisir la voix et Choisir
+    le mode, avec alias. Corrige la cause de la plainte : voix enregistrée dans le profil mais inchangée à la lecture.'
+  directives_pending: 1
+  directives_unacknowledged: 0
+- task_id: GAO-refonte-ux-0-005
+  title: "Refonte UX 05 · Galerie de voix en onglet : cartes, écoute, préparation, recherche, favorites, phrase d'essai"
+  status: accepted
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - "test: l'écoute ne se lance jamais sans clic"
+  - "test: aucun bouton ne passe à la ligne ni ne s'étire à 260, 320 et 500 px"
+  - 'revue: écoute et validation par guilhem-bonnet'
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : \"test: l'écoute ne se lance jamais sans clic\""
+    criteria:
+    - criterion: "test: l'écoute ne se lance jamais sans clic"
+      pattern:
+    - criterion: "test: aucun bouton ne passe à la ligne ni ne s'étire à 260, 320 et 500 px"
+      pattern: test
+    - criterion: 'revue: écoute et validation par guilhem-bonnet'
+      pattern: revue
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-005/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-005/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-refonte-ux-0-005/evidence-pack.md
+  description: 'Maquette : https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj . Audit : docs/ux/audit-2026-11-05.md. Dépend
+    de 03. createWebviewPanel, CSP stricte, textContent seul, couleurs --vscode-*, codicons. Écoute dans la webview, pas via
+    speakTestText ; état avec temps écoulé et annulation ; cache local. Quick Pick réduit aux récentes plus « Ouvrir la galerie
+    ».'
 - task_id: GAO-s1-fedora-va-001
   title: 'S1 Fedora · Validation Wayland/PipeWire : périphérique par défaut, changement de sortie à chaud, casque USB, mise
     en veille'
@@ -2421,3 +2588,86 @@ tasks:
   context_bundle_ref: _grimoire-output/context/GAO-veille-moteu-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-veille-moteu-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-veille-moteu-001/evidence-pack.md
+- task_id: GAO-essai-qwen3-001
+  title: "Essai Qwen3-TTS : voix d'assistant créées sur description, deux registres, page d'écoute"
+  status: archived
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - "test: page d'écoute générée, audio chargé dans Firefox"
+  - 'revue: écoute de guilhem-bonnet consignée dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : \"test: page d'écoute générée, audio chargé dans Firefox\""
+    criteria:
+    - criterion: "test: page d'écoute générée, audio chargé dans Firefox"
+      pattern:
+    - criterion: 'revue: écoute de guilhem-bonnet consignée dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-essai-qwen3-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-essai-qwen3-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-essai-qwen3-001/evidence-pack.md
+  description: 'Demande du 2026-11-06 : voix classique façon assistant, sans imiter de produit. Texte local uniquement, mode
+    jeu respecté.'
+- task_id: GAO-maquette-com-001
+  title: 'Maquette complète avec design (Claude Design) : vue dédiée, lecteur unique, inbox, documents, dialogue, profils
+    — revue utilisateur'
+  status: archived
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'gate : maquette versée dans _grimoire-output/design/ et décision utilisateur consignée dans acceptance-record'
+  - 'gate : grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'gate : maquette versée dans _grimoire-output/design/ et décision utilisateur
+      consignée dans acceptance-record'"
+    criteria:
+    - criterion: 'gate : maquette versée dans _grimoire-output/design/ et décision utilisateur consignée dans acceptance-record'
+      pattern:
+    - criterion: 'gate : grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-maquette-com-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-maquette-com-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-maquette-com-001/evidence-pack.md
+- task_id: GAO-s2-design-ma-001
+  title: 'S2 Design · Maquette v2 : corriger la revue (3 bloquants, 8 importants), boutons à taille fixe sans retour à la
+    ligne'
+  status: archived
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'gate : aucun bouton ne passe à la ligne à 260, 320 et 500 px (vérification automatisée sur les artboards)'
+  - 'gate : décision utilisateur consignée dans acceptance-record'
+  - 'gate : grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'gate : décision utilisateur consignée dans acceptance-record'"
+    criteria:
+    - criterion: 'gate : aucun bouton ne passe à la ligne à 260, 320 et 500 px (vérification automatisée sur les artboards)'
+      pattern: gate
+    - criterion: 'gate : décision utilisateur consignée dans acceptance-record'
+      pattern:
+    - criterion: 'gate : grimoire standard gate check --strict vert'
+      pattern: gate
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-s2-design-ma-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-s2-design-ma-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-s2-design-ma-001/evidence-pack.md

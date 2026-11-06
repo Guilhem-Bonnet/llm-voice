@@ -21,6 +21,7 @@ rejetées / Tests qui prouvent la décision).
 | [ADR-015](./ADR-015-reading-direction.md) | Direction de lecture : partition par segment, distribution des voix et mémoire (« bible ») — **accepté** (2026-09-29) | demande du 2026-09-29 (architecture en cinq rôles), veille `GAO-veille-moteu-001` |
 | [ADR-016](./ADR-016-kyutai-tts-provider.md) | Kyutai Pocket TTS : palier de voix additionnel — voir le fichier pour son statut | décisions-log, 2026-11-05 |
 | [ADR-017](./ADR-017-voice-and-reading-mode.md) | Voix globale et mode de lecture : retrait du mot « profil », migration, fusion des vues ; amende ADR-011 — **accepté** (2026-11-06) | décision du 2026-11-05 (refonte UX) |
+| [ADR-018](./ADR-018-jeu-d-acteurs.md) | Jeu d'acteurs : plusieurs voix sur Kyutai TTS 1.6B, première tranche sans LLM ; précise la livraison d'ADR-015 — **proposé** | demande du 2026-11-06, carte `GAO-jeu-d-acteur-001` |
 
 Les ADR-001 à ADR-011 sont accepté(e)s et fusionné(e)s sur `main` ; ADR-001
 est remplacé par ADR-012 (le `<audio>` du webview ne reste qu'en repli sur
