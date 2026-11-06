@@ -22,6 +22,7 @@ function fakeActions(showMessageReturns: string | undefined = undefined): VoiceT
     openExternal: unknown[][];
     writeClipboardText: unknown[][];
     applyProviderChoice: VoiceTier[];
+    browseVoices: number;
   };
 } {
   const calls = {
@@ -29,7 +30,8 @@ function fakeActions(showMessageReturns: string | undefined = undefined): VoiceT
     executeCommand: [] as unknown[][],
     openExternal: [] as unknown[][],
     writeClipboardText: [] as unknown[][],
-    applyProviderChoice: [] as VoiceTier[]
+    applyProviderChoice: [] as VoiceTier[],
+    browseVoices: 0
   };
   return {
     calls,
@@ -52,7 +54,11 @@ function fakeActions(showMessageReturns: string | undefined = undefined): VoiceT
     applyProviderChoice: vi.fn((tier: VoiceTier) => {
       calls.applyProviderChoice.push(tier);
       return Promise.resolve(undefined);
-    }) as VoiceTierActions["applyProviderChoice"]
+    }) as VoiceTierActions["applyProviderChoice"],
+    browseVoices: vi.fn(() => {
+      calls.browseVoices += 1;
+      return Promise.resolve(undefined);
+    }) as VoiceTierActions["browseVoices"]
   };
 }
 
@@ -67,6 +73,14 @@ describe("handleVoiceTier", () => {
     expect(actions.calls.openExternal).toEqual([]);
   });
 
+  it("'system': opens the real voice picker right after — real-user bug fix (2026-11-05): 'aucun moyen de réellement choisir une voix'", async () => {
+    const actions = fakeActions();
+
+    await handleVoiceTier("system", actions);
+
+    expect(actions.calls.browseVoices).toBe(1);
+  });
+
   it("'piper': calls the real S7.1 command directly, no registry probe, no fallback message", async () => {
     const actions = fakeActions();
 
@@ -74,6 +88,22 @@ describe("handleVoiceTier", () => {
 
     expect(actions.calls.executeCommand).toEqual([[INSTALL_PIPER_VOICE_COMMAND]]);
     expect(actions.calls.showMessage).toEqual([]);
+  });
+
+  it("'piper': opens the real voice picker right after installing/confirming — same fix as 'system'", async () => {
+    const actions = fakeActions();
+
+    await handleVoiceTier("piper", actions);
+
+    expect(actions.calls.browseVoices).toBe(1);
+  });
+
+  it("'chatterbox': never opens the voice picker — its server may not even be running yet, unlike system/piper which are always locally reachable synchronously", async () => {
+    const actions = fakeActions(undefined);
+
+    await handleVoiceTier("chatterbox", actions);
+
+    expect(actions.calls.browseVoices).toBe(0);
   });
 
   it("'chatterbox': shows the modal instructions naming the real compose command", async () => {

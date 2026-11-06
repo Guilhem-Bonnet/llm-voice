@@ -133,6 +133,43 @@ suite("LLM Voice pipeline (S3.5, AC-01..06)", () => {
     assert.equal(testPipeline.getPlaybackState(), "stopped");
   });
 
+  test("a stop while the reading is still being prepared cancels it: nothing plays afterwards", async () => {
+    const api = await activateExtension();
+    const sink = api.audioSink as FakeAudioSink;
+    const fileUri = fixtureUri("markdown", "short.md");
+    await vscode.workspace.openTextDocument(fileUri);
+    await api.pipeline.stop();
+    const loadsBefore = sink.loads.length;
+
+    const starting = api.pipeline.start({ scope: "document", uri: fileUri.toString(), languageId: "markdown" });
+    await api.pipeline.stop();
+    await starting;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    const testPipeline = api.pipeline as unknown as { getPlaybackState(): string };
+    assert.notEqual(testPipeline.getPlaybackState(), "playing");
+    assert.equal(sink.loads.length, loadsBefore, "a cancelled start must never reach the sink");
+  });
+
+  test("a second reading supersedes one still being prepared: only the second plays", async () => {
+    const api = await activateExtension();
+    const sink = api.audioSink as FakeAudioSink;
+    const fileUri = fixtureUri("markdown", "short.md");
+    await vscode.workspace.openTextDocument(fileUri);
+    await api.pipeline.stop();
+    const sessionsBefore = api.ttsProvider ? sink.loads.length : 0;
+
+    const first = api.pipeline.start({ scope: "document", uri: fileUri.toString(), languageId: "markdown" });
+    const second = api.pipeline.start({ scope: "document", uri: fileUri.toString(), languageId: "markdown" });
+    await Promise.all([first, second]);
+
+    const testPipeline = api.pipeline as unknown as { getPlaybackState(): string; getCurrentChunkIndex(): number };
+    assert.equal(testPipeline.getPlaybackState(), "playing");
+    assert.equal(testPipeline.getCurrentChunkIndex(), 0);
+    assert.equal(sink.loads.length, sessionsBefore + 1, "the superseded start must not load its own first chunk");
+    await api.pipeline.stop();
+  });
+
   test("AC-06: Speak Selection only reads the selected text", async () => {
     const api = await activateExtension();
     const fileUri = fixtureUri("markdown", "short.md");

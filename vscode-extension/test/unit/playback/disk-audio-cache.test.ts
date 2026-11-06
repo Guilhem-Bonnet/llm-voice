@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DiskAudioCache } from "../../../src/playback/DiskAudioCache.js";
+import { makeSilentWav } from "../../fakes/wav.js";
 
 function sidecarOf(root: string, key: string): Record<string, unknown> {
   const shard = key.slice(0, 2);
@@ -23,6 +24,21 @@ describe("DiskAudioCache (ADR-004)", () => {
 
   afterEach(() => {
     rmSync(root, { recursive: true, force: true });
+  });
+
+  it("get() heals a WAV cached with pocket-tts' placeholder sizes, in memory and on disk", async () => {
+    const cache = new DiskAudioCache({ root });
+    const broken = Buffer.from(makeSilentWav(100, 16000));
+    broken.writeUInt32LE(2_000_000_036, 4);
+    broken.writeUInt32LE(2_000_000_000, 40);
+    await cache.put("abcdef", new Uint8Array(broken));
+
+    const read = Buffer.from((await cache.get("abcdef"))!);
+
+    expect(read.readUInt32LE(40)).toBe(read.length - 44);
+    expect(read.readUInt32LE(4)).toBe(read.length - 8);
+    const onDisk = readFileSync(join(root, "ab", "abcdef.wav"));
+    expect(onDisk.readUInt32LE(40)).toBe(onDisk.length - 44);
   });
 
   it("get() returns undefined for an unknown key", async () => {

@@ -11,11 +11,12 @@ import type { TtsProvider } from "../core/tts.js";
 import type { EgressGuardHandle } from "../net/EgressGuard.js";
 import { ChatterboxProvider } from "./ChatterboxProvider.js";
 import { KokoroProvider, KOKORO_DEFAULT_FR_VOICE } from "./KokoroProvider.js";
+import { KyutaiPocketProvider } from "./KyutaiPocketProvider.js";
 import { OpenAICompatibleTtsProvider } from "./OpenAICompatibleTtsProvider.js";
 import { SystemTtsProvider, type SystemTtsProcessRunner } from "./SystemTtsProvider.js";
 
 /** Which concrete class a preset instantiates; never guessed from an id (ADR-005). */
-export type TtsPresetKind = "chatterbox" | "kokoro" | "openai-compatible" | "system";
+export type TtsPresetKind = "chatterbox" | "kokoro" | "kyutai-pocket" | "openai-compatible" | "system";
 
 export interface TtsProviderPreset {
   id: string;
@@ -24,6 +25,19 @@ export interface TtsProviderPreset {
   baseUrl: string;
   model?: string;
   voice?: string;
+  /**
+   * Mirrors the `--language` flag the user's `pocket-tts serve` process was
+   * started with (`kind: "kyutai-pocket"` only — ignored for every other
+   * kind, same restriction as `referenceAudio`/`parameters` below). Unlike
+   * those two fields, this one *is* read directly by `createTtsProvider`
+   * itself (see its `"kyutai-pocket"` case) rather than merely mirrored by
+   * `src/profiles/defaults.ts` into a profile — there is no `profile.tts.*`
+   * field carrying it yet, and `KyutaiPocketProvider`'s own file header is
+   * explicit that this can never be auto-detected (no endpoint exposes a
+   * running server's language), so it must come from this static preset
+   * data or an explicit caller, never a guess.
+   */
+  languages?: readonly string[];
   /**
    * Path to a reference sample for voice cloning (CdC §55, `chatterbox` kind
    * only). Relative paths are resolved against the extension root by
@@ -131,11 +145,41 @@ export const SYSTEM_LOCAL_PRESET: TtsProviderPreset = {
   remote: false
 };
 
+/**
+ * ADR-016 §2/§4 "voie intermédiaire" for Kyutai TTS: `pocket-tts serve`, a
+ * Python process the user starts and keeps running themselves — opt-in and
+ * advanced (no entry in `llmVoice.tts.provider`'s enum, never named by
+ * `src/profiles/defaults.ts`'s shipped profiles: a user reaches this preset
+ * only by naming it explicitly in their own profile). `languages: ["fr"]`
+ * mirrors the one `--language` flag the label below requires of that
+ * process — `createTtsProvider`'s `"kyutai-pocket"` case is what actually
+ * reads it (see `TtsProviderPreset.languages`'s own doc comment); `voice:
+ * "estelle"` by contrast is plain preset data here, exactly like every
+ * other preset's `voice` (e.g. `KOKORO_LOCAL_PRESET`) — not read by
+ * `createTtsProvider` itself. `"estelle"` is the one voice the official
+ * README (`github.com/kyutai-labs/pocket-tts`, "Trying it with the CLI")
+ * tags `(fr)`; it is one of two entries in
+ * `KyutaiPocketProvider.KYUTAI_POCKET_VOICE_CATALOG` (fix 2026-11-05: an
+ * earlier version of this preset defaulted to `"alba"`, which that same
+ * README tags English, not French — wrong for a preset whose entire
+ * purpose is a French voice).
+ */
+export const KYUTAI_POCKET_LOCAL_PRESET: TtsProviderPreset = {
+  id: "kyutai-pocket-local",
+  label: "Kyutai Pocket TTS (local, nécessite d'avoir lancé « pocket-tts serve --language french » soi-même)",
+  kind: "kyutai-pocket",
+  baseUrl: "http://localhost:8000",
+  languages: ["fr"],
+  voice: "estelle",
+  remote: false
+};
+
 export const TTS_PROVIDER_PRESETS: readonly TtsProviderPreset[] = [
   CHATTERBOX_LOCAL_PRESET,
   KOKORO_LOCAL_PRESET,
   PIPER_LOCAL_PRESET,
   SYSTEM_LOCAL_PRESET,
+  KYUTAI_POCKET_LOCAL_PRESET,
   OPENAI_COMPATIBLE_PRESET
 ];
 
@@ -159,6 +203,17 @@ export interface CreateTtsProviderOptions {
    * before reaching here; this factory never touches the filesystem.
    */
   referenceAudioPath?: string;
+  /**
+   * Voice name or voice-cloning URL (`http://`, `https://`, `hf://`) sent
+   * when a request names none (`kind: "kyutai-pocket"` only — ignored for
+   * every other preset kind, forwarded verbatim to
+   * `KyutaiPocketProvider`'s own `defaultVoice` constructor option). No
+   * caller resolves this from `preset.voice` today (that field stays plain
+   * documentation for this kind too, see `KYUTAI_POCKET_LOCAL_PRESET`'s own
+   * doc comment) — an explicit caller-supplied value only, same spirit as
+   * `apiKey`/`referenceAudioPath` above.
+   */
+  defaultVoice?: string;
   /**
    * Bug fix (voice-selection-not-applied, defect 3): forwarded to
    * `ChatterboxProvider`'s own `onReferenceAudioWarning` — called (at most
@@ -197,7 +252,7 @@ export interface CreateTtsProviderOptions {
  * codebase only ever handles `TtsProvider` (ADR-005).
  */
 export function createTtsProvider(
-  preset: Pick<TtsProviderPreset, "kind" | "baseUrl">,
+  preset: Pick<TtsProviderPreset, "kind" | "baseUrl" | "languages">,
   options: CreateTtsProviderOptions
 ): TtsProvider {
   const baseUrl = options.baseUrl ?? preset.baseUrl;
@@ -218,6 +273,12 @@ export function createTtsProvider(
       });
     case "kokoro":
       return new KokoroProvider(providerOptions);
+    case "kyutai-pocket":
+      return new KyutaiPocketProvider({
+        ...providerOptions,
+        languages: preset.languages ?? [],
+        ...(options.defaultVoice !== undefined ? { defaultVoice: options.defaultVoice } : {})
+      });
     case "openai-compatible":
       return new OpenAICompatibleTtsProvider(providerOptions);
     case "system":
@@ -243,6 +304,13 @@ export function presetKindForProviderId(providerId: string): TtsPresetKind {
   }
   if (providerId === "system") {
     return "system";
+  }
+  // Convention (`chatterbox`/`kokoro`/`system` above): a *provider* id, not
+  // a *preset* id — `"kyutai-pocket-local"` (`KYUTAI_POCKET_LOCAL_PRESET.id`)
+  // is deliberately not matched here, same as `"chatterbox-local"`/
+  // `"kokoro-local"` never were.
+  if (providerId === "kyutai-pocket") {
+    return "kyutai-pocket";
   }
   return "openai-compatible";
 }

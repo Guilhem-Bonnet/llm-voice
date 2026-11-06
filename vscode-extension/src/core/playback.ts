@@ -68,6 +68,13 @@ export interface PlayerStateView {
   index: number;
   total: number;
   profile: string;
+  /**
+   * Human-facing TTS provider label (`friendlyTtsProviderLabel`), e.g.
+   * "Chatterbox (qualité maximale)" — audit 2026-11-05 P1: the only
+   * persistent, always-visible confirmation that a voice choice took
+   * effect.
+   */
+  voice: string;
   title: string;
   state: PlaybackState;
 }

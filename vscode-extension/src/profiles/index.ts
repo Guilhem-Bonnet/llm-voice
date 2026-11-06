@@ -9,3 +9,4 @@ export * from "./ProfileRepository.js";
 export * from "./bySource.js";
 export * from "./profileQuickPick.js";
 export * from "./remoteProviders.js";
+export * from "./ttsProviderLabel.js";

@@ -82,9 +82,15 @@ export function formatAutoVoiceInstallPrompt(details: PiperInstallConsentDetails
 
 export type AutoVoiceInstallResult = "resumed" | "fallback";
 
-/** `"resumed"` only for `outcome.status === "installed"` — every other outcome (declined, unsupported platform, or a failed/offline download) is an honest, silent-ish fallback, never a retry loop. */
+/**
+ * `"resumed"` for `outcome.status === "installed"` or `"already-installed"`
+ * — both mean a usable Piper is now on disk, whether this call just put it
+ * there or found it already there (2026-11-05 fix). Every other outcome
+ * (declined, unsupported platform, or a failed/offline download) is an
+ * honest, silent-ish fallback, never a retry loop.
+ */
 export function nextActionFor(outcome: PiperInstallOutcome): AutoVoiceInstallResult {
-  return outcome.status === "installed" ? "resumed" : "fallback";
+  return outcome.status === "installed" || outcome.status === "already-installed" ? "resumed" : "fallback";
 }
 
 /**
@@ -103,7 +109,8 @@ export function fallbackMessageFor(outcome: PiperInstallOutcome): string {
     case "failed":
       return `LLM Voice : téléchargement de la voix impossible (${outcome.message}) — la voix système sera utilisée si votre système en fournit une.`;
     case "installed":
-      // Never reached (nextActionFor returns "resumed" for this case) —
+    case "already-installed":
+      // Never reached (nextActionFor returns "resumed" for both cases) —
       // exhaustive switch kept so a new PiperInstallOutcome variant fails
       // to compile here instead of silently falling through.
       return "";

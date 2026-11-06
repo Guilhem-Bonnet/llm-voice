@@ -69,6 +69,42 @@ textarea {
   font-size: 0.9em;
 }
 
+/* Audit 2026-11-05, P1: "Consigne de narration" — a free-text field that is
+   actually an LLM prompt — had no explanation at all in the form itself. */
+.field-hint {
+  margin: 0 0 6px;
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--vscode-descriptionForeground);
+}
+
+/* Real-user bug fix (2026-11-05): live connection check next to Base URL,
+   so a provider/Base URL mismatch is visible in the editor itself instead
+   of only surfacing as a cryptic "fetch failed" once the user tries to
+   speak something. */
+#connection-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+#connection-row input {
+  flex: 1;
+}
+
+#connection-status {
+  margin: 4px 0 0;
+  font-size: 0.9em;
+}
+
+#connection-status.connection-ok {
+  color: var(--vscode-charts-green, var(--vscode-foreground));
+}
+
+#connection-status.connection-error {
+  color: var(--vscode-editorError-foreground);
+}
+
 .parameter-row {
   display: flex;
   align-items: center;

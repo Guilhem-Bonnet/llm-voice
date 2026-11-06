@@ -21,6 +21,8 @@ export interface MockOllamaServerOptions {
   chatDelayMs?: number;
   /** Raw `message.content` to return instead of the extracted BLOCK_xxx mapping. */
   chatContentOverride?: string;
+  /** Raw `message.content` of the 1st, 2nd… chat answer (the last one is repeated); wins over `chatContentOverride`. */
+  chatContentSequence?: string[];
 }
 
 export interface MockOllamaServerRequestLog {
@@ -76,6 +78,7 @@ function extractPromptContent(body: string): string {
 export class MockOllamaServer {
   private readonly server: Server;
   private readonly options: Required<MockOllamaServerOptions>;
+  private chatCount = 0;
   readonly requests: MockOllamaServerRequestLog[] = [];
 
   constructor(options: MockOllamaServerOptions = {}) {
@@ -84,7 +87,8 @@ export class MockOllamaServer {
       redirectExternal: options.redirectExternal ?? false,
       models: options.models ?? ["qwen2.5:7b"],
       chatDelayMs: options.chatDelayMs ?? 0,
-      chatContentOverride: options.chatContentOverride ?? ""
+      chatContentOverride: options.chatContentOverride ?? "",
+      chatContentSequence: options.chatContentSequence ?? []
     };
     this.server = createServer((req, res) => {
       this.handle(req, res).catch((error: unknown) => {
@@ -143,10 +147,15 @@ export class MockOllamaServer {
         await new Promise((resolveDelay) => setTimeout(resolveDelay, this.options.chatDelayMs));
       }
 
+      const sequence = this.options.chatContentSequence;
+      const scripted = sequence.length > 0 ? sequence[Math.min(this.chatCount, sequence.length - 1)] : undefined;
+      this.chatCount += 1;
       const content =
-        this.options.chatContentOverride.length > 0
-          ? this.options.chatContentOverride
-          : JSON.stringify({ segments: extractSegmentsFromPrompt(extractPromptContent(body)) });
+        scripted !== undefined
+          ? scripted
+          : this.options.chatContentOverride.length > 0
+            ? this.options.chatContentOverride
+            : JSON.stringify({ segments: extractSegmentsFromPrompt(extractPromptContent(body)) });
 
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ message: { content } }));

@@ -15,6 +15,12 @@
 
 import type { NarratorBinding, TtsBinding } from "../core/profile.js";
 import type { ProviderHealth } from "../core/health.js";
+import {
+  CHATTERBOX_LOCAL_PRESET,
+  KOKORO_LOCAL_PRESET,
+  KYUTAI_POCKET_LOCAL_PRESET,
+  PIPER_LOCAL_PRESET
+} from "../tts/presets.js";
 
 /** Snapshot of `llmVoice.tts.*`, read once by the caller (`vscode.workspace.getConfiguration`). */
 export interface TtsSettings {
@@ -40,11 +46,39 @@ export interface ResolvedNarratorConfig {
   model: string;
 }
 
-/** `profile.tts.{providerId,baseUrl}` if set, else `llmVoice.tts.{provider,baseUrl}`. */
+/** `localhost` and `127.0.0.1` name the same endpoint; same rule as the profile editor's `normalizeLoopbackUrl`. */
+function normalizeLoopbackUrl(url: string): string {
+  return url.trim().toLowerCase().replace(/\/+$/, "").replace("://127.0.0.1", "://localhost");
+}
+
+/** The setting names no server of its own: it is blank, or still on Chatterbox's port (its shipped default). */
+function settingNamesNoServer(settingBaseUrl: string): boolean {
+  const normalized = normalizeLoopbackUrl(settingBaseUrl);
+  return normalized === "" || normalized === normalizeLoopbackUrl(CHATTERBOX_LOCAL_PRESET.baseUrl);
+}
+
+/**
+ * `profile.tts.{providerId,baseUrl}` if set, else `llmVoice.tts.{provider,baseUrl}`.
+ * `kyutai-pocket` keeps its own port: the setting's default is Chatterbox's.
+ * So do `kokoro` and `piper-local`, however they were chosen, unless the
+ * setting names another endpoint: `llmVoice.tts.provider` can select them,
+ * which leaves that setting as the only place to point at a custom server.
+ */
 export function resolveTtsConfig(tts: TtsBinding, settings: TtsSettings): ResolvedTtsConfig {
+  const providerId = tts.providerId ?? settings.provider;
+  let ownDefault: string | undefined;
+  if (tts.providerId === "kyutai-pocket") {
+    ownDefault = KYUTAI_POCKET_LOCAL_PRESET.baseUrl;
+  } else if (settingNamesNoServer(settings.baseUrl)) {
+    if (providerId === "kokoro") {
+      ownDefault = KOKORO_LOCAL_PRESET.baseUrl;
+    } else if (providerId === "piper-local") {
+      ownDefault = PIPER_LOCAL_PRESET.baseUrl;
+    }
+  }
   return {
-    providerId: tts.providerId ?? settings.provider,
-    baseUrl: tts.baseUrl ?? settings.baseUrl
+    providerId,
+    baseUrl: tts.baseUrl ?? ownDefault ?? settings.baseUrl
   };
 }
 

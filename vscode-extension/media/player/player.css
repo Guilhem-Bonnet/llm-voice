@@ -37,10 +37,29 @@ body {
   white-space: nowrap;
 }
 
+#profile-group {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 #profile {
   color: var(--vscode-descriptionForeground);
-  white-space: nowrap;
-  flex-shrink: 0;
+}
+
+/* Provider/voice indicator (audit 2026-11-05, P1): the only persistent,
+   always-visible confirmation that a voice choice actually took effect —
+   everywhere else, the only feedback was a transitory toast. */
+#voice {
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+
+#voice:not(:empty)::before {
+  content: "· ";
 }
 
 #time {
@@ -71,6 +90,22 @@ body {
   background-color: var(--vscode-progressBar-background, var(--vscode-button-background));
 }
 
+/* Takes no height while empty, and stays in the page so that assistive
+   technology announces each change of its text. */
+#status-line {
+  min-height: 0;
+  justify-content: center;
+}
+
+#status {
+  min-width: 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 #transport {
   justify-content: center;
   gap: 4px;
@@ -82,9 +117,14 @@ body {
   background: transparent;
   color: var(--vscode-foreground);
   cursor: pointer;
-  padding: 2px 8px;
+  flex: none;
+  width: 32px;
+  height: 24px;
+  padding: 0;
   font-size: 16px;
   line-height: 1;
+  white-space: nowrap;
+  text-align: center;
   border-radius: 4px;
 }
 

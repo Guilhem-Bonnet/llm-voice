@@ -34,20 +34,23 @@ function toQuickPickItem(option: VoiceTierOption): VoiceTierQuickPickItem {
  * `Pipeline` instance itself exists).
  */
 export type ApplyProviderChoice = (tier: VoiceTier) => Promise<void>;
+/** Real-user bug fix (2026-11-05): opens the actual voice picker after "system"/"piper" settle — see `VoiceTierActions.browseVoices`'s doc comment. */
+export type BrowseVoices = () => Promise<void>;
 
-function realActions(applyProviderChoice: ApplyProviderChoice): VoiceTierActions {
+function realActions(applyProviderChoice: ApplyProviderChoice, browseVoices: BrowseVoices): VoiceTierActions {
   return {
     showMessage: (message, options, ...items) =>
       vscode.window.showInformationMessage(message, options, ...items),
     executeCommand: (command) => vscode.commands.executeCommand(command),
     openExternal: (url) => vscode.env.openExternal(vscode.Uri.parse(url)),
     writeClipboardText: (text) => vscode.env.clipboard.writeText(text),
-    applyProviderChoice
+    applyProviderChoice,
+    browseVoices
   };
 }
 
 /** Registered as `llmVoice.setupVoice` (`extension.ts` — not `commands/index.ts`, S7.2's own file). */
-export async function setupVoice(applyProviderChoice: ApplyProviderChoice): Promise<void> {
+export async function setupVoice(applyProviderChoice: ApplyProviderChoice, browseVoices: BrowseVoices): Promise<void> {
   const picked = await vscode.window.showQuickPick(VOICE_TIER_OPTIONS.map(toQuickPickItem), {
     title: "LLM Voice : choisir une voix",
     placeHolder: "Quel niveau de qualité vocale voulez-vous utiliser ?",
@@ -57,5 +60,5 @@ export async function setupVoice(applyProviderChoice: ApplyProviderChoice): Prom
   if (picked === undefined) {
     return;
   }
-  await handleVoiceTier(picked.tier, realActions(applyProviderChoice));
+  await handleVoiceTier(picked.tier, realActions(applyProviderChoice, browseVoices));
 }

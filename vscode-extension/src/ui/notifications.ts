@@ -180,7 +180,12 @@ export async function notifyChunkInvalid(
 }
 
 /** One failure family CdC §52 describes; see `NotificationGate`. */
-export type NotificationType = "ttsUnavailable" | "narratorUnavailable" | "chunkInvalid";
+export type NotificationType = "ttsUnavailable" | "narratorUnavailable" | "chunkInvalid" | "playbackFailed";
+
+/** The voice answered but its audio could not be played: never a silent skip. */
+export function formatPlaybackFailedMessage(detail: string): string {
+  return `LLM Voice : l'audio reçu n'a pas pu être lu — ${detail}`;
+}
 
 /**
  * Anti-spam guard: each `NotificationType` may notify once until `reset()`

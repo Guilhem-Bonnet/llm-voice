@@ -326,9 +326,14 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   // a few lines down).
   context.subscriptions.push(
     vscode.commands.registerCommand("llmVoice.setupVoice", () =>
-      setupVoice(async (tier) => {
-        await pipelineRef.current?.applyVoiceTierChoice(tier);
-      })
+      setupVoice(
+        async (tier) => {
+          await pipelineRef.current?.applyVoiceTierChoice(tier);
+        },
+        async () => {
+          await pipelineRef.current?.browseVoices();
+        }
+      )
     )
   );
   context.subscriptions.push(

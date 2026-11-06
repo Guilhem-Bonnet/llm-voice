@@ -10,7 +10,9 @@
   const body = document.body;
   const titleEl = document.getElementById("title");
   const profileEl = document.getElementById("profile");
+  const voiceEl = document.getElementById("voice");
   const timeEl = document.getElementById("time");
+  const statusEl = document.getElementById("status");
   const progressTrack = document.getElementById("progress-track");
   const progressFill = document.getElementById("progress-fill");
 
@@ -30,6 +32,20 @@
   let lastTimeUpdatePostMs = 0;
   const TIMEUPDATE_THROTTLE_MS = 250;
 
+  // While a session loads there is nothing to pause, and the host ignores
+  // "play": the button cancels instead, and says what is happening. The glyph
+  // is text, like the other transport buttons; this webview loads no codicon
+  // font. U+2715 has no emoji presentation, unlike U+2716.
+  const CANCEL_GLYPH = "✕";
+  const LOADING_STATES = new Map([
+    ["preparing", { status: "Préparation de la voix…", label: "Annuler la préparation" }],
+    ["buffering", { status: "Préparation du segment suivant…", label: "Annuler et arrêter la lecture" }]
+  ]);
+  // The cancel lands while the second click of a double click is on its way:
+  // that click must not read as "play", which would start a new reading.
+  const CANCEL_GUARD_MS = 600;
+  let lastCancelAtMs = Number.NEGATIVE_INFINITY;
+
   function formatTime(ms) {
     const totalSeconds = Math.max(0, Math.floor(ms / 1000));
     const minutes = Math.floor(totalSeconds / 60);
@@ -43,9 +59,13 @@
 
   function setState(state) {
     body.setAttribute("data-state", state);
+    const loading = LOADING_STATES.get(state);
     const isPlaying = state === "playing";
-    buttons.playPause.textContent = isPlaying ? "⏸" /* pause */ : "▶" /* play */;
-    buttons.playPause.setAttribute("aria-label", isPlaying ? "Pause" : "Lecture");
+    const label = loading ? loading.label : isPlaying ? "Pause" : "Lecture";
+    buttons.playPause.textContent = loading ? CANCEL_GLYPH : isPlaying ? "⏸" /* pause */ : "▶" /* play */;
+    buttons.playPause.setAttribute("aria-label", label);
+    buttons.playPause.setAttribute("title", label);
+    statusEl.textContent = loading ? loading.status : "";
   }
 
   function updateProgress(positionMs, durationMs) {
@@ -137,6 +157,7 @@
         // sink anywhere under `media/`.
         titleEl.textContent = typeof state.title === "string" ? state.title : "";
         profileEl.textContent = typeof state.profile === "string" ? state.profile : "";
+        voiceEl.textContent = typeof state.voice === "string" ? state.voice : "";
         break;
       }
       default:
@@ -189,7 +210,16 @@
   buttons.next.addEventListener("click", () => post({ type: "userAction", action: "next" }));
   buttons.stop.addEventListener("click", () => post({ type: "userAction", action: "stop" }));
   buttons.playPause.addEventListener("click", () => {
-    post({ type: "userAction", action: audio.paused ? "play" : "pause" });
+    // The host's state, not `audio.paused`: this element stays silent under the native engine.
+    const state = body.getAttribute("data-state");
+    if (LOADING_STATES.has(state)) {
+      lastCancelAtMs = Date.now();
+      post({ type: "userAction", action: "stop" });
+    } else if (state === "playing") {
+      post({ type: "userAction", action: "pause" });
+    } else if (Date.now() - lastCancelAtMs >= CANCEL_GUARD_MS) {
+      post({ type: "userAction", action: "play" });
+    }
   });
 
   // Empty-player welcome actions (S7.2): only visible in the idle state

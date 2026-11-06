@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import { createEgressGuard } from "../../../src/net/EgressGuard.js";
 import { ChatterboxProvider } from "../../../src/tts/ChatterboxProvider.js";
 import { KokoroProvider } from "../../../src/tts/KokoroProvider.js";
+import { KyutaiPocketProvider } from "../../../src/tts/KyutaiPocketProvider.js";
 import { OpenAICompatibleTtsProvider } from "../../../src/tts/OpenAICompatibleTtsProvider.js";
 import { SystemTtsProvider } from "../../../src/tts/SystemTtsProvider.js";
 import {
   CHATTERBOX_LOCAL_PRESET,
   KOKORO_LOCAL_PRESET,
+  KYUTAI_POCKET_LOCAL_PRESET,
   OPENAI_COMPATIBLE_PRESET,
   PIPER_LOCAL_PRESET,
   SYSTEM_LOCAL_PRESET,
@@ -68,12 +70,27 @@ describe("TTS provider presets (ADR-009)", () => {
     expect(TTS_PROVIDER_PRESETS).toContain(SYSTEM_LOCAL_PRESET);
   });
 
+  it("kyutai-pocket-local targets localhost:8000, stays opt-in/local, and names the required server command (ADR-016 §2)", () => {
+    expect(KYUTAI_POCKET_LOCAL_PRESET.baseUrl).toBe("http://localhost:8000");
+    expect(KYUTAI_POCKET_LOCAL_PRESET.kind).toBe("kyutai-pocket");
+    expect(KYUTAI_POCKET_LOCAL_PRESET.languages).toEqual(["fr"]);
+    expect(KYUTAI_POCKET_LOCAL_PRESET.voice).toBe("estelle");
+    expect(KYUTAI_POCKET_LOCAL_PRESET.remote).toBe(false);
+    expect(KYUTAI_POCKET_LOCAL_PRESET.label).toContain("pocket-tts serve --language french");
+    expect(TTS_PROVIDER_PRESETS).toContain(KYUTAI_POCKET_LOCAL_PRESET);
+  });
+
   it("presetKindForProviderId() maps known ids, defaults everything else to generic", () => {
     expect(presetKindForProviderId("chatterbox")).toBe("chatterbox");
     expect(presetKindForProviderId("kokoro")).toBe("kokoro");
     expect(presetKindForProviderId("system")).toBe("system");
+    expect(presetKindForProviderId("kyutai-pocket")).toBe("kyutai-pocket");
     expect(presetKindForProviderId("openai-compatible")).toBe("openai-compatible");
     expect(presetKindForProviderId("some-enterprise-endpoint")).toBe("openai-compatible");
+  });
+
+  it("presetKindForProviderId() never matches a preset id, only a provider id (convention, same as chatterbox-local/kokoro-local)", () => {
+    expect(presetKindForProviderId("kyutai-pocket-local")).toBe("openai-compatible");
   });
 
   it("createTtsProvider() instantiates the class matching `kind`", () => {
@@ -88,6 +105,39 @@ describe("TTS provider presets (ADR-009)", () => {
       createTtsProvider({ kind: "openai-compatible", baseUrl: "http://localhost:5000" }, options)
     ).toBeInstanceOf(OpenAICompatibleTtsProvider);
     expect(createTtsProvider({ kind: "system", baseUrl: "" }, options)).toBeInstanceOf(SystemTtsProvider);
+    expect(
+      createTtsProvider({ kind: "kyutai-pocket", baseUrl: "http://localhost:8000", languages: ["fr"] }, options)
+    ).toBeInstanceOf(KyutaiPocketProvider);
+  });
+
+  it("createTtsProvider() threads the preset's languages into KyutaiPocketProvider, never guessing", () => {
+    const withLanguages = createTtsProvider(KYUTAI_POCKET_LOCAL_PRESET, { egress: egress() }) as unknown as {
+      languages: readonly string[];
+    };
+    expect(withLanguages.languages).toEqual(["fr"]);
+
+    // A bare `kind`/`baseUrl` with no `languages` field (e.g. `Pipeline.ttsFor`'s
+    // own call shape today) must never fabricate a language — an empty list,
+    // not a guess (`KyutaiPocketProvider`'s own file header, D10).
+    const bare = createTtsProvider(
+      { kind: "kyutai-pocket", baseUrl: "http://localhost:8000" },
+      { egress: egress() }
+    ) as unknown as { languages: readonly string[] };
+    expect(bare.languages).toEqual([]);
+  });
+
+  it("createTtsProvider() forwards defaultVoice into KyutaiPocketProvider only", () => {
+    const withVoice = createTtsProvider(
+      { kind: "kyutai-pocket", baseUrl: "http://localhost:8000", languages: ["fr"] },
+      { egress: egress(), defaultVoice: "alba" }
+    ) as unknown as { defaultVoice: string | undefined };
+    expect(withVoice.defaultVoice).toBe("alba");
+
+    const kokoro = createTtsProvider(
+      { kind: "kokoro", baseUrl: "http://localhost:8880" },
+      { egress: egress(), defaultVoice: "alba" }
+    ) as unknown as { defaultVoice: string | undefined };
+    expect(kokoro.defaultVoice).toBeUndefined();
   });
 
   it("createTtsProvider() forwards systemPiperInstallDir only to the system provider", () => {

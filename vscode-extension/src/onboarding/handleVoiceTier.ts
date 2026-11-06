@@ -47,6 +47,18 @@ export interface VoiceTierActions {
    * the choice itself).
    */
   applyProviderChoice: (tier: VoiceTier) => PromiseLike<void>;
+  /**
+   * Real-user bug (2026-11-05): "je n'ai aucun moyen de réellement choisir
+   * une voix via l'interface" — `handleVoiceTier` used to stop at applying
+   * a *tier* (system/piper/chatterbox), never actually opening a voice
+   * picker. `Pipeline.browseVoices()` (already wired to `llmVoice.
+   * browseVoices`, S8.2) is that picker — called here right after "system"
+   * and "piper" settle (both reach a locally-reachable `SystemTtsProvider`
+   * synchronously, no server to wait for), never after "chatterbox" (its
+   * server may not even be running yet — `handleChatterbox`'s dialog is
+   * instructions, not a ready signal).
+   */
+  browseVoices: () => PromiseLike<void>;
 }
 
 const COPY_COMMAND_LABEL = "Copier la commande";
@@ -78,9 +90,11 @@ export async function handleVoiceTier(tier: VoiceTier, actions: VoiceTierActions
     case "system":
       // Nothing to install — `SystemTtsProvider` (S7.1) already works.
       await actions.showMessage(SYSTEM_VOICE_READY_MESSAGE, {});
+      await actions.browseVoices();
       return;
     case "piper":
       await actions.executeCommand(INSTALL_PIPER_VOICE_COMMAND);
+      await actions.browseVoices();
       return;
     case "chatterbox":
       await handleChatterbox(actions);

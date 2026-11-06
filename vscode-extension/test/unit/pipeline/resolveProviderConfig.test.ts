@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { CHATTERBOX_LOCAL_PRESET, KOKORO_LOCAL_PRESET } from "../../../src/tts/presets.js";
 import {
   isHealthyEnough,
   resolveNarratorConfig,
@@ -43,6 +46,91 @@ describe("resolveTtsConfig (fix(review): llmVoice.tts.baseUrl/tts.provider orpha
       providerId: "openai-compatible",
       baseUrl: "http://127.0.0.1:8004"
     });
+  });
+
+  it("gives kyutai-pocket its own port when the profile has no baseUrl, not the setting's Chatterbox one", () => {
+    expect(resolveTtsConfig({ providerId: "kyutai-pocket" }, TTS_SETTINGS)).toEqual({
+      providerId: "kyutai-pocket",
+      baseUrl: "http://localhost:8000"
+    });
+  });
+
+  it("still lets a profile's own baseUrl win for kyutai-pocket", () => {
+    const tts: TtsBinding = { providerId: "kyutai-pocket", baseUrl: "http://127.0.0.1:9000" };
+    expect(resolveTtsConfig(tts, TTS_SETTINGS).baseUrl).toBe("http://127.0.0.1:9000");
+  });
+});
+
+describe("resolveTtsConfig: piper-local never inherits Chatterbox's port", () => {
+  const shipped = { provider: "auto", baseUrl: "http://127.0.0.1:8004" };
+
+  it("uses Piper's port for a profile naming piper-local with an empty baseUrl", () => {
+    expect(resolveTtsConfig({ providerId: "piper-local" }, shipped).baseUrl).toBe("http://localhost:5000");
+  });
+
+  it("uses Piper's port when piper-local comes from llmVoice.tts.provider", () => {
+    expect(resolveTtsConfig({}, { provider: "piper-local", baseUrl: "http://localhost:8004/" }).baseUrl).toBe(
+      "http://localhost:5000"
+    );
+  });
+
+  it("keeps a custom endpoint chosen in llmVoice.tts.baseUrl", () => {
+    expect(resolveTtsConfig({}, { provider: "piper-local", baseUrl: "http://127.0.0.1:5999" }).baseUrl).toBe(
+      "http://127.0.0.1:5999"
+    );
+  });
+});
+
+describe("resolveTtsConfig: Kokoro never inherits Chatterbox's port", () => {
+  const manifest = JSON.parse(readFileSync(resolve(__dirname, "../../../package.json"), "utf8")) as {
+    contributes: { configuration: { properties: Record<string, { default?: string }> } };
+  };
+  const shippedBaseUrl = manifest.contributes.configuration.properties["llmVoice.tts.baseUrl"]?.default as string;
+
+  it("the shipped setting really is Chatterbox's port, the premise of everything below", () => {
+    expect(shippedBaseUrl).toBe("http://127.0.0.1:8004");
+    expect(CHATTERBOX_LOCAL_PRESET.baseUrl).toBe("http://localhost:8004");
+  });
+
+  it("uses Kokoro's port for a profile naming kokoro with an empty baseUrl", () => {
+    const resolved = resolveTtsConfig({ providerId: "kokoro" }, { provider: "auto", baseUrl: shippedBaseUrl });
+    expect(resolved).toEqual({ providerId: "kokoro", baseUrl: KOKORO_LOCAL_PRESET.baseUrl });
+  });
+
+  it("uses Kokoro's port when kokoro comes from llmVoice.tts.provider, not from the profile", () => {
+    const resolved = resolveTtsConfig({}, { provider: "kokoro", baseUrl: shippedBaseUrl });
+    expect(resolved).toEqual({ providerId: "kokoro", baseUrl: KOKORO_LOCAL_PRESET.baseUrl });
+  });
+
+  it.each(["http://localhost:8004", "http://LOCALHOST:8004/", "http://127.0.0.1:8004/"])(
+    "treats %s as Chatterbox's port whatever its spelling",
+    (baseUrl) => {
+      expect(resolveTtsConfig({ providerId: "kokoro" }, { provider: "auto", baseUrl }).baseUrl).toBe(
+        KOKORO_LOCAL_PRESET.baseUrl
+      );
+    }
+  );
+
+  it.each(["", "   "])("uses Kokoro's port when the setting is blank (%j)", (baseUrl) => {
+    expect(resolveTtsConfig({ providerId: "kokoro" }, { provider: "auto", baseUrl }).baseUrl).toBe(
+      KOKORO_LOCAL_PRESET.baseUrl
+    );
+  });
+
+  it("keeps a custom endpoint chosen in llmVoice.tts.baseUrl", () => {
+    const resolved = resolveTtsConfig({}, { provider: "kokoro", baseUrl: "http://127.0.0.1:9000" });
+    expect(resolved.baseUrl).toBe("http://127.0.0.1:9000");
+  });
+
+  it("lets a profile's own baseUrl win, even on Chatterbox's port", () => {
+    const tts: TtsBinding = { providerId: "kokoro", baseUrl: "http://127.0.0.1:8004" };
+    const resolved = resolveTtsConfig(tts, { provider: "auto", baseUrl: shippedBaseUrl });
+    expect(resolved.baseUrl).toBe("http://127.0.0.1:8004");
+  });
+
+  it("leaves Chatterbox on the setting's value", () => {
+    const resolved = resolveTtsConfig({ providerId: "chatterbox" }, { provider: "auto", baseUrl: shippedBaseUrl });
+    expect(resolved.baseUrl).toBe(shippedBaseUrl);
   });
 });
 

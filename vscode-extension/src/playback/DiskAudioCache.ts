@@ -25,6 +25,7 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { AudioFormat } from "../core/tts.js";
+import { repairStreamedWavSizes } from "../core/wavRepair.js";
 import type { AudioCachePutMeta, AudioCacheStore } from "./AudioCache.js";
 
 export interface DiskAudioCacheOptions {
@@ -96,9 +97,16 @@ export class DiskAudioCache implements AudioCacheStore {
   async get(key: string): Promise<Uint8Array | undefined> {
     await this.ready;
     try {
-      const bytes = await fs.readFile(this.filePath(key));
-      await this.touch(key, bytes.byteLength);
-      return new Uint8Array(bytes);
+      const dest = this.filePath(key);
+      const bytes = new Uint8Array(await fs.readFile(dest));
+      const repaired = repairStreamedWavSizes(bytes);
+      if (repaired !== bytes) {
+        const tmp = `${dest}.tmp-${await tempSuffix()}`;
+        await fs.writeFile(tmp, repaired);
+        await fs.rename(tmp, dest);
+      }
+      await this.touch(key, repaired.byteLength);
+      return repaired;
     } catch (error) {
       if (isEnoent(error)) {
         return undefined;

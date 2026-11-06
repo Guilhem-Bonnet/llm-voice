@@ -27,6 +27,15 @@ export interface StatusBarViewModel {
    * `$(lock)`/`$(unmute)` pair.
    */
   isRemoteProvider?: boolean;
+  /**
+   * Human-facing TTS provider label (`friendlyTtsProviderLabel`), e.g.
+   * "Chatterbox (qualité maximale)". Audit 2026-11-05, P1: before this, no
+   * persistent surface showed the active provider/voice, only the profile
+   * label — a provider change was invisible outside a transitory toast.
+   * Kept out of the main status bar text (already tight on space) and shown
+   * in the tooltip instead, per the audit's own minimum recommendation.
+   */
+  voiceLabel?: string;
 }
 
 export function formatTime(ms: number): string {
@@ -65,10 +74,11 @@ export function formatStatusBarText(vm: StatusBarViewModel): string {
 }
 
 export function formatStatusBarTooltip(vm: StatusBarViewModel): string {
+  const voiceSuffix = vm.voiceLabel !== undefined && vm.voiceLabel.length > 0 ? ` (${vm.voiceLabel})` : "";
   switch (vm.state) {
     case "error":
       return "LLM Voice : erreur de lecture — cliquer pour reprendre";
     default:
-      return "LLM Voice — cliquer pour les actions de lecture";
+      return `LLM Voice — ${vm.profileLabel}${voiceSuffix} — cliquer pour les actions de lecture`;
   }
 }

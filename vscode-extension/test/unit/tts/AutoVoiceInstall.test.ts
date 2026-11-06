@@ -83,6 +83,15 @@ describe("nextActionFor / fallbackMessageFor", () => {
     expect(nextActionFor(installed)).toBe("resumed");
   });
 
+  it("resumes on already-installed too — a Piper found already on disk is just as usable as one just downloaded (2026-11-05 fix)", () => {
+    const alreadyInstalled: PiperInstallOutcome = {
+      status: "already-installed",
+      binaryPath: "/x/bin/piper",
+      voiceModelPath: "/x/voices/fr_FR-siwis-medium.onnx"
+    };
+    expect(nextActionFor(alreadyInstalled)).toBe("resumed");
+  });
+
   it("falls back honestly on a decline — no network dependency, no error to log", () => {
     const declined: PiperInstallOutcome = { status: "declined" };
     expect(nextActionFor(declined)).toBe("fallback");

@@ -157,6 +157,7 @@ writeFileSync(
       "llmVoice.audio.corePath": join(testRootDir, "..", "target", "release", "llm-voice-core"),
       "llmVoice.tts.provider": "system",
       "llmVoice.defaultProfile": "native-real-piper",
+      "llmVoice.testVoice.text": "Bonjour. Voici un exemple de ma voix. Nous allons maintenant examiner un concept technique et voir comment l'expliquer clairement.",
       "llmVoice.cache.enabled": false,
       "llmVoice.log.level": "debug",
       "security.workspace.trust.enabled": false
@@ -183,6 +184,17 @@ writeFileSync(
           chunking: { unit: "sentence", maxSentences: 1, prefetchChunks: 1 },
           playback: { rate: 1, volume: 1 },
           description: "Test-only profile: real Piper through the system provider."
+        },
+        {
+          id: "native-real-kyutai",
+          label: "Native real (Kyutai Estelle)",
+          mode: "faithful",
+          language: "fr-FR",
+          // No baseUrl on purpose: the provider must find its own port.
+          tts: { providerId: "kyutai-pocket", voice: "estelle" },
+          chunking: { unit: "sentence", maxSentences: 1, prefetchChunks: 1 },
+          playback: { rate: 1, volume: 1 },
+          description: "Test-only profile: real Estelle voice through pocket-tts serve."
         }
       ]
     },

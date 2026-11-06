@@ -710,6 +710,50 @@ describe("PlaybackController — buffering (ADR-005's reported-to-phase-4 gap)",
     expect(h.controller.getCurrentIndex()).toBe(1);
   });
 
+  it("a stop during preparing cancels for good: the synthesis landing later plays nothing", async () => {
+    const h = harness({ ttsLatencyMs: 4000 });
+    const started = h.controller.start({
+      segments: makeSegments(3),
+      profile: makeProfile(),
+      tts: h.tts,
+      sink: h.sink
+    });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(h.controller.getState()).toBe("preparing");
+
+    h.controller.stop();
+    await vi.advanceTimersByTimeAsync(60_000);
+    await started;
+
+    expect(h.controller.getState()).toBe("stopped");
+    expect(h.sink.loads).toEqual([]);
+    expect(h.sink.commands).not.toContain("play");
+    expect(h.chunkChanges).toEqual([]);
+  });
+
+  it("a stop during buffering cancels for good: the next chunk landing later plays nothing", async () => {
+    const h = harness({ ttsLatencyMs: 4000 });
+    const started = h.controller.start({
+      segments: makeSegments(3),
+      profile: makeProfile(),
+      tts: h.tts,
+      sink: h.sink
+    });
+    await vi.advanceTimersByTimeAsync(4000);
+    await started;
+    await vi.advanceTimersByTimeAsync(CHUNK_MS);
+    expect(h.controller.getState()).toBe("buffering");
+    const loadsBefore = h.sink.loads.length;
+    const playsBefore = h.sink.commands.filter((command) => command === "play").length;
+
+    h.controller.stop();
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(h.controller.getState()).toBe("stopped");
+    expect(h.sink.loads).toHaveLength(loadsBefore);
+    expect(h.sink.commands.filter((command) => command === "play")).toHaveLength(playsBefore);
+  });
+
   it("never shows buffering for the very first chunk of a session (that is `preparing`)", async () => {
     const h = harness();
     await h.start(1);

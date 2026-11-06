@@ -603,7 +603,7 @@
         "llmVoice.tts.baseUrl": {
           "type": "string",
           "default": "http://127.0.0.1:8004",
-          "description": "URL de base du service de synthèse vocale (TTS), doit rester locale par défaut (D2, D10). Port 8004 = Chatterbox (ADR-009 niveau 1)."
+          "description": "URL de base du service de synthèse vocale (TTS), doit rester locale par défaut (D2, D10). Port 8004 = Chatterbox (ADR-009 niveau 1). Kokoro utilise le port 8880 tant que ce réglage reste vide ou sur le port de Chatterbox."
         },
         "llmVoice.tts.provider": {
           "type": "string",
@@ -619,7 +619,7 @@
           "enumDescriptions": [
             "Sélection automatique (S7.1, ADR-009) : Chatterbox si disponible, sinon Piper local, sinon la voix système — zéro configuration.",
             "Chatterbox (niveau 1, GPU, port 8004 par défaut).",
-            "Kokoro (niveau 1, repli léger).",
+            "Kokoro (niveau 1, repli léger, port 8880 par défaut).",
             "Piper derrière un serveur compatible OpenAI (niveau 1b, port 5000 par défaut).",
             "Voix système sans installation ni serveur — espeak-ng/Piper local/say/SAPI selon la plateforme (niveau 1b, ADR-009).",
             "Point de terminaison compatible OpenAI générique (entreprise/cloud, niveaux 2-3)."

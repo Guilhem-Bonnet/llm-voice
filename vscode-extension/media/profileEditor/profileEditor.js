@@ -33,6 +33,7 @@
   const validationErrors = document.getElementById("validation-errors");
   const voiceWarning = document.getElementById("voice-warning");
   const testStatus = document.getElementById("test-status");
+  const connectionStatus = document.getElementById("connection-status");
 
   // The full profile last loaded from the extension host: fields this form
   // does not expose (id, chunking, playback.volume, tts.apiKeyRef,
@@ -215,7 +216,90 @@
     validationErrors.appendChild(list);
   }
 
+  // Real-user bug (2026-11-05): switching `field-tts-provider` never
+  // touched `field-tts-base-url` — picking "Kyutai Pocket TTS" after the
+  // profile had been created with Chatterbox left the Chatterbox port
+  // (8004) in place, so synthesis failed against the wrong server with no
+  // obvious reason why. Known default base URLs, mirroring
+  // `src/tts/presets.ts`'s own preset objects (this plain webview script
+  // has no bundler/import access to that file, so the values are kept in
+  // sync by hand — see that file if a preset's default ever changes).
+  var KNOWN_DEFAULT_BASE_URLS = {
+    chatterbox: "http://localhost:8004",
+    kokoro: "http://localhost:8880",
+    "kyutai-pocket": "http://localhost:8000"
+  };
+  // Sentinel review (same day): the first version of this fix compared
+  // `current` to these values verbatim — but the real error the user saw
+  // named `http://127.0.0.1:8004`, not `http://localhost:8004`, so a
+  // byte-exact comparison would have missed the exact case this fix exists
+  // for. `localhost` and `127.0.0.1` name the same loopback endpoint; this
+  // normalizes both forms (lowercase, no trailing slash, `127.0.0.1` ===
+  // `localhost`) before comparing, so either spelling of a known default is
+  // recognized the same way.
+  function normalizeLoopbackUrl(value) {
+    return value
+      .toLowerCase()
+      .replace(/\/+$/, "")
+      .replace("://127.0.0.1", "://localhost");
+  }
+  var NORMALIZED_KNOWN_DEFAULTS = Object.values(KNOWN_DEFAULT_BASE_URLS).map(normalizeLoopbackUrl);
+  fields.ttsProvider.addEventListener("change", () => {
+    const current = fields.ttsBaseUrl.value.trim();
+    // Only auto-fill when the field is empty or still holds another known
+    // provider's *default* (in either loopback spelling) — a URL the user
+    // typed by hand (anything else) is never touched, so a deliberate
+    // custom endpoint always survives a provider switch.
+    const isKnownDefault = current === "" || NORMALIZED_KNOWN_DEFAULTS.includes(normalizeLoopbackUrl(current));
+    if (!isKnownDefault) {
+      return;
+    }
+    const next = KNOWN_DEFAULT_BASE_URLS[fields.ttsProvider.value];
+    if (next !== undefined) {
+      fields.ttsBaseUrl.value = next;
+    }
+  });
+
   fields.mode.addEventListener("change", updateNarratorVisibility);
+
+  // Real-user bug (2026-11-05): a provider/Base URL mismatch used to be
+  // invisible until the user actually tried to speak something, minutes
+  // later, with a cryptic "fetch failed" naming neither field. Checking
+  // right here — on provider change (after the auto-fill above) and when
+  // the Base URL field loses focus — surfaces it immediately instead.
+  //
+  // Sentinel review (same day): nothing stopped two checks from racing —
+  // e.g. editing the URL then immediately picking a different provider
+  // fires `blur` then `change`, each posting its own `checkHealth`; if
+  // their `healthResult` replies came back out of order, the status shown
+  // could describe the wrong one. `requestId` makes every reply carry back
+  // which request it answers, so a stale one arriving after a newer one
+  // (or after a profile reload) is simply ignored instead of overwriting
+  // the current status.
+  var lastCheckedBaseUrl;
+  var latestHealthRequestId = 0;
+  function checkConnection() {
+    const baseUrl = fields.ttsBaseUrl.value.trim();
+    if (baseUrl === lastCheckedBaseUrl) {
+      // A `blur` with nothing actually changed (e.g. tabbing through
+      // without editing) would otherwise re-run the same check for no
+      // reason every time the field loses focus.
+      return;
+    }
+    lastCheckedBaseUrl = baseUrl;
+    latestHealthRequestId += 1;
+    connectionStatus.textContent = "Vérification…";
+    connectionStatus.className = "";
+    post({ type: "checkHealth", requestId: latestHealthRequestId, profile: collectFormProfile() });
+  }
+  document.getElementById("btn-check-health").addEventListener("click", () => {
+    // The button means "check now" even if the URL hasn't changed since
+    // the last check — bypass the no-op guard above for this one trigger.
+    lastCheckedBaseUrl = undefined;
+    checkConnection();
+  });
+  fields.ttsProvider.addEventListener("change", checkConnection);
+  fields.ttsBaseUrl.addEventListener("blur", checkConnection);
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -247,6 +331,12 @@
         applyProfileToForm(message.profile || {});
         renderErrors(undefined);
         testStatus.textContent = "";
+        connectionStatus.textContent = "";
+        connectionStatus.className = "";
+        // A check already in flight for the previous profile must never be
+        // allowed to paint its (now meaningless) result over this one.
+        latestHealthRequestId += 1;
+        lastCheckedBaseUrl = undefined;
         break;
       }
       case "voiceSelected": {
@@ -265,7 +355,25 @@
         break;
       }
       case "testResult": {
-        testStatus.textContent = message.ok ? "Lecture terminée." : `Erreur : ${textOf(message.error)}`;
+        testStatus.textContent = message.ok ? "Lecture lancée." : `Erreur : ${textOf(message.error)}`;
+        break;
+      }
+      case "healthResult": {
+        if (message.requestId !== undefined && message.requestId !== latestHealthRequestId) {
+          // A reply to a superseded check (raced by a newer one, or by a
+          // profile reload) — ignore it rather than overwrite a status that
+          // describes the *current* form state with one that doesn't.
+          break;
+        }
+        const ok = message.status === "ok" || message.status === "degraded";
+        connectionStatus.className = ok ? "connection-ok" : "connection-error";
+        const endpoint = textOf(message.endpoint);
+        const detail = textOf(message.detail);
+        if (ok) {
+          connectionStatus.textContent = `✓ Joignable${endpoint ? ` (${endpoint})` : ""}`;
+        } else {
+          connectionStatus.textContent = `✗ Injoignable${detail ? ` — ${detail}` : ""}`;
+        }
         break;
       }
       default:

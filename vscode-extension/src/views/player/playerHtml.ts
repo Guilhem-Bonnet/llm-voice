@@ -73,7 +73,10 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
 
   <div id="title-line" class="line">
     <span id="title"></span>
-    <span id="profile"></span>
+    <span id="profile-group">
+      <span id="profile"></span>
+      <span id="voice"></span>
+    </span>
   </div>
 
   <div id="progress-line" class="line">
@@ -89,6 +92,10 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
       <div id="progress-fill"></div>
     </div>
     <span id="time">00:00</span>
+  </div>
+
+  <div id="status-line" class="line">
+    <span id="status" role="status" aria-live="polite"></span>
   </div>
 
   <div id="transport" class="line" role="toolbar" aria-label="Contrôles de lecture">

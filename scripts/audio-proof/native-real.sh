@@ -14,6 +14,10 @@
 # scripts/audio-spike/native-sink-play.sh) et d'un LLM_VOICE_CORE_STATE_DIR
 # jetable : jamais de rattachement au Core « réel » d'un VS Code ouvert.
 #
+# `--kyutai` : même chaîne avec la voix Estelle (`pocket-tts serve --language french`
+# requis), via le chemin du bouton Test, pause de 2,5 s comprise :
+# `silence_between_sounds_ms` du JSON mesure ce silence.
+#
 # Sortie 0 si le test est vert ET la transcription conforme (prove.sh, WER
 # <= 0.25, signal non silencieux) ; 1 sinon ; 2 erreur du banc. Le JSON de
 # prove.sh est imprimé sur stdout ; les journaux détaillés vont sur stderr.
@@ -54,6 +58,16 @@ if [ "${1:-}" = "--inner" ]; then
   exit 0   # le verdict du test est combiné à celui du banc plus bas
 fi
 
+if [ "${1:-}" = "--kyutai" ]; then
+  export LLM_VOICE_NATIVE_REAL_SCENARIO=kyutai
+  curl -fs -m 3 http://localhost:8000/health >/dev/null \
+    || { echo "native-real.sh: pocket-tts serve --language french doit tourner sur le port 8000" >&2; exit 2; }
+  # Cache du VS Code de test uniquement : chaque preuve exerce une vraie synthèse.
+  # `LLM_VOICE_NATIVE_REAL_KEEP_CACHE=1` conserve le cache pour prouver sa guérison.
+  [ -n "${LLM_VOICE_NATIVE_REAL_KEEP_CACHE:-}" ] \
+    || rm -rf "$EXT/.vscode-test/native-real/User/globalStorage/guilhem-bonnet.llm-voice/cache"
+fi
+
 for bin in cargo npm npx xvfb-run pactl parecord python3; do
   command -v "$bin" >/dev/null 2>&1 || { echo "native-real.sh: binaire requis introuvable : $bin" >&2; exit 2; }
 done
@@ -65,16 +79,25 @@ echo "== build de l'extension" >&2
 
 # Texte attendu = les phrases du Markdown (retours à la ligne aplatis).
 EXPECT="$(tr '\n' ' ' < "$MARKDOWN" | sed 's/  */ /g; s/ *$//')"
+if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "kyutai" ]; then
+  EXPECT="Bonjour. Voici un exemple de ma voix. Nous allons maintenant examiner un concept technique et voir comment l'expliquer clairement."
+fi
 export LLM_VOICE_NATIVE_REAL_EXIT_FILE
 LLM_VOICE_NATIVE_REAL_EXIT_FILE="$(mktemp)"
 trap 'rm -f "$LLM_VOICE_NATIVE_REAL_EXIT_FILE"' EXIT
 echo "1" > "$LLM_VOICE_NATIVE_REAL_EXIT_FILE"   # défaut : test non exécuté = échec
 
 set +e
-"$SCRIPT_DIR/prove.sh" "$(mktemp -u).wav" --expect "$EXPECT" --post-roll 3 \
-  --play-cmd "\"$SCRIPT\" --inner"
+PROVE_JSON="$("$SCRIPT_DIR/prove.sh" "$(mktemp -u).wav" --expect "$EXPECT" --post-roll 3 \
+  --play-cmd "\"$SCRIPT\" --inner")"
 PROVE_EXIT=$?
 set -e
+echo "$PROVE_JSON"
+if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "kyutai" ] && [ "$PROVE_EXIT" = "0" ]; then
+  # La pause du test dure 2,5 s : sans ce silence dans le son capté, elle n'a rien arrêté.
+  echo "$PROVE_JSON" | python3 -c 'import json,sys; sys.exit(0 if json.loads(sys.stdin.read().strip().splitlines()[-1])["silence_between_sounds_ms"] >= 2000 else 1)' \
+    || { echo "native-real.sh: la pause n'a pas laissé 2 s de silence dans la capture" >&2; PROVE_EXIT=1; }
+fi
 TEST_EXIT="$(cat "$LLM_VOICE_NATIVE_REAL_EXIT_FILE")"
 
 echo "native-real.sh: test vscode-test exit=$TEST_EXIT ; banc prove.sh exit=$PROVE_EXIT" >&2

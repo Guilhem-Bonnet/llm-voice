@@ -80,6 +80,7 @@ class SignalStats:
     duration_s: float
     rms: float
     silence_max_ms: float
+    silence_between_sounds_ms: float = 0.0
 
 
 def analyze_signal(wav_path: Path, silence_dbfs: float = -50.0, window_ms: float = 20.0) -> SignalStats:
@@ -109,6 +110,9 @@ def analyze_signal(wav_path: Path, silence_dbfs: float = -50.0, window_ms: float
 
     max_silence_windows = 0
     current_silence_windows = 0
+    # Entre le premier et le dernier son : ignore l'attente avant le premier mot et la fin de capture.
+    max_internal_windows = 0
+    heard_sound = False
     for i in range(n_windows):
         chunk = raw[i * window_bytes:(i + 1) * window_bytes]
         if not chunk:
@@ -118,17 +122,25 @@ def analyze_signal(wav_path: Path, silence_dbfs: float = -50.0, window_ms: float
             current_silence_windows += 1
             max_silence_windows = max(max_silence_windows, current_silence_windows)
         else:
+            if heard_sound:
+                max_internal_windows = max(max_internal_windows, current_silence_windows)
+            heard_sound = True
             current_silence_windows = 0
 
     silence_max_ms = max_silence_windows * window_ms
-    return SignalStats(duration_s=duration_s, rms=global_rms, silence_max_ms=silence_max_ms)
+    return SignalStats(
+        duration_s=duration_s,
+        rms=global_rms,
+        silence_max_ms=silence_max_ms,
+        silence_between_sounds_ms=max_internal_windows * window_ms,
+    )
 
 
 def transcribe(wav_path: Path, lang: str, model: str, device: str, compute_type: str) -> str:
     from faster_whisper import WhisperModel  # import tardif : dépendance du venv dédié
 
     whisper_model = WhisperModel(model, device=device, compute_type=compute_type)
-    segments, _info = whisper_model.transcribe(str(wav_path), language=lang)
+    segments, _info = whisper_model.transcribe(str(wav_path), language=lang, vad_filter=True)
     return " ".join(segment.text.strip() for segment in segments).strip()
 
 
@@ -159,6 +171,7 @@ def mcp_analyze(
         "transcription": transcription,
         "duration_s": round(stats.duration_s, 3),
         "silence_max_ms": round(stats.silence_max_ms, 1),
+        "silence_between_sounds_ms": round(stats.silence_between_sounds_ms, 1),
         "rms": round(stats.rms, 6),
         "silent": silent,
         "wer_ok": wer_ok,

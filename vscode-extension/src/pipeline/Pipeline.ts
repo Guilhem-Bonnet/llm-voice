@@ -59,6 +59,7 @@ import {
   notifyChunkInvalid,
   notifyNarratorUnavailable,
   notifyTtsUnavailable,
+  formatPlaybackFailedMessage,
   type TtsFailureDiagnostic,
   type TtsUnavailableChoice
 } from "../ui/notifications.js";
@@ -69,6 +70,7 @@ import {
   apiKeySecretKey,
   collectRemoteProviderIds,
   formatProfileQuickPickItem,
+  friendlyTtsProviderLabel,
   type BySourceSetting
 } from "../profiles/index.js";
 import {
@@ -79,6 +81,7 @@ import {
   formatAutoVoiceInstallPrompt,
   INSTALL_VOICE_ACTION_LABEL,
   installPiperVoice as runPiperInstall,
+  KYUTAI_POCKET_LOCAL_PRESET,
   nextActionFor,
   OpenAICompatibleTtsProvider,
   PIPER_LOCAL_PRESET,
@@ -97,6 +100,7 @@ import type { Logger } from "../infrastructure/logger.js";
 import type { PipelineFacade } from "../commands/PipelineFacade.js";
 import { decidePlay, decidePlayPause, type PlayDecision } from "../commands/playDecision.js";
 import { plainTextSegments, rangesOverlap } from "./textSegments.js";
+import { createInstallFreshnessCheck, installedBundlePath } from "./installFreshness.js";
 import {
   resolveNarratorConfig,
   resolveTtsConfig,
@@ -303,12 +307,23 @@ export class Pipeline implements PipelineFacade {
   private inboxTreeView: vscode.TreeView<InboxTreeItem> | undefined;
   private inboxContentProviderRegistration: vscode.Disposable | undefined;
 
+  private readonly warnIfInstallIsNewer: () => Promise<void>;
   private currentUri: vscode.Uri | undefined;
   private currentProfileLabel = "—";
+  /**
+   * Audit 2026-11-05 P1: mirrors `currentProfileLabel`, updated at every
+   * site that updates it from a profile whose `tts.providerId` is known —
+   * the only persistent, always-visible confirmation that a voice choice
+   * took effect (`statusBarModel`/`pushPlayerState`), where previously only
+   * a transitory toast confirmed it.
+   */
+  private currentVoiceLabel = "";
   /** S8.2: `profile.synchronization.mode` for the session in progress, `"highlight-scroll"` (0.1 behaviour) until a session sets it. */
   private currentSyncMode: SyncMode = "highlight-scroll";
   private lastCaptureContext: CaptureContext | undefined;
   private captureAbort: AbortController | undefined;
+  /** Set while `startInternal` prepares a reading, before the controller knows about it. */
+  private pendingStart: AbortController | undefined;
   /** CdC §52 "une seule notification par session par type" (anti-spam); reset in `start()`. */
   private readonly notificationGate = new NotificationGate();
   /**
@@ -366,6 +381,12 @@ export class Pipeline implements PipelineFacade {
 
   constructor(options: PipelineOptions) {
     this.context = options.context;
+    this.warnIfInstallIsNewer = createInstallFreshnessCheck({
+      bundlePath: installedBundlePath(this.context.extensionPath),
+      activatedAtMs: Date.now(),
+      showWarning: (message, action) => vscode.window.showWarningMessage(message, action),
+      reloadWindow: () => vscode.commands.executeCommand("workbench.action.reloadWindow")
+    });
     this.output = options.output;
     this.highlight = options.highlight;
     this.player = options.player;
@@ -540,7 +561,9 @@ export class Pipeline implements PipelineFacade {
     this.captureAbort?.abort();
     const abort = new AbortController();
     this.captureAbort = abort;
+    this.pendingStart = abort;
     this.notificationGate.reset();
+    void this.warnIfInstallIsNewer();
 
     try {
       const source = this.sources.find((candidate) => candidate.canCapture(captureContext));
@@ -552,6 +575,7 @@ export class Pipeline implements PipelineFacade {
       const doc = await source.capture(captureContext, abort.signal);
       const profile = await this.profiles.getSelected(doc.sourceType, this.bySourceSettings());
       this.currentProfileLabel = profile.label;
+      this.currentVoiceLabel = friendlyTtsProviderLabel(profile.tts.providerId);
       this.currentSyncMode = profile.synchronization?.mode ?? "highlight-scroll";
 
       // S8.3 (no Docker by default): a fresh install with no local engine
@@ -587,6 +611,9 @@ export class Pipeline implements PipelineFacade {
       // CdC §51 "Loading": a still-warming-up TTS server gets a grace period
       // instead of an immediate failure on the very first synthesis.
       await this.waitForTtsReady(tts, abort.signal);
+      if (abort.signal.aborted) {
+        return;
+      }
       const sink = this.sinkOverride ?? this.player.playbackSink;
 
       this.currentUri = doc.uri !== undefined ? vscode.Uri.parse(doc.uri) : undefined;
@@ -600,6 +627,10 @@ export class Pipeline implements PipelineFacade {
       // voice on their own. Never persisted to `profiles.json` — a
       // session-scoped default only, exactly like `forceFaithful` above.
       const effectiveProfile = await this.withDefaultVoice(profile, tts, abort.signal);
+      if (abort.signal.aborted) {
+        return;
+      }
+      this.pendingStart = undefined;
       await this.controller.start({
         segments: build.segments,
         profile: effectiveProfile,
@@ -608,8 +639,16 @@ export class Pipeline implements PipelineFacade {
         sealed: true
       });
     } catch (error) {
+      // A reading cancelled while preparing unwinds through here: the user asked for it.
+      if (abort.signal.aborted) {
+        return;
+      }
       this.output.error("start failed", { error: messageOf(error) });
       void vscode.window.showErrorMessage(`LLM Voice : ${messageOf(error)}`);
+    } finally {
+      if (this.pendingStart === abort) {
+        this.pendingStart = undefined;
+      }
     }
   }
 
@@ -780,8 +819,17 @@ export class Pipeline implements PipelineFacade {
 
   /** S7.3: same "no silent no-op" treatment as `pause()`. */
   async stop(): Promise<void> {
+    // The controller stays idle while a reading is being prepared: without
+    // this, a stop would answer "nothing to stop" and the reading would start.
+    const pendingStart = this.pendingStart;
+    if (pendingStart !== undefined) {
+      this.pendingStart = undefined;
+      pendingStart.abort();
+    }
     if (this.controller.getState() === "idle") {
-      void vscode.window.showInformationMessage("LLM Voice : rien à arrêter.");
+      if (pendingStart === undefined) {
+        void vscode.window.showInformationMessage("LLM Voice : rien à arrêter.");
+      }
       return;
     }
     this.controller.stop();
@@ -832,6 +880,7 @@ export class Pipeline implements PipelineFacade {
     }
     await this.profiles.select(id);
     this.currentProfileLabel = next.label;
+    this.currentVoiceLabel = friendlyTtsProviderLabel(next.tts.providerId);
     await this.refreshLocalModeBadge();
   }
 
@@ -970,6 +1019,9 @@ export class Pipeline implements PipelineFacade {
     this.currentResolvedTts = await this.resolveTtsProviderConfig(profile);
     const sink = this.sinkOverride ?? this.player.playbackSink;
     this.currentProfileLabel = profile.label;
+    this.currentVoiceLabel = friendlyTtsProviderLabel(profile.tts.providerId);
+    this.notificationGate.clear("playbackFailed");
+    void this.warnIfInstallIsNewer();
     this.player.reveal();
     this.beginPerfSession();
     // Bug fix (voice-selection-not-applied / infinite loop): same
@@ -1001,6 +1053,7 @@ export class Pipeline implements PipelineFacade {
       tts: { ...current.tts, voice: voiceId }
     }));
     this.currentProfileLabel = updated.label;
+    this.currentVoiceLabel = friendlyTtsProviderLabel(updated.tts.providerId);
     return updated;
   }
 
@@ -1016,6 +1069,11 @@ export class Pipeline implements PipelineFacade {
         tts: { ...current.tts, voice: picked.id }
       }));
       this.currentProfileLabel = updated.label;
+      this.currentVoiceLabel = friendlyTtsProviderLabel(updated.tts.providerId);
+      // Same fix as `applyVoiceTierChoice` just above: without this, the
+      // toast stayed the only visible effect of this command too.
+      await this.refreshLocalModeBadge();
+      this.pushPlayerState();
       void vscode.window.showInformationMessage(
         `LLM Voice : voix « ${picked.label} » appliquée à « ${updated.label} ».`
       );
@@ -1107,6 +1165,7 @@ export class Pipeline implements PipelineFacade {
           tts: { ...current.tts, referenceAudio: absolutePath }
         }));
         this.currentProfileLabel = updated.label;
+        this.currentVoiceLabel = friendlyTtsProviderLabel(updated.tts.providerId);
       },
       previewCurrentProfile: async () => {
         const profile = await this.profiles.getSelected();
@@ -1133,7 +1192,8 @@ export class Pipeline implements PipelineFacade {
       deleteProfile: (profileId) => this.deleteProfileById(profileId),
       testProfile: (profile) => this.speakTestText(profile),
       listParameters: (profile) => this.ttsParametersFor(profile),
-      pickVoice: (profile) => this.pickVoiceForProfile(profile)
+      pickVoice: (profile) => this.pickVoiceForProfile(profile),
+      checkHealth: (profile) => this.checkTtsHealth(profile)
     };
     await ProfileEditorPanel.open(deps, this.context.extensionUri, id);
   }
@@ -1176,6 +1236,19 @@ export class Pipeline implements PipelineFacade {
     const tts = await this.ttsFor(profile);
     const capabilities = await tts.getCapabilities();
     return capabilities.parameters;
+  }
+
+  /**
+   * Real-user bug (2026-11-05): `ProfileEditorDeps.checkHealth` — probes
+   * `profile`'s resolved TTS provider the same way everything else here
+   * does (`ttsFor` + `.health()`, ADR-005), but from the *unsaved* form, so
+   * a provider/Base URL mismatch shows up in the editor itself instead of
+   * only surfacing as a "fetch failed" once the user tries to actually
+   * speak something.
+   */
+  private async checkTtsHealth(profile: VoiceProfile): Promise<ProviderHealth> {
+    const tts = await this.ttsFor(profile);
+    return tts.health();
   }
 
   /** `LLM Voice: Provider Status` (CdC §51). */
@@ -1348,6 +1421,7 @@ export class Pipeline implements PipelineFacade {
     try {
       const profile = await this.profiles.getSelected();
       this.currentProfileLabel = profile.label;
+      this.currentVoiceLabel = friendlyTtsProviderLabel(profile.tts.providerId);
       await this.computeLocalModeResult(profile);
     } catch (error) {
       this.output.error("failed to refresh local mode badge", { error: messageOf(error) });
@@ -1449,6 +1523,19 @@ export class Pipeline implements PipelineFacade {
       this.autoTtsCache = undefined;
       void vscode.window.showInformationMessage(
         "LLM Voice : voix Piper installée et utilisée automatiquement pour la lecture (llmVoice.tts.provider = auto)."
+      );
+      return;
+    }
+    if (outcome.status === "already-installed") {
+      // Real-user bug fix (2026-11-05): before this status existed, this
+      // branch didn't exist either — every call re-downloaded, forever.
+      // Same cache drop as "installed" (Sentinel review): without it, a
+      // stale `autoTtsCache` from before Piper was ever detected could
+      // still answer "déjà installée et prête" while synthesis kept using
+      // whatever "auto" resolved to up to HEALTH_CACHE_TTL_MS ago.
+      this.autoTtsCache = undefined;
+      void vscode.window.showInformationMessage(
+        "LLM Voice : la voix française (Piper) est déjà installée et prête à l'emploi."
       );
       return;
     }
@@ -1685,8 +1772,20 @@ export class Pipeline implements PipelineFacade {
     // an id string — `presetKindForProviderId` is the single place that maps
     // one to the other; anything unrecognised stays the generic OpenAI-
     // compatible client (enterprise/cloud tiers 2-3, ADR-009).
+    const ttsKind = presetKindForProviderId(resolved.providerId);
+    // ADR-016 §2: `kyutai-pocket`'s `languages` is never detected (no server
+    // endpoint for it) — it only ever reflects what `KYUTAI_POCKET_LOCAL_PRESET`
+    // declares the user's own `pocket-tts serve --language ...` was started
+    // with. There is exactly one preset of this kind today (opt-in, no
+    // per-profile override yet), so this direct reference is exact, not a
+    // guess; a second `kyutai-pocket` preset would need this resolved by id
+    // instead.
     const provider = createTtsProvider(
-      { kind: presetKindForProviderId(resolved.providerId), baseUrl: resolved.baseUrl },
+      {
+        kind: ttsKind,
+        baseUrl: resolved.baseUrl,
+        ...(ttsKind === "kyutai-pocket" ? { languages: KYUTAI_POCKET_LOCAL_PRESET.languages } : {})
+      },
       {
         id: key,
         egress: this.egress,
@@ -1918,6 +2017,17 @@ export class Pipeline implements PipelineFacade {
       tts: { ...binding }
     }));
     this.currentProfileLabel = updated.label;
+    this.currentVoiceLabel = friendlyTtsProviderLabel(updated.tts.providerId);
+    // Real-user bug found by testing GAO-impl-mente-l-001 (2026-11-05):
+    // the field above was updated, but nothing told the player panel or the
+    // status bar to actually re-render — the toast below stayed the only
+    // visible effect, exactly the original complaint this card was meant to
+    // fix. `refreshLocalModeBadge()` is the established pattern that already
+    // does this after a profile-affecting change (`selectProfileById`);
+    // `pushPlayerState()` additionally updates the player panel even before
+    // any reading session has started, so the choice is visible immediately.
+    await this.refreshLocalModeBadge();
+    this.pushPlayerState();
     void vscode.window.showInformationMessage(
       `LLM Voice : voix « ${titleCaseProviderId(binding.providerId)} » appliquée au profil « ${updated.label} ».`
     );
@@ -2070,6 +2180,10 @@ export class Pipeline implements PipelineFacade {
   private async handleChunkError(info: PlaybackErrorInfo): Promise<ChunkErrorDecision> {
     this.output.warn("chunk failed", { chunkId: info.chunk.id, origin: info.origin, index: info.index });
     if (info.origin !== "synthesis") {
+      if (this.notificationGate.shouldNotify("playbackFailed")) {
+        this.notificationGate.markShown("playbackFailed");
+        void vscode.window.showErrorMessage(formatPlaybackFailedMessage(info.message));
+      }
       return "skip";
     }
     this.statusBar.update({ ...this.statusBarModel("error") });
@@ -2305,7 +2419,8 @@ export class Pipeline implements PipelineFacade {
       profileLabel: this.currentProfileLabel,
       positionMs: this.controller.getPositionMs(),
       isLocalOnly: this.cachedLocalModeResult?.badge === "local",
-      isRemoteProvider: remoteCheck?.status === "fail"
+      isRemoteProvider: remoteCheck?.status === "fail",
+      voiceLabel: this.currentVoiceLabel
     };
   }
 
@@ -2322,6 +2437,7 @@ export class Pipeline implements PipelineFacade {
       index: this.controller.getCurrentIndex(),
       total: chunks.length,
       profile: this.currentProfileLabel,
+      voice: this.currentVoiceLabel,
       title: this.currentUri?.path.split("/").pop() ?? "",
       state: this.controller.getState()
     });
