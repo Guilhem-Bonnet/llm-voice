@@ -1,0 +1,207 @@
+$schema: "grimoire-agentic-standard-tool-registry/v1"
+metadata:
+  project: "TTS-Voice"
+  generated_by: "grimoire standard init"
+  purpose: "Tout outil est inscrit avec son risque et ses permissions ; toute intégration MCP est un contrat ; toute erreur d'outil devient une preuve ou un incident."
+
+# Outils que les agents peuvent appeler. Les deux premiers existent sur tout hôte.
+tools:
+  - id: TOOL-001
+    name: shell
+    kind: shell               # shell | file | search | network | browser | mcp | model
+    risk: élevé               # faible | moyen | élevé | critique
+    permissions: [read, execute]   # read | write | execute | network | external
+    owner: "guilhem-bonnet"
+  - id: TOOL-002
+    name: file-edit
+    kind: file
+    risk: moyen
+    permissions: [read, write]
+    owner: "guilhem-bonnet"
+  - id: TOOL-003
+    name: code-search
+    kind: search
+    risk: faible
+    permissions: [read]
+    owner: "guilhem-bonnet"
+  - id: TOOL-004
+    name: git-gh
+    kind: network
+    risk: élevé
+    permissions: [read, write, network, external]
+    owner: "guilhem-bonnet"
+    # push, merge de PR et release GitHub demandent une approbation par session (policies.yaml)
+  - id: TOOL-005
+    name: npm-vitest-vsce
+    kind: shell
+    risk: moyen
+    permissions: [read, write, execute, network]
+    owner: "guilhem-bonnet"
+    # build/tests/packaging de l'extension ; publication Marketplace hors périmètre (pas de VSCE_PAT)
+  - id: TOOL-006
+    name: claude-subagent
+    kind: model
+    risk: moyen
+    permissions: [read, write, execute]
+    owner: "guilhem-bonnet"
+    # sous-agents Grimoire dispatchés avec `model:` explicite (registre llm-provider-registry.yaml)
+
+# Serveurs MCP : owner, scopes minimaux, timeout, journalisation.
+mcp_servers:
+  - id: MCP-001
+    server: "grimoire"
+    owner: "guilhem-bonnet"
+    scopes: [lecture-projet, memoire-projet, taches, standard, hotes]
+    timeout_s: 30
+    logging:
+      requests: true
+      errors: true
+      secrets_masked: true
+    environment: local
+    risk: moyen
+    human_validation: "écriture mémoire durable, changement de statut de tâche, ajout d'agent"
+    out_of_scope: false
+    out_of_scope_reason: ""
+  - id: MCP-002
+    server: "hostinger-agency-hosting"
+    owner: "guilhem-bonnet"
+    scopes: [aucun-hors-perimetre]   # aucun appel autorisé depuis ce projet
+    timeout_s: 30
+    logging:
+      requests: true
+      errors: true
+      secrets_masked: true
+    environment: externe
+    risk: élevé
+    human_validation: "toujours"
+    out_of_scope: true
+    out_of_scope_reason: "Serveur MCP du compte utilisateur (~/.claude.json), sans rapport avec LLM Voice : jamais appelé depuis ce projet, aucune donnée du projet ne lui est envoyée."
+  - id: MCP-003
+    server: "hostinger-billing"
+    owner: "guilhem-bonnet"
+    scopes: [aucun-hors-perimetre]   # aucun appel autorisé depuis ce projet
+    timeout_s: 30
+    logging:
+      requests: true
+      errors: true
+      secrets_masked: true
+    environment: externe
+    risk: élevé
+    human_validation: "toujours"
+    out_of_scope: true
+    out_of_scope_reason: "Serveur MCP du compte utilisateur (~/.claude.json), sans rapport avec LLM Voice : jamais appelé depuis ce projet, aucune donnée du projet ne lui est envoyée."
+  - id: MCP-004
+    server: "hostinger-dns"
+    owner: "guilhem-bonnet"
+    scopes: [aucun-hors-perimetre]   # aucun appel autorisé depuis ce projet
+    timeout_s: 30
+    logging:
+      requests: true
+      errors: true
+      secrets_masked: true
+    environment: externe
+    risk: élevé
+    human_validation: "toujours"
+    out_of_scope: true
+    out_of_scope_reason: "Serveur MCP du compte utilisateur (~/.claude.json), sans rapport avec LLM Voice : jamais appelé depuis ce projet, aucune donnée du projet ne lui est envoyée."
+  - id: MCP-005
+    server: "hostinger-domains"
+    owner: "guilhem-bonnet"
+    scopes: [aucun-hors-perimetre]   # aucun appel autorisé depuis ce projet
+    timeout_s: 30
+    logging:
+      requests: true
+      errors: true
+      secrets_masked: true
+    environment: externe
+    risk: élevé
+    human_validation: "toujours"
+    out_of_scope: true
+    out_of_scope_reason: "Serveur MCP du compte utilisateur (~/.claude.json), sans rapport avec LLM Voice : jamais appelé depuis ce projet, aucune donnée du projet ne lui est envoyée."
+  - id: MCP-006
+    server: "hostinger-hosting"
+    owner: "guilhem-bonnet"
+    scopes: [aucun-hors-perimetre]   # aucun appel autorisé depuis ce projet
+    timeout_s: 30
+    logging:
+      requests: true
+      errors: true
+      secrets_masked: true
+    environment: externe
+    risk: élevé
+    human_validation: "toujours"
+    out_of_scope: true
+    out_of_scope_reason: "Serveur MCP du compte utilisateur (~/.claude.json), sans rapport avec LLM Voice : jamais appelé depuis ce projet, aucune donnée du projet ne lui est envoyée."
+  - id: MCP-007
+    server: "hostinger-reach"
+    owner: "guilhem-bonnet"
+    scopes: [aucun-hors-perimetre]   # aucun appel autorisé depuis ce projet
+    timeout_s: 30
+    logging:
+      requests: true
+      errors: true
+      secrets_masked: true
+    environment: externe
+    risk: élevé
+    human_validation: "toujours"
+    out_of_scope: true
+    out_of_scope_reason: "Serveur MCP du compte utilisateur (~/.claude.json), sans rapport avec LLM Voice : jamais appelé depuis ce projet, aucune donnée du projet ne lui est envoyée."
+  - id: MCP-008
+    server: "hostinger-vps"
+    owner: "guilhem-bonnet"
+    scopes: [aucun-hors-perimetre]   # aucun appel autorisé depuis ce projet
+    timeout_s: 30
+    logging:
+      requests: true
+      errors: true
+      secrets_masked: true
+    environment: externe
+    risk: élevé
+    human_validation: "toujours"
+    out_of_scope: true
+    out_of_scope_reason: "Serveur MCP du compte utilisateur (~/.claude.json), sans rapport avec LLM Voice : jamais appelé depuis ce projet, aucune donnée du projet ne lui est envoyée."
+  - id: MCP-009
+    server: "hostinger-wordpress"
+    owner: "guilhem-bonnet"
+    scopes: [aucun-hors-perimetre]   # aucun appel autorisé depuis ce projet
+    timeout_s: 30
+    logging:
+      requests: true
+      errors: true
+      secrets_masked: true
+    environment: externe
+    risk: élevé
+    human_validation: "toujours"
+    out_of_scope: true
+    out_of_scope_reason: "Serveur MCP du compte utilisateur (~/.claude.json), sans rapport avec LLM Voice : jamais appelé depuis ce projet, aucune donnée du projet ne lui est envoyée."
+# - id: MCP-001
+#   server: ""
+#   owner: ""
+#   scopes: []              # allowlist minimale : lecture, écriture, cibles
+#   timeout_s: 30
+#   logging:
+#     requests: true
+#     errors: true
+#     secrets_masked: true
+#   environment: local      # local | staging | production | externe
+#   risk: moyen
+#   human_validation: "écriture, production ou données sensibles"
+#   # Un serveur volontairement hors périmètre se déclare, il ne s'omet pas :
+#   # `grimoire standard verify` compare ce registre aux serveurs réellement
+#   # résolus (.mcp.json du projet, ~/.claude.json, ~/.claude/settings.json) et
+#   # refuse aussi bien l'absent que l'exemption sans motif.
+#   out_of_scope: false
+#   out_of_scope_reason: ""
+
+# Erreurs d'outil : preuve par défaut, incident à partir d'une gravité.
+error_capture:
+  policy: evidence            # evidence | incident
+  evidence_target: "_grimoire-output/evidence/{task-id}/evidence-pack.md"
+  incident_from_severity: élevée
+  incident_target: "_grimoire/standard/incident-registry.yaml"
+
+allowed:
+  kinds: [shell, file, search, network, browser, mcp, model]
+  risks: [faible, moyen, élevé, critique]
+  permissions: [read, write, execute, network, external]
+  policies: [evidence, incident]

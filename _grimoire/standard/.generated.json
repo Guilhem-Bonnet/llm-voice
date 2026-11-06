@@ -3,8 +3,13 @@
  "artifacts": {
   "_grimoire-output/evidence/bootstrap/acceptance-record.md": "ab42b1cb598b541800db471cdc25df7487b33a808ae9d19663020d1d03b9ac64",
   "_grimoire-output/evidence/bootstrap/claim-ledger.md": "f5dd59cc2eba171379b42ec6864839b8fd0a46ee6a62286b14f8f4e9d4c31c6e",
+  "_grimoire/standard/compliance-declaration.md": "0432b902895857b3fbdcfe4552bdef9ccbeb3179d8030b7fcff4b331fa3b5e8a",
+  "_grimoire/standard/incident-registry.yaml": "ebaca4b820afa74bbeb4deadb75c4773e99d9e09384317aff11b3bc2396def13",
+  "_grimoire/standard/llm-provider-registry.yaml": "3f2c747e8db984997e242922112283f98b48e2052ee19ed7d80122e07de3e466",
   "_grimoire/standard/mission-brief.md": "e440ecd06f19ccf26364e85810f17fc011df289d753a08d66f5d53ed062fb1c4",
   "_grimoire/standard/retention-registry.yaml": "aa9e92272b115d5c38790e3042743cca07b0a175ff956d68399f4db3b05f19ed",
-  "_grimoire/standard/standard-profile.yaml": "e7c1c80c037569271730b7ce14ce0175950fc0029edc183cf469c4b2f48c99e0"
+  "_grimoire/standard/risk-control-matrix.yaml": "f0fa02af1f21d8294ef455b5f735fa8d4d2bb69c7f2105625b4dd97dd04a2ed7",
+  "_grimoire/standard/standard-profile.yaml": "b0e7e6e9e3c944e9cd9e76a89b247d2546cb614dd1b31713cbc5854b69dc559b",
+  "_grimoire/standard/tool-registry.yaml": "2d80ef1f01977e038479aa937f6d985db0081e055fb62a2ccaefc9b23bc0d756"
  }
 }

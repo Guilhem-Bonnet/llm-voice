@@ -16,6 +16,7 @@ user:
   name: "guilhem-bonnet"
   language: "Français"
   skill_level: "expert"
+  document_language: "Français"
 
 memory:
   backend: "weaviate-server"
@@ -46,3 +47,9 @@ agents:
   custom_agents: []
 
 installed_archetypes: ["infra-ops", "platform-engineering", "agentic-standard", "fix-loop"]
+
+# Lanceur de tests déclaré pour les gates de preuve (le package.json vit sous vscode-extension/,
+# hors racine, donc non détecté automatiquement). Ajouté le 2026-09-27.
+needs:
+  commands:
+    test-runner: "npm --prefix vscode-extension run test:unit"

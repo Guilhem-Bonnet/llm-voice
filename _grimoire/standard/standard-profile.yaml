@@ -12,18 +12,31 @@ artifacts:
   type: acceptance_record
 - path: _grimoire/standard/retention-registry.yaml
   type: retention_registry
-display_name: Starter
-generated_at: '2026-09-08T16:03:54.994692+00:00'
+- path: _grimoire/standard/tool-registry.yaml
+  type: tool_registry
+- path: _grimoire/standard/incident-registry.yaml
+  type: incident_registry
+- path: _grimoire/standard/risk-control-matrix.yaml
+  type: risk_control_matrix
+- path: _grimoire/standard/llm-provider-registry.yaml
+  type: llm_provider_registry
+- path: _grimoire/standard/compliance-declaration.md
+  type: compliance_declaration
+display_name: Controlled
+generated_at: '2026-09-13T05:45:59.570285+00:00'
 mapped_capabilities:
-- evidence-gated-fsm
-- tool-blast-radius-limiter
-- workflow-state-manifest
+- provider-routing-contract
+- guardrail-contract
+- tool-mediation-gate
+- prompt-injection-firewall
+- remote-hygiene-guard
+- prompt-version-observability
 minimum_evidence:
-- Selected profile and task state are declared.
-- Tools and writable paths are bounded.
-- Completion includes validation evidence or an explicit non-applicability note.
-profile: starter
-project: LLM Voice
+- Every provider/model call is declared in the provider registry.
+- Guardrails define allow, deny, and escalation behavior.
+- Prompt, instruction, and capability changes are traceable.
+profile: controlled
+project: TTS-Voice
 required_artifacts:
 - mission_brief
 - task_envelope
@@ -31,6 +44,11 @@ required_artifacts:
 - claim_ledger
 - acceptance_record
 - retention_registry
+- tool_registry
+- incident_registry
+- risk_control_matrix
+- llm_provider_registry
+- compliance_declaration
 task_id: bootstrap
 upstream_standard:
   entrypoint: docs/norme-structure-agentique.md

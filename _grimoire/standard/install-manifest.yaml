@@ -1,0 +1,14 @@
+$schema: "grimoire-agentic-standard-install-manifest/v1"
+metadata:
+  project: "TTS-Voice"
+  generated_by: "grimoire standard init"
+  task_id: "bootstrap"
+  profile: controlled
+selection:
+  needs: [provider-neutral]
+  patterns: [provider-routing-contract]
+  memory_capabilities: []
+install:
+  tech_extras: [ollama]
+  pip_target: "grimoire-kit[ollama]"
+  pip_command: "pip install 'grimoire-kit[ollama]'"

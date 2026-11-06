@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreCompact": [
+      {
+        "type": "command",
+        "command": "grimoire-hook --host copilot --event PreCompact",
+        "timeout": 30
+      }
+    ]
+  }
+}

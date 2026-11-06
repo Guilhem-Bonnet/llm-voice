@@ -18,24 +18,15 @@ lançant une commande.
 
 | Persona | Rôle | Définition | Outils |
 |---|---|---|---|
-| `agent-optimizer` | Agent Quality Assurance & Optimizer — Sentinel | `_grimoire/kit/agents/agent-optimizer.md` | read, search, edit, execute |
-| `art-director` | Art Director — Visual identity, prompt aesthetics, output formatting | `_grimoire/kit/agents/art-director.md` | read, search, edit, execute |
-| `backend-engineer` | Backend Engineer — Stack | `_grimoire/kit/agents/backend-engineer.md` | read, search, edit, execute |
-| `backup-dr-specialist` | Backup & Disaster Recovery Specialist — Phoenix | `_grimoire/kit/agents/backup-dr-specialist.md` | read, search, edit, execute |
-| `concierge` (entrée) | Concierge — Triage, clarification, routage intelligent vers l'agent adapté | `_grimoire/kit/agents/concierge.md` | read, search, edit, execute |
-| `creative-toolsmith` | Creative Toolsmith — Tool design, framework extension, automation patterns | `_grimoire/kit/agents/creative-toolsmith.md` | read, search, edit, execute |
-| `deploy-orchestrator` | Deploy Orchestrator — Convoy | `_grimoire/kit/agents/deploy-orchestrator.md` | read, search, edit, execute |
-| `fix-loop-orchestrator` | Closed-Loop Fix Orchestrator — zéro 'done' sans preuve d'exécution réelle | `_grimoire/kit/agents/fix-loop-orchestrator.md` | read, search, edit, execute |
-| `k8s-navigator` | Kubernetes & GitOps Navigator — Helm | `_grimoire/kit/agents/k8s-navigator.md` | read, search, edit, execute |
-| `memory-keeper` | Memory Keeper & Knowledge Quality — Mnemo | `_grimoire/kit/agents/memory-keeper.md` | read, search, edit, execute |
-| `monitoring-specialist` | Monitoring & Observability Specialist — Hawk | `_grimoire/kit/agents/monitoring-specialist.md` | read, search, edit, execute |
-| `ops-engineer` | Infrastructure & DevOps Engineer — Forge | `_grimoire/kit/agents/ops-engineer.md` | read, search, edit, execute |
-| `pipeline-architect` | CI/CD & Automation Specialist — Flow | `_grimoire/kit/agents/pipeline-architect.md` | read, search, edit, execute |
-| `platform-architect` | Platform Architect — Archie | `_grimoire/kit/agents/platform-architect.md` | read, search, edit |
-| `project-navigator` | Project Knowledge Curator & Navigator — Atlas | `_grimoire/kit/agents/project-navigator.md` | read, search, edit, execute |
-| `reliability-engineer` | Reliability Engineer (SRE) — Guardian | `_grimoire/kit/agents/reliability-engineer.md` | read, search, edit, execute |
-| `security-hardener` | Security & Compliance Specialist — Vault | `_grimoire/kit/agents/security-hardener.md` | read, search, edit, execute |
-| `systems-debugger` | Systems Debugger & Linux Internals — Probe | `_grimoire/kit/agents/systems-debugger.md` | read, search, edit, execute |
+| `agent-optimizer` | Agent Quality Assurance & Optimizer — Sentinel — généraliste meta : arbitrage d'agents/workflows, plus les skills attachés meta-art-direction, meta-toolsmithing, meta-memory-quality, meta-project-navigation | `_grimoire/kit/agents/agent-optimizer.md` | read, search, edit |
+| `backend-engineer` | Backend Engineer généraliste — Stack : implémentation applicative, plus les skills attachés platform-deploy-release et platform-reliability-sre | `_grimoire/kit/agents/backend-engineer.md` | read, edit, execute |
+| `concierge` (entrée) | Concierge — Triage, clarification, routage intelligent vers l'agent adapté | `_grimoire/kit/agents/concierge.md` | read, search |
+| `fix-loop-orchestrator` | Closed-Loop Fix Orchestrator — zéro 'done' sans preuve d'exécution réelle | `_grimoire/kit/agents/fix-loop-orchestrator.md` | read, execute |
+| `monitoring-specialist` | Monitoring & Observability Specialist — Hawk | `_grimoire/kit/agents/monitoring-specialist.md` | read, edit |
+| `ops-engineer` | Infrastructure & DevOps Engineer généraliste — Forge | `_grimoire/kit/agents/ops-engineer.md` | read, edit, execute |
+| `platform-architect` | Platform Architect — Archie | `_grimoire/kit/agents/platform-architect.md` | read, edit |
+| `security-auditor` | Security Auditor — cartographie des surfaces d'entrée, fuzzing, triage de plantages, analyse binaire cadrée | `_grimoire/kit/agents/security-auditor.md` | read, execute |
+| `systems-debugger` | Systems Debugger & Linux Internals — Probe | `_grimoire/kit/agents/systems-debugger.md` | read, execute |
 
 Activer une persona = lire sa définition en entier et l'appliquer, sans la
 résumer. Aucun contexte n'est isolé sur cet hôte : la persona s'ajoute à la
@@ -46,7 +37,18 @@ conversation courante au lieu de s'exécuter à part.
 | Compétence | Quand l'utiliser | Contenu |
 |---|---|---|
 | `grimoire-agent-dispatch` | Choisir et activer la bonne persona Grimoire du projet. À utiliser quand une demande relève clairement d'un rôle (architecture, tests, documentation, sécurité, produit) plutôt que d'une exécution directe, ou quand l'utilisateur demande un avis spécialisé. | `_grimoire/hosts/skills/grimoire-agent-dispatch.md` |
+| `grimoire-evidence` | Protocole de preuve du standard agentique Grimoire. À utiliser dans un projet enrôlé (présence de _grimoire/standard/) dès qu'une tâche modifie du code, de la configuration ou de l'infrastructure : avant la première modification, pendant le travail, et avant toute conclusion. | `_grimoire/hosts/skills/grimoire-evidence.md` |
 | `grimoire-memory` | Mémoire projet Grimoire : retrouver une décision passée, un incident ou une convention, et consigner ce qui doit survivre à la session. À utiliser avant de reprendre un sujet déjà traité, et après toute décision non déductible du code. | `_grimoire/hosts/skills/grimoire-memory.md` |
+| `infra-backup-dr` | Concevoir, tester ou auditer une stratégie de sauvegarde et de reprise après sinistre : snapshots Proxmox, backups Longhorn, plan DR, rétention, sécurisation des clés. À utiliser dès qu'une opération touche des snapshots, une politique de rétention ou une restauration — pas pour l'exploitation d'infrastructure courante sans enjeu backup. | `_grimoire/hosts/skills/infra-backup-dr.md` |
+| `infra-k8s-gitops` | Naviguer, diagnostiquer ou faire évoluer des ressources Kubernetes et des déploiements GitOps (FluxCD, Longhorn, Helm/Kustomize). À utiliser dès qu'une demande porte sur un manifest K8s, une réconciliation FluxCD, un pod en échec ou une migration Compose → K3s — pas pour l'infrastructure hors Kubernetes. | `_grimoire/hosts/skills/infra-k8s-gitops.md` |
+| `infra-pipeline-cicd` | Concevoir, modifier ou déboguer un pipeline CI/CD (GitHub Actions, Taskfile) et son automatisation. À utiliser quand la demande porte sur un workflow, une task go-task, l'orchestration Terraform→Ansible→Docker, ou un échec CI/CD — pas pour l'exploitation d'infrastructure hors pipeline. | `_grimoire/hosts/skills/infra-pipeline-cicd.md` |
+| `infra-security-hardening` | Durcir la sécurité ou vérifier la conformité d'une infrastructure : secrets SOPS/age, TLS, firewall/fail2ban, hardening CIS. À utiliser dès qu'une modification touche des secrets, des règles firewall, du TLS ou une politique de conformité — pas pour du fuzzing ou de l'analyse binaire cadrée. | `_grimoire/hosts/skills/infra-security-hardening.md` |
+| `meta-art-direction` | Concevoir une identité visuelle d'agent (persona, ton, icône), un template de sortie (rapport/dashboard/checklist) ou une palette d'icônes cohérente pour le projet. À utiliser quand une nouvelle persona doit être créée ou qu'un format de sortie manque de cohérence — pas pour de la relecture qualité ordinaire d'un agent (voir l'arbitrage d'agent-optimizer). | `_grimoire/hosts/skills/meta-art-direction.md` |
+| `meta-memory-quality` | Auditer à la demande la qualité de la mémoire du projet : contradictions, doublons de learnings, fraîcheur, drift. À utiliser pour un audit ponctuel avec enjeu de qualité — la maintenance de routine (pruning, archivage) tourne déjà sans agent, via les hooks du cercle vertueux. | `_grimoire/hosts/skills/meta-memory-quality.md` |
+| `meta-project-navigation` | Cartographier ou retrouver une connaissance dispersée du projet (services, ports, configs, ADRs) et arbitrer `shared-context.md` quand deux sources se contredisent. À utiliser quand la connaissance cherchée n'est pas déjà indexée et nommée — sinon une recherche directe suffit. | `_grimoire/hosts/skills/meta-project-navigation.md` |
+| `meta-toolsmithing` | Créer, auditer ou refactorer un outil framework Grimoire (CLI, module, pattern d'automatisation sous framework/tools/). À utiliser dès qu'un outil doit être forgé, testé triple-interface (CLI/MCP/module) ou découpé — pas pour créer un agent (arbitrage d'agent-optimizer) ni un workflow métier. | `_grimoire/hosts/skills/meta-toolsmithing.md` |
+| `platform-deploy-release` | Orchestrer un déploiement multi-service ou faire évoluer la stratégie de release (pipeline CI/CD, rollout progressif, rollback, containerisation, Helm, feature flags). À utiliser quand la demande porte sur le déploiement ou la release — pas pour le développement du code applicatif lui-même (voir backend-engineer) ni pour la fiabilité en régime établi (skill platform-reliability-sre). | `_grimoire/hosts/skills/platform-deploy-release.md` |
+| `platform-reliability-sre` | Définir des SLO/SLI, instrumenter l'observabilité, diagnostiquer un incident de fiabilité et rédiger le post-mortem/runbook associé. À utiliser pour la fiabilité en régime établi — pas pour la mise en place initiale de l'observabilité sans incident (voir monitoring-specialist de l'archétype infra-ops) ni pour le déploiement lui-même (skill platform-deploy-release). | `_grimoire/hosts/skills/platform-reliability-sre.md` |
 
 Aucun chargement automatique ici : lire le fichier quand la situation décrite se présente.
 
@@ -57,12 +59,15 @@ Aucun chargement automatique ici : lire le fichier quand la situation décrite s
 | `grimoire host run grimoire-changelog` | Génère un CHANGELOG structuré depuis git history et les décisions Grimoire |
 | `grimoire host run grimoire-doctor [--fix]` | Diagnostiquer et réparer l'installation Grimoire du projet |
 | `grimoire host run grimoire-dream` | Dream Mode — consolidation hors-session, patterns cross-domaine, insights émergents |
+| `grimoire host run grimoire-gate [task-id]` | Vérifier les gates de preuve de la tâche courante |
 | `grimoire host run grimoire-health-check` | Health check complet du projet Grimoire — agents, mémoire, config, intégrité |
 | `grimoire host run grimoire-pre-push` | Validation pre-push — intégrité agents, qualité code, mémoire, tests si disponibles |
+| `grimoire host run grimoire-proof [task-id]` | Compléter le pack de preuve de la tâche courante |
 | `grimoire host run grimoire-recall <sujet>` | Chercher une décision, un incident ou une convention en mémoire projet |
 | `grimoire host run grimoire-self-heal` | Auto-diagnostic et réparation Grimoire — identifie et corrige les problèmes courants |
 | `grimoire host run grimoire-session-bootstrap` | Bootstrap une nouvelle session Grimoire — contexte projet, historique, état git, santé |
 | `grimoire host run grimoire-status` | Tableau de bord Grimoire — agents actifs, mémoire, activité récente, état projet |
+| `grimoire host run grimoire-verify` | Vérification complète du standard agentique et score de conformité |
 
 ## MCP
 
@@ -72,6 +77,20 @@ Serveurs déclarés dans `.mcp.json` : `grimoire`.
 
 - **session_start** — Directive de session — mécanisme mesuré 40/40 contre 0/40 sans lui (campagne 2026-07-09).
 - **pre_tool_use** — Refus des mutations destructrices et des accès secrets, selon le profil de risque.
+- **user_prompt_submit** — Nomme la tâche courante avant que le modèle ne choisisse où écrire ses preuves.
+- **post_tool_use** — Rappelle qu'une écriture doit laisser une ligne de preuve.
+- **pre_compact** — Sauvegarde la tâche et les gates ouverts avant une remise à zéro du contexte.
+- **subagent_stop** — Remonte l'état des gates sans bloquer un sous-agent qui ne clôt pas la tâche.
+- **stop** — Une clôture sans gates verts est une tâche non terminée — la règle devient contrainte ici.
 
 Sur cet hôte, ces règles ne sont pas opposables : rien n'intercepte un appel
 d'outil ni une fin de tour. Elles tiennent par discipline, et par la CI.
+
+Avant toute conclusion de tâche :
+
+```bash
+grimoire standard gate check --strict
+grimoire standard verify .
+```
+
+Une clôture sans gates verts est une tâche non terminée.
