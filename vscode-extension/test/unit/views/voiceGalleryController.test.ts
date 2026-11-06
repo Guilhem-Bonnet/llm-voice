@@ -533,6 +533,8 @@ describe("the voice menu (Quick Pick of chooseVoice)", () => {
   });
 });
 
+const KYUTAI16_COMMAND = 'mkdir -p "$XDG_RUNTIME_DIR/gpu-yield" && docker compose -f deploy/docker-compose.tts.yml up -d kyutai16';
+
 describe("Kyutai narration", () => {
   const started = (binding: { providerId: string }) => (binding.providerId === "kyutai-1-6b" ? "ok" : "unreachable") as "ok" | "unreachable";
   const CAMILLE = "kyutai16:cml-577_394";
@@ -623,9 +625,9 @@ describe("Kyutai narration", () => {
     await controller.handle({ type: "ready" });
     await controller.handle({ type: "copyCommand", engine: "kyutai16" });
 
-    expect(deps.writeClipboard).toHaveBeenCalledWith("docker compose -f deploy/docker-compose.tts.yml up -d kyutai16");
-    expect(lastState()?.engines.kyutai16?.command).toBe("docker compose -f deploy/docker-compose.tts.yml up -d kyutai16");
-    expect(startCommand("kyutai16", "http://localhost:9999")).toBe("docker compose -f deploy/docker-compose.tts.yml up -d kyutai16");
+    expect(deps.writeClipboard).toHaveBeenCalledWith(KYUTAI16_COMMAND);
+    expect(lastState()?.engines.kyutai16?.command).toBe(KYUTAI16_COMMAND);
+    expect(startCommand("kyutai16", "http://localhost:9999")).toBe(KYUTAI16_COMMAND);
   });
 
   it("credits name all 36 voices and what is not documented, and each link is allowed", async () => {
