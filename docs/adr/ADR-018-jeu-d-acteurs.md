@@ -15,7 +15,7 @@
 
 ## Statut
 
-**Proposé (2026-11-06).** Carte du Mission Ledger : `GAO-jeu-d-acteur-001`. Rien n'est implémenté,
+**Accepté (2026-11-06) par guilhem-bonnet, avec les choix recommandés.** Carte du Mission Ledger : `GAO-jeu-d-acteur-001`. Rien n'est implémenté,
 aucune vérification de ce document n'a été exécutée.
 
 - **Précise la livraison d'ADR-015**, sans le réécrire : partition, `speakerId`, bible, traducteur et

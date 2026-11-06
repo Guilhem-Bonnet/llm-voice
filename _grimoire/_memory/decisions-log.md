@@ -244,3 +244,11 @@
 ### [2026-11-06] Lecture, attente, lexique, reprise et jeu d'acteurs
 - **Décision** : direction UX validée (gestes de lecture visibles, étapes d'attente sans faux pourcentage, lexique, reprise, bloc de code, fichiers texte). Qwen3-TTS non retenu pour l'instant : on reste sur les moteurs Kyutai. Nouvelle priorité : jeu d'acteurs à plusieurs voix (théâtre, livre avec narrateur et personnages). Application hors VS Code visée ensuite : garder la logique de lecture indépendante de VS Code.
 - **Agent** : concierge, sur décision de guilhem-bonnet
+
+### [2026-11-06] Moteur retenu : Kyutai TTS 1.6B, voix françaises
+- **Décision** : la technologie Moshi de Kyutai, c'est-à-dire Kyutai TTS 1.6B, avec ses voix françaises, est le moteur de lecture et du jeu d'acteurs. Pocket TTS et ses voix d'origine anglophone sortent de la galerie, la voix système reste en repli (mode jeu, sans carte graphique).
+- **Agent** : concierge, sur décision de guilhem-bonnet (« je veux juste la technologie moshi avec le TTS et des voix FR »)
+
+### [2026-11-06] Studio et jeu d'acteurs validés
+- **Décision** : plan d'intégration validé (panneau pour écouter, Studio pour régler). ADR-018 accepté avec ses choix recommandés : activation proposée et retenue par document ; étiquettes non lues, indications scéniques lues par le narrateur ; « Préparer » ou « Lire quand même » au-delà de 20 s ; mode jeu annoncé, sans bascule ; distribution automatique stable sans déduire de genre, ordre fixe ; voix changée à la lecture suivante. Rythme de Camille : réglage actuel par défaut.
+- **Agent** : concierge, sur accord de guilhem-bonnet (« ça me va bien, on peut continuer »)
