@@ -206,7 +206,8 @@ flèche : il n'est câblé nulle part.)
 
 ### 4. Voix et licences
 
-- **Rien dans le VSIX** (P0 n° 5) : modèles et voix sont téléchargés par
+- **Amendement du 2026-11-05** : de courts échantillons Ogg Opus de 20 voix et leurs crédits sont inclus dans le VSIX, pour écouter sans rien installer (`media/voices/`, décision de guilhem-bonnet). Les modèles et les données de voix restent hors du VSIX.
+- **Aucun modèle ni donnée de voix dans le VSIX** (P0 n° 5) : modèles et voix sont téléchargés par
   `AssetDownloader` + `EgressGuard`, avec consentement et SHA-256 (ADR-010,
   ADR-012 §6).
 - **Catalogue proposé par défaut** : seulement les voix **CC0** (dons
