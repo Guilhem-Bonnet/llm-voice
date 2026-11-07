@@ -318,6 +318,13 @@ function formatCacheBytes(bytes: number): string {
   return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
 }
 
+/**
+ * GAO-qwen3-dans-l-001: per-request timeout of a whole-reading preparation, at least. Qwen3
+ * needs about 2.7 s per second of audio: a 300-character passage (about 20 s heard) takes about
+ * 55 s, at the edge of the 60 s default, and a timeout would throw the work away to retry it.
+ */
+const WHOLE_READING_TIMEOUT_MS = 180_000;
+
 /** Resolves after `ms`, or immediately if/when `signal` aborts — used by `waitForTtsReady`'s poll loop. */
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -921,6 +928,21 @@ export class Pipeline implements PipelineFacade {
         firstPassagesChars: charsOf(toPlay.slice(0, passagesBeforeSound).map((seg) => seg.spokenText)),
         ...firstPassagesMin
       });
+      // GAO-qwen3-dans-l-001: an engine slower than its audio prepares the whole reading before
+      // its first sound, so that nothing cuts once it plays. A narrated reading (its passages
+      // still arrive) and several voices (their own plan, ADR-018) keep their path.
+      const capabilities = await tts.getCapabilities(abort.signal).catch(() => undefined);
+      const wholeReading = capabilities?.wholeReadingFirst === true && !narrated && cast?.voices === undefined && toPlay.length > 1;
+      if (wholeReading) {
+        this.reviseWait("whole-reading", {
+          modelLoaded: true,
+          narrated: false,
+          narrationChars: 0,
+          firstPassagesChars: charsOf(toPlay.map((seg) => seg.spokenText))
+        });
+        this.wait?.setPassages(0, toPlay.length);
+        this.refreshWait();
+      }
       const sink = this.sinkOverride ?? this.player.playbackSink;
 
       this.currentUri = doc.uri !== undefined ? vscode.Uri.parse(doc.uri) : undefined;
@@ -950,8 +972,9 @@ export class Pipeline implements PipelineFacade {
         tts,
         sink,
         sealed: !narrating,
-        startAhead: passagesBeforeSound - 1,
+        startAhead: wholeReading ? toPlay.length - 1 : passagesBeforeSound - 1,
         ...(castPlan !== undefined ? { prefetchChunks: Math.max(castPlan.prefetchChunks, this.audioPrefetchChunks()) } : {}),
+        ...(wholeReading ? { prefetchChunks: toPlay.length, timeoutMs: Math.max(this.ttsTimeoutMs(), WHOLE_READING_TIMEOUT_MS) } : {}),
         ...(engineSpeed !== undefined ? { engineSpeed } : {})
       });
       if (narrating) {
@@ -3519,6 +3542,10 @@ export class Pipeline implements PipelineFacade {
   private handleChunkTiming(event: ChunkTimingEvent): void {
     this.perf.recordChunk(event);
     this.measureSynthesis(event);
+    if (this.wait?.step === "whole-reading") {
+      const chunks = this.controller.getChunks();
+      this.wait.setPassages(chunks.filter((chunk) => chunk.audioUri !== undefined).length, chunks.length);
+    }
     this.pushPlayerState();
     this.output.debug("chunk timing", {
       index: event.index,

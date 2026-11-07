@@ -58,6 +58,8 @@ export interface PlaybackStartRequest {
    * voices need more of them ahead than a narrator's long ones (ADR-018 §5.1).
    */
   prefetchChunks?: number;
+  /** Overrides the queue's per-request timeout for this session: a slow engine's long passage. */
+  timeoutMs?: number;
 }
 
 /** Emitted whenever the state machine moves (CdC §34). */
@@ -247,7 +249,11 @@ export class PlaybackController {
         cache: this.cache,
         binding: bindingFrom(request.profile, request.engineSpeed)
       },
-      request.prefetchChunks !== undefined ? { ...this.queueOptions, prefetchChunks: request.prefetchChunks } : this.queueOptions
+      {
+        ...this.queueOptions,
+        ...(request.prefetchChunks !== undefined ? { prefetchChunks: request.prefetchChunks } : {}),
+        ...(request.timeoutMs !== undefined ? { timeoutMs: request.timeoutMs } : {})
+      }
     );
     queue.reset(chunks);
 

@@ -40,3 +40,13 @@ Un premier passage de `test:unit` a échoué sur le cliquet V9 (mot interdit dan
 - `POST /load` : prêt en 28 s (`model_loaded`, `duration_s: 27.5` dans le journal). Premier chargement via compose réussi.
 - Une synthèse curl : 6,8 s d'audio en 18,4 s (≈ 2,7 s de calcul par seconde, première requête après chargement).
 - `gpu-yield/active` absent avant chaque charge GPU.
+
+Commit de l'incrément 1 : `969ee43` (fichiers de la carte seulement ; hook pre-commit passé).
+
+## Incrément 2 : lecture préparée en entier
+
+- `src/playback/waitEstimate.ts` : étape `whole-reading` (« Préparation de toute la lecture… »), `WaitTracker.setPassages(ready, total)` : barre = passages prêts / total, texte « n passages prêts sur N », jamais 100 avant le son.
+- `src/playback/PlaybackController.ts` : `timeoutMs` par session.
+- `src/pipeline/Pipeline.ts` : moteur `wholeReadingFirst` + lecture fidèle à une voix + plus d'un passage → `startAhead = N-1`, fenêtre = N, délai par requête ≥ 180 s ; le compteur suit `onChunkTiming`.
+- Lu : `typecheck` 0, `lint` 0, `test:unit` 150 fichiers / 3151 tests verts (dont `test/unit/playback/wholeReadingWait.test.ts`), `build` 0.
+- Suites d'intégration lues : `fake-tts` 79 passing, `integration-security` 8 passing, `test:integration-voice` 51 passing (2 min), build 0.

@@ -114,20 +114,22 @@ export function estimateWait(input: WaitEstimateInput): WaitEstimate {
   };
 }
 
-export type WaitStep = "engine" | "narration" | "first-passage" | "next-passage";
+export type WaitStep = "engine" | "narration" | "first-passage" | "next-passage" | "whole-reading";
 
 const STEP_LABELS: Readonly<Record<WaitStep, string>> = {
   engine: "Démarrage du moteur…",
   narration: "Préparation du texte par l'IA…",
   "first-passage": "Génération du premier passage…",
-  "next-passage": "Passage suivant…"
+  "next-passage": "Passage suivant…",
+  "whole-reading": "Préparation de toute la lecture…"
 };
 
 const STEP_SHORT_LABELS: Readonly<Record<WaitStep, string>> = {
   engine: "Moteur en démarrage…",
   narration: "IA…",
   "first-passage": "Premier passage…",
-  "next-passage": "Passage suivant…"
+  "next-passage": "Passage suivant…",
+  "whole-reading": "Préparation…"
 };
 
 const SLOW_TEXT = "Plus lent que d'habitude";
@@ -176,6 +178,8 @@ export class WaitTracker {
   private currentStep: WaitStep;
   private typicalMs: number | undefined;
   private noteText: string | undefined;
+  /** Whole-reading preparation: the bar counts passages ready, never time. */
+  private passages: { ready: number; total: number } | undefined;
 
   constructor(
     step: WaitStep,
@@ -212,6 +216,14 @@ export class WaitTracker {
     this.noteText = remaining.narrationCounted ? undefined : NARRATION_NOT_COUNTED_TEXT;
   }
 
+  /**
+   * GAO-qwen3-dans-l-001: from now on the bar is `ready / total` passages, a count and not an
+   * estimate. It still stops below 100 until the sound starts (`complete()`).
+   */
+  setPassages(ready: number, total: number): void {
+    this.passages = { ready: Math.max(0, Math.min(ready, total)), total: Math.max(1, total) };
+  }
+
   /** The first real sound. */
   complete(): void {
     this.completed = true;
@@ -221,17 +233,22 @@ export class WaitTracker {
   view(): WaitView {
     const now = this.now();
     const elapsedMs = now - this.startedAt;
-    const raw = this.estimateMs > 0 ? (elapsedMs / this.estimateMs) * 100 : BAR_CAP_PERCENT;
+    const counted = this.passages;
+    const raw = counted !== undefined
+      ? (counted.ready / counted.total) * 100
+      : this.estimateMs > 0 ? (elapsedMs / this.estimateMs) * 100 : BAR_CAP_PERCENT;
     const percent = this.completed
       ? 100
       : Math.max(this.floorPercent, Math.min(BAR_CAP_PERCENT, Math.floor(raw)));
     this.floorPercent = percent;
 
     const label = STEP_LABELS[this.currentStep];
-    const slow = !this.completed && elapsedMs > this.estimateMs * SLOW_FACTOR;
+    const slow = !this.completed && counted === undefined && elapsedMs > this.estimateMs * SLOW_FACTOR;
     const nearly = !this.completed && !slow && percent >= BAR_CAP_PERCENT;
     const text = this.completed
       ? ""
+      : counted !== undefined
+        ? `${counted.ready} passages prêts sur ${counted.total}`
       : slow
         ? SLOW_TEXT
         : nearly
