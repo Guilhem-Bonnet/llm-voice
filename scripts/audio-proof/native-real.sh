@@ -115,13 +115,19 @@ if [ "${1:-}" = "--response" ]; then
   LLM_VOICE_INBOX="$(mktemp -d)"
   python3 -c 'import json,sys,time; now=int(time.time()*1000); json.dump({"schemaVersion":1,"provider":"claude-code","sessionId":"preuve-reponse","capturedAt":now,"cwd":"/tmp/preuve","message":sys.argv[2]},open(sys.argv[1]+"/"+str(now)+"-preuve.json","w",encoding="utf-8"),ensure_ascii=False)' "$LLM_VOICE_INBOX" "$RESPONSE_MESSAGE"
 fi
-if [ "${1:-}" = "--qwen3" ] || [ "${1:-}" = "--qwen3-stop" ]; then
+if [ "${1:-}" = "--qwen3" ] || [ "${1:-}" = "--qwen3-stop" ] || [ "${1:-}" = "--qwen3-cast" ]; then
   [ ! -e "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/gpu-yield/active" ] \
     || { echo "native-real.sh: mode jeu actif, aucune charge GPU" >&2; exit 2; }
   curl -fs -m 3 http://localhost:8021/health >/dev/null \
     || { echo "native-real.sh: le service qwen3 doit tourner sur le port 8021 (deploy/README.md)" >&2; exit 2; }
   export LLM_VOICE_NATIVE_REAL_SCENARIO="${1#--}"
   MARKDOWN="$EXT/test/fixtures-native-real/qwen3-long.md"
+  # `--qwen3-cast` (GAO-metteur-en-s-001) : 07 à plusieurs voix, propositions et états joués ;
+  # les mots des indications ne doivent jamais s'entendre.
+  if [ "${1:-}" = "--qwen3-cast" ]; then
+    MARKDOWN="$REPO/docs/essais-voix/07-theatre-noms-seuls.md"
+    RESPONSE_FORBIDDEN="lampe épée"
+  fi
   export LLM_VOICE_NATIVE_REAL_DOCUMENT="$MARKDOWN"
   CACHE_DIR="$EXT/.vscode-test/native-real/User/globalStorage/guilhem-bonnet.llm-voice/cache"
   if [ -z "${LLM_VOICE_NATIVE_REAL_KEEP_CACHE:-}" ] && [ -d "$CACHE_DIR" ]; then
@@ -169,6 +175,10 @@ fi
 if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "response" ]; then
   EXPECT="$RESPONSE_TEXT"
 fi
+if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "qwen3-cast" ]; then
+  # Tout sauf les noms en capitales, les indications (italique seule, parenthèses seules), les filets et le balisage.
+  EXPECT="$(python3 -c 'import re,sys; lines=[l for l in open(sys.argv[1],encoding="utf-8").read().splitlines() if not re.fullmatch(r"[A-ZÉÈ ]+",l.strip()) and not re.fullmatch(r"\*[^*]+\*|\([^)]*\)|-{3,}",l.strip())]; t=re.sub(r"[#*]","","\n".join(lines)); print(" ".join(t.split()))' "$MARKDOWN")"
+fi
 export LLM_VOICE_NATIVE_REAL_EXIT_FILE
 LLM_VOICE_NATIVE_REAL_EXIT_FILE="$(mktemp)"
 trap 'rm -f "$LLM_VOICE_NATIVE_REAL_EXIT_FILE"' EXIT
@@ -195,14 +205,14 @@ sys.exit(1 if found else 0)' "$RESPONSE_FORBIDDEN" \
 fi
 TEST_EXIT="$(cat "$LLM_VOICE_NATIVE_REAL_EXIT_FILE")"
 case "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" in
-  qwen3|qwen3-stop)
+  qwen3|qwen3-stop|qwen3-cast)
     # Ce que le serveur a vraiment fait : une ligne par requête, avec son heure et sa durée.
     docker logs --since "$QWEN3_SINCE" deploy-qwen3-1 2>/dev/null | python3 -c 'import json,sys
 rows=[json.loads(l) for l in sys.stdin if l.startswith("{") and "\"/tts\"" in l]
 print(json.dumps({"requetes":len(rows),"passages":[[r.get("timestamp"),r.get("text_chars"),r.get("duration_s"),r.get("status")] for r in rows]},ensure_ascii=False))' >&2 || true
     ;;
 esac
-if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "qwen3" ] && [ "$PROVE_EXIT" = "0" ]; then
+if { [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "qwen3" ] || [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "qwen3-cast" ]; } && [ "$PROVE_EXIT" = "0" ]; then
   echo "$PROVE_JSON" | python3 -c 'import json,sys; sys.exit(0 if json.loads(sys.stdin.read().strip().splitlines()[-1])["silence_between_sounds_ms"] < 1200 else 1)' \
     || { echo "native-real.sh: un silence de 1,2 s ou plus pendant la lecture" >&2; PROVE_EXIT=1; }
 fi

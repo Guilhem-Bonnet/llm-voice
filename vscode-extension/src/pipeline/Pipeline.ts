@@ -465,6 +465,8 @@ export class Pipeline implements PipelineFacade {
   private readonly castProposals = new Map<string, readonly VerifiedProposal[]>();
   /** Consignes du metteur en scène local pour les états hors table, même clé. */
   private readonly stateDirections = new Map<string, readonly StateDirection[]>();
+  private earlyStartEnabled = true;
+  private lastCastDirections: readonly (string | undefined)[] = [];
   private readonly registry = new TtsProviderRegistry<TtsProvider>();
   private readonly narratorRegistry = new TtsProviderRegistry<NarratorProvider>();
   private readonly diskCache: DiskAudioCache;
@@ -986,7 +988,7 @@ export class Pipeline implements PipelineFacade {
         sealed: !narrating,
         startAhead: wholeReading ? toPlay.length - 1 : passagesBeforeSound - 1,
         // GAO-metteur-en-s-001: the speed measured while preparing may start the sound sooner.
-        ...(wholeReading ? { earlyStart: true } : {}),
+        ...(wholeReading && this.earlyStartEnabled ? { earlyStart: true } : {}),
         ...(castPlan !== undefined ? { prefetchChunks: Math.max(castPlan.prefetchChunks, this.audioPrefetchChunks()) } : {}),
         ...(wholeReading ? { prefetchChunks: toPlay.length, timeoutMs: Math.max(this.ttsTimeoutMs(), WHOLE_READING_TIMEOUT_MS) } : {}),
         ...(engineSpeed !== undefined ? { engineSpeed } : {})
@@ -1242,6 +1244,8 @@ export class Pipeline implements PipelineFacade {
       maxSentences: profile.chunking.maxSentences,
       lang: profile.language
     });
+    this.lastCastDirections = narration.map((seg) => (seg.metadata?.["cast"] as AudioChunk["cast"])?.direction);
+    this.output.info("jeu d'acteurs : passages joués", { passages: narration.length, played: this.lastCastDirections.filter((item) => item !== undefined).length });
     const providerId = tts.cacheIdentity !== undefined ? await tts.cacheIdentity(signal) : tts.id;
     const passages = await Promise.all(
       narration.map(async (seg) => {
@@ -1353,6 +1357,16 @@ export class Pipeline implements PipelineFacade {
   }
 
   /** Not part of `PipelineFacade`: lets the integration tests answer the long-scene question. */
+  /** Preuve réelle : la même lecture avec et sans démarrage anticipé. */
+  setEarlyStartForTest(enabled: boolean): void {
+    this.earlyStartEnabled = enabled;
+  }
+
+  /** Les consignes anglaises envoyées par passage de la dernière lecture à plusieurs voix ; aucun mot du document. */
+  lastCastDirectionsForTest(): readonly (string | undefined)[] {
+    return this.lastCastDirections;
+  }
+
   setSceneChoiceForTest(choice: (message: string) => Thenable<string | undefined>): void {
     this.sceneChoice = choice;
   }
