@@ -196,3 +196,18 @@ export function castNotice(input: { multiVoice: boolean; canCreateVoice: boolean
     ? `${input.characters} personnages, ${input.freeVoices} voix libres : ${missing} ${plural}. Créez une voix, puis attribuez-la avec Changer.`
     : `${input.characters} personnages, ${input.freeVoices} voix libres : certains personnages partagent une voix.`;
 }
+
+const ENGINE_LABELS: Readonly<Record<string, string>> = {
+  qwen3: "voix Qwen3",
+  "kyutai-1-6b": "Kyutai 1.6B",
+  "kyutai-pocket": "Kyutai",
+  kokoro: "Kokoro",
+  chatterbox: "Chatterbox",
+  "piper-local": "Piper",
+  system: "voix du système"
+};
+
+/** Le nom du moteur dans le panneau, en mots simples. */
+export function engineLabelOf(providerId: string): string {
+  return ENGINE_LABELS[providerId] ?? providerId;
+}

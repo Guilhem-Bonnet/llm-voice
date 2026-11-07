@@ -80,6 +80,11 @@
         "category": "LLM Voice"
       },
       {
+        "command": "llmVoice.openCastPanel",
+        "title": "LLM Voice: Distribution, voir les personnages et leur voix",
+        "category": "LLM Voice"
+      },
+      {
         "command": "llmVoice.openVoiceGallery",
         "title": "LLM Voice: Ouvrir la galerie de voix",
         "category": "LLM Voice",

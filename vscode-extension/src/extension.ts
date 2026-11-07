@@ -348,7 +348,8 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   context.subscriptions.push(
     vscode.commands.registerCommand(statusBarMenuCommand, () => statusBar.openMenu()),
     vscode.commands.registerCommand("llmVoice.toggleCast", () => pipeline.toggleCast()),
-    vscode.commands.registerCommand("llmVoice.chooseCastVoices", () => pipeline.chooseCastVoices())
+    vscode.commands.registerCommand("llmVoice.chooseCastVoices", () => pipeline.chooseCastVoices()),
+    vscode.commands.registerCommand("llmVoice.openCastPanel", () => pipeline.openCastPanel())
   );
   player.setScriptDescriber((document) => pipeline.describeScript(document));
 
@@ -432,7 +433,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
           pipeline.toggleResponseCode();
           break;
         case "chooseCastVoices":
-          void pipeline.chooseCastVoices();
+          void pipeline.openCastPanel();
           break;
         default:
           break;

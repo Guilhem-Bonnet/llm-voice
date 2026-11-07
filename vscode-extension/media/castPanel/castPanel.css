@@ -1,0 +1,38 @@
+/* Panneau Distribution. Couleurs du thème seulement (--vscode-*). Boutons à taille fixe :
+   jamais étirés, jamais de retour à la ligne. */
+
+body { margin: 0; padding: 0; color: var(--vscode-foreground); background: var(--vscode-editor-background); font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); }
+[hidden] { display: none !important; }
+.page { box-sizing: border-box; max-width: 980px; margin: 0 auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+h1 { margin: 0; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.muted { color: var(--vscode-descriptionForeground); margin: 0; }
+.notice { border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); padding: 6px 10px; background: var(--vscode-textBlockQuote-background); }
+.status { min-height: 1.4em; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--vscode-panel-border, rgba(128,128,128,.3)); }
+.who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.name { font-weight: 600; }
+.quote { color: var(--vscode-descriptionForeground); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.voice { font-size: 0.95em; }
+.tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px; font-size: 0.85em; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); white-space: nowrap; }
+.proposal { font-size: 0.9em; color: var(--vscode-descriptionForeground); }
+.actions { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; }
+button { flex: 0 0 auto; width: auto; white-space: nowrap; padding: 4px 12px; min-height: 26px; border: 1px solid var(--vscode-button-border, transparent); border-radius: 2px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); font: inherit; cursor: pointer; }
+button:hover { background: var(--vscode-button-secondaryHoverBackground); }
+button.primary { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
+button.primary:hover { background: var(--vscode-button-hoverBackground); }
+button:disabled { opacity: 0.5; cursor: default; }
+.choices { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 4px; padding: 6px 0 0 12px; }
+.choice { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.choice-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.footer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.create { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--vscode-panel-border, rgba(128,128,128,.3)); }
+.create h2 { margin: 0; font-size: 14px; }
+.fields { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.fields label { display: flex; flex-direction: column; gap: 2px; font-size: 0.9em; }
+select, input { font: inherit; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, transparent); padding: 3px 6px; }
+input.wide { min-width: 220px; }
+audio { display: none; }
+@media (max-width: 560px) {
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .actions { justify-content: flex-start; }
+}

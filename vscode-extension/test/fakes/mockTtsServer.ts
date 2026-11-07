@@ -39,7 +39,7 @@ export interface MockTtsServerOptions {
   /** If true, POST /upload_reference always responds 500 (CdC §55 upload failure path). */
   uploadReference500?: boolean;
   /** Body of GET /voices (`deploy/kyutai16/server.py`); absent = 404. */
-  kyutaiVoices?: { voices: Array<{ id: string; name?: string; available: boolean }> };
+  kyutaiVoices?: { voices: Array<{ id: string; name?: string; available: boolean; origin?: string; description?: string }> };
   /** Milliseconds POST /tts takes, so that two requests at once would be seen. */
   ttsDelayMs?: number;
   /** POST /tts answers 503 with this `reason`, as `deploy/kyutai16/server.py` does. */
@@ -135,6 +135,35 @@ export class MockTtsServer {
           ]
         })
       );
+      return;
+    }
+
+    // Qwen3 (`deploy/qwen3/server.py`, GAO-studio-distr-001): voices created on this machine.
+    if (req.method === "POST" && url === "/voices/create") {
+      const form = new URLSearchParams(body);
+      const name = form.get("name") ?? "";
+      const description = form.get("description") ?? "";
+      if (name.length < 1 || name.length > 40 || description.length < 1 || description.length > 300) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ detail: "mock: invalid form" }));
+        return;
+      }
+      if (this.options.kyutaiVoices.voices.some((voice) => voice.name === name)) {
+        res.writeHead(409, { "content-type": "application/json" });
+        res.end(JSON.stringify({ detail: "mock: name taken" }));
+        return;
+      }
+      const id = `created-${this.options.kyutaiVoices.voices.length + 1}`;
+      this.options.kyutaiVoices.voices.push({ id, name, available: true, origin: "created", description });
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(JSON.stringify({ id, name, description, seed: 1, sample_seconds: 2 }));
+      return;
+    }
+    const sample = /^\/voices\/([^/]+)\/sample$/.exec(url);
+    if (req.method === "GET" && sample !== null) {
+      const wav = makeSilentWav(300, this.options.sampleRate);
+      res.writeHead(200, { "content-type": "audio/wav", "content-length": wav.length });
+      res.end(wav);
       return;
     }
 

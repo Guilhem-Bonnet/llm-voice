@@ -56,7 +56,10 @@ import type { AudioChunk, PlayerScriptView } from "../core/playback.js";
 import { BibleStore } from "../direction/bible/BibleStore.js";
 import { documentKeyOf, documentScope } from "../direction/bible/scopes.js";
 import { assignCast } from "../direction/cast/castSegments.js";
-import { castFromBible, recordUserVoice } from "../direction/cast/castStore.js";
+import { castFromBible, recastFromScratch, recordUserVoice } from "../direction/cast/castStore.js";
+import { CastPanel } from "../views/castPanel/CastPanel.js";
+import { castNotice, engineLabelOf, type CastPanelState } from "../views/castPanel/castPanelModel.js";
+import { createQwen3Voice, fetchQwen3VoiceSample } from "../tts/qwen3Voices.js";
 import { planReading, type ReadingPlan } from "../direction/cast/synthesisPlan.js";
 import { parseScript, plainTextBlocks } from "../direction/script/parseScript.js";
 import { sameWordsApartFromLabels } from "../direction/script/scriptFidelity.js";
@@ -1425,6 +1428,176 @@ export class Pipeline implements PipelineFacade {
     }
     await recordUserVoice(this.castStore(), scope, row.roleId, tts.id, voiceRow.voiceId);
     void vscode.window.showInformationMessage(`LLM Voice : sera appliqué à la prochaine lecture, ${row.lines} répliques à régénérer.`);
+  }
+
+  /** Ce que le panneau Distribution lit d'un document : personnages, moteur, voix, bible. */
+  private async castPanelContext(uri: string) {
+    const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+    const markdown = document.languageId === "markdown";
+    const text = document.getText();
+    const script = parseScript(await this.blocksOf(text, markdown, uri), { plainText: !markdown });
+    const reading = await this.profiles.resolveReading(markdown ? "markdown" : "text", this.modesBySourceSettings());
+    const tts = await this.ttsFor(reading.effective);
+    const resolved = resolveTtsConfig(reading.effective.tts, this.ttsSettings());
+    const capabilities = await tts.getCapabilities().catch(() => undefined);
+    const multiVoice = capabilities?.multiVoice === true;
+    const effective = await this.withDefaultVoice(reading.effective, tts);
+    const narratorVoice = effective.tts.referenceAudio === undefined ? effective.tts.voice : undefined;
+    const voices: readonly Voice[] = multiVoice ? ((await tts.listVoices?.()) ?? capabilities.voices) : [];
+    const { scope } = this.castScopeOf(uri, text, "document");
+    const firstLineOf = (roleId: string | undefined): string => {
+      const block = script.blocks.find((item) => (item as { speakerId?: string }).speakerId === roleId && item.text.trim().length > 0);
+      return (block?.text ?? "").replace(/\s+/g, " ").trim().slice(0, 300);
+    };
+    return { document, script, tts, resolved, capabilities, multiVoice, effective, narratorVoice, voices, scope, firstLineOf };
+  }
+
+  private async castPanelState(uri: string): Promise<CastPanelState> {
+    const context = await this.castPanelContext(uri);
+    const { script, tts, resolved, capabilities, multiVoice, narratorVoice, voices, scope, firstLineOf } = context;
+    const cast = await castFromBible(this.castStore(), scope, script, {
+      providerId: tts.id,
+      voices,
+      narratorVoice,
+      readOnly: !multiVoice
+    });
+    const labelOf = (id: string | undefined): string | undefined =>
+      id === undefined ? undefined : (voices.find((voice) => voice.id === id)?.label ?? capabilities?.voices.find((voice) => voice.id === id)?.label ?? id);
+    const canCreateVoice = resolved.providerId === "qwen3";
+    const staticIds = new Set((capabilities?.voices ?? []).map((voice) => voice.id));
+    return {
+      documentName: context.document.uri.path.split("/").pop() ?? "document",
+      engineLabel: engineLabelOf(resolved.providerId),
+      narrator: { voiceLabel: labelOf(narratorVoice), firstLine: firstLineOf(undefined) },
+      rows: cast.entries.map((entry) => ({
+        roleId: entry.roleId,
+        name: entry.name,
+        lines: entry.lines,
+        firstLine: firstLineOf(entry.roleId),
+        voiceId: entry.voice,
+        voiceLabel: labelOf(entry.voice),
+        byUser: entry.origin === "user",
+        shared: entry.shared,
+        unavailable: entry.unavailable,
+        narratorClash: entry.narratorClash
+      })),
+      voices: voices.map((voice) => ({
+        id: voice.id,
+        label: voice.label,
+        created: !staticIds.has(voice.id),
+        narrator: voice.id === narratorVoice,
+        takenBy: cast.entries.filter((entry) => entry.voice === voice.id).map((entry) => entry.name)
+      })),
+      notice: script.active
+        ? castNotice({ multiVoice, canCreateVoice, characters: cast.entries.length, freeVoices: voices.filter((voice) => voice.id !== narratorVoice).length })
+        : "Aucun personnage repéré dans ce document : il sera lu par le narrateur.",
+      canCreateVoice,
+      slowFactor: capabilities?.wholeReadingFirst === true ? 2 : undefined
+    };
+  }
+
+  /** Une phrase synthétisée pour le panneau, mise en cache comme les essais de la galerie. */
+  private async castPanelSynthesis(uri: string, voice: string | undefined, text: string, signal: AbortSignal, trialDir: string): Promise<string> {
+    const { tts, effective } = await this.castPanelContext(uri);
+    const key = trialKey({ providerId: tts.id, ...(voice !== undefined ? { voice } : {}) }, effective.language, text);
+    const existing = await findTrial(trialDir, key);
+    if (existing !== undefined) {
+      return existing;
+    }
+    const audio = await tts.synthesize({ text, language: effective.language, ...(voice !== undefined ? { voice } : {}) }, signal);
+    return storeTrial(trialDir, key, audio.format, audio.data);
+  }
+
+  /** `LLM Voice: Distribution` : le panneau du document actif, même si les voix manquent. */
+  async openCastPanel(): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (editor === undefined) {
+      void vscode.window.showInformationMessage("LLM Voice : ouvrez d'abord un document.");
+      return;
+    }
+    const uri = editor.document.uri.toString();
+    const languageId = editor.document.languageId;
+    const trialDir = vscode.Uri.joinPath(this.context.globalStorageUri, "cast-trials");
+    await vscode.workspace.fs.createDirectory(trialDir);
+    const SAMPLE_PHRASE = "Bonjour, voici ma voix. Je peux lire ce texte pour vous.";
+    CastPanel.open(
+      {
+        trialDir,
+        documentKey: documentKeyOf(uri),
+        loadState: () => this.castPanelState(uri),
+        listenToFile: async (roleId, voiceId, signal) => {
+          const context = await this.castPanelContext(uri);
+          const voice = voiceId ?? (await this.castPanelState(uri)).rows.find((row) => row.roleId === roleId)?.voiceId ?? context.narratorVoice;
+          const text = context.firstLineOf(roleId) || context.firstLineOf(undefined);
+          return this.castPanelSynthesis(uri, voice, text, signal, trialDir.fsPath);
+        },
+        sampleToFile: async (voiceId, signal) => {
+          const { resolved, tts } = await this.castPanelContext(uri);
+          if (resolved.providerId === "qwen3") {
+            const key = trialKey({ providerId: tts.id, voice: voiceId }, "sample", "GET /voices/sample");
+            const existing = await findTrial(trialDir.fsPath, key);
+            if (existing !== undefined) {
+              return existing;
+            }
+            try {
+              return await storeTrial(trialDir.fsPath, key, "wav", await fetchQwen3VoiceSample(this.egress, resolved.baseUrl, voiceId, signal));
+            } catch (error) {
+              this.output.warn("distribution : extrait indisponible, synthèse courte", { error: error instanceof Error ? error.message : String(error) });
+            }
+          }
+          return this.castPanelSynthesis(uri, voiceId, SAMPLE_PHRASE, signal, trialDir.fsPath);
+        },
+        assign: async (roleId, voiceId) => {
+          const { tts, scope } = await this.castPanelContext(uri);
+          await recordUserVoice(this.castStore(), scope, roleId, tts.id, voiceId);
+        },
+        createVoice: async (input, signal) => {
+          const { resolved, tts, scope, firstLineOf } = await this.castPanelContext(uri);
+          if (resolved.providerId !== "qwen3") {
+            throw new Error("Créer une voix demande la voix Qwen3.");
+          }
+          const sampleText = input.forRoleId !== undefined ? firstLineOf(input.forRoleId) : "";
+          const created = await createQwen3Voice(
+            this.egress,
+            resolved.baseUrl,
+            { name: input.name, description: input.description, ...(sampleText.length > 0 ? { sampleText } : {}) },
+            signal
+          );
+          if (input.forRoleId !== undefined) {
+            await recordUserVoice(this.castStore(), scope, input.forRoleId, tts.id, created.id);
+          }
+          return created;
+        },
+        read: async () => {
+          if (!this.isCastEnabled(uri)) {
+            await this.toggleCast(uri);
+          }
+          await this.start({ scope: "document", uri, languageId });
+        },
+        recast: async () => {
+          const { tts, scope } = await this.castPanelContext(uri);
+          await recastFromScratch(this.castStore(), scope, tts.id);
+        },
+        log: (message) => this.output.warn(message)
+      },
+      this.context.extensionUri
+    );
+  }
+
+  castPanelStateForTest(): CastPanelState | undefined {
+    return CastPanel.testOnlyState();
+  }
+
+  async dispatchCastPanelForTest(message: unknown): Promise<void> {
+    await CastPanel.testOnlyDispatch(message);
+  }
+
+  observeCastPanelForTest(observer: ((message: unknown) => void) | undefined): void {
+    CastPanel.testOnlyObserve(observer);
+  }
+
+  closeCastPanelForTest(): void {
+    CastPanel.testOnlyClose();
   }
 
   /**
