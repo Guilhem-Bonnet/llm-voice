@@ -183,7 +183,7 @@ class Contract(ServerCase):
         _, data = self.request("GET", "/voices")
         payload = json.loads(data)
         self.assertEqual(payload["default"], self.voice)
-        self.assertEqual(payload["voices"], [{"id": self.voice, "name": "Naturelle (provisoire)", "available": True, "played": True}])
+        self.assertEqual(payload["voices"], [{"id": self.voice, "name": "Voix des essais 21 et 22", "available": True, "played": True}])
 
     def test_multipart_returns_a_wav_and_keeps_accents(self):
         response, data = self.tts(text="Éléonore été là", voice_url=self.voice)
@@ -522,7 +522,7 @@ class FirstLoad(ServerCase):
 
 class Refusals(ServerCase):
     def test_voice_url_never_accepts_a_path_or_an_url(self):
-        attempts = ["../../etc/passwd", "/etc/passwd", "http://exemple.org/v.wav", "https://exemple.org/v", "file:///etc/passwd", "out-gao/naturel1-s11.wav", "FR-NATURELLE", f"{self.voice}/../x"]
+        attempts = ["../../etc/passwd", "/etc/passwd", "http://exemple.org/v.wav", "https://exemple.org/v", "file:///etc/passwd", "out-gao/naturel1-s11.wav", "FR-ESSAIS-21-22", f"{self.voice}/../x"]
         for voice in attempts:
             for extra in ({}, {"direction": "Sad."}):
                 with self.subTest(voice=voice, extra=extra):
@@ -768,13 +768,13 @@ class Catalogue(unittest.TestCase):
     def find(self, catalog: srv.Catalog) -> dict:
         return srv.find_references(catalog, self.root, log=lambda event, **fields: self.logged.append({"event": event, **fields}))
 
-    def test_the_shipped_catalogue_names_no_absolute_path_and_only_the_provisional_voice(self):
+    def test_the_shipped_catalogue_names_no_absolute_path_and_only_the_chosen_voice(self):
         catalog = srv.load_catalog()
-        self.assertEqual(catalog.default, "fr-naturelle")
+        self.assertEqual(catalog.default, "fr-essais-21-22")
         self.assertEqual(catalog.language, "French")
-        voice = catalog.voices["fr-naturelle"]
+        voice = catalog.voices["fr-essais-21-22"]
         self.assertEqual(voice.seed, 11)
-        self.assertEqual([ref["audio"] for ref in voice.frozen_refs], ["out-gao/naturel1-s11.wav", "out-gao/naturel2-s11.wav"])
+        self.assertEqual([ref["audio"] for ref in voice.frozen_refs], ["out-gao/rire-en-s11.wav", "out-gao/chuchote-en-s11.wav"])
         self.assertFalse(list((ROOT / "deploy" / "qwen3").glob("*.wav")), "aucun extrait audio dans le dépôt")
 
     def test_text_comes_from_the_neighbour_json_or_from_the_catalogue(self):
@@ -1084,7 +1084,7 @@ class ReleaseTest(unittest.TestCase):
         return srv.Qwen3Service(engine, catalog, references, self.flag, log=lambda *_a, **_k: None, free_vram=lambda: self.free, min_free_vram=6 * GIB)
 
     def request(self, direction: str = "") -> srv.Request:
-        return srv.Request("texte", "fr-naturelle", direction)
+        return srv.Request("texte", "fr-essais-21-22", direction)
 
     def test_game_mode_during_synthesis_really_frees_the_model(self):
         def start_game(checkpoint) -> None:

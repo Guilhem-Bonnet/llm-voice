@@ -148,8 +148,8 @@ Les deux tirent la graine de la voix (11) : même texte, même consigne, même s
 **Changer la voix figée** se fait dans `deploy/qwen3/voices.json`, sans toucher au code :
 `frozen_refs` liste les extraits, chemins relatifs à `~/.llm-voice/voices-lab/qwen3/`
 (monté en `/lab/refs`). La transcription vient du champ `text`, ou sinon du `.json` posé à côté du
-`.wav`. Relancer le service ensuite. L'entrée actuelle, `fr-naturelle`, est **provisoire** :
-`out-gao/naturel1-s11.wav` et `naturel2-s11.wav`, en attendant le choix de l'extrait. Aucun extrait
+`.wav`. Relancer le service ensuite. L'entrée actuelle, `fr-essais-21-22`, est la voix choisie à l'écoute le 2026-11-07 :
+`out-gao/rire-en-s11.wav` et `chuchote-en-s11.wav` (extraits 21 et 22 des essais). Aucun extrait
 n'entre dans le dépôt. Un extrait absent rend la voix figée indisponible (503), pas le service.
 
 Ce qu'il faut savoir :

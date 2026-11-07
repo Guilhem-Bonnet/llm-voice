@@ -1,15 +1,19 @@
 {
-  "default": "fr-naturelle",
+  "default": "fr-essais-21-22",
   "language": "French",
   "voices": {
-    "fr-naturelle": {
-      "name": "Naturelle (provisoire)",
+    "fr-essais-21-22": {
+      "name": "Voix des essais 21 et 22",
       "seed": 11,
       "description": "Young adult woman, medium pitch, clear diction.",
       "accent": "Native French speaker with a standard metropolitan France accent.",
       "frozen_refs": [
-        { "audio": "out-gao/naturel1-s11.wav" },
-        { "audio": "out-gao/naturel2-s11.wav" }
+        {
+          "audio": "out-gao/rire-en-s11.wav"
+        },
+        {
+          "audio": "out-gao/chuchote-en-s11.wav"
+        }
       ]
     }
   }
