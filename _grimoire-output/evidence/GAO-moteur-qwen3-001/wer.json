@@ -1,0 +1,74 @@
+[
+  {
+    "name": "figee-1",
+    "wer": 0.0,
+    "heard": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+    "duration_s": 3.52,
+    "rms": 0.0803,
+    "silence_between_sounds_ms": 340
+  },
+  {
+    "name": "figee-2",
+    "wer": 0.125,
+    "heard": "Les voyageurs ont levé les yeux de leur livre, puis se sont regardés sans rien dire.",
+    "duration_s": 4.16,
+    "rms": 0.0929,
+    "silence_between_sounds_ms": 380
+  },
+  {
+    "name": "jouee-1",
+    "wer": 0.0,
+    "heard": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+    "duration_s": 4.16,
+    "rms": 0.0999,
+    "silence_between_sounds_ms": 480
+  },
+  {
+    "name": "jouee-2",
+    "wer": 0.125,
+    "heard": "Les voyageurs ont levé les yeux de leur livre, puis se sont regardés sans rien dire.",
+    "duration_s": 4.72,
+    "rms": 0.1248,
+    "silence_between_sounds_ms": 440
+  },
+  {
+    "name": "figee-1-bis",
+    "wer": 0.0,
+    "heard": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+    "duration_s": 3.52,
+    "rms": 0.0803,
+    "silence_between_sounds_ms": 340
+  },
+  {
+    "name": "ordre2-jouee",
+    "wer": 0.0,
+    "heard": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+    "duration_s": 4.16,
+    "rms": 0.0999,
+    "silence_between_sounds_ms": 480
+  },
+  {
+    "name": "ordre2-figee",
+    "wer": 0.125,
+    "heard": "Les voyageurs ont levé les yeux de leur livre, puis se sont regardés sans rien dire.",
+    "duration_s": 4.16,
+    "rms": 0.0929,
+    "silence_between_sounds_ms": 380
+  },
+  {
+    "name": "apres-annulation",
+    "wer": 0.0,
+    "heard": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+    "duration_s": 4.16,
+    "rms": 0.0999,
+    "silence_between_sounds_ms": 480
+  },
+  {
+    "name": "apres-jeu",
+    "wer": 0.125,
+    "heard": "Les voyageurs ont levé les yeux de leur livre, puis se sont regardés sans rien dire.",
+    "duration_s": 4.16,
+    "rms": 0.0929,
+    "silence_between_sounds_ms": 380
+  }
+]

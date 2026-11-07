@@ -66,6 +66,9 @@ _grimoire-output/evidence/GAO-essais-voix-001/ecoute-classique/wav/
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-classique/*.ogg
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-classique/index.html
 deploy/kyutai16/__pycache__/
+deploy/qwen3/__pycache__/
+# Preuve du serveur Qwen3 : audio régénérable par proof_real.py, mesures commitées
+_grimoire-output/evidence/GAO-moteur-qwen3-001/*.wav
 
 # Banc Qwen3-TTS : audio régénérable par scripts/voice-lab/qwen3.py
 _grimoire-output/evidence/GAO-essais-voix-001/ecoute-qwen3/wav/

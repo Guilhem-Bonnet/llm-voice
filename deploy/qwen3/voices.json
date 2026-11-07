@@ -1,0 +1,16 @@
+{
+  "default": "fr-naturelle",
+  "language": "French",
+  "voices": {
+    "fr-naturelle": {
+      "name": "Naturelle (provisoire)",
+      "seed": 11,
+      "description": "Young adult woman, medium pitch, clear diction.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        { "audio": "out-gao/naturel1-s11.wav" },
+        { "audio": "out-gao/naturel2-s11.wav" }
+      ]
+    }
+  }
+}

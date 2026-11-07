@@ -1,0 +1,114 @@
+$schema: grimoire-agentic-standard-context-bundle/v1
+agent_role_constraints: []
+decision_inputs:
+  memory_policy_ref: _grimoire/standard/memory-policy.yaml
+  provider_registry_ref: _grimoire/standard/llm-provider-registry.yaml
+  task_ref: _grimoire/standard/task-board.yaml
+evidence_requirements:
+- 'test: serveur Qwen3 local répond avec --network none et gpu-yield respecté, preuve réelle en audio'
+- 'gate: grimoire standard gate check --strict vert'
+fingerprints:
+  board: _grimoire/standard/task-board.yaml
+  contract: _grimoire/standard/context-contract.yaml
+generated_at: '2026-11-07T06:37:45.372974+00:00'
+knowledge_graph_ref: _grimoire-output/knowledge/GAO-moteur-qwen3-001/knowledge-graph.yaml
+knowledge_nodes: []
+memory_exclusions: []
+memory_inclusions: []
+memory_os:
+  contract_declared: false
+  legacy_vector_sources:
+  - qdrant-local
+  - qdrant-server
+  policy_ref: _grimoire/standard/memory-policy.yaml
+  promotion_gates:
+  - graph_projection_has_source_refs
+  - hot_memory_ttl_declared
+  - qdrant_migration_bundle_verified
+  - semantic_write_has_evidence
+  target:
+    graph_projection: neo4j
+    hot_memory: redis
+    semantic_memory: weaviate-server
+    sidecar: sqlite
+profile: controlled
+provider_constraints:
+  enabled_providers:
+  - anthropic
+  - local
+  matched_provider: anthropic
+  required_capabilities:
+  - chat
+  routes:
+  - allowed_data_classes:
+    - code-du-projet
+    - cahier-des-charges
+    - fixtures-synthetiques
+    - documentation-publique
+    capabilities:
+    - chat
+    - code
+    - reasoning
+    - review
+    capability_match: true
+    fallback_order:
+    - local
+    forbidden_data_classes:
+    - secrets
+    - cles-api
+    - contenu-env
+    - documents-personnels-hors-repo
+    - audio-utilisateur
+    missing_capabilities: []
+    provider: anthropic
+    provider_type: hosted
+    required_capabilities:
+    - chat
+  - allowed_data_classes:
+    - code-du-projet
+    - cahier-des-charges
+    - fixtures-synthetiques
+    - documentation-publique
+    - texte-lu-par-l-extension
+    capabilities:
+    - chat
+    - code
+    - embeddings
+    capability_match: true
+    fallback_order: []
+    forbidden_data_classes:
+    - secrets
+    - cles-api
+    - contenu-env
+    missing_capabilities: []
+    provider: local
+    provider_type: local
+    required_capabilities:
+    - chat
+  routing:
+    default_fallback_chain:
+    - anthropic
+    - local
+    default_provider: anthropic
+    require_capability_match: true
+    require_data_policy_match: true
+  unmatched_capabilities: []
+redactions:
+  forbidden_data_classes: []
+  required: true
+selected_sources:
+- path: _grimoire/standard/mission-brief.md
+  source: mission_brief
+- path: _grimoire/standard/task-board.yaml
+  source: task_board
+- path: _grimoire-output/evidence/GAO-moteur-qwen3-001/task-envelope.md
+  source: task_envelope
+source_priority: []
+task_id: GAO-moteur-qwen3-001
+task_summary:
+  acceptance_criteria:
+  - 'test: serveur Qwen3 local répond avec --network none et gpu-yield respecté, preuve réelle en audio'
+  - 'gate: grimoire standard gate check --strict vert'
+  description: ''
+  status: in_progress
+  title: 'Moteur Qwen3 : serveur local hors ligne, voix figée et voix jouée'

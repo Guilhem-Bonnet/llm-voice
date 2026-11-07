@@ -1,6 +1,6 @@
 # Services TTS locaux — `docker-compose.tts.yml`
 
-Quatre services indépendants (ADR-009). Aucun port publié hors `127.0.0.1`.
+Cinq services indépendants (ADR-009). Aucun port publié hors `127.0.0.1`.
 
 | Service | Profil | Rôle | Port |
 |---|---|---|---|
@@ -8,6 +8,7 @@ Quatre services indépendants (ADR-009). Aucun port publié hors `127.0.0.1`.
 | `ollama` | `ollama` | Narrateur, **optionnel** (déjà natif sur cette machine) | 11434 |
 | `piper` | `light` | TTS niveau 1b, CPU seul, sans GPU | 5000 |
 | `kyutai16` | `kyutai16` | Kyutai TTS 1.6B, voix de narration, GPU ROCm | 8020 |
+| `qwen3` | `qwen3` | Qwen3-TTS 1.7B, voix figée et voix jouée, GPU ROCm | 8021 |
 
 ## Prérequis
 
@@ -121,3 +122,56 @@ attendent dans l'ordre ; se déconnecter annule. Tests, sans GPU : `python3 depl
 Les voix viennent de `kyutai/tts-voices` : CML-TTS (CC BY 4.0) et Estelle (CC0).
 L'accent des voix CML-TTS et le consentement au clonage de leurs locuteurs ne sont pas
 documentés : aucun échantillon n'est livré dans le VSIX.
+
+## Qwen3-TTS, voix figée et voix jouée (`qwen3`)
+
+```bash
+mkdir -p "$XDG_RUNTIME_DIR/gpu-yield"   # comme pour kyutai16
+docker compose -f deploy/docker-compose.tts.yml up -d qwen3
+```
+
+Prérequis : l'image `deploy-chatterbox:latest` et `~/.llm-voice/voices-lab/qwen3/` contenant
+`extras/` (`qwen_tts` 0.1.1 et ses dépendances), `hf/` (Qwen3-TTS 12Hz 1.7B Base et VoiceDesign,
+Apache-2.0) et les extraits de référence. Tout est monté en lecture seule, rien n'est téléchargé.
+
+Deux façons de dire un texte, sur le même `POST /tts` :
+
+- **voix figée**, sans champ `direction` : modèle Base, clonage depuis les extraits de la voix.
+  Stable d'une phrase à l'autre, mais aucune consigne de jeu. Elle prononcerait `[Cough]`,
+  `[Sigh]` ou `[Laughter]` comme des mots : le serveur les retire avant de lui donner le texte ;
+- **voix jouée**, avec `direction` (consigne libre en anglais, 500 caractères au plus) : modèle
+  VoiceDesign. La consigne se place entre la description et l'accent de la voix du catalogue :
+  `Young adult woman, medium pitch, clear diction. <direction> Native French speaker with a standard metropolitan France accent.`
+
+Les deux tirent la graine de la voix (11) : même texte, même consigne, même son, octet pour octet.
+
+**Changer la voix figée** se fait dans `deploy/qwen3/voices.json`, sans toucher au code :
+`frozen_refs` liste les extraits, chemins relatifs à `~/.llm-voice/voices-lab/qwen3/`
+(monté en `/lab/refs`). La transcription vient du champ `text`, ou sinon du `.json` posé à côté du
+`.wav`. Relancer le service ensuite. L'entrée actuelle, `fr-naturelle`, est **provisoire** :
+`out-gao/naturel1-s11.wav` et `naturel2-s11.wav`, en attendant le choix de l'extrait. Aucun extrait
+n'entre dans le dépôt. Un extrait absent rend la voix figée indisponible (503), pas le service.
+
+Ce qu'il faut savoir :
+
+- **Chargement.** Chaque modèle se charge à son premier usage, ou d'avance par `POST /load`
+  (voix figée) et `POST /load?mode=played`. Mesuré : 14 à 19 s pour Base avec l'encodage des
+  extraits, 3 à 6 s pour VoiceDesign quand les fichiers sont déjà en cache disque.
+  `/health` répond pendant ce temps (`state: loading`) et dit quels modèles sont prêts (`models`).
+- **Vitesse.** Environ 2 s de calcul par seconde d'audio : le client doit préparer la phrase
+  suivante pendant que la précédente se lit.
+- **Mémoire du GPU.** Mesuré par processus sur RX 9070 (16 Gio), Kyutai chargé à côté (4,9 Gio) :
+  Base seul 4,5 Gio, 5,5 Gio une fois une phrase dite ; les deux modèles 8,7 Gio chargés, 9,7 Gio
+  au plus fort. Ils tiennent ensemble, mais avec Kyutai et le bureau la carte monte à 99 %
+  (16 132 Mio sur 16 304) : aucun manque de mémoire mesuré, sans marge pour un autre programme. Avant de charger le second modèle, le serveur lit la
+  mémoire libre de la carte : sous 3000 Mio (`QWEN3_MIN_FREE_VRAM_MB`), ou si elle est illisible,
+  il décharge le premier. Un manque de mémoire au chargement ou pendant une synthèse fait de même,
+  puis réessaie une fois. Passer d'un modèle à l'autre coûte alors un rechargement.
+  Ollama et un jeu se disputent la même mémoire.
+- **Mode jeu**, **local seulement**, **pas de redémarrage automatique** : comme `kyutai16`,
+  y compris l'annulation quand le client part (vérifiée à chaque trame) et la libération
+  des deux modèles. Il reste environ 0,85 Gio au processus en mode jeu (contexte du runtime GPU,
+  mesuré) : seul l'arrêt du service rend tout. Ni le texte ni la consigne ne sont jamais journalisés, seulement leur longueur.
+
+Tests, sans GPU : `python3 -P deploy/qwen3/test_server.py`. Preuve réelle sur le GPU, hors ligne :
+`_grimoire-output/evidence/GAO-moteur-qwen3-001/proof_real.py`.
