@@ -133,6 +133,8 @@ export interface AudioCacheKeyMaterial {
   parameters?: Readonly<Record<string, unknown>>;
   /** Only when the engine applies the speed: the audio differs (ADR-017 §1.5). */
   speed?: number;
+  /** A played line (Qwen3 `direction`): the same text played otherwise is other audio. */
+  direction?: string;
   spokenText: string;
 }
 

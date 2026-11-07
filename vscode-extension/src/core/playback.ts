@@ -29,8 +29,10 @@ export interface ChunkVoice {
   readonly voice?: string;
   readonly model?: string;
   readonly parameters?: Readonly<Record<string, unknown>>;
-  /** Shown, not played yet: like `speakerId`, it enters neither a request nor a cache key. */
+  /** Shown: like `speakerId`, it enters neither a request nor a cache key. */
   readonly stage?: readonly StageState[];
+  /** How this line is played (English, ASCII); enters the request and the cache key. */
+  readonly direction?: string;
 }
 
 /** One synthesised unit of audio and the source it highlights (CdC §30). */

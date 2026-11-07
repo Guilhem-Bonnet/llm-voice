@@ -91,7 +91,8 @@ export function computeCacheKey(material: AudioCacheKeyMaterial): string {
     stableStringify(material.parameters ?? {}),
     material.spokenText,
     ...(material.speed !== undefined ? [`speed:${material.speed}`] : []),
-    ...(material.language !== undefined ? [`language:${material.language}`] : [])
+    ...(material.language !== undefined ? [`language:${material.language}`] : []),
+    ...(material.direction !== undefined && material.direction.length > 0 ? [`direction:${material.direction}`] : [])
   ];
   return createHash("sha256").update(parts.join("\u0000"), "utf8").digest("hex");
 }

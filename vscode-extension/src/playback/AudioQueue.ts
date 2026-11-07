@@ -59,6 +59,8 @@ export interface AudioQueueBinding {
   speed?: number;
   format?: TtsRequest["format"];
   parameters?: Readonly<Record<string, unknown>>;
+  /** A played line only: never set on a session, only by a chunk's `cast`. */
+  direction?: string;
 }
 
 /**
@@ -67,14 +69,15 @@ export interface AudioQueueBinding {
  * comes back, so a reading with one voice cannot differ from what it was.
  */
 export function bindingForChunk(binding: AudioQueueBinding, cast: ChunkVoice | undefined): AudioQueueBinding {
-  if (cast === undefined || (cast.voice === undefined && cast.model === undefined && cast.parameters === undefined)) {
+  if (cast === undefined || (cast.voice === undefined && cast.model === undefined && cast.parameters === undefined && cast.direction === undefined)) {
     return binding;
   }
   return {
     ...binding,
     ...(cast.voice !== undefined ? { voice: cast.voice } : {}),
     ...(cast.model !== undefined ? { model: cast.model } : {}),
-    ...(cast.parameters !== undefined ? { parameters: cast.parameters } : {})
+    ...(cast.parameters !== undefined ? { parameters: cast.parameters } : {}),
+    ...(cast.direction !== undefined ? { direction: cast.direction } : {})
   };
 }
 
@@ -87,6 +90,7 @@ export function cacheKeyFor(providerId: string, binding: AudioQueueBinding, spok
     ...(binding.parameters !== undefined ? { parameters: binding.parameters } : {}),
     ...(binding.speed !== undefined ? { speed: binding.speed } : {}),
     ...(binding.language !== undefined ? { language: binding.language } : {}),
+    ...(binding.direction !== undefined ? { direction: binding.direction } : {}),
     spokenText
   });
 }
@@ -599,7 +603,8 @@ export class AudioQueue {
       ...(binding.model !== undefined ? { model: binding.model } : {}),
       ...(binding.speed !== undefined ? { speed: binding.speed } : {}),
       ...(binding.format !== undefined ? { format: binding.format } : {}),
-      ...(binding.parameters !== undefined ? { parameters: binding.parameters } : {})
+      ...(binding.parameters !== undefined ? { parameters: binding.parameters } : {}),
+      ...(binding.direction !== undefined ? { direction: binding.direction } : {})
     };
   }
 

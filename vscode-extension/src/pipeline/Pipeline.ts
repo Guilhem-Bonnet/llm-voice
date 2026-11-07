@@ -1143,7 +1143,7 @@ export class Pipeline implements PipelineFacade {
     profile: VoiceProfile,
     tts: TtsProvider,
     signal?: AbortSignal
-  ): Promise<{ voices: readonly Voice[]; effective: VoiceProfile; narratorVoice: string; refused?: undefined } | { refused: string }> {
+  ): Promise<{ voices: readonly Voice[]; effective: VoiceProfile; narratorVoice: string; playsStates: boolean; refused?: undefined } | { refused: string }> {
     const capabilities = await tts.getCapabilities(signal).catch(() => undefined);
     if (capabilities?.multiVoice !== true) {
       return { refused: CAST_VOICE_REQUIRED };
@@ -1158,7 +1158,7 @@ export class Pipeline implements PipelineFacade {
     if (!voices.some((voice) => voice.id === narratorVoice)) {
       return { refused: CAST_NARRATOR_ABSENT };
     }
-    return { voices, effective, narratorVoice };
+    return { voices, effective, narratorVoice, playsStates: capabilities.direction?.instructions === true };
   }
 
   /** Only a file has a bible on disk; a selection reads the file's cast, and writes nothing. */
@@ -1222,7 +1222,7 @@ export class Pipeline implements PipelineFacade {
     const engineSpeed = await this.engineSpeedFor(tts, requestedSpeed(reading.voice, reading.mode), signal);
     const binding: AudioQueueBinding = bindingFrom(engine.effective, engineSpeed);
     const faithful = await buildSession(segments, profile);
-    const narration = groupPassages(assignCast(faithful.segments, { binding, voiceOf: (speakerId) => voiceOfRole.get(speakerId) }), {
+    const narration = groupPassages(assignCast(faithful.segments, { binding, voiceOf: (speakerId) => voiceOfRole.get(speakerId), playsStates: engine.playsStates }), {
       maxSentences: profile.chunking.maxSentences,
       lang: profile.language
     });

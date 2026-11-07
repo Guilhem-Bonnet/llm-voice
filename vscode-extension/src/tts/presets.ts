@@ -338,8 +338,8 @@ export function createTtsProvider(
         multiVoice: true,
         readsDirection: true,
         wholeReadingFirst: true,
-        // Step 2 measures what a direction does on this engine; until then, nothing is advertised.
-        direction: { instructions: false, nonverbal: [], usesGpu: true },
+        // GAO-metteur-en-s-001: heard on this engine, a written state played by an English direction.
+        direction: { instructions: true, nonverbal: [], usesGpu: true },
         defaultVoice: options.defaultVoice ?? QWEN3_DEFAULT_VOICE
       });
     case "openai-compatible":
