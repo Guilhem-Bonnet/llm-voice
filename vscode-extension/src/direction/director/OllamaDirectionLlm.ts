@@ -52,7 +52,7 @@ export const DEFAULT_OLLAMA_TIMEOUT_MS = 60_000;
 
 /** What one call cost, without any content. */
 export interface OllamaCallStats {
-  readonly kind: "analyze" | "direct" | "warmup";
+  readonly kind: "analyze" | "direct" | "warmup" | "propose";
   readonly ok: boolean;
   /** `"ok"` or the degraded reason the call ended with. */
   readonly outcome: "ok" | DirectionDegradedReason;
@@ -245,6 +245,19 @@ export class OllamaDirectionLlm implements DirectionLlm {
         { role: "user", content: directorUserPrompt(request) }
       ],
       DIRECTION_OUTPUT_JSON_SCHEMA,
+      signal
+    );
+  }
+
+  /** One structured answer for a caller that checks it itself (cast proposals: quotes verified by code). */
+  async structured(system: string, user: string, schema: object, signal?: AbortSignal): Promise<unknown> {
+    return this.chat(
+      "propose",
+      [
+        { role: "system", content: system },
+        { role: "user", content: user }
+      ],
+      schema as JsonSchema,
       signal
     );
   }

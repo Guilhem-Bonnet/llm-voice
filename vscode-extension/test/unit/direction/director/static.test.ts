@@ -28,6 +28,7 @@ describe("src/direction/director static rules", () => {
       "OllamaDirectionLlm.ts",
       "PartitionCache.ts",
       "StageDirector.ts",
+      "castProposals.ts",
       "gpuYield.ts",
       "index.ts",
       "llm.ts",

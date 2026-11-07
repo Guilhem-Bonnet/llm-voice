@@ -23,12 +23,15 @@ export interface CastPanelDeps {
   createVoice(input: { name: string; description: string; forRoleId?: string }, signal: AbortSignal): Promise<{ id: string; name: string }>;
   read(): Promise<void>;
   recast(): Promise<void>;
+  /** Propositions d'après le texte (analyste local), hors lecture ; rend la phrase à afficher. */
+  propose?(signal: AbortSignal): Promise<string>;
   log(message: string): void;
 }
 
 export type CastPanelPost = (message: { type: string; [key: string]: unknown }) => void;
 
 const CREATE_ESTIMATE_SECONDS = 30;
+const PROPOSE_ESTIMATE_SECONDS = 20;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -122,6 +125,22 @@ export class CastPanelController {
       case "read":
         await this.deps.read();
         return;
+      case "propose": {
+        const controller = new AbortController();
+        this.running.set(message.requestId, controller);
+        this.post({ type: "busy", requestId: message.requestId, estimateSeconds: PROPOSE_ESTIMATE_SECONDS });
+        try {
+          const notice = this.deps.propose !== undefined ? await this.deps.propose(controller.signal) : "Propositions indisponibles ici.";
+          this.post({ type: "done", requestId: message.requestId });
+          await this.refresh();
+          this.post({ type: "notice", message: notice });
+        } catch (error) {
+          this.post({ type: "failed", requestId: message.requestId, message: messageOf(error) });
+        } finally {
+          this.running.delete(message.requestId);
+        }
+        return;
+      }
       case "recast":
         await this.deps.recast();
         await this.refresh();

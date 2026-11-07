@@ -84,9 +84,11 @@
         ]),
         row.proposal ? el("span", { class: "proposal", text: proposalText(row.proposal) }) : null
       ]);
+      const proposed = row.proposal && row.proposal.voiceId && row.proposal.voiceId !== row.voiceId ? row.proposal : undefined;
       const actions = el("div", { class: "actions" }, [
         button("Écouter", () => listen(row.roleId, undefined), { "data-action": "listen", disabled: !row.firstLine }),
-        button("Changer", () => { openRole = openRole === row.roleId ? undefined : row.roleId; render(); }, { "data-action": "change" })
+        button("Changer", () => { openRole = openRole === row.roleId ? undefined : row.roleId; render(); }, { "data-action": "change" }),
+        proposed ? button("Appliquer", () => vscode.postMessage({ type: "assign", roleId: row.roleId, voiceId: proposed.voiceId }), { "data-action": "apply", title: `Choisir ${proposed.voiceLabel || "la voix proposée"}` }) : null
       ]);
       const line = el("div", { class: "row", "data-role": row.roleId }, [who, actions]);
       if (openRole === row.roleId) line.appendChild(choices(row));
@@ -95,14 +97,17 @@
 
     page.appendChild(el("div", { class: "footer" }, [
       button("Lire", () => vscode.postMessage({ type: "read" }), { class: "primary", "data-action": "read" }),
+      button("Proposer d'après le texte", () => { const requestId = startRequest("Lecture du texte"); vscode.postMessage({ type: "propose", requestId }); }, { "data-action": "propose", title: "Un modèle local lit le texte et propose âge, genre et caractère, seulement d'après des indices écrits. Rien ne sort de la machine." }),
       button("Refaire la distribution", () => vscode.postMessage({ type: "recast" }), { "data-action": "recast", title: "Les voix attribuées automatiquement sont recalculées avec les voix disponibles. Vos choix restent." })
     ]));
     if (state.canCreateVoice) page.appendChild(createForm());
   }
 
   function proposalText(p) {
-    const parts = [p.age, p.gender, p.character].filter(Boolean).join(", ");
-    return `Proposition : ${parts}${p.quote ? ` (d'après « ${p.quote} »)` : ""}`;
+    const parts = [p.gender, p.age, p.character].filter(Boolean).join(", ");
+    const quotes = (p.quotes && p.quotes.length > 0 ? p.quotes : p.quote ? [p.quote] : []).map((q) => `« ${q} »`).join(", ");
+    const voice = p.voiceLabel ? ` · voix la plus proche : ${p.voiceLabel}` : "";
+    return `Proposition : ${parts}${quotes ? ` (d'après ${quotes})` : ""}${voice}`;
   }
 
   function choices(row) {
@@ -209,6 +214,7 @@
       case "failed": finish(message.requestId); setStatus(message.message); break;
       case "created": finish(message.requestId); setStatus(`Voix « ${message.name} » créée : elle est dans la liste de Changer.`); break;
       case "notice": setStatus(message.message); break;
+      case "done": finish(message.requestId); break;
     }
   });
 

@@ -56,9 +56,11 @@ import type { AudioChunk, PlayerScriptView } from "../core/playback.js";
 import { BibleStore } from "../direction/bible/BibleStore.js";
 import { documentKeyOf, documentScope } from "../direction/bible/scopes.js";
 import { assignCast } from "../direction/cast/castSegments.js";
+import { nearestVoice, proposalCacheKey, proposalLabels, proposeCast, type ProposalRole, type VerifiedProposal } from "../direction/director/castProposals.js";
+import { DEFAULT_DIRECTION_MODEL, OllamaDirectionLlm } from "../direction/director/OllamaDirectionLlm.js";
 import { castFromBible, recastFromScratch, recordUserVoice } from "../direction/cast/castStore.js";
 import { CastPanel } from "../views/castPanel/CastPanel.js";
-import { castNotice, engineLabelOf, traitChoices, type CastPanelState } from "../views/castPanel/castPanelModel.js";
+import { castNotice, engineLabelOf, traitChoices, type CastPanelState, type CastProposal } from "../views/castPanel/castPanelModel.js";
 import { createQwen3Voice, fetchQwen3VoiceSample } from "../tts/qwen3Voices.js";
 import { planReading, type ReadingPlan } from "../direction/cast/synthesisPlan.js";
 import { parseScript, plainTextBlocks } from "../direction/script/parseScript.js";
@@ -457,6 +459,8 @@ export class Pipeline implements PipelineFacade {
   private responseCodeIds: readonly string[] = [];
 
   private readonly egress: EgressGuardHandle;
+  /** Propositions de voix d'après le texte, par document (clé : texte, personnages, modèle). */
+  private readonly castProposals = new Map<string, readonly VerifiedProposal[]>();
   private readonly registry = new TtsProviderRegistry<TtsProvider>();
   private readonly narratorRegistry = new TtsProviderRegistry<NarratorProvider>();
   private readonly diskCache: DiskAudioCache;
@@ -1479,7 +1483,8 @@ export class Pipeline implements PipelineFacade {
         byUser: entry.origin === "user",
         shared: entry.shared,
         unavailable: entry.unavailable,
-        narratorClash: entry.narratorClash
+        narratorClash: entry.narratorClash,
+        ...this.panelProposalOf(context.document.getText(), script, entry.roleId, voices, narratorVoice, cast.entries)
       })),
       voices: voices.map((voice) => ({
         id: voice.id,
@@ -1494,6 +1499,74 @@ export class Pipeline implements PipelineFacade {
       canCreateVoice,
       slowFactor: capabilities?.wholeReadingFirst === true ? 2 : undefined,
       traitChoices: traitChoices()
+    };
+  }
+
+  /** Les personnages tels que l'analyste les voit : identifiant et nom affiché, rien d'autre. */
+  private proposalRolesOf(script: ReturnType<typeof parseScript>): ProposalRole[] {
+    return script.roles.map((role) => ({ roleId: role.roleId, name: role.name }));
+  }
+
+  /**
+   * « Proposer d'après le texte » : un appel à l'analyste local, mis en cache par document.
+   * Mode jeu : aucun appel. Le journal ne porte que des comptes et des raisons, aucun mot du texte.
+   */
+  async prepareCastProposals(uri: string, signal?: AbortSignal): Promise<string> {
+    const { document, script } = await this.castPanelContext(uri);
+    const text = document.getText();
+    const roles = this.proposalRolesOf(script);
+    const llm = new OllamaDirectionLlm({ egress: this.egress, model: DEFAULT_DIRECTION_MODEL, temperature: 0 });
+    const key = proposalCacheKey(text, roles, llm.model);
+    if (this.castProposals.has(key)) {
+      return "Propositions déjà prêtes pour ce texte.";
+    }
+    const outcome = await proposeCast(text, roles, llm, { gpuYield: createGpuYieldProbe(), ...(signal !== undefined ? { signal } : {}) });
+    if (outcome.status === "gpu-yield") {
+      this.output.info("distribution : propositions différées, mode jeu actif");
+      return "Mode jeu actif : les propositions attendront la fin de la partie.";
+    }
+    if (outcome.status === "failed") {
+      this.output.warn("distribution : propositions indisponibles", { reason: outcome.reason });
+      return "L'analyste local ne répond pas (Ollama). Aucune proposition.";
+    }
+    this.castProposals.set(key, outcome.check.proposals);
+    this.output.info("distribution : propositions", {
+      roles: roles.length,
+      proposed: outcome.check.proposals.length,
+      fields: outcome.check.proposals.map((proposal) => Object.keys(proposal).filter((name) => name !== "roleId").length),
+      rejected: outcome.check.rejected.map((item) => `${item.field}:${item.reason}`),
+      durationMs: outcome.durationMs
+    });
+    return outcome.check.proposals.length > 0
+      ? "Propositions prêtes, avec les mots du texte qui les fondent. Vous gardez le dernier mot."
+      : "Aucun indice écrit sur l'âge ou le genre : aucune proposition.";
+  }
+
+  /** Une proposition déjà préparée pour ce personnage, et la voix la plus proche par sa description. */
+  private panelProposalOf(
+    text: string,
+    script: ReturnType<typeof parseScript>,
+    roleId: string,
+    voices: readonly Voice[],
+    narratorVoice: string | undefined,
+    entries: readonly { readonly roleId: string; readonly voice: string | undefined }[]
+  ): { proposal?: CastProposal } {
+    const key = proposalCacheKey(text, this.proposalRolesOf(script), DEFAULT_DIRECTION_MODEL);
+    const proposal = this.castProposals.get(key)?.find((item) => item.roleId === roleId);
+    if (proposal === undefined) {
+      return {};
+    }
+    const taken = new Set(entries.filter((entry) => entry.roleId !== roleId && entry.voice !== undefined).map((entry) => entry.voice as string));
+    const voice = nearestVoice(proposal, voices, { ...(narratorVoice !== undefined ? { narratorVoice } : {}), taken });
+    const labels = proposalLabels(proposal);
+    return {
+      proposal: {
+        ...(labels.age !== undefined ? { age: labels.age } : {}),
+        ...(labels.gender !== undefined ? { gender: labels.gender } : {}),
+        ...(labels.character !== undefined ? { character: labels.character } : {}),
+        quotes: labels.quotes,
+        ...(voice !== undefined ? { voiceId: voice.id, voiceLabel: voice.label } : {})
+      }
     };
   }
 
@@ -1579,6 +1652,7 @@ export class Pipeline implements PipelineFacade {
           const { tts, scope } = await this.castPanelContext(uri);
           await recastFromScratch(this.castStore(), scope, tts.id);
         },
+        propose: async (signal) => this.prepareCastProposals(uri, signal),
         log: (message) => this.output.warn(message)
       },
       this.context.extensionUri

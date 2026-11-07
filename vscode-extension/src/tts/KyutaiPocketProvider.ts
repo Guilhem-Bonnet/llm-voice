@@ -254,7 +254,7 @@ export class KyutaiPocketProvider implements TtsProvider {
       if (!response.ok) {
         return [...this.catalog];
       }
-      const body = (await response.json()) as { voices?: { id?: unknown; name?: unknown; available?: unknown; origin?: unknown }[] };
+      const body = (await response.json()) as { voices?: { id?: unknown; name?: unknown; available?: unknown; origin?: unknown; description?: unknown }[] };
       const rows = (body.voices ?? []).filter((row) => row.available === true);
       const available = new Set(rows.map((row) => row.id));
       const voices = this.catalog.filter((voice) => available.has(voice.id));
@@ -265,7 +265,9 @@ export class KyutaiPocketProvider implements TtsProvider {
       for (const row of rows) {
         if (typeof row.origin === "string" && typeof row.id === "string" && row.id.length > 0 && row.id.length <= 200 && !known.has(row.id)) {
           const label = typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim().slice(0, 80) : row.id;
-          voices.push({ id: row.id, label, ...(language !== undefined ? { language } : {}) });
+          // The English description of a created voice: what a text-based proposal is compared with.
+          const description = typeof row.description === "string" && row.description.trim().length > 0 ? row.description.trim().slice(0, 300) : undefined;
+          voices.push({ id: row.id, label, ...(language !== undefined ? { language } : {}), ...(description !== undefined ? { description } : {}) });
         }
       }
       return voices.length > 0 ? voices : [...this.catalog];

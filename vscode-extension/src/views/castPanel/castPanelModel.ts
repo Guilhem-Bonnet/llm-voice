@@ -10,6 +10,11 @@ export interface CastProposal {
   readonly character?: string;
   /** Les mots du texte qui fondent la proposition. */
   readonly quote?: string;
+  /** Chaque citation, vérifiée dans le document. */
+  readonly quotes?: readonly string[];
+  /** La voix disponible la plus proche, par sa description : « Appliquer » la choisit. */
+  readonly voiceId?: string;
+  readonly voiceLabel?: string;
 }
 
 export interface CastPanelRow {
@@ -94,7 +99,8 @@ export type CastPanelMessage =
   | { readonly type: "assign"; readonly roleId: string; readonly voiceId: string }
   | { readonly type: "createVoice"; readonly name: string; readonly recipe: VoiceRecipe; readonly forRoleId?: string; readonly requestId: number }
   | { readonly type: "read" }
-  | { readonly type: "recast" };
+  | { readonly type: "recast" }
+  | { readonly type: "propose"; readonly requestId: number };
 
 export const MAX_VOICE_NAME = 40;
 export const MAX_DESCRIPTION = 300;
@@ -153,6 +159,8 @@ export function parseCastPanelMessage(raw: unknown): CastPanelMessage | undefine
         return undefined;
       }
       return { type: "listen", roleId: raw.roleId, requestId: raw.requestId, ...(raw.voiceId !== undefined ? { voiceId: raw.voiceId as string } : {}) };
+    case "propose":
+      return requestIdOf(raw.requestId) ? { type: "propose", requestId: raw.requestId } : undefined;
     case "sampleVoice":
       return shortId(raw.voiceId) && requestIdOf(raw.requestId) ? { type: "sampleVoice", voiceId: raw.voiceId, requestId: raw.requestId } : undefined;
     case "cancel":
