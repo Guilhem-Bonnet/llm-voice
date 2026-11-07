@@ -105,37 +105,69 @@ export function directionLookup(directions: readonly StateDirection[]): (speaker
   };
 }
 
-export const STATE_JSON_SCHEMA = {
-  type: "object",
-  properties: {
-    items: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          id: { type: "string" },
-          state: { anyOf: [{ type: "null" }, { type: "string", enum: STATE_IDS }] },
-          quote: { type: "string" }
-        },
-        required: ["id", "state", "quote"]
+/**
+ * Les mots qu'une citation peut reprendre : chaque indication entière et ses propositions.
+ * Diagnostic du 2026-11-07 sur 07 : laissé libre, le modèle citait la réplique au lieu de
+ * l'indication ; le schéma ne lui laisse plus que des fragments exacts des indications.
+ */
+export function indicationFragments(candidates: readonly StateCandidate[]): string[] {
+  const out = new Set<string>();
+  for (const candidate of candidates) {
+    const whole = candidate.context.replace(/^[\s(]+|[\s).!?…]+$/gu, "");
+    if (whole.length > 0) {
+      out.add(whole);
+    }
+    for (const part of whole.split(/\s*[,;:.!?…]\s*|\s+(?:et|puis|mais)\s+/u)) {
+      if (part.trim().length >= 3) {
+        out.add(part.trim());
       }
     }
-  },
-  required: ["items"]
-} as const;
+  }
+  return [...out];
+}
+
+export function stateJsonSchema(candidates: readonly StateCandidate[]): object {
+  const fragments = indicationFragments(candidates);
+  return {
+    type: "object",
+    properties: {
+      items: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string", enum: candidates.map((candidate) => candidate.id) },
+            state: { anyOf: [{ type: "null" }, { type: "string", enum: STATE_IDS }] },
+            quote: fragments.length > 0 ? { type: "string", enum: fragments } : { type: "string" }
+          },
+          required: ["id", "state", "quote"]
+        }
+      }
+    },
+    required: ["items"]
+  };
+}
 
 export function stateSystemPrompt(): string {
   return [
-    "Tu es metteur en scène. Pour chaque réplique, une indication écrite la précède. Dis comment l'acteur doit dire la réplique, d'après l'indication seulement.",
-    `Choisis un état dans cette liste fermée : ${STATE_IDS.join(", ")} ; ou null si l'indication ne change pas la façon de parler (un geste neutre, un déplacement).`,
-    "Recopie dans `quote` les mots exacts de l'indication qui justifient l'état. En cas de doute : null.",
+    "Tu es metteur en scène. Chaque ligne donne une indication écrite, puis la réplique qui la suit. Dis comment l'acteur doit dire la réplique, d'après l'indication seulement.",
+    `Choisis un état dans cette liste fermée : ${STATE_IDS.join(", ")} ; ou null si l'indication ne change pas la façon de parler.`,
+    "Une action peut mener à un état de la voix, ou à rien : à toi de juger d'après le sens de l'action.",
+    "`quote` reprend les mots de l'INDICATION (jamais ceux de la réplique) qui justifient ton choix, même quand l'état est null.",
+    "Exemples :",
+    // Exemples volontairement absents des textes d'essai : la preuve ne doit pas réciter la consigne.
+    '- indication « Il brandit le poing vers la porte. » → {"state":"determined","quote":"Il brandit le poing"} (une menace, une résolution) ;',
+    '- indication « Elle range ses lunettes dans leur étui. » → {"state":null,"quote":"Elle range ses lunettes dans leur étui"} (un geste neutre) ;',
+    '- indication « Il revient en courant. » → {"state":"breathless","quote":"Il revient en courant"} ;',
+    '- indication « Elle se détourne pour cacher ses larmes. » → {"state":"crying","quote":"cacher ses larmes"}.',
+    "En cas de doute : null.",
     'Réponds uniquement en JSON : {"items":[{"id":"c1","state":"…"|null,"quote":"…"}]}.'
   ].join("\n");
 }
 
 export function stateUserPrompt(candidates: readonly StateCandidate[], roles: readonly ProposalRole[]): string {
   const nameOf = (roleId: string): string => roles.find((role) => role.roleId === roleId)?.name ?? roleId;
-  return candidates.map((candidate) => `${candidate.id} | ${nameOf(candidate.roleId)} | indication : ${candidate.context} | réplique : ${candidate.reply.slice(0, MAX_REPLY_CHARS)}`).join("\n");
+  return candidates.map((candidate) => `${candidate.id} | ${nameOf(candidate.roleId)} | INDICATION : ${candidate.context} | réplique qui suit : ${candidate.reply.slice(0, MAX_REPLY_CHARS)}`).join("\n");
 }
 
 export type StateOutcome =
@@ -154,7 +186,7 @@ export async function directStates(regions: readonly ScriptRegion[], roles: read
   }
   const started = Date.now();
   try {
-    const raw = await llm.structured(stateSystemPrompt(), stateUserPrompt(candidates, roles), STATE_JSON_SCHEMA, options.signal);
+    const raw = await llm.structured(stateSystemPrompt(), stateUserPrompt(candidates, roles), stateJsonSchema(candidates), options.signal);
     return { status: "ok", check: verifyStateDirections(raw, candidates, roles), candidates: candidates.length, durationMs: Date.now() - started };
   } catch (error) {
     return { status: "failed", reason: error instanceof Error ? error.name : "error" };

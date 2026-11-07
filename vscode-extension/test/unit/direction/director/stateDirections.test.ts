@@ -1,6 +1,6 @@
 /** Le metteur en scène local : identifiant d'état, citation de l'indication vérifiée, repli voix figée. */
 import { describe, expect, it } from "vitest";
-import { directStates, directionLookup, stateCandidates, verifyStateDirections } from "../../../../src/direction/director/stateDirections.js";
+import { directStates, directionLookup, indicationFragments, stateCandidates, stateJsonSchema, verifyStateDirections } from "../../../../src/direction/director/stateDirections.js";
 import { assignCast } from "../../../../src/direction/cast/castSegments.js";
 
 const ROLES = [{ roleId: "comte", name: "Le Comte" }, { roleId: "isaure", name: "Isaure" }];
@@ -29,6 +29,17 @@ describe("metteur en scène", () => {
     expect(verifyStateDirections({ items: [{ id: "c1", state: "angry", quote: "je reste" }] }, candidates, ROLES).rejected).toEqual([{ id: "c1", reason: "quote-absent" }]);
     expect(verifyStateDirections({ items: [{ id: "c1", state: "heroic voice please", quote: "tire son épée" }] }, candidates, ROLES).rejected).toEqual([{ id: "c1", reason: "invalid-state" }]);
     expect(verifyStateDirections({ items: [{ id: "c1", state: null, quote: "" }] }, candidates, ROLES).directions).toEqual([]);
+  });
+
+  it("le schéma ne laisse citer que des fragments exacts des indications ; un fragment partiel est accepté", () => {
+    const candidates = stateCandidates(REGIONS);
+    expect(indicationFragments(candidates)).toEqual(["Il tire son épée"]);
+    const schema = JSON.stringify(stateJsonSchema(candidates));
+    expect(schema).toContain('"enum":["Il tire son épée"]');
+    expect(schema).not.toContain("Je reste");
+    expect(verifyStateDirections({ items: [{ id: "c1", state: "determined", quote: "son épée" }] }, candidates, ROLES).directions).toHaveLength(1);
+    // Diagnostic 07 : la réplique citée au lieu de l'indication reste rejetée.
+    expect(verifyStateDirections({ items: [{ id: "c1", state: "determined", quote: "Non. Je reste, et je veux que cette tour le sache." }] }, candidates, ROLES).rejected).toEqual([{ id: "c1", reason: "quote-absent" }]);
   });
 
   it("panne ou mode jeu : rien, la lecture reste en voix figée", async () => {
