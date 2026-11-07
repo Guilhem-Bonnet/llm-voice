@@ -68,7 +68,9 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
-        vscode.Uri.joinPath(this.globalStorageUri, "cache"),
+        // `globalStorageUri` has the `vscode-userdata` scheme, the audio is played by its `file`
+        // address (`WebviewAudioSink`), and VS Code compares schemes: under the former, a 401.
+        vscode.Uri.file(vscode.Uri.joinPath(this.globalStorageUri, "cache").fsPath),
         vscode.Uri.joinPath(this.extensionUri, "media")
       ]
     };
@@ -113,7 +115,13 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
 
   /** Reveals the Panel view without stealing editor focus (ADR-001). */
   reveal(): void {
-    this.view?.show(true /* preserveFocus */);
+    if (this.view !== undefined) {
+      this.view.show(true /* preserveFocus */);
+      return;
+    }
+    // Never opened since the window loaded: there is no view to show yet, and the waiting bar
+    // of the reading that asks for it would be seen by no one.
+    void vscode.commands.executeCommand("llmVoice.playerView.focus", { preserveFocus: true });
   }
 
   /** True once `resolveWebviewView` has run at least once. Test hook. */

@@ -38,7 +38,9 @@ export class VoiceGalleryPanel {
       localResourceRoots: [
         vscode.Uri.joinPath(extensionUri, "media", "voiceGallery"),
         vscode.Uri.joinPath(extensionUri, "media", "voices"),
-        deps.trialDir
+        // `globalStorageUri` has the `vscode-userdata` scheme, the phrases are played by their
+        // `file` address, and VS Code compares schemes: under the former, every phrase got a 401.
+        vscode.Uri.file(deps.trialDir.fsPath)
       ]
     });
     const webview = this.panel.webview;

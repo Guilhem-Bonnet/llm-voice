@@ -165,6 +165,7 @@ const inboxDirAutoFallbackFails = mkdtempSync(join(tmpdir(), "llm-voice-test-inb
 // `.vscode-test/`, absolute, short — see `userDataDir()` above), settings
 // and profile pre-seeded *before* activation (settings are read once, at
 // `activate()`).
+const requestedScenario = process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "";
 const nativeRealUserDataDir = userDataDir("native-real");
 const nativeRealExtensionsDir = userDataDir("native-real-extensions", "native-real");
 mkdirSync(join(nativeRealUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice"), { recursive: true });
@@ -173,7 +174,7 @@ writeFileSync(
   join(nativeRealUserDataDir, "User", "settings.json"),
   JSON.stringify(
     {
-      "llmVoice.audio.engine": "native",
+      "llmVoice.audio.engine": requestedScenario === "player-webview" ? "webview" : "native",
       "llmVoice.audio.corePath": join(testRootDir, "..", "target", "release", "llm-voice-core"),
       "llmVoice.tts.provider": "system",
       "llmVoice.testVoice.text": "Bonjour. Voici un exemple de ma voix. Nous allons maintenant examiner un concept technique et voir comment l'expliquer clairement.",
@@ -194,7 +195,7 @@ writeFileSync(
     {
       schemaVersion: 1,
       voice:
-        ["kyutai", "cast", "response"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "")
+        ["kyutai", "cast", "response", "gallery", "player-webview"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "")
           ? // No baseUrl on purpose: the provider must find its own port.
             process.env.LLM_VOICE_NATIVE_REAL_ENGINE === "kyutai16"
             ? { providerId: "kyutai-1-6b", voice: "cml-577_394", speed: 1 }
@@ -475,7 +476,9 @@ export default defineConfig([
       `--user-data-dir=${nativeRealUserDataDir}`,
       `--extensions-dir=${nativeRealExtensionsDir}`,
       // `--response` presses the real shortcut through the browser's debugging protocol.
-      ...(process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT ? [`--remote-debugging-port=${process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT}`] : [])
+      ...(process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT ? [`--remote-debugging-port=${process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT}`] : []),
+      // The gallery and the webview engine play in VS Code itself: their sound would reach the speakers of whoever runs this.
+      ...(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "gallery" || requestedScenario === "player-webview" ? ["--mute-audio"] : [])
     ]
   }
 ]);

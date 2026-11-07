@@ -9,6 +9,7 @@ import * as assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import * as vscode from "vscode";
 import type { ExtensionTestApi } from "../../src/extension.js";
+import { clickIn, findFrame, photograph as photographWindow, sleep } from "./webviewProbe.js";
 
 interface TestPipeline {
   getPlaybackState(): string;
@@ -82,6 +83,57 @@ function photograph(port: string, path: string): Promise<void> {
 
 const CHORD = { key: "v", code: "KeyV", keyCode: 86, modifiers: CTRL_ALT };
 
+interface WaitWatch {
+  stop(): Promise<{ seenAfterMs?: number; furthestPercent: number; label?: string; shown: boolean }>;
+}
+
+/**
+ * The waiting bar of the panel, read in the real page from the gesture on. Visible means a page
+ * that is shown, a bar with a height and a width: a block no one can see would not count.
+ */
+function watchWaitBar(port: string, startedAt: number): WaitWatch {
+  let running = true;
+  let seenAfterMs: number | undefined;
+  let furthestPercent = 0;
+  let label: string | undefined;
+  const shot = process.env.LLM_VOICE_NATIVE_REAL_WAIT_SHOT;
+  const watching = (async () => {
+    const frame = await findFrame(port, "#wait-bar", 60_000);
+    if (frame === undefined) {
+      return;
+    }
+    while (running) {
+      const seen = await frame.evaluate<{ shown: boolean; percent: number; label: string }>(`(() => {
+        const box = document.getElementById("wait-bar").getBoundingClientRect();
+        return {
+          shown: !document.getElementById("wait").hidden && document.visibilityState === "visible" && box.width > 0 && box.height > 0,
+          percent: Number(document.getElementById("wait-bar").getAttribute("aria-valuenow")),
+          label: document.getElementById("wait-label").textContent
+        };
+      })()`);
+      if (seen.shown) {
+        if (seenAfterMs === undefined) {
+          seenAfterMs = Date.now() - startedAt;
+          label = seen.label;
+          if (shot !== undefined) {
+            await photographWindow(port, shot);
+          }
+        }
+        furthestPercent = Math.max(furthestPercent, seen.percent);
+      }
+      await sleep(100);
+    }
+    frame.close();
+  })();
+  return {
+    stop: async () => {
+      running = false;
+      await watching;
+      return { ...(seenAfterMs !== undefined ? { seenAfterMs } : {}), furthestPercent, ...(label !== undefined ? { label } : {}), shown: seenAfterMs !== undefined };
+    }
+  };
+}
+
 (enabled ? suite : suite.skip)("moteur natif réel — Lire la dernière réponse, Ctrl+Alt+V puis R", () => {
   test("le raccourci, depuis le terminal, lit la réponse déposée jusqu'au bout", async function () {
     this.timeout(300_000);
@@ -122,7 +174,21 @@ const CHORD = { key: "v", code: "KeyV", keyCode: 86, modifiers: CTRL_ALT };
     assert.equal(pipeline.getPlaybackState(), idle, "le focus n'est pas dans le terminal : le témoin a démarré");
 
     const startedAt = Date.now();
-    await pressKeys(port, [CHORD, { key: "r", code: "KeyR", keyCode: 82, modifiers: 0 }]);
+    const gesture = process.env.LLM_VOICE_NATIVE_REAL_RESPONSE_GESTURE ?? "shortcut";
+    let waitBar: WaitWatch;
+    if (gesture === "shortcut") {
+      waitBar = watchWaitBar(port, startedAt);
+      await pressKeys(port, [CHORD, { key: "r", code: "KeyR", keyCode: 82, modifiers: 0 }]);
+    } else {
+      // « Tout lire » : le bouton du panneau, à la souris. Le panneau est donc ouvert.
+      await vscode.commands.executeCommand("llmVoice.playerView.focus");
+      await sleep(2000);
+      const panel = await findFrame(port, "#btn-response-read", 30_000);
+      assert.ok(panel, "panneau introuvable");
+      waitBar = watchWaitBar(port, Date.now());
+      await clickIn(port, panel, `document.getElementById("btn-response-read")`);
+      panel.close();
+    }
 
     let firstSoundMs: number | undefined;
     let state = pipeline.getPlaybackState();
@@ -151,8 +217,10 @@ const CHORD = { key: "v", code: "KeyV", keyCode: 86, modifiers: CTRL_ALT };
       state = pipeline.getPlaybackState();
     }
 
-    console.log(`response-proof ${JSON.stringify({ firstSoundMs, totalMs: Date.now() - startedAt })}`);
+    const wait = await waitBar.stop();
+    console.log(`response-proof ${JSON.stringify({ gesture, firstSoundMs, totalMs: Date.now() - startedAt, wait })}`);
     assert.equal(state, "completed");
+    assert.ok(wait.shown, "la barre d'attente du panneau n'a pas été visible");
     const [after] = await pipeline.listInboxEntriesForTest();
     assert.equal(after?.read, true, "la réponse lue est marquée comme lue");
   });

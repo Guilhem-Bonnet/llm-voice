@@ -260,3 +260,11 @@
 ### [2026-11-06] Jeu d'acteurs : les indications se jouent
 - **Décision** : amende ADR-018. Une indication de manière (« essoufflé », « tousse ») n'est pas lue par le narrateur : le personnage joue sa réplique dans cet état. Le jeu tient compte du contexte et de l'état de chaque personnage, déduit du texte, pour une scène vivante entre personnages réellement différents. La faisabilité avec le moteur reste à mesurer.
 - **Agent** : concierge, sur décision de guilhem-bonnet (« c'est réellement au LLM du personnage de faire un effet d'essoufflement oral »)
+
+### [2026-11-06] Attente, voix off et essais de moteurs
+- **Décision** : l'attente au premier son est acceptable tant que la lecture ne coupe pas et qu'une barre de chargement est visible. Répéter un mot (« J'ai… j'ai couru ») est admis en mode voix off ou voix dans la tête ; à défaut, les mots de l'auteur restent dits une fois, dans l'ordre (lecture du concierge, à confirmer). Essais de moteurs de jeu autorisés sans limite de nombre (« autant de tests que tu souhaite »), à part du moteur en place, texte local uniquement.
+- **Agent** : concierge, sur réponses de guilhem-bonnet
+
+### [2026-11-06] Écoute : Kyutai 1.6B ne joue pas
+- **Décision** : réécrire le texte pour Kyutai 1.6B ne donne ni souffle, ni toux, ni rire : seulement des phrases hachées, et une lecture littéraire « mot à mot ». Le jeu doit venir de codes compris par le modèle de voix (balises), donc d'un moteur qui en a. Remet en question le moteur unique décidé le 2026-11-06, selon l'écoute des essais ; Kyutai reste en place d'ici là.
+- **Agent** : concierge, sur l'écoute de guilhem-bonnet
