@@ -4,10 +4,10 @@ import { castNotice, composeVoiceDescription, parseCastPanelMessage, VOICE_TRAIT
 describe("le panneau Distribution : messages et voix à créer", () => {
   it("compose une consigne anglaise à partir des choix simples", () => {
     expect(composeVoiceDescription({ gender: "woman", age: "young", timbre: "high", traits: ["proud", "anxious"] })).toBe(
-      "A young woman with a high-pitched, bright voice, speaking French naturally. Proud and haughty, anxious and worried."
+      "A French young woman, native speaker from France, with a high-pitched, bright voice. Proud and haughty, anxious and worried."
     );
     expect(composeVoiceDescription({ gender: "man", age: "elderly", timbre: "deep", traits: [] })).toBe(
-      "An elderly man with a deep, low-pitched voice, speaking French naturally."
+      "A French elderly man, native speaker from France, with a deep, low-pitched voice."
     );
   });
 

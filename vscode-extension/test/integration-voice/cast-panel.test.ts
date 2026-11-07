@@ -112,7 +112,7 @@ suite("voice-chain: panneau Distribution (GAO-studio-distr-001)", () => {
     assert.ok(create, "POST /voices/create attendu");
     const form = new URLSearchParams(create.body);
     assert.equal(form.get("name"), "Isaure jeune");
-    assert.equal(form.get("description"), "A young woman with a high-pitched, bright voice, speaking French naturally. Proud and haughty, anxious and worried.");
+    assert.equal(form.get("description"), "A French young woman, native speaker from France, with a high-pitched, bright voice. Proud and haughty, anxious and worried.");
     assert.ok((form.get("sample_text") ?? "").startsWith("Quel vent"));
     assert.ok(posted.some((message) => message.type === "created" && message.requestId === 1));
     const afterCreate = pipeline.castPanelStateForTest();

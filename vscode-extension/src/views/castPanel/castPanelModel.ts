@@ -191,8 +191,9 @@ const PITCH: Record<Timbre, string> = {
  */
 export function composeVoiceDescription(recipe: VoiceRecipe): string {
   const noun = NOUN[recipe.gender][recipe.age];
-  const article = /^[aeiou]/.test(noun) ? "An" : "A";
-  const parts = [`${article} ${noun} with ${PITCH[recipe.timbre]}, speaking French naturally.`];
+  // Le français en tête : placé en fin de consigne, il a laissé un accent anglais à une voix
+  // d'enfant (15 % d'anglais détecté) ; nommer l'anglais l'aggrave (failure-museum, 2026-11-07).
+  const parts = [`A French ${noun}, native speaker from France, with ${PITCH[recipe.timbre]}.`];
   const traits = recipe.traits.slice(0, MAX_TRAITS).map((trait) => VOICE_TRAITS[trait].english);
   if (traits.length > 0) {
     const sentence = traits.join(", ");
