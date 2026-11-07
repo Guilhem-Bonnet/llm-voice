@@ -434,10 +434,11 @@ describe("links, commands, preparation", () => {
 });
 
 describe("the model", () => {
-  it("has 23 voices of the mockup, 36 of Kyutai narration, then the two to prepare; every id is distinct", () => {
+  it("has 23 voices of the mockup, the Qwen3 voice, 36 of Kyutai narration, then the two to prepare; every id is distinct", () => {
     expect(KNOWN.size).toBe(GALLERY_ENTRIES.length);
-    expect(GALLERY_ENTRIES).toHaveLength(23 + 36 + 2);
-    expect(GALLERY_VOICE_COUNT).toBe(23 + 36);
+    expect(GALLERY_ENTRIES).toHaveLength(23 + 1 + 36 + 2);
+    expect(GALLERY_VOICE_COUNT).toBe(23 + 1 + 36);
+    expect(GALLERY_ENTRIES.filter((entry) => entry.engine === "qwen3")).toHaveLength(1);
     expect(GALLERY_ENTRIES.filter((entry) => entry.engine === "kyutai16")).toHaveLength(36);
     expect(GALLERY_ENTRIES.filter((entry) => entry.engine === "kyutai")).toHaveLength(20);
     expect(GALLERY_ENTRIES.map((entry) => entry.id)).toEqual(expect.arrayContaining(["system", "piper", "kokoro", "chatterbox", "own-voice"]));
@@ -505,7 +506,7 @@ describe("the voice menu (Quick Pick of chooseVoice)", () => {
       "Utiliser ma voix"
     ]);
     expect(rows[1]?.description).toBe("active");
-    expect(rows.find((row) => row.label === "Ouvrir la galerie")?.description).toBe("59 voix");
+    expect(rows.find((row) => row.label === "Ouvrir la galerie")?.description).toBe("60 voix");
   });
 
   it("never lists the catalogue, whatever the history", () => {

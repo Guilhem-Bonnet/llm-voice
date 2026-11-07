@@ -12,6 +12,7 @@
 import type { GlobalVoice, TtsBinding } from "../../core/profile.js";
 import type { ProviderHealthStatus } from "../../core/health.js";
 import { KYUTAI16_VOICE_CAVEAT } from "../../tts/kyutai16VoiceCatalog.js";
+import { QWEN3_VOICE_CAVEAT } from "../../tts/qwen3VoiceCatalog.js";
 import {
   activeEntryId,
   activeLabel,
@@ -34,7 +35,7 @@ import {
   type ServerEngine
 } from "./galleryModel.js";
 
-const SERVER_ENGINES: readonly ServerEngine[] = ["kyutai", "kyutai16", "kokoro", "chatterbox"];
+const SERVER_ENGINES: readonly ServerEngine[] = ["kyutai", "kyutai16", "qwen3", "kokoro", "chatterbox"];
 const HEALTH_TIMEOUT_MS = 2000;
 
 export interface VoiceGalleryDeps {
@@ -72,6 +73,7 @@ export class VoiceGalleryController {
   private status: Record<ServerEngine, EngineStatus> = {
     kyutai: "unknown",
     kyutai16: "unknown",
+    qwen3: "unknown",
     kokoro: "unknown",
     chatterbox: "unknown"
   };
@@ -268,6 +270,7 @@ export class VoiceGalleryController {
       favorites: this.favorites(),
       engines,
       kyutai16Note: KYUTAI16_VOICE_CAVEAT,
+      qwen3Note: QWEN3_VOICE_CAVEAT,
       credits: {
         subtitle: GALLERY_CREDITS.subtitle,
         groups: [...GALLERY_CREDITS.groups, GALLERY_CREDITS.engine, ...GALLERY_CREDITS.narration],

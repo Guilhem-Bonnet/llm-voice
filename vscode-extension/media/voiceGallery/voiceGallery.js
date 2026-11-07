@@ -10,7 +10,7 @@
 
   const SVG_NS = "http://www.w3.org/2000/svg";
   const STAR_PATH = "M8 1.5l2 4.3 4.7.6-3.5 3.2.9 4.7L8 12l-4.1 2.3.9-4.7L1.3 6.4 6 5.8z";
-  const SECTIONS = ["local", "kyutai16", "kyutai", "prepare"];
+  const SECTIONS = ["local", "qwen3", "kyutai16", "kyutai", "prepare"];
 
   const search = get("search");
   const phrase = get("phrase");
@@ -340,7 +340,7 @@
   }
 
   function applyFilters() {
-    const visible = { local: 0, kyutai16: 0, kyutai: 0, prepare: 0 };
+    const visible = { local: 0, qwen3: 0, kyutai16: 0, kyutai: 0, prepare: 0 };
     for (const card of cards.values()) {
       const shown = matches(card.model);
       card.root.hidden = !shown;
@@ -351,7 +351,7 @@
     for (const section of SECTIONS) {
       get("section-" + section).hidden = visible[section] === 0;
     }
-    get("empty").hidden = visible.local + visible.kyutai16 + visible.kyutai + visible.prepare > 0;
+    get("empty").hidden = visible.local + visible.qwen3 + visible.kyutai16 + visible.kyutai + visible.prepare > 0;
     for (const name of Object.keys(filterButtons)) {
       const on = name === filter;
       filterButtons[name].setAttribute("aria-pressed", on ? "true" : "false");
@@ -389,9 +389,15 @@
 
   /** Kyutai narration says its state in its own section, command included: no banner for it. */
   function refreshNarrationServer() {
-    const narration = engines.kyutai16;
+    refreshSectionServer("kyutai16");
+    refreshSectionServer("qwen3");
+  }
+
+  /** Kyutai narration and Qwen3: each section says its server's state and command. */
+  function refreshSectionServer(engine) {
+    const narration = engines[engine];
     const started = Boolean(narration) && narration.status === "started";
-    const status = get("kyutai16-status");
+    const status = get(engine + "-status");
     status.textContent = !narration
       ? ""
       : started
@@ -400,8 +406,8 @@
           ? "Serveur arrêté"
           : "État du serveur inconnu";
     status.classList.toggle("state-ok", started);
-    get("kyutai16-server").hidden = !narration || started;
-    get("kyutai16-command").textContent = narration ? narration.command : "";
+    get(engine + "-server").hidden = !narration || started;
+    get(engine + "-command").textContent = narration ? narration.command : "";
   }
 
   function bannerEngine() {
@@ -454,6 +460,7 @@
     activeId = message.activeId;
     get("current-voice").textContent = message.activeLabel || "";
     get("kyutai16-note").textContent = message.kyutai16Note || "";
+    get("qwen3-note").textContent = message.qwen3Note || "";
     for (const model of message.cards) {
       const card = cards.get(model.id) || createCard(model);
       card.model = model;
@@ -494,7 +501,7 @@
       case "trialStopped": {
         const finished = settlePending(message);
         if (finished) {
-          refusedEngine = message.engine === "kyutai16" ? refusedEngine : message.engine;
+          refusedEngine = message.engine === "kyutai16" || message.engine === "qwen3" ? refusedEngine : message.engine;
           if (engines[message.engine]) {
             engines[message.engine].status = "stopped";
           }
@@ -547,6 +554,12 @@
     vscode.postMessage({ type: "refreshHealth" });
   });
   get("kyutai16-credits").addEventListener("click", () => showCredits(true));
+  get("qwen3-copy").addEventListener("click", () => {
+    vscode.postMessage({ type: "copyCommand", engine: "qwen3" });
+  });
+  get("qwen3-check").addEventListener("click", () => {
+    vscode.postMessage({ type: "refreshHealth" });
+  });
   get("open-credits").addEventListener("click", () => showCredits(true));
   get("credits-back").addEventListener("click", () => showCredits(false));
 

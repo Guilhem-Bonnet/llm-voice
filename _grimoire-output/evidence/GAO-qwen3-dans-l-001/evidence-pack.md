@@ -50,3 +50,12 @@ Commit de l'incrément 1 : `969ee43` (fichiers de la carte seulement ; hook pre-
 - `src/pipeline/Pipeline.ts` : moteur `wholeReadingFirst` + lecture fidèle à une voix + plus d'un passage → `startAhead = N-1`, fenêtre = N, délai par requête ≥ 180 s ; le compteur suit `onChunkTiming`.
 - Lu : `typecheck` 0, `lint` 0, `test:unit` 150 fichiers / 3151 tests verts (dont `test/unit/playback/wholeReadingWait.test.ts`), `build` 0.
 - Suites d'intégration lues : `fake-tts` 79 passing, `integration-security` 8 passing, `test:integration-voice` 51 passing (2 min), build 0.
+
+Commit de l'incrément 2 : `df52198`.
+
+## Incrément 3 : la voix Qwen3 dans la galerie
+
+- `galleryModel.ts` : moteur et section `qwen3`, entrée `qwen3:fr-essais-21-22` « Voix des essais 21 et 22 » placée avant Kyutai narration, commande `docker compose -f deploy/docker-compose.tts.yml up -d qwen3`, carte « Prête / Non prête », choix écrit `{providerId: "qwen3", baseUrl: 8021, voice}`.
+- `VoiceGalleryController.ts` : sonde de santé et note de la section ; `voiceGalleryHtml.ts` + `media/voiceGallery/voiceGallery.js` : section « Voix Qwen3 · voix par défaut », état du serveur, commande, Copier, Vérifier.
+- Aucun code n'écrit `global-voice.json` en dehors du clic « Choisir » existant.
+- Lu : typecheck 0, lint 0, test:unit 150 fichiers / 3154 tests (compteurs de la galerie passés à 60 voix, 3 tests galerie dans `qwen3.test.ts`), build 0, fake-tts 79 passing, integration-security 8 passing, test:integration-voice 51 passing.

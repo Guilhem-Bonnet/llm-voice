@@ -18,6 +18,17 @@ import { friendlyTtsProviderLabel } from "../../../src/profiles/ttsProviderLabel
 import { describeVoice } from "../../../src/profiles/voiceResolution.js";
 import { QWEN3_DEFAULT_VOICE, QWEN3_VOICE_CATALOG } from "../../../src/tts/qwen3VoiceCatalog.js";
 import { QWEN3_LOCAL_PRESET, createTtsProvider, findTtsProviderPreset, presetKindForProviderId } from "../../../src/tts/presets.js";
+import {
+  QWEN3_COMPOSE_COMMAND,
+  activeEntryId,
+  activeLabel,
+  bindingForEntry,
+  buildCards,
+  galleryEntry,
+  knownGalleryIds,
+  parseGalleryMessage,
+  startCommand
+} from "../../../src/views/voiceGallery/galleryModel.js";
 
 const REPO = resolve(__dirname, "../../../..");
 const SETTINGS = { provider: "auto", baseUrl: "http://localhost:8004" };
@@ -166,5 +177,34 @@ describe("the fallback of a reading asked of Qwen3", () => {
     const served = chooseQwen3OrFallback({ gameMode: false, qwen3: health("degraded", "gpu-yield"), kyutai16: health("ok") });
     expect(served).toEqual({ use: "system", reason: "game-mode" });
     expect(qwen3FallbackMessage({ use: "system", reason: "game-mode" })).toMatch(/mode jeu.*la voix système/);
+  });
+});
+
+describe("the Qwen3 voice in the gallery", () => {
+  const ID = `qwen3:${QWEN3_DEFAULT_VOICE}`;
+  const status = { kyutai: "unknown", kyutai16: "unknown", qwen3: "unknown", kokoro: "unknown", chatterbox: "unknown" } as const;
+
+  it("is an entry of its own, which writes Qwen3 and its voice, and is then shown as chosen", () => {
+    const entry = galleryEntry(ID);
+    expect(entry).toMatchObject({ label: "Voix des essais 21 et 22", engine: "qwen3", voice: QWEN3_DEFAULT_VOICE });
+    const binding = bindingForEntry(entry!, { providerId: "kyutai-1-6b", baseUrl: "http://localhost:8020", voice: "cml-577_394" });
+    expect(binding).toEqual({ providerId: "qwen3", baseUrl: "http://localhost:8021", voice: QWEN3_DEFAULT_VOICE });
+    expect(activeEntryId(binding)).toBe(ID);
+    expect(activeLabel(binding)).toBe("Voix des essais 21 et 22");
+  });
+
+  it("has its own section, can be chosen once its server is started, and can always be tried", () => {
+    const stopped = buildCards({ status, piperInstalled: false, sampleUri: (path) => path }).find((card) => card.id === ID);
+    expect(stopped).toMatchObject({ section: "qwen3", engine: "qwen3", ready: false, canChoose: false, canListen: true, state: "Non prête" });
+    const started = buildCards({ status: { ...status, qwen3: "started" }, piperInstalled: false, sampleUri: (path) => path }).find((card) => card.id === ID);
+    expect(started).toMatchObject({ ready: true, canChoose: true, state: "Prête" });
+  });
+
+  it("gives the command that starts its service, without the word V9 removes", () => {
+    expect(startCommand("qwen3", "http://localhost:8021")).toBe(QWEN3_COMPOSE_COMMAND);
+    expect(QWEN3_COMPOSE_COMMAND).toContain("docker compose -f deploy/docker-compose.tts.yml up -d qwen3");
+    expect(QWEN3_COMPOSE_COMMAND).not.toMatch(/profil/i);
+    expect(parseGalleryMessage({ type: "copyCommand", engine: "qwen3" }, knownGalleryIds())).toEqual({ type: "copyCommand", engine: "qwen3" });
+    expect(parseGalleryMessage({ type: "choose", voiceId: ID }, knownGalleryIds())).toEqual({ type: "choose", voiceId: ID });
   });
 });

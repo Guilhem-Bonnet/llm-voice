@@ -10,20 +10,22 @@ import { CHATTERBOX_COMPOSE_COMMAND, ttsBindingForTier } from "../../onboarding/
 import { bindingForEngineVoice, describeVoice } from "../../profiles/voiceResolution.js";
 import { KOKORO_DEFAULT_FR_VOICE } from "../../tts/KokoroProvider.js";
 import { KYUTAI16_VOICE_CATALOG, KYUTAI16_VOICE_CAVEAT } from "../../tts/kyutai16VoiceCatalog.js";
+import { QWEN3_VOICE_CATALOG } from "../../tts/qwen3VoiceCatalog.js";
 import { KYUTAI_POCKET_VOICE_CATALOG } from "../../tts/kyutaiVoiceCatalog.js";
 import {
   CHATTERBOX_LOCAL_PRESET,
   KOKORO_LOCAL_PRESET,
   KYUTAI16_LOCAL_PRESET,
+  QWEN3_LOCAL_PRESET,
   KYUTAI_POCKET_LOCAL_PRESET
 } from "../../tts/presets.js";
 import { PIPER_VOICE_ID } from "../../tts/SystemTtsProvider.js";
 
-export type ServerEngine = "kyutai" | "kyutai16" | "kokoro" | "chatterbox";
+export type ServerEngine = "kyutai" | "kyutai16" | "qwen3" | "kokoro" | "chatterbox";
 export type GalleryEngine = ServerEngine | "system" | "own-voice";
 export type PrepareTarget = "chatterbox" | "ownVoice" | "piper";
 export type EngineStatus = "started" | "stopped" | "unknown";
-export type GallerySection = "local" | "kyutai" | "kyutai16" | "prepare";
+export type GallerySection = "local" | "qwen3" | "kyutai" | "kyutai16" | "prepare";
 
 export interface GalleryEntry {
   id: string;
@@ -55,10 +57,20 @@ const KYUTAI16_ENTRIES: readonly GalleryEntry[] = KYUTAI16_VOICE_CATALOG.map((vo
   detail: voice.licence?.spdx === "CC0-1.0" ? "Unmute, CC0." : "CML-TTS, CC BY 4.0."
 }));
 
+/** GAO-qwen3-dans-l-001: the voice that replaces Camille as the default when its service answers. */
+const QWEN3_ENTRIES: readonly GalleryEntry[] = QWEN3_VOICE_CATALOG.map((voice) => ({
+  id: `qwen3:${voice.id}`,
+  label: voice.label,
+  engine: "qwen3",
+  voice: voice.id,
+  detail: "Voix posée, carte graphique. Toute la lecture est préparée avant le premier son."
+}));
+
 export const GALLERY_ENTRIES: readonly GalleryEntry[] = [
   { id: "system", label: "Voix système", engine: "system", detail: "Déjà sur votre machine, qualité correcte." },
   { id: "piper", label: "Piper Siwis", engine: "system", detail: "Voix française autonome, bonne qualité." },
   { id: "kokoro", label: "Kokoro Siwis", engine: "kokoro" },
+  ...QWEN3_ENTRIES,
   ...KYUTAI16_ENTRIES,
   ...KYUTAI_ENTRIES,
   { id: "chatterbox", label: "Chatterbox", engine: "chatterbox", detail: "Qualité maximale. Nécessite Docker." },
@@ -88,6 +100,7 @@ export const MAX_TRIAL_PHRASE_LENGTH = 300;
 const SERVER_PRESETS: Readonly<Record<ServerEngine, { providerId: string; baseUrl: string }>> = {
   kyutai: { providerId: "kyutai-pocket", baseUrl: KYUTAI_POCKET_LOCAL_PRESET.baseUrl },
   kyutai16: { providerId: "kyutai-1-6b", baseUrl: KYUTAI16_LOCAL_PRESET.baseUrl },
+  qwen3: { providerId: "qwen3", baseUrl: QWEN3_LOCAL_PRESET.baseUrl },
   kokoro: { providerId: "kokoro", baseUrl: KOKORO_LOCAL_PRESET.baseUrl },
   chatterbox: { providerId: "chatterbox", baseUrl: CHATTERBOX_LOCAL_PRESET.baseUrl }
 };
@@ -110,8 +123,8 @@ export function engineProviderId(engine: ServerEngine): string {
  * has none here: it needs a file, which only the `useOwnVoice` flow can provide.
  */
 export function bindingForEntry(entry: GalleryEntry, current: TtsBinding): TtsBinding & { providerId: string } {
-  if (entry.engine === "kyutai16") {
-    return serverVoice("kyutai16", current, entry.voice ?? entry.id);
+  if (entry.engine === "kyutai16" || entry.engine === "qwen3") {
+    return serverVoice(entry.engine, current, entry.voice ?? entry.id);
   }
   switch (entry.id) {
     case "system":
@@ -154,6 +167,10 @@ export function activeEntryId(binding: TtsBinding): string | undefined {
       const id = `kyutai16:${binding.voice ?? KYUTAI16_LOCAL_PRESET.voice}`;
       return galleryEntry(id) !== undefined ? id : undefined;
     }
+    case "qwen3": {
+      const id = `qwen3:${binding.voice ?? QWEN3_LOCAL_PRESET.voice}`;
+      return galleryEntry(id) !== undefined ? id : undefined;
+    }
     default:
       return undefined;
   }
@@ -191,6 +208,9 @@ function portOf(url: string): string | undefined {
  */
 export const KYUTAI16_COMPOSE_COMMAND = `mkdir -p "$XDG_RUNTIME_DIR/gpu-yield" && docker compose -f deploy/docker-compose.tts.yml up -d kyutai16`;
 
+/** Same rule as `KYUTAI16_COMPOSE_COMMAND`: naming the service activates its group. */
+export const QWEN3_COMPOSE_COMMAND = `mkdir -p "$XDG_RUNTIME_DIR/gpu-yield" && docker compose -f deploy/docker-compose.tts.yml up -d qwen3`;
+
 /**
  * The command to run oneself, adapted to the configured port. Shown and copied, never
  * run: starting a server belongs to card 0-006.
@@ -204,6 +224,8 @@ export function startCommand(engine: ServerEngine, url: string): string {
     }
     case "kyutai16":
       return KYUTAI16_COMPOSE_COMMAND;
+    case "qwen3":
+      return QWEN3_COMPOSE_COMMAND;
     case "kokoro":
       return `docker run --rm -p 127.0.0.1:${port ?? "8880"}:8880 ghcr.io/remsky/kokoro-fastapi-cpu:latest`;
     case "chatterbox":
@@ -214,6 +236,7 @@ export function startCommand(engine: ServerEngine, url: string): string {
 export const ENGINE_NAMES: Readonly<Record<ServerEngine, string>> = {
   kyutai: "Kyutai Pocket",
   kyutai16: "Kyutai narration",
+  qwen3: "Voix Qwen3",
   kokoro: "Kokoro",
   chatterbox: "Chatterbox"
 };
@@ -242,7 +265,7 @@ export interface CardInputs {
 }
 
 function isServerEngine(engine: GalleryEngine): engine is ServerEngine {
-  return engine === "kyutai" || engine === "kyutai16" || engine === "kokoro" || engine === "chatterbox";
+  return engine === "kyutai" || engine === "kyutai16" || engine === "qwen3" || engine === "kokoro" || engine === "chatterbox";
 }
 
 export function buildCards(inputs: CardInputs): GalleryCard[] {
@@ -250,14 +273,14 @@ export function buildCards(inputs: CardInputs): GalleryCard[] {
 }
 
 function cardOf(entry: GalleryEntry, inputs: CardInputs): GalleryCard {
-  if (entry.engine === "kyutai16") {
+  if (entry.engine === "kyutai16" || entry.engine === "qwen3") {
     // Stays visible when not ready; a click on `Écouter` says why, and shows the command.
-    const ready = inputs.status.kyutai16 === "started";
+    const ready = inputs.status[entry.engine] === "started";
     return {
       id: entry.id,
       label: entry.label,
-      section: "kyutai16",
-      engine: "kyutai16",
+      section: entry.engine,
+      engine: entry.engine,
       ready,
       canChoose: ready,
       canListen: true,
@@ -435,7 +458,7 @@ export function parseGalleryMessage(raw: unknown, knownIds: ReadonlySet<string>)
         ? { type: "favorite", voiceId, favorite: raw.favorite }
         : undefined;
     case "copyCommand":
-      return raw.engine === "kyutai" || raw.engine === "kyutai16" || raw.engine === "kokoro" || raw.engine === "chatterbox"
+      return raw.engine === "kyutai" || raw.engine === "kyutai16" || raw.engine === "qwen3" || raw.engine === "kokoro" || raw.engine === "chatterbox"
         ? { type: "copyCommand", engine: raw.engine }
         : undefined;
     case "openLink":

@@ -90,6 +90,24 @@ export function buildVoiceGalleryHtml(inputs: VoiceGalleryHtmlInputs): string {
       <div id="cards-local" class="cards"></div>
     </section>
 
+    <section id="section-qwen3" class="section">
+      <div class="section-head">
+        <h2>Voix Qwen3 · voix par défaut</h2>
+        <span id="qwen3-status" class="small"></span>
+      </div>
+      <p id="qwen3-note" class="muted small"></p>
+      <div id="qwen3-server" class="banner" hidden>
+        <div class="banner-text">
+          <strong>Serveur à démarrer depuis le dépôt</strong>
+          <span class="muted small">Il utilise la carte graphique et ne fonctionne que sur votre machine. Rien ne démarre sans vous.</span>
+          <code id="qwen3-command" class="command"></code>
+        </div>
+        <button id="qwen3-copy" class="button" type="button">Copier la commande</button>
+        <button id="qwen3-check" class="button" type="button">Vérifier</button>
+      </div>
+      <div id="cards-qwen3" class="cards"></div>
+    </section>
+
     <section id="section-kyutai16" class="section">
       <div class="section-head">
         <h2>Kyutai narration · 36 voix en français</h2>
