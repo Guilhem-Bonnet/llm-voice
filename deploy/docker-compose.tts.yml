@@ -290,6 +290,9 @@ services:
       - ${HOME}/.llm-voice/voices-lab/qwen3/extras:/lab/extras:ro
       - ${HOME}/.llm-voice/voices-lab/qwen3/hf:/lab/hf:ro
       - ${HOME}/.llm-voice/voices-lab/qwen3:/lab/refs:ro
+      # Le seul dossier en écriture : les voix créées par POST /voices/create, hors du dépôt.
+      # Doit exister avant le démarrage (mkdir -p), sinon Docker le créerait en root.
+      - ${HOME}/.llm-voice/voices-lab/qwen3/created:/lab/refs/created:rw
       # Le drapeau du mode jeu. Doit exister : un dossier absent ne doit pas être
       # recréé par Docker en root, et le serveur le lirait vide sans rien dire.
       - type: bind
@@ -314,6 +317,7 @@ services:
       # ci-dessus. Lancé hors conteneur, le serveur écoute 127.0.0.1.
       - QWEN3_HOST=0.0.0.0
       - QWEN3_REFS_DIR=/lab/refs
+      - QWEN3_CREATED_DIR=/lab/refs/created
       # Pas de HSA_OVERRIDE_GFX_VERSION : même raison que `chatterbox`.
       - ROCBLAS_USE_HIPBLASLT=0
       - TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1

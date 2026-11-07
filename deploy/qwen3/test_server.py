@@ -120,6 +120,7 @@ class ServerCase(unittest.TestCase):
             log=lambda event, **fields: self.logged.append({"event": event, **fields}),
             free_vram=lambda: self.free,
             min_free_vram=6 * GIB,
+            created_dir=self.dir / "created",
         )
         self.server = srv.serve(self.service, "127.0.0.1", 0)
         self.port = self.server.server_address[1]
@@ -183,7 +184,9 @@ class Contract(ServerCase):
         _, data = self.request("GET", "/voices")
         payload = json.loads(data)
         self.assertEqual(payload["default"], self.voice)
-        self.assertEqual(payload["voices"], [{"id": self.voice, "name": "Voix des essais 21 et 22", "available": True, "played": True}])
+        description = "Young adult woman, medium pitch, clear diction."
+        row = {"id": self.voice, "name": "Voix des essais 21 et 22", "available": True, "played": True}
+        self.assertEqual(payload["voices"], [{**row, "description": description, "origin": "catalogue"}])
 
     def test_multipart_returns_a_wav_and_keeps_accents(self):
         response, data = self.tts(text="Éléonore été là", voice_url=self.voice)
@@ -749,6 +752,213 @@ class Privacy(ServerCase):
         self.assertEqual(self.tts(text="Bonjour")[0].status, 200)
 
 
+class Creation(ServerCase):
+    """POST /voices/create, GET /voices/<id>/sample, et les voix créées dans /voices et /tts."""
+
+    DESCRIPTION = "Older man, deep low voice, slow and grave."
+
+    def create(self, **fields: str):
+        body, content_type = multipart(fields)
+        return self.request("POST", "/voices/create", body, {"Content-Type": content_type})
+
+    def created(self, name: str = "Homme mûr grave", **extra: str) -> dict:
+        response, data = self.create(name=name, description=self.DESCRIPTION, **extra)
+        self.assertEqual(response.status, 201, data)
+        return json.loads(data)
+
+    def accent(self) -> str:
+        return self.catalog.voices[self.voice].accent
+
+    def test_creation_returns_201_with_a_server_id_and_keeps_the_voice(self):
+        payload = self.created()
+        self.assertEqual(set(payload), {"id", "name", "description", "seed", "sample_seconds"})
+        self.assertRegex(payload["id"], r"^v-[0-9a-f]{10}$")
+        self.assertEqual((payload["name"], payload["description"], payload["sample_seconds"]), ("Homme mûr grave", self.DESCRIPTION, 0.1))
+        job = self.engine.calls[0]
+        self.assertEqual((job.mode, job.seed, job.text), (srv.MODE_PLAYED, payload["seed"], srv.DEFAULT_SAMPLE_TEXT))
+        self.assertEqual(job.instruct, f"{self.DESCRIPTION} {srv.CREATE_DIRECTION} {self.accent()}")
+        folder = self.dir / "created" / payload["id"]
+        self.assert_wav((folder / "sample.wav").read_bytes())
+        meta = json.loads((folder / "voice.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            (meta["id"], meta["seed"], meta["sample_text"], meta["accent"]),
+            (payload["id"], payload["seed"], srv.DEFAULT_SAMPLE_TEXT, self.accent()),
+        )
+        voices = json.loads(self.request("GET", "/voices")[1])["voices"]
+        row = next(voice for voice in voices if voice["id"] == payload["id"])
+        expected = {"id": payload["id"], "name": "Homme mûr grave", "available": True, "played": True}
+        self.assertEqual(row, {**expected, "description": self.DESCRIPTION, "origin": "created"})
+        self.assertEqual(voices[0]["origin"], "catalogue")
+
+    def test_the_client_never_chooses_the_id_nor_a_path(self):
+        payload = self.created(id="../../evil", voice_url="../x")
+        self.assertRegex(payload["id"], r"^v-[0-9a-f]{10}$")
+        self.assertEqual([folder.name for folder in (self.dir / "created").iterdir()], [payload["id"]])
+        self.assertFalse((self.dir.parent / "evil").exists())
+        self.assertNotEqual(self.created("Autre")["id"], payload["id"])
+
+    def test_sample_text_is_optional_and_loses_the_tags_the_frozen_voice_would_say(self):
+        self.created(sample_text="[sigh] Une phrase à moi.")
+        self.assertEqual(self.engine.calls[0].text, "Une phrase à moi.")
+
+    def test_invalid_creations_are_400_without_synthesis(self):
+        cases = [
+            {"description": self.DESCRIPTION},
+            {"name": "  ", "description": self.DESCRIPTION},
+            {"name": "x" * 41, "description": self.DESCRIPTION},
+            {"name": "Nom\x00", "description": self.DESCRIPTION},
+            {"name": "Nom"},
+            {"name": "Nom", "description": "d" * 301},
+            {"name": "Nom", "description": "Voix grave d'homme âgé"},
+            {"name": "Nom", "description": self.DESCRIPTION, "sample_text": "é" * 301},
+        ]
+        for fields in cases:
+            with self.subTest(fields=sorted(fields)):
+                self.assertEqual(self.create(**fields)[0].status, 400)
+        self.assertEqual(self.engine.calls, [])
+        self.assertFalse((self.dir / "created").exists())
+        self.assertEqual(self.created("x" * 40)["name"], "x" * 40)
+
+    def test_a_taken_name_is_409_whatever_the_case_catalogue_included(self):
+        self.created("Voix A")
+        for name in ("Voix A", "voix   a", "Voix des essais 21 et 22"):
+            with self.subTest(name=name):
+                response, data = self.create(name=name, description=self.DESCRIPTION)
+                self.assertEqual(response.status, 409, data)
+        self.assertEqual(len(self.engine.calls), 1)
+
+    def test_a_created_voice_speaks_frozen_and_played_with_its_own_seed(self):
+        payload = self.created()
+        response, _ = self.tts(text="Bonjour", voice_url=payload["id"])
+        self.assertEqual(response.status, 200)
+        frozen = self.engine.calls[1]
+        self.assertEqual((frozen.mode, frozen.voice, frozen.seed), (srv.MODE_FROZEN, payload["id"], payload["seed"]))
+        self.assertEqual(self.references[payload["id"]][0].text, srv.DEFAULT_SAMPLE_TEXT)
+        self.assertEqual(self.tts(text="Bonjour", voice_url=payload["id"], direction="Shouting.")[0].status, 200)
+        played = self.engine.calls[2]
+        self.assertEqual(
+            (played.mode, played.seed, played.instruct),
+            (srv.MODE_PLAYED, payload["seed"], f"{self.DESCRIPTION} Shouting. {self.accent()}"),
+        )
+
+    def test_creation_waits_in_the_same_queue_as_tts(self):
+        self.engine.hold.set()
+        self.raw_tts("Première")
+        self.assertTrue(self.engine.started.wait(5))
+        statuses: list[int] = []
+        thread = threading.Thread(target=lambda: statuses.append(self.create(name="En file", description=self.DESCRIPTION)[0].status))
+        thread.start()
+        time.sleep(0.2)
+        self.assertEqual(len(self.engine.calls), 1, "la création attend la synthèse en cours")
+        self.engine.hold.clear()
+        thread.join(5)
+        self.assertEqual(statuses, [201])
+        self.assertEqual([call.mode for call in self.engine.calls], [srv.MODE_FROZEN, srv.MODE_PLAYED])
+        self.assertEqual(self.engine.max_active, 1)
+
+    def test_a_disconnected_client_cancels_the_creation_and_nothing_is_kept(self):
+        self.engine.hold.set()
+        body, content_type = multipart({"name": "Partie", "description": self.DESCRIPTION})
+        sock = socket.create_connection(("127.0.0.1", self.port), timeout=5)
+        head = f"POST /voices/create HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: {content_type}\r\nContent-Length: {len(body)}\r\n\r\n"
+        sock.sendall(head.encode() + body)
+        self.assertTrue(self.engine.started.wait(5))
+        sock.close()
+        self.assertTrue(self.engine.cancelled.wait(5))
+        self.engine.hold.clear()
+        time.sleep(0.1)
+        self.assertFalse(any(voice.name == "Partie" for voice in self.catalog.voices.values()))
+        self.assertFalse((self.dir / "created").exists())
+        self.assertEqual(self.create(name="Partie", description=self.DESCRIPTION)[0].status, 201)
+
+    def test_game_mode_refuses_the_creation_without_touching_the_gpu(self):
+        self.flag.touch()
+        response, data = self.create(name="Jeu", description=self.DESCRIPTION)
+        self.assertEqual(response.status, 503)
+        self.assertEqual(json.loads(data)["reason"], "gpu_yield")
+        self.assertEqual(response.getheader("Retry-After"), "60")
+        self.assertEqual((self.engine.loads, self.engine.calls), ([], []))
+        self.assertFalse((self.dir / "created").exists())
+
+    def test_created_voices_survive_a_restart(self):
+        payload = self.created()
+        catalog = srv.load_catalog()
+        references = srv.find_references(catalog, self.dir, log=lambda *_a, **_k: None)
+        logged: list[str] = []
+        added = srv.merge_created(catalog, references, self.dir / "created", log=lambda event, **_f: logged.append(event))
+        self.assertEqual((added, logged), (1, []))
+        voice = catalog.voices[payload["id"]]
+        self.assertEqual(
+            (voice.name, voice.seed, voice.description, voice.accent, voice.origin),
+            ("Homme mûr grave", payload["seed"], self.DESCRIPTION, self.accent(), "created"),
+        )
+        self.assertEqual(references[payload["id"]][0].text, srv.DEFAULT_SAMPLE_TEXT)
+        engine = FakeEngine()
+        service = srv.Qwen3Service(engine, catalog, references, self.flag, log=lambda *_a, **_k: None, created_dir=self.dir / "created")
+        self.assertIn(("created", payload["id"]), [(row["origin"], row["id"]) for row in service.voices()["voices"]])
+        service.synthesize(srv.Request("Bonjour", payload["id"], ""), lambda: False)
+        self.assertEqual((engine.calls[0].mode, engine.calls[0].seed), (srv.MODE_FROZEN, payload["seed"]))
+
+    def test_an_unreadable_or_foreign_folder_only_costs_itself(self):
+        good = self.created()
+        root = self.dir / "created"
+        (root / "v-0123456789").mkdir()
+        (root / "v-0123456789" / "voice.json").write_text("{", encoding="utf-8")
+        (root / ".tmp-v-aaaaaaaaaa").mkdir()
+        (root / "evil").mkdir()
+        logged: list[tuple] = []
+        voices, _ = srv.load_created(root, log=lambda event, **fields: logged.append((event, fields.get("voice"))))
+        self.assertEqual(list(voices), [good["id"]])
+        self.assertEqual(logged, [("created_voice_unreadable", "v-0123456789")])
+
+    def test_sample_route_serves_only_ids_of_the_catalogue_never_a_path(self):
+        with wave.open(str(self.dir / "ref.wav"), "wb") as out:
+            out.setnchannels(1)
+            out.setsampwidth(2)
+            out.setframerate(24000)
+            out.writeframes(b"\x01\x00" * 240)
+        response, data = self.request("GET", f"/voices/{self.voice}/sample")
+        self.assertEqual((response.status, response.getheader("Content-Type")), (200, "audio/wav"))
+        with wave.open(io.BytesIO(data)) as audio:
+            self.assertEqual(audio.getnframes(), 240)
+        payload = self.created()
+        response, data = self.request("GET", f"/voices/{payload['id']}/sample")
+        self.assertEqual(response.status, 200)
+        self.assertEqual(data, (self.dir / "created" / payload["id"] / "sample.wav").read_bytes())
+        secret = self.dir / "secret.wav"
+        secret.write_bytes(data)
+        paths = [
+            "/voices/..%2Fsecret.wav/sample",
+            "/voices/%2Fetc%2Fpasswd/sample",
+            "/voices/../sample",
+            "/voices/ref.wav/sample",
+            "/voices/" + quote(str(secret), safe="") + "/sample",
+            f"/voices/{payload['id']}/../../secret.wav",
+            "/voices/v-0000000000/sample",
+        ]
+        for path in paths:
+            with self.subTest(path=path):
+                self.assertEqual(self.request("GET", path)[0].status, 404)
+        forbidden = self.request("GET", f"/voices/{self.voice}/sample", headers={"Origin": "https://example.com"})[0]
+        self.assertEqual(forbidden.status, 403)
+
+    def test_a_catalogue_voice_without_its_file_says_so(self):
+        self.assertEqual(self.request("GET", f"/voices/{self.voice}/sample")[0].status, 503)
+
+    def test_creation_logs_neither_the_name_nor_the_description_nor_the_sample(self):
+        self.created("Camille secrète", sample_text=SECRET)
+        dump = json.dumps(self.logged, ensure_ascii=False)
+        for secret in ("Camille secrète", self.DESCRIPTION, SECRET):
+            self.assertNotIn(secret, dump)
+        self.assertIn("voice_created", dump)
+
+    def test_creation_obeys_the_same_origin_rules(self):
+        body, content_type = multipart({"name": "N", "description": self.DESCRIPTION})
+        response, _ = self.request("POST", "/voices/create", body, {"Content-Type": content_type, "Origin": "https://example.com"})
+        self.assertEqual(response.status, 403)
+        self.assertEqual(self.engine.calls, [])
+
+
 class Catalogue(unittest.TestCase):
     """L'extrait de référence se change dans voices.json, sans toucher au code."""
 
@@ -856,8 +1066,10 @@ class Setup(unittest.TestCase):
         self.assertNotIn("build:", block)
         volumes = re.findall(r"^\s+- \$\{HOME\}.*$", block, flags=re.M)
         self.assertTrue(volumes)
-        for volume in volumes:
-            self.assertTrue(volume.endswith(":ro"), volume)
+        # Le seul dossier où le service écrit : celui des voix créées.
+        writable = [volume.strip() for volume in volumes if not volume.endswith(":ro")]
+        self.assertEqual(writable, ["- ${HOME}/.llm-voice/voices-lab/qwen3/created:/lab/refs/created:rw"])
+        self.assertIn("QWEN3_CREATED_DIR=/lab/refs/created", block)
 
 
 class RealAdapter(unittest.TestCase):
@@ -1021,6 +1233,18 @@ class RealAdapter(unittest.TestCase):
             with self.assertRaises(srv.VoiceUnavailable):
                 engine.synthesize(srv.Job(srv.MODE_FROZEN, "Bonjour", "abimee", 11), lambda: None)
         self.assertIn('"voice_prompt_failed"', out.getvalue())
+
+    def test_a_voice_created_after_the_load_is_encoded_at_its_first_sentence(self):
+        calls, modules = self.stubs()
+        with mock.patch.dict(sys.modules, modules):
+            engine = srv.QwenEngine("French", self.references, "cuda")
+            engine.load(srv.MODE_FROZEN)
+            self.references["w"] = (srv.Reference(self.dir / "a.wav", "Trois."),)
+            engine.synthesize(srv.Job(srv.MODE_FROZEN, "Bonjour", "w", 5), lambda: None)
+            engine.synthesize(srv.Job(srv.MODE_FROZEN, "Encore", "w", 5), lambda: None)
+            self.assertEqual([prompt[1] for prompt in calls.prompt], ["Un. Deux.", "Trois."])
+            self.assertEqual(calls.clone[-1], ("Encore", "French", "prompt"))
+            self.assertEqual(calls.seeds[-1], 5)
 
     def test_no_gpu_says_so(self):
         calls, modules = self.stubs()

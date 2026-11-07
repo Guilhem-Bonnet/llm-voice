@@ -6,7 +6,11 @@ Même contrat HTTP que `deploy/kyutai16/server.py`, plus le champ `direction` :
   GET  /health   {"status": "healthy", "state": ..., "models": ...}, jamais de chargement ni de charge GPU
   POST /load     lance le chargement en tâche de fond, sans synthèse : 202, 200 si déjà fait.
                  Voix figée par défaut, `?mode=played` pour la voix jouée
-  GET  /voices   le catalogue et ce que cette machine possède réellement
+  GET  /voices   le catalogue et ce que cette machine possède réellement : `origin` vaut `catalogue`
+                 (voices.json) ou `created` (voix créées ici, hors du dépôt)
+  GET  /voices/<id>/sample   le WAV d'extrait d'une voix, pour l'écouter
+  POST /voices/create        formulaire `name`, `description` (anglais), `sample_text` facultatif :
+                 VoiceDesign produit un extrait, la voix est figée depuis cet extrait. 201
   POST /tts      formulaire `text`, `voice_url`, `direction` facultatif : renvoie un WAV entier
 
 Deux façons de produire :
@@ -18,6 +22,8 @@ Garanties, chacune couverte par test_server.py :
   - aucun texte ne sort de la machine : pas de téléchargement (HF_HUB_OFFLINE=1 forcé), Host et
     Origin vérifiés, et le service ne journalise jamais ni le texte ni la consigne ;
   - `voice_url` n'accepte que les identifiants du catalogue : jamais de chemin, jamais d'URL ;
+  - une voix créée reçoit un identifiant tiré par le serveur, vit dans `<refs>/created/<id>/`,
+    survit au redémarrage, et sa création passe par la même file que `/tts` ;
   - une synthèse à la fois, les suivantes attendent dans l'ordre d'arrivée ;
   - un client qui se déconnecte annule sa synthèse, ou sa place dans la file ;
   - mode jeu (`$XDG_RUNTIME_DIR/gpu-yield/active`) : 503, sans charge GPU et sans contournement,
@@ -33,10 +39,12 @@ from __future__ import annotations
 import argparse
 import collections
 import gc
+import hashlib
 import io
 import json
 import os
 import re
+import secrets
 import select
 import signal
 import socket
@@ -49,15 +57,28 @@ from email.parser import BytesParser
 from email.policy import HTTP as HTTP_POLICY
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Callable, Collection, Optional, Protocol
+from typing import Callable, Collection, Optional, Protocol, TypeVar
 from urllib.parse import parse_qs, urlsplit
 
 HERE = Path(__file__).resolve().parent
+T = TypeVar("T")
 ENGINE_NAME = "qwen3-tts-1.7b"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8021
 MAX_TEXT_CHARS = 5000
 MAX_DIRECTION_CHARS = 500
+MAX_NAME_CHARS = 40
+MAX_DESCRIPTION_CHARS = 300
+MAX_SAMPLE_TEXT_CHARS = 300
+# L'extrait d'une voix créée : une phrase neutre d'une dizaine de secondes, la durée que le clonage préfère.
+DEFAULT_SAMPLE_TEXT = (
+    "Bonjour. Je vais vous lire ce texte calmement, en prenant le temps de bien articuler "
+    "chaque mot, pour que l'écoute reste agréable du début à la fin."
+)
+# Placée entre la description et l'accent : un extrait posé fige une voix posée.
+CREATE_DIRECTION = "Calm, neutral reading at a steady pace."
+ORIGIN_CATALOGUE = "catalogue"
+ORIGIN_CREATED = "created"
 MAX_BODY_BYTES = 256 * 1024
 MAX_PENDING = 8
 POLL_S = 0.1
@@ -83,6 +104,9 @@ DRM_ROOT = Path("/sys/class/drm")
 FROZEN_STAGE_TAGS = re.compile(r"\[(?:cough|sigh|laughter)\] ?", re.IGNORECASE)
 # Les jetons du gabarit de conversation du modèle : un texte lu n'a pas à clore son tour de parole.
 CHAT_TOKENS = re.compile(r"<\|[^<>|]*\|>")
+# Identifiant d'une voix créée : tiré par le serveur, jamais fourni par le client.
+CREATED_ID = re.compile(r"v-[0-9a-f]{10}")
+SAMPLE_ROUTE = re.compile(r"/voices/([^/]+)/sample")
 
 YIELD_MESSAGE = "Mode jeu actif (gpu-yield) : aucune synthèse tant qu'il dure. Réessayez une fois le jeu terminé."
 
@@ -133,6 +157,16 @@ class TooLarge(BadRequest):
     message = f"Texte trop long : {MAX_TEXT_CHARS} caractères au plus."
 
 
+class Conflict(BadRequest):
+    status = 409
+    message = "Ce nom de voix existe déjà."
+
+
+class NotFound(ServiceError):
+    status = 404
+    message = "Adresse inconnue."
+
+
 class Forbidden(BadRequest):
     status = 403
     message = "Requête refusée : ce serveur ne répond qu'à cette machine."
@@ -151,6 +185,7 @@ class Voice:
     accent: str
     # Chemins relatifs à la racine des extraits : aucun audio n'entre dans le dépôt.
     frozen_refs: tuple[dict, ...] = ()
+    origin: str = ORIGIN_CATALOGUE
 
 
 @dataclass(frozen=True)
@@ -171,6 +206,13 @@ class Request:
     text: str
     voice: str
     direction: str
+
+
+@dataclass(frozen=True)
+class Creation:
+    name: str
+    description: str
+    sample_text: str
 
 
 @dataclass(frozen=True)
@@ -336,6 +378,131 @@ def validated_request(form: dict[str, str], catalog: Catalog) -> Request:
     return Request(text=text, voice=voice, direction=direction)
 
 
+def one_line(value: str) -> str:
+    return " ".join(CHAT_TOKENS.sub("", value).split())
+
+
+def validated_creation(form: dict[str, str]) -> Creation:
+    """Aucun identifiant ni chemin n'est lu : le serveur tire l'identifiant lui-même."""
+    name = one_line(form.get("name", ""))
+    if not name or len(name) > MAX_NAME_CHARS or not name.isprintable():
+        raise BadRequest(f"`name` : de 1 à {MAX_NAME_CHARS} caractères.")
+    description = one_line(form.get("description", ""))
+    if not description or len(description) > MAX_DESCRIPTION_CHARS:
+        raise BadRequest(f"`description` : de 1 à {MAX_DESCRIPTION_CHARS} caractères.")
+    if not description.isascii() or not description.isprintable():
+        raise BadRequest("`description` : en anglais, sans accent, par exemple « Older man, deep low voice, slow and grave. »")
+    sample_text = one_line(form.get("sample_text", ""))
+    if len(sample_text) > MAX_SAMPLE_TEXT_CHARS or not sample_text.isprintable():
+        raise BadRequest(f"`sample_text` : {MAX_SAMPLE_TEXT_CHARS} caractères au plus.")
+    # Il deviendra la transcription de référence de la voix figée : pas de balise qu'elle prononcerait.
+    sample_text = FROZEN_STAGE_TAGS.sub("", sample_text).strip() or DEFAULT_SAMPLE_TEXT
+    return Creation(name=name, description=description, sample_text=sample_text)
+
+
+def persist_created(root: Path, voice: Voice, sample_text: str, pcm: bytes, rate: int) -> Reference:
+    """Écrit dans un dossier provisoire puis le renomme : jamais de voix à moitié écrite au démarrage."""
+    root.mkdir(parents=True, exist_ok=True)
+    staging = root / f".tmp-{voice.id}"
+    staging.mkdir()
+    try:
+        (staging / "sample.wav").write_bytes(wav_bytes(pcm, rate))
+        meta = {
+            "id": voice.id,
+            "name": voice.name,
+            "description": voice.description,
+            "accent": voice.accent,
+            "seed": voice.seed,
+            "sample_text": sample_text,
+            "sample_seconds": round(len(pcm) / 2 / rate, 2),
+            "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }
+        (staging / "voice.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        staging.rename(root / voice.id)
+    except BaseException:
+        # Deux fichiers au plus, puis le dossier vide : rien d'autre n'y est jamais écrit.
+        for leftover in staging.iterdir():
+            leftover.unlink(missing_ok=True)
+        staging.rmdir()
+        raise
+    return Reference(audio=root / voice.id / "sample.wav", text=sample_text)
+
+
+def load_created(root: Path, log: Callable[..., None] = emit) -> tuple[dict[str, Voice], dict[str, tuple[Reference, ...]]]:
+    """Les voix créées ici. Un dossier illisible ne coûte que cette voix ; un nom hors format est ignoré."""
+    voices: dict[str, Voice] = {}
+    references: dict[str, tuple[Reference, ...]] = {}
+    if not root.is_dir():
+        return voices, references
+    for folder in sorted(root.iterdir()):
+        if not CREATED_ID.fullmatch(folder.name):
+            continue
+        try:
+            meta = json.loads((folder / "voice.json").read_text(encoding="utf-8"))
+            if meta["id"] != folder.name:
+                raise ValueError("identifiant différent du dossier")
+            audio = folder / "sample.wav"
+            if not audio.is_file():
+                raise FileNotFoundError(audio.name)
+            text = meta["sample_text"].strip()
+            if not text:
+                raise ValueError("transcription vide")
+            voices[folder.name] = Voice(
+                id=folder.name,
+                name=str(meta["name"]),
+                seed=int(meta["seed"]),
+                description=str(meta["description"]),
+                accent=str(meta["accent"]),
+                origin=ORIGIN_CREATED,
+            )
+            references[folder.name] = (Reference(audio=audio, text=text),)
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+            log("created_voice_unreadable", voice=folder.name, error=type(error).__name__)
+    return voices, references
+
+
+def merge_created(
+    catalog: Catalog, references: dict[str, tuple[Reference, ...]], root: Path, log: Callable[..., None] = emit
+) -> int:
+    """Ajoute au catalogue les voix créées ; une voix dont le nom existe déjà est écartée."""
+    voices, found = load_created(root, log)
+    added = 0
+    for voice_id, voice in voices.items():
+        taken = {other.name.casefold() for other in catalog.voices.values()}
+        if voice_id in catalog.voices or voice.name.casefold() in taken:
+            log("created_voice_skipped", voice=voice_id, why="name_taken")
+            continue
+        catalog.voices[voice_id] = voice
+        references[voice_id] = found[voice_id]
+        added += 1
+    return added
+
+
+def sample_wav(references: tuple[Reference, ...]) -> bytes:
+    """Les extraits tels que le modèle les entend : bout à bout, séparés par le même silence."""
+    frames: list[bytes] = []
+    params: Optional[tuple[int, int, int]] = None
+    for reference in references:
+        with wave.open(str(reference.audio), "rb") as source:
+            current = (source.getnchannels(), source.getsampwidth(), source.getframerate())
+            if params is None:
+                params = current
+            elif current != params:
+                break
+            frames.append(source.readframes(source.getnframes()))
+    if params is None:
+        raise FileNotFoundError("aucun extrait")
+    channels, width, rate = params
+    gap = b"\x00" * (int(REFERENCE_GAP_S * rate) * channels * width)
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as out:
+        out.setnchannels(channels)
+        out.setsampwidth(width)
+        out.setframerate(rate)
+        out.writeframes(gap.join(frames))
+    return buffer.getvalue()
+
+
 def is_out_of_memory(error: BaseException) -> bool:
     """Par le type ou par le message HIP ; le message n'est jamais journalisé, il peut citer le texte."""
     return "OutOfMemory" in type(error).__name__ or "out of memory" in str(error).lower()
@@ -353,8 +520,11 @@ class Qwen3Service:
         log: Callable[..., None] = emit,
         free_vram: Callable[[], Optional[int]] = read_free_vram,
         min_free_vram: int = DEFAULT_MIN_FREE_VRAM_MB * 1024 * 1024,
+        created_dir: Optional[Path] = None,
     ) -> None:
         self.engine = engine
+        self.created_dir = created_dir
+        self._catalog_lock = threading.Lock()
         self.catalog = catalog
         self.references = references
         self.yield_flag = yield_flag
@@ -402,8 +572,15 @@ class Qwen3Service:
     def voices(self) -> dict[str, object]:
         default = self.catalog.default
         rows = [
-            {"id": voice.id, "name": voice.name, "available": voice.id in self.references, "played": True}
-            for voice in self.catalog.voices.values()
+            {
+                "id": voice.id,
+                "name": voice.name,
+                "available": voice.id in self.references,
+                "played": True,
+                "description": voice.description,
+                "origin": voice.origin,
+            }
+            for voice in list(self.catalog.voices.values())
         ]
         rows.sort(key=lambda row: (row["id"] != default, str(row["name"])))
         return {"default": default, "voices": rows}
@@ -539,8 +716,74 @@ class Qwen3Service:
             raise VoiceUnavailable()
         return Job(MODE_FROZEN, request.text, voice.id, voice.seed)
 
+    def sample(self, voice_id: str) -> bytes:
+        """L'identifiant n'est qu'une clé du catalogue : jamais un chemin."""
+        if voice_id not in self.catalog.voices:
+            raise NotFound("Voix inconnue : seuls les identifiants de GET /voices sont acceptés.")
+        references = self.references.get(voice_id)
+        if not references:
+            raise VoiceUnavailable()
+        try:
+            return sample_wav(references)
+        except (OSError, EOFError, wave.Error) as error:
+            self.log("voice_sample_unreadable", voice=voice_id, error=type(error).__name__)
+            raise VoiceUnavailable() from None
+
+    def _check_name_free(self, name: str) -> None:
+        wanted = name.casefold()
+        if any(voice.name.casefold() == wanted for voice in list(self.catalog.voices.values())):
+            raise Conflict()
+
+    def _new_id(self, creation: Creation, seed: int, root: Path) -> str:
+        while True:
+            material = f"{creation.name}\0{creation.description}\0{seed}\0{time.time_ns()}\0{secrets.token_hex(8)}"
+            voice_id = "v-" + hashlib.sha256(material.encode("utf-8")).hexdigest()[:10]
+            if voice_id not in self.catalog.voices and not (root / voice_id).exists():
+                return voice_id
+
+    def create_voice(self, creation: Creation, disconnected: Callable[[], bool]) -> dict[str, object]:
+        """VoiceDesign produit l'extrait (graine tirée puis gardée), puis l'extrait devient la référence figée."""
+        root = self.created_dir
+        if root is None:
+            raise VoiceUnavailable("Création de voix indisponible : aucun dossier où les garder.")
+        self._check_name_free(creation.name)
+        seed = secrets.randbelow(2**31)
+        accent = self.catalog.voices[self.catalog.default].accent
+        voice = Voice(
+            id=self._new_id(creation, seed, root),
+            name=creation.name,
+            seed=seed,
+            description=creation.description,
+            accent=accent,
+            origin=ORIGIN_CREATED,
+        )
+        instruct = f"{creation.description} {CREATE_DIRECTION} {accent}"
+        job = Job(MODE_PLAYED, creation.sample_text, voice.id, seed, instruct)
+
+        def finish(pcm: bytes, rate: int) -> dict[str, object]:
+            # Encore dans la file : aucun chargement du modèle figé ne parcourt les références pendant l'ajout.
+            with self._catalog_lock:
+                self._check_name_free(voice.name)
+                reference = persist_created(root, voice, creation.sample_text, pcm, rate)
+                self.catalog.voices[voice.id] = voice
+                self.references[voice.id] = (reference,)
+            return {
+                "id": voice.id,
+                "name": voice.name,
+                "description": voice.description,
+                "seed": seed,
+                "sample_seconds": round(len(pcm) / 2 / rate, 2),
+            }
+
+        result = self._exclusive(job, disconnected, finish)
+        self.log("voice_created", voice=voice.id, seed=seed, sample_seconds=result["sample_seconds"])
+        return result
+
     def synthesize(self, request: Request, disconnected: Callable[[], bool]) -> bytes:
-        job = self.job_for(request)
+        return self._exclusive(self.job_for(request), disconnected, wav_bytes)
+
+    def _exclusive(self, job: Job, disconnected: Callable[[], bool], finish: Callable[[bytes, int], T]) -> T:
+        """Une synthèse à la fois, dans l'ordre d'arrivée ; `finish` s'exécute encore dans la file."""
 
         def checkpoint() -> None:
             if self.yielding():
@@ -558,7 +801,7 @@ class Qwen3Service:
                 # Le chargement ne s'interrompt pas : le mode jeu a pu commencer pendant.
                 checkpoint()
                 pcm, rate = self._run(job, checkpoint)
-                return wav_bytes(pcm, rate)
+                return finish(pcm, rate)
             except GpuYielded:
                 failure = GpuYielded()
             except (Cancelled, ServiceError):
@@ -690,6 +933,8 @@ def make_handler(service: Qwen3Service) -> type[BaseHTTPRequestHandler]:
                     self._json(200, service.health())
                 elif route == "/voices":
                     self._json(200, service.voices())
+                elif (match := SAMPLE_ROUTE.fullmatch(route)) is not None:
+                    self._reply(200, service.sample(match.group(1)), "audio/wav")
                 else:
                     self._json(404, {"detail": "Adresse inconnue."})
             except ServiceError as error:
@@ -705,7 +950,7 @@ def make_handler(service: Qwen3Service) -> type[BaseHTTPRequestHandler]:
             started = time.monotonic()
             address = urlsplit(self.path)
             route = address.path
-            fields: dict[str, object] = {"route": route if route in ("/tts", "/load") else "other"}
+            fields: dict[str, object] = {"route": route if route in ("/tts", "/load", "/voices/create") else "other"}
             status = 500
             try:
                 self._check_origin()
@@ -714,6 +959,20 @@ def make_handler(service: Qwen3Service) -> type[BaseHTTPRequestHandler]:
                     fields["mode"] = mode
                     status = 200 if service.begin_load(mode) else 202
                     self._json(status, {"state": "ready" if status == 200 else "loading", "mode": mode})
+                    return
+                if route == "/voices/create":
+                    creation = validated_creation(parse_form(self.headers.get("Content-Type") or "", self._read_body()))
+                    # Des longueurs seulement : ni le nom, ni la description, ni l'extrait.
+                    fields.update(
+                        mode=MODE_PLAYED,
+                        name_chars=len(creation.name),
+                        description_chars=len(creation.description),
+                        text_chars=len(creation.sample_text),
+                    )
+                    created = service.create_voice(creation, lambda: peer_is_gone(self.connection))
+                    fields["voice"] = created["id"]
+                    status = 201
+                    self._json(201, created)
                     return
                 if route != "/tts":
                     raise ServiceError("Adresse inconnue.")
@@ -786,7 +1045,7 @@ class QwenEngine:
         model = Qwen3TTSModel.from_pretrained(path, device_map=self.device, dtype=torch.bfloat16, attn_implementation="sdpa")
         if mode == MODE_FROZEN:
             # Ici plutôt qu'à la première phrase : le chargement peut être long, pas l'écoute.
-            for voice in self.references:
+            for voice in list(self.references):
                 try:
                     self._prompts[voice] = self._clone_prompt(model, voice)
                 except (OSError, ValueError, EOFError, wave.Error) as error:
@@ -829,7 +1088,14 @@ class QwenEngine:
         model = self._models[job.mode]
         prompt = self._prompts.get(job.voice)
         if job.mode == MODE_FROZEN and prompt is None:
-            raise VoiceUnavailable()
+            # Une voix créée après le chargement : sa référence s'encode à sa première phrase.
+            if job.voice not in self.references:
+                raise VoiceUnavailable()
+            try:
+                prompt = self._prompts[job.voice] = self._clone_prompt(model, job.voice)
+            except (OSError, ValueError, EOFError, wave.Error) as error:
+                emit("voice_prompt_failed", voice=job.voice, error=type(error).__name__)
+                raise VoiceUnavailable() from None
         # Une trame de code par passage dans `talker` : une exception ici remonte de `generate`.
         # La bibliothèque n'offre pas de `stopping_criteria` : ses arguments ne vont pas jusqu'à `talker.generate`.
         hook = model.model.talker.register_forward_pre_hook(lambda *_: checkpoint())
@@ -858,6 +1124,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path(os.environ.get("QWEN3_REFS_DIR") or Path.home() / ".llm-voice" / "voices-lab" / "qwen3"),
     )
     parser.add_argument(
+        "--created-dir",
+        type=Path,
+        default=Path(os.environ["QWEN3_CREATED_DIR"]) if os.environ.get("QWEN3_CREATED_DIR") else None,
+        help="voix créées ici (défaut : <refs-dir>/created), le seul dossier où le service écrit",
+    )
+    parser.add_argument(
         "--min-free-vram-mb",
         type=int,
         default=int(os.environ.get("QWEN3_MIN_FREE_VRAM_MB") or DEFAULT_MIN_FREE_VRAM_MB),
@@ -870,12 +1142,15 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     catalog = load_catalog()
     references = find_references(catalog, args.refs_dir)
+    created_dir = args.created_dir or args.refs_dir / "created"
+    created = merge_created(catalog, references, created_dir)
     service = Qwen3Service(
         QwenEngine(catalog.language, references, args.device),
         catalog,
         references,
         yield_flag_path(),
         min_free_vram=args.min_free_vram_mb * 1024 * 1024,
+        created_dir=created_dir,
     )
     server = serve(service, args.host, args.port)
 
@@ -886,7 +1161,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     threading.Thread(target=maintain_forever, name="maintain", daemon=True).start()
     signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=server.shutdown, daemon=True).start())
-    emit("listening", host=args.host, port=args.port, voices=len(references), catalog=len(catalog.voices), device=args.device)
+    emit("listening", host=args.host, port=args.port, voices=len(references), catalog=len(catalog.voices), created=created, device=args.device)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
