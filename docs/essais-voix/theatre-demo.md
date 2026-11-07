@@ -1,6 +1,6 @@
 # La clef du jardin
 
-Scène courte, écrite pour essayer la lecture à plusieurs voix. Les noms en capitales ne sont pas dits. Le décor est lu par le narrateur.
+Scène courte, écrite pour essayer la lecture à plusieurs voix. Les noms en capitales ne sont pas dits, le décor est lu par le narrateur.
 
 ## Scène unique
 
