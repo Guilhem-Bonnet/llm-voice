@@ -1,0 +1,2 @@
+{"wer": 0.0417, "transcription": "Le correctif touche tts.ts, la documentation est sur le guide et sur un lien. Un exemple de code. Le test passe maintenant.", "duration_s": 41.643, "silence_max_ms": 29440.0, "silence_between_sounds_ms": 920.0, "rms": 0.028442, "silent": false, "wer_ok": true, "pass": true}
+{"entendu": "le correctif touche tts.ts, la documentation est sur le guide et sur un lien. un exemple de code. le test passe maintenant.", "mots_interdits_entendus": []}

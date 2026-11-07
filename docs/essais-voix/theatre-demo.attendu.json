@@ -1,7 +1,8 @@
 {
   "active": true,
   "roles": ["madeleine", "anselme", "lucien"],
-  "absent": ["MADELEINE :", "ANSELME :", "LUCIEN :"],
-  "narrateur": ["essoufflé", "Lucien entre", "à part", "La lanterne s'éteint"],
-  "repliques": { "anselme": ["J'ai couru depuis le pont"], "lucien": ["Il ne se doute de rien"] }
+  "absent": ["MADELEINE :", "ANSELME :", "LUCIEN :", "essoufflé"],
+  "narrateur": ["Lucien entre", "à part", "La lanterne s'éteint"],
+  "repliques": { "anselme": ["J'ai couru depuis le pont"], "lucien": ["Il ne se doute de rien"] },
+  "joues": { "J'ai couru depuis le pont": [{ "label": "essoufflé", "kind": "manner", "quote": "(essoufflé)" }] }
 }

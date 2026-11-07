@@ -127,8 +127,9 @@ Il coupe un bloc en sous-blocs portant un `speakerId` optionnel, et `segment()` 
 | `% nom = voix` | identifiant ou prénom du catalogue, sinon ignorée | rien | non |
 | `NOM : réplique`, `**NOM** :`, `NOM. — réplique` | capitales, 4 mots au plus, 40 caractères au plus, espace insécable admise | le personnage | non |
 | `NOM` seul sur sa ligne, puis la réplique | mêmes capitales ; court jusqu'au prochain nom, titre ou séparateur | le personnage | non |
-| Ligne entière entre parenthèses ou en italique | seulement dans une forme théâtre reconnue | le narrateur | sans objet |
-| `NOM (à part) : …`, `(Elle soupire.)`, `*Elle sort.*` dans une réplique | découpée en trois passages | le narrateur pour l'indication | sans objet |
+| Ligne entière entre parenthèses ou en italique | seulement dans une forme théâtre reconnue | le narrateur, sauf indication jouée (note du 2026-11-06) | sans objet |
+| `NOM (à part) : …`, `(Elle prend son panier.)`, `*Elle sort.*` dans une réplique | découpée en trois passages | le narrateur pour l'indication | sans objet |
+| `(essoufflé)`, `(en riant)`, `(il tousse)` dans une réplique | classée « jouée » (note du 2026-11-06) | personne : l'état reste sur la réplique | non |
 | Titres, `ACTE I`, `SCÈNE II`, texte sans étiquette | toujours | le narrateur | sans objet |
 | `— réplique`, `– réplique`, `« réplique »` | marqués `dialogue` pour la tranche 2 | le narrateur | sans objet |
 
@@ -142,8 +143,30 @@ Il coupe un bloc en sous-blocs portant un `speakerId` optionnel, et `segment()` 
   nom est déclaré par `%` ou `@` : sinon `Résumé : …` serait un personnage.
 - **Tiret de liste** : `- ` reste une liste en Markdown et n'est pas un dialogue.
 - **Garde de fidélité** : au lancement, les mots de la lecture à plusieurs voix sont comparés à ceux de la
-  lecture simple, étiquettes retirées (`tokenize`, `fidelity.ts:79`). Un écart abandonne le jeu d'acteurs pour
-  cette lecture, avec un message : on perd les voix, jamais des mots.
+  lecture simple (`tokenize`, `fidelity.ts:79`). Invariant révisé le 2026-11-06 : tous les mots dits par l'auteur sont
+  prononcés, dans l'ordre, par le personnage attribué ; une indication classée jouée n'est pas dite ; aucun mot n'est
+  ajouté, remplacé ou répété. Étiquette et indication jouée s'effacent chacune une fois, à leur place dans le texte ;
+  tout le reste doit être égal. Un écart abandonne le jeu d'acteurs pour cette lecture, avec un message : on perd les
+  voix, jamais des mots.
+- **Indications, note du 2026-11-06.** Décision de guilhem-bonnet : « Quand il y a des termes comme essoufflé, ce n'est
+  pas au narrateur de prononcer le mot essoufflé. » **Le jeu audible n'est pas livré** : l'indication n'est plus dite et
+  l'état reste connu du système, mais le moteur ne joue rien encore ; la faisabilité dépend d'une écoute. Classement dans
+  `stageDirection.ts`, par lexique fermé et formes, jamais par un LLM :
+
+  | Classe | Exemples | Sort |
+  |---|---|---|
+  | Manière | `(essoufflé)`, `(en riant)`, `(bas)`, `(tout bas)`, `(furieux)` | jamais dite ; état conservé |
+  | Action vocale | `(il tousse)`, `(soupire)`, `(tousse)` | jamais dite ; état conservé, de nature « son » |
+  | Action muette ou décor | `*Lucien entre, une lettre à la main.*`, « La lanterne s'éteint » | narrée, inchangée |
+  | Aparté | `(à part)` | narré pour l'instant : sans moyen de marquer l'adresse, le sens deviendrait faux |
+  | Mixte | `(Il tousse, puis sort.)` | narrée, avec en plus un état |
+  | Doute | tout le reste, dont `(en sortant)`, hors de la liste des `en …ant` | narrée : une action muette effacée perd de l'information |
+
+  Seule une parenthèse se joue : l'italique sert aussi à l'emphase, et `*Furieux.*` peut être une réplique. Une
+  parenthèse qui coupe une phrase reste à la voix du personnage. Une ligne d'indication sans personnage courant reste
+  narrée, faute de savoir de qui elle parle. Chaque segment garde `stage: [{ label, kind, quote }]`, recopié dans
+  `ChunkVoice`, hors de la requête et de la clé de cache, et montré par la ligne « qui parle » :
+  `Anselme · voix Andréa · essoufflé`. Une future partition pourra le reprendre ; elle n'est pas construite.
 - **Roman en tranche 1** : tout est lu par le narrateur. Une attribution par incise (`dit Julien`) n'est pas
   livrée : un roman où une réplique sur cinq change de voix sonne faux. Elle sert de témoin en tranche 2.
 - **Modes qui réécrivent** : Professeur, Résumé et Révision n'ont plus de répliques à suivre. Le jeu d'acteurs
@@ -248,7 +271,8 @@ préférence d'activation.
 La clé reste calculée au seul endroit où elle l'est aujourd'hui : `computeCacheKey` avec `tts.id`, identité du
 moteur résolu (`Pipeline.ts:2089, 2118`), plus `bindingFor(chunk)`.
 
-- Un passage du narrateur a **la même clé** qu'en lecture simple : son audio est réutilisé.
+- Un passage du narrateur a **la même clé** qu'en lecture simple : son audio est réutilisé. Depuis le 2026-11-06, seulement
+  s'il n'a pas été regroupé avec un voisin (`passageGroups.ts`) : le texte de la requête n'est plus le même.
 - Deux personnages sur la même voix partagent l'audio d'un texte identique, ce qui est exact.
 - Changer la voix d'un personnage ne régénère que ses répliques.
 - `cacheVoice` et `cacheParameters` du traducteur (`translate.ts:78-81, 308-313`) ne sont pas utilisés par la
@@ -297,6 +321,12 @@ Avance minimale pour ne pas couper : `D = max_k ( Σ(i ≤ k) synthèse_i − Σ
 | `D` ≤ 20 s (proposé) | état `preparing`, étapes affichées, `leadChunks` prêts, puis lecture |
 | `D` > 20 s | **rien ne part** : « Cette scène demande environ N min de préparation », boutons « Préparer » et « Lire quand même » |
 | « Lire quand même » | lecture avec coupures possibles, et « Passage suivant en préparation… » |
+
+**Regroupement, note du 2026-11-06** (`src/playback/passageGroups.ts`) : des phrases voisines de même personnage, même voix
+et même état partent en une seule requête, jusqu'à 80 caractères (proposé), sous le plafond `chunking.maxSentences` du profil et
+sous 300 caractères (proposé). Jamais à travers un changement de voix. Jeu d'acteurs et réponses seulement ; une lecture simple
+garde son découpage, son cache et ses tests. `planReading`, « Préparer », Précédent et Suivant travaillent sur les passages
+regroupés. Mesures : `_grimoire-output/evidence/GAO-jeu-d-acteur-001/evidence-pack.md`.
 
 **Fenêtre** : la fenêtre de 2 chunks (`AudioQueue.ts:127`) compte des passages, pas des secondes. Deux répliques de 2 s
 ne donnent que 4 s d'avance avant une tirade. La session à plusieurs voix demande donc l'équivalent de 120 s d'audio

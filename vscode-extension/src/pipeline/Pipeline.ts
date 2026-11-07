@@ -60,6 +60,7 @@ import { planReading, type ReadingPlan } from "../direction/cast/synthesisPlan.j
 import { parseScript, plainTextBlocks } from "../direction/script/parseScript.js";
 import { sameWordsApartFromLabels } from "../direction/script/scriptFidelity.js";
 import { bindingForChunk, cacheKeyFor, type AudioQueueBinding } from "../playback/AudioQueue.js";
+import { groupPassages } from "../playback/passageGroups.js";
 import { bindingFrom, chunksFrom } from "../playback/PlaybackController.js";
 import { ReadingPreparer, type PreparationOutcome } from "../playback/ReadingPreparer.js";
 import { segment } from "../parser/Segmenter.js";
@@ -431,6 +432,7 @@ export class Pipeline implements PipelineFacade {
   private sceneChoice: (message: string) => Thenable<string | undefined> = (message) =>
     vscode.window.showInformationMessage(message, SCENE_PREPARE, SCENE_READ_ANYWAY);
   private currentHeadings: readonly SourceSegment[] = [];
+  private responseCodeIds: readonly string[] = [];
 
   private readonly egress: EgressGuardHandle;
   private readonly registry = new TtsProviderRegistry<TtsProvider>();
@@ -852,6 +854,8 @@ export class Pipeline implements PipelineFacade {
         castPlan !== undefined ? 1 + castPlan.leadChunks : 1 + (this.audioPrefetchChunks() > 0 ? START_AHEAD_PASSAGES : 0);
       const firstPassagesMin = castPlan !== undefined ? { firstPassagesMinMs: castPlan.leadSeconds * 1000 } : {};
       const narrationChars = charsOf(toRead.slice(0, DEFAULT_GROUP_SIZE).map((seg) => seg.rawText));
+      // Grouped passages: the wait counts what the first requests really say.
+      const firstTexts = cast?.voices !== undefined ? cast.voices.narration.map((seg) => seg.spokenText) : toRead.map((seg) => seg.rawText);
       // CdC §51 "Loading": the engine loads first, so that a synthesis request's
       // timeout measures a synthesis, and never the 40 to 60 s of a first load.
       // Everything already generated plays with no engine at all: nothing to load.
@@ -861,7 +865,7 @@ export class Pipeline implements PipelineFacade {
           {
             narrated,
             narrationChars,
-            firstPassagesChars: charsOf(toRead.slice(0, passagesBeforeSound).map((seg) => seg.rawText)),
+            firstPassagesChars: charsOf(firstTexts.slice(0, passagesBeforeSound)),
             ...firstPassagesMin
           },
           abort.signal
@@ -895,11 +899,12 @@ export class Pipeline implements PipelineFacade {
       if (abort.signal.aborted) {
         return;
       }
+      const toPlay = cast?.voices !== undefined ? [...cast.voices.narration] : this.passagesOfReply(doc, build.segments, profile, narrator !== undefined);
       this.reviseWait("first-passage", {
         modelLoaded: true,
         narrated: false,
         narrationChars: 0,
-        firstPassagesChars: charsOf(build.segments.slice(0, passagesBeforeSound).map((seg) => seg.spokenText)),
+        firstPassagesChars: charsOf(toPlay.slice(0, passagesBeforeSound).map((seg) => seg.spokenText)),
         ...firstPassagesMin
       });
       const sink = this.sinkOverride ?? this.player.playbackSink;
@@ -926,7 +931,7 @@ export class Pipeline implements PipelineFacade {
       // Fixed for the whole reading: a voice changed now applies to the next one (ADR-017 §1.3).
       this.currentSpeakers = cast?.voices?.speakers;
       const starting = this.controller.start({
-        segments: cast?.voices !== undefined ? [...cast.voices.narration] : [...build.segments],
+        segments: toPlay,
         profile: effectiveProfile,
         tts,
         sink,
@@ -1140,7 +1145,10 @@ export class Pipeline implements PipelineFacade {
     const engineSpeed = await this.engineSpeedFor(tts, requestedSpeed(reading.voice, reading.mode), signal);
     const binding: AudioQueueBinding = bindingFrom(engine.effective, engineSpeed);
     const faithful = await buildSession(segments, profile);
-    const narration = assignCast(faithful.segments, { binding, voiceOf: (speakerId) => voiceOfRole.get(speakerId) });
+    const narration = groupPassages(assignCast(faithful.segments, { binding, voiceOf: (speakerId) => voiceOfRole.get(speakerId) }), {
+      maxSentences: profile.chunking.maxSentences,
+      lang: profile.language
+    });
     const providerId = tts.cacheIdentity !== undefined ? await tts.cacheIdentity(signal) : tts.id;
     const passages = await Promise.all(
       narration.map(async (seg) => {
@@ -1274,7 +1282,9 @@ export class Pipeline implements PipelineFacade {
     const narrator = chunk.cast.speakerId === NARRATOR_SPEAKER_ID;
     const name = narrator ? "Narrateur" : speakers.names.get(chunk.cast.speakerId);
     const voice = speakers.voiceLabels.get(chunk.cast.voice ?? speakers.narratorVoice ?? "");
-    return name !== undefined && voice !== undefined ? `${name} · voix ${voice}` : name;
+    const who = name !== undefined && voice !== undefined ? `${name} · voix ${voice}` : name;
+    const state = chunk.cast.stage?.map((item) => item.label).join(", ");
+    return who !== undefined && state ? `${who} · ${state}` : who;
   }
 
   /** The Quick Pick of ADR-018 §7, step 4: the Distribution panel comes at step 5. */
@@ -1551,7 +1561,26 @@ export class Pipeline implements PipelineFacade {
     const reading = await readResponse(doc.rawText, { readCode: codeRead, lang: profile.language });
     this.responseBeingRead = { hasCode: reading.hasCode, codeRead };
     this.currentHeadings = [];
+    this.responseCodeIds = reading.segments.filter((seg) => seg.type === "code").map((seg) => seg.id);
     return reading.segments;
+  }
+
+  /**
+   * A reply's short sentences leave together: "Bilan." alone comes back deformed. A narrated
+   * reply arrives group by group and a document keeps its own cut (`passageGroups.ts`). Code
+   * lines being read stay one by one: a line of code is not a sentence to run on from.
+   */
+  private passagesOfReply(doc: SourceDocument, segments: readonly NarrationSegment[], profile: VoiceProfile, narrated: boolean): NarrationSegment[] {
+    if (doc.sourceType !== "claude-code" || narrated) {
+      return [...segments];
+    }
+    const codeRead = this.responseBeingRead?.codeRead === true;
+    const codeIds = new Set(codeRead ? this.responseCodeIds : []);
+    return groupPassages(segments, {
+      maxSentences: profile.chunking.maxSentences,
+      lang: profile.language,
+      keepApart: (segment) => segment.sourceSegmentIds.some((id) => codeIds.has(id))
+    });
   }
 
   /** The chip's choice holds for the session, until the setting itself changes. */

@@ -256,3 +256,7 @@
 ### [2026-11-06] Écouter les réponses de tout LLM
 - **Décision** : une seule liste « Réponses » et un raccourci « Lire la dernière réponse », sans lecture automatique. Par défaut tout est lu, adapté à l'oral (balisage retiré, code ignoré) ; « l'essentiel » déterministe est proposé avec sa durée, après écoute sur de vraies réponses ; le résumé par IA reste à la demande et étiqueté. Capture : hook pour Claude Code, `notify` avec accord pour Codex, geste Copier puis raccourci pour Copilot Chat et les chats web, CLI `llm-voice-inbox` à rendre installable. Antigravity à confirmer. Écartés : participant `@voice`, historiques privés, extension navigateur.
 - **Agent** : concierge, sur accord de guilhem-bonnet (« Oui, je valide ton plan. OK avec toutes tes propositions. »)
+
+### [2026-11-06] Jeu d'acteurs : les indications se jouent
+- **Décision** : amende ADR-018. Une indication de manière (« essoufflé », « tousse ») n'est pas lue par le narrateur : le personnage joue sa réplique dans cet état. Le jeu tient compte du contexte et de l'état de chaque personnage, déduit du texte, pour une scène vivante entre personnages réellement différents. La faisabilité avec le moteur reste à mesurer.
+- **Agent** : concierge, sur décision de guilhem-bonnet (« c'est réellement au LLM du personnage de faire un effet d'essoufflement oral »)

@@ -37,9 +37,11 @@ export function assignCast(segments: readonly NarrationSegment[], options: Assig
   return segments.map((segment, index) => {
     const voice = speech[index]?.request.voice;
     const speakerId = speakerOf(segment);
+    const stage = segment.metadata?.["stage"] as ChunkVoice["stage"];
     const cast: ChunkVoice = {
       speakerId,
-      ...(speakerId !== NARRATOR_SPEAKER_ID && voice !== undefined && voice !== options.binding.voice ? { voice } : {})
+      ...(speakerId !== NARRATOR_SPEAKER_ID && voice !== undefined && voice !== options.binding.voice ? { voice } : {}),
+      ...(stage !== undefined ? { stage } : {})
     };
     return { ...segment, metadata: { ...segment.metadata, cast } };
   });

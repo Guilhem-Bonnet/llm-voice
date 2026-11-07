@@ -20,6 +20,8 @@
 # `--response-adapted` : même chemin, avec une réponse qui porte du balisage, un chemin, des URL
 # et un bloc de code. La transcription doit suivre ce qui se dit, et ne contenir aucun de ces mots.
 #
+# `--cast` : scène à plusieurs voix. Le mot de l'indication jouée, « essoufflé », doit être absent.
+#
 # `--kyutai` : même chaîne avec la voix Estelle (`pocket-tts serve --language french`
 # requis), via le chemin du bouton Test, pause de 2,5 s comprise :
 # `silence_between_sounds_ms` du JSON mesure ce silence.
@@ -77,6 +79,10 @@ fi
 RESPONSE_TEXT="Les deux pannes sont corrigées. La lecture part maintenant du raccourci. Rien ne se lit tout seul."
 RESPONSE_MESSAGE="$RESPONSE_TEXT"
 RESPONSE_FORBIDDEN=""
+if [ "${1:-}" = "--cast" ]; then
+  # Décision du 2026-11-06 : une indication de manière n'est plus dite.
+  RESPONSE_FORBIDDEN="essouffl"
+fi
 if [ "${1:-}" = "--response-adapted" ]; then
   # GAO-r-ponses-2-l-001 : ce qui s'entend n'est pas ce qui est écrit.
   RESPONSE_MESSAGE="$(printf '%s\n' '## Bilan' '' 'Le **correctif** touche `src/core/tts.ts`. La documentation est sur [le guide](https://example.test/guide) et sur https://example.test/docs.' '' '```ts' 'const hiddenValue = computeTheAnswer();' '```' '' 'Le test passe maintenant.')"
@@ -130,8 +136,9 @@ if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "kyutai" ]; then
   EXPECT="Bonjour. Voici un exemple de ma voix. Nous allons maintenant examiner un concept technique et voir comment l'expliquer clairement."
 fi
 if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "cast" ]; then
-  # Ce qui doit s'entendre : tout le texte, sans les noms en capitales ni le balisage.
-  EXPECT="$(python3 -c 'import re,sys; t=open(sys.argv[1],encoding="utf-8").read(); t=re.sub(r"^[A-ZÉÈ]+ : ","",t,flags=re.M); t=re.sub(r"[#*]","",t); print(" ".join(t.split()))' "$LLM_VOICE_NATIVE_REAL_DOCUMENT")"
+  # Ce qui doit s'entendre : tout le texte, sans les noms en capitales ni le balisage, et sans la
+  # seule indication jouée de cette scène. Nommée ici : le reste, « à part » compris, reste attendu.
+  EXPECT="$(python3 -c 'import re,sys; t=open(sys.argv[1],encoding="utf-8").read(); assert t.count("(essoufflé) ")==1; t=t.replace("(essoufflé) ",""); t=re.sub(r"^[A-ZÉÈ]+ : ","",t,flags=re.M); t=re.sub(r"[#*]","",t); print(" ".join(t.split()))' "$LLM_VOICE_NATIVE_REAL_DOCUMENT")"
 fi
 if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "response" ]; then
   EXPECT="$RESPONSE_TEXT"
@@ -158,7 +165,7 @@ heard=json.loads(sys.stdin.read().strip().splitlines()[-1])["transcription"].low
 found=[word for word in sys.argv[1].split() if word in heard]
 print(json.dumps({"entendu":heard,"mots_interdits_entendus":found},ensure_ascii=False))
 sys.exit(1 if found else 0)' "$RESPONSE_FORBIDDEN" \
-    || { echo "native-real.sh: la transcription contient du balisage, une URL ou du code" >&2; PROVE_EXIT=1; }
+    || { echo "native-real.sh: la transcription contient un mot qui ne doit pas être dit (balisage, URL, code, indication jouée)" >&2; PROVE_EXIT=1; }
 fi
 TEST_EXIT="$(cat "$LLM_VOICE_NATIVE_REAL_EXIT_FILE")"
 if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "cast" ]; then

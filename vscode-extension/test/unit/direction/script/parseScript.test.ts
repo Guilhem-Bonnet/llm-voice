@@ -78,14 +78,14 @@ describe("parseScript : table des formes", () => {
     expect(lineOf(scripted, "rideau")?.speakerId).toBeUndefined();
   });
 
-  it("ligne d'indication, `NOM (à part) :`, `(Elle soupire.)` et `*Elle sort.*` vont au narrateur, découpés en passages", async () => {
-    const text = `${SCENE}\n(Il entre.)\n\nROMÉO (à part) : Quelle joie.\n\nJULIETTE : Non. (Elle soupire.) Pas encore. *Elle sort.*\n`;
+  it("ligne d'indication, `NOM (à part) :`, `(Elle prend son sac.)` et `*Elle sort.*` vont au narrateur, découpés en passages", async () => {
+    const text = `${SCENE}\n(Il entre.)\n\nROMÉO (à part) : Quelle joie.\n\nJULIETTE : Non. (Elle prend son sac.) Pas encore. *Elle sort.*\n`;
     const { scripted } = await parsed(text);
     expect(lineOf(scripted, "Il entre")?.speakerId).toBeUndefined();
     expect(lineOf(scripted, "à part")?.speakerId).toBeUndefined();
     expect(lineOf(scripted, "Quelle joie")?.speakerId).toBe("romeo");
     expect(lineOf(scripted, "Non.")?.speakerId).toBe("juliette");
-    expect(lineOf(scripted, "Elle soupire")?.speakerId).toBeUndefined();
+    expect(lineOf(scripted, "Elle prend son sac")?.speakerId).toBeUndefined();
     expect(lineOf(scripted, "Pas encore")?.speakerId).toBe("juliette");
     expect(lineOf(scripted, "Elle sort")?.speakerId).toBeUndefined();
   });
@@ -182,6 +182,7 @@ describe("parseScript : les mots ne changent pas", () => {
         absent?: string[];
         narrateur?: string[];
         repliques?: Record<string, string[]>;
+        joues?: Record<string, unknown>;
         declarations?: Record<string, string>;
         dialogues?: number;
       };
@@ -201,6 +202,9 @@ describe("parseScript : les mots ne changent pas", () => {
         for (const needle of needles) {
           expect(lineOf(scripted, needle)?.speakerId, needle).toBe(role);
         }
+      }
+      for (const [needle, states] of Object.entries(expected.joues ?? {})) {
+        expect(lineOf(scripted, needle)?.stage, needle).toEqual(states);
       }
       if (expected.declarations !== undefined) {
         expect(Object.fromEntries(script.declarations.map((item) => [item.roleId, item.voiceText]))).toEqual(expected.declarations);

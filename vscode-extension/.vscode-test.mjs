@@ -221,7 +221,7 @@ writeFileSync(
           tts: {},
           // One sentence per chunk: three sentences => three segments, so the
           // Core's per-segment ids are exercised more than once.
-          chunking: { unit: "sentence", maxSentences: 1, prefetchChunks: 1 },
+          chunking: { unit: "sentence", maxSentences: ["cast", "response"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "") ? 3 : 1, prefetchChunks: 1 },
           playback: { rate: 1, volume: 1 },
           description: "Test-only mode: real Piper through the global system voice."
         },
@@ -231,7 +231,8 @@ writeFileSync(
           mode: "faithful",
           language: "fr-FR",
           tts: {},
-          chunking: { unit: "sentence", maxSentences: 1, prefetchChunks: 1 },
+          // Cast and reply proofs read as a user does: the 3 sentences of the default "Fidèle".
+          chunking: { unit: "sentence", maxSentences: ["cast", "response"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "") ? 3 : 1, prefetchChunks: 1 },
           playback: { rate: 1, volume: 1 },
           description: "Test-only mode: real Estelle voice through pocket-tts serve, as the global voice."
         }

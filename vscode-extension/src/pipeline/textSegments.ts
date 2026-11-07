@@ -75,7 +75,8 @@ export function plainScriptSegments(blocks: readonly SourceBlock[]): SourceSegme
         rawText: sentence.text,
         spokenText: sentence.text,
         sourceRange: { startLine: start.line, startColumn: start.column, endLine: end.line, endColumn: end.column },
-        ...(block.speakerId !== undefined ? { speakerId: block.speakerId } : {})
+        ...(block.speakerId !== undefined ? { speakerId: block.speakerId } : {}),
+        ...(block.stage !== undefined ? { stage: block.stage } : {})
       };
     })
   );

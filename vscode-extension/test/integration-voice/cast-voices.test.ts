@@ -230,7 +230,6 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
       [
         "Scène",
         "Tu arrives bien tard, Anselme.",
-        "essoufflé",
         "J'ai couru depuis le pont.",
         "La clef est perdue.",
         "Je l'ai rendue à ton frère.",
@@ -239,9 +238,8 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
       ]
     );
     const voices = requests.map((request) => request.voice);
-    const [title, madeleine, aside, anselme, madeleineAgain, anselmeAgain, stage, lucien] = voices;
+    const [title, madeleine, anselme, madeleineAgain, anselmeAgain, stage, lucien] = voices;
     assert.equal(title, NARRATOR);
-    assert.equal(aside, NARRATOR);
     assert.equal(stage, NARRATOR);
     assert.equal(madeleine, "estelle");
     assert.equal(madeleineAgain, "estelle");
@@ -251,6 +249,10 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
     assert.ok(requests.every((request) => !/MADELEINE|ANSELME|LUCIEN|%/.test(request.text)));
     assert.ok(speakers.has("Narrateur · voix Camille"), [...speakers].join(" | "));
     assert.ok(speakers.has("Madeleine · voix Estelle"), [...speakers].join(" | "));
+    // Décision du 2026-11-06 : l'état se montre, et aucune requête ne dit l'indication.
+    assert.ok([...speakers].some((line) => /^Anselme · voix .+ · essoufflé$/.test(line)), [...speakers].join(" | "));
+    assert.ok(requests.every((request) => !request.text.includes("essoufflé")), requests.map((request) => request.text).join(" | "));
+    assert.ok(requests.some((request) => request.text.includes("J'ai couru depuis le pont")));
 
     server.requests.length = 0;
     await readToTheEnd(uri);
@@ -368,7 +370,6 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
     } as unknown as Parameters<TestPipeline["start"]>[0]);
     await waitFor(() => pipeline.getPlaybackState() === "completed", `completed, was ${pipeline.getPlaybackState()}`);
     assert.deepEqual(sent(), [
-      { text: "essoufflé", voice: NARRATOR },
       { text: "J'ai couru depuis le pont.", voice: anselme },
       { text: "Je l'ai rendue à ton frère.", voice: anselme }
     ]);
@@ -408,7 +409,7 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
       const short = fileWith(SCENE);
       await pipeline.toggleCast(short);
       await readToTheEnd(short);
-      assert.equal(posted().length, 8);
+      assert.equal(posted().length, 7);
       assert.equal(fresh.maxConcurrentTts, 1);
     } finally {
       writeVoice({ providerId: "kyutai-1-6b", baseUrl: mainUrl, voice: NARRATOR });
@@ -665,6 +666,44 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
     }
   });
 
+  test("des phrases courtes de même voix : une seule requête, et Suivant saute le groupe entier", async () => {
+    await withServer({ healthBody: { status: "healthy", model_loaded: true }, msPerChar: 150 }, async (fresh) => {
+      const scene = [
+        "% madeleine = Estelle",
+        "",
+        "# Scène",
+        "",
+        "MADELEINE : Tenez. Voici la lettre.",
+        "",
+        "MADELEINE : Lisez-la.",
+        "",
+        "ANSELME : Bien.",
+        "",
+        "MADELEINE : Alors ?",
+        "",
+        "ANSELME : Rien.",
+        ""
+      ].join("\n");
+      const uri = fileWith(scene);
+      await pipeline.toggleCast(uri);
+      await read(uri);
+      await waitFor(() => pipeline.getPlaybackState() === "playing" && pipeline.getCurrentChunkIndex() === 0, "premier passage");
+      await nextPassage(1);
+      assert.equal(pipeline.getSpeakerLineForTest(), "Madeleine · voix Estelle");
+      await nextPassage(2);
+      assert.match(pipeline.getSpeakerLineForTest() ?? "", /^Anselme · voix /);
+      await pipeline.previousSegment();
+      await waitFor(() => pipeline.getCurrentChunkIndex() === 1 && pipeline.getPlaybackState() === "playing", "retour au groupe de Madeleine");
+      assert.equal(pipeline.getSpeakerLineForTest(), "Madeleine · voix Estelle");
+      await pipeline.stop();
+      const bodies = fresh.requests.filter((request) => request.method === "POST" && request.url === "/tts").map((request) => String(request.body));
+      const withTenez = bodies.filter((body) => body.includes("Tenez."));
+      assert.equal(withTenez.length, 1, bodies.join(" | "));
+      assert.ok(withTenez[0]?.includes("Tenez. Voici la lettre. Lisez-la."), bodies.join(" | "));
+      assert.equal(fresh.maxConcurrentTts, 1);
+    });
+  });
+
   test("Précédent et Suivant vont de réplique en réplique, chacune à sa voix", async () => {
     await withServer({ healthBody: { status: "healthy", model_loaded: true }, msPerChar: 150 }, async (fresh) => {
       const uri = fileWith(SCENE);
@@ -675,15 +714,15 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
       await nextPassage(1);
       assert.equal(pipeline.getSpeakerLineForTest(), "Madeleine · voix Estelle");
       await nextPassage(2);
-      assert.equal(pipeline.getSpeakerLineForTest(), "Narrateur · voix Camille");
-      await nextPassage(3);
       const anselme = pipeline.getSpeakerLineForTest();
-      assert.match(anselme ?? "", /^Anselme · voix /);
+      assert.match(anselme ?? "", /^Anselme · voix .+ · essoufflé$/);
+      await nextPassage(3);
+      assert.equal(pipeline.getSpeakerLineForTest(), "Madeleine · voix Estelle");
       await pipeline.previousSegment();
       await waitFor(() => pipeline.getCurrentChunkIndex() === 2 && pipeline.getPlaybackState() === "playing", "retour au passage 2");
-      assert.equal(pipeline.getSpeakerLineForTest(), "Narrateur · voix Camille");
-      await nextPassage(3);
       assert.equal(pipeline.getSpeakerLineForTest(), anselme);
+      await nextPassage(3);
+      assert.equal(pipeline.getSpeakerLineForTest(), "Madeleine · voix Estelle");
       await pipeline.stop();
       const voices = new Map(
         fresh.requests
@@ -692,7 +731,7 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
       );
       assert.equal(voices.get("Scène"), NARRATOR);
       assert.equal(voices.get("Tu arrives bien tard, Anselme."), "estelle");
-      assert.equal(voices.get("essoufflé"), NARRATOR);
+      assert.equal(voices.has("essoufflé"), false);
       assert.ok(![NARRATOR, "estelle"].includes(voices.get("J'ai couru depuis le pont.") ?? NARRATOR));
     });
   });

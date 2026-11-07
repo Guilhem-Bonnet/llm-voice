@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { plainTextSegments, plainScriptSegments } from "../../../../src/pipeline/textSegments.js";
 import { parseScript, plainTextBlocks } from "../../../../src/direction/script/parseScript.js";
 import { sameWordsApartFromLabels } from "../../../../src/direction/script/scriptFidelity.js";
+import { readStage } from "../../../../src/direction/script/stageDirection.js";
 import { parseMarkdown } from "../../../../src/parser/MarkdownParser.js";
 import { segment } from "../../../../src/parser/Segmenter.js";
 import type { SegmentationPolicy } from "../../../../src/parser/types.js";
@@ -144,12 +145,11 @@ describe("3. une parenthèse n'est une indication que si elle y ressemble", () =
 
   /** Découpé en passages, l'indication au narrateur. */
   it.each([
-    ["(essoufflé) J'ai couru.", [[undefined, "essoufflé"], ["a", "J'ai couru."]]],
     ["(à part) Il ne se doute de rien.", [[undefined, "à part"], ["a", "Il ne se doute de rien."]]],
-    ["Non. (Elle soupire.) Pas encore.", [["a", "Non."], [undefined, "Elle soupire."], ["a", "Pas encore."]]],
+    ["Non. (Elle sourit au mur.) Pas encore.", [["a", "Non."], [undefined, "Elle sourit au mur."], ["a", "Pas encore."]]],
     ["Mon père, le marché n'attend pas. (Elle prend son panier.) Je reviens.", [["a", "Mon père, le marché n'attend pas."], [undefined, "Elle prend son panier."], ["a", "Je reviens."]]],
-    ["Non, (bas) je reste.", [["a", "Non,"], [undefined, "bas"], ["a", "je reste."]]],
-    ["(bas) (en riant) Viens.", [[undefined, "bas"], [undefined, "en riant"], ["a", "Viens."]]],
+    ["Non, (il sort) je reste.", [["a", "Non,"], [undefined, "il sort"], ["a", "je reste."]]],
+    ["(à part) (au public) Viens.", [[undefined, "à part"], [undefined, "au public"], ["a", "Viens."]]],
     ["Adieu (il sort).", [["a", "Adieu."], [undefined, "il sort"]]]
   ])("%s", async (reply, expected) => {
     const { passages, faithful } = await parsed(`@a: ${reply}\n`);
@@ -166,6 +166,10 @@ describe("3. une parenthèse n'est une indication que si elle y ressemble", () =
       expect(faithful, name).toBe(true);
       for (const parenthesis of parentheses) {
         const said = parenthesis.slice(1, -1);
+        if (!readStage(parenthesis).said) {
+          expect(passages.some(([, text]) => String(text).includes(said)), `${name} : ${said}`).toBe(false);
+          continue;
+        }
         expect(passages.find(([, text]) => String(text).includes(said))?.[0], `${name} : ${said}`).toBeUndefined();
       }
     }
@@ -174,10 +178,10 @@ describe("3. une parenthèse n'est une indication que si elle y ressemble", () =
 
 describe("4. la ponctuation seule après une indication reste à la réplique", () => {
   it.each([
-    ["Viens (bas) ?", [["a", "Viens ?"], [undefined, "bas"]]],
-    ["Viens (bas)!", [["a", "Viens!"], [undefined, "bas"]]],
-    ["Viens (bas) ? Puis reste.", [["a", "Viens ?"], [undefined, "bas"], ["a", "Puis reste."]]],
-    ["Viens (bas), je t'en prie.", [["a", "Viens,"], [undefined, "bas"], ["a", "je t'en prie."]]],
+    ["Viens (il sort) ?", [["a", "Viens ?"], [undefined, "il sort"]]],
+    ["Viens (il sort)!", [["a", "Viens!"], [undefined, "il sort"]]],
+    ["Viens (il sort) ? Puis reste.", [["a", "Viens ?"], [undefined, "il sort"], ["a", "Puis reste."]]],
+    ["Viens (il sort), je t'en prie.", [["a", "Viens,"], [undefined, "il sort"], ["a", "je t'en prie."]]],
     ["Viens *Elle sort.* ?", [["a", "Viens ?"], [undefined, "Elle sort."]]]
   ])("%s", async (reply, expected) => {
     const { passages, faithful } = await parsed(`@a: ${reply}\n`);
@@ -186,8 +190,8 @@ describe("4. la ponctuation seule après une indication reste à la réplique", 
   });
 
   it("sans réplique à qui la rendre, elle suit l'indication : elle n'est jamais perdue", async () => {
-    expect((await parsed("@a: (étonné) ?\n")).passages).toEqual([[undefined, "étonné ?"]]);
-    expect((await parsed("@a: Non. (bas) ?\n")).passages).toEqual([["a", "Non."], [undefined, "bas ?"]]);
+    expect((await parsed("@a: (Il sort.) ?\n")).passages).toEqual([[undefined, "Il sort. ?"]]);
+    expect((await parsed("@a: Non. (il sort) ?\n")).passages).toEqual([["a", "Non."], [undefined, "il sort ?"]]);
   });
 });
 
@@ -240,9 +244,9 @@ describe("5. un fichier texte dit les mots de sa lecture simple", () => {
   });
 
   it("une indication en texte brut perd ses seules marques", () => {
-    const script = parseScript(plainTextBlocks("@a: (Elle soupire.) Bon.\n\n*Elle sort.*\n"), { plainText: true });
+    const script = parseScript(plainTextBlocks("@a: (Elle se lève.) Bon.\n\n*Elle sort.*\n"), { plainText: true });
     expect(plainScriptSegments(script.blocks).map((seg) => [seg.speakerId, seg.spokenText])).toEqual([
-      [undefined, "Elle soupire."],
+      [undefined, "Elle se lève."],
       ["a", "Bon."],
       [undefined, "Elle sort."]
     ]);

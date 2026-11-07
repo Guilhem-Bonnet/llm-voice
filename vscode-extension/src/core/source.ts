@@ -51,6 +51,16 @@ export interface SourceDocument {
   capturedAt: number;
 }
 
+/**
+ * How a character says a passage (ADR-018, note of 2026-11-06). Known and never said: no engine
+ * plays it yet. `quote` is the indication as written, for a later score to start from.
+ */
+export interface StageState {
+  readonly label: string;
+  readonly kind: "manner" | "sound";
+  readonly quote: string;
+}
+
 /** Smallest readable unit of a document, anchored to its origin (CdC §14). */
 export interface SourceSegment {
   id: string;
@@ -62,6 +72,8 @@ export interface SourceSegment {
   spokenText?: string;
   /** Role that speaks this segment (ADR-018 §1); absent = the narrator. */
   speakerId?: string;
+  /** The state of that role here; comes with the text, never with a name in a log. */
+  stage?: readonly StageState[];
 }
 
 /** What part of the environment a capture request targets. */

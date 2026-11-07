@@ -7,7 +7,7 @@
 import type { WaitView } from "../playback/waitEstimate.js";
 import type { TtsHoldReason } from "./tts.js";
 import type { NarrationSegment } from "./narration.js";
-import type { SourceDocument, SourceRange } from "./source.js";
+import type { SourceDocument, SourceRange, StageState } from "./source.js";
 import type { AudioFormat } from "./tts.js";
 
 /** Lifecycle of a single audio chunk in the synthesis queue (CdC §30). */
@@ -29,6 +29,8 @@ export interface ChunkVoice {
   readonly voice?: string;
   readonly model?: string;
   readonly parameters?: Readonly<Record<string, unknown>>;
+  /** Shown, not played yet: like `speakerId`, it enters neither a request nor a cache key. */
+  readonly stage?: readonly StageState[];
 }
 
 /** One synthesised unit of audio and the source it highlights (CdC §30). */

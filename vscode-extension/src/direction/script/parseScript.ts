@@ -8,10 +8,10 @@
  */
 
 import { NARRATOR_SPEAKER_ID } from "../../core/direction.js";
-import type { SourceRange } from "../../core/source.js";
+import type { SourceRange, StageState } from "../../core/source.js";
 import type { SourceBlock } from "../../parser/types.js";
 import { toRoleId } from "../director/Analyst.js";
-import { isStageParenthesis, stagePosition } from "./stageDirection.js";
+import { isStageParenthesis, readStage, stagePosition, type StageReading } from "./stageDirection.js";
 
 export interface ScriptRole {
   readonly roleId: string;
@@ -35,7 +35,7 @@ export interface ScriptParse {
   /** Par ordre d'apparition. */
   readonly roles: readonly ScriptRole[];
   readonly declarations: readonly ScriptDeclaration[];
-  /** Ce qui n'est pas dit, pour la garde de fidélité. */
+  /** Ce qui n'est pas dit, étiquettes et indications jouées, dans l'ordre du texte : la garde les efface un à un. */
   readonly labels: readonly string[];
   /** Paragraphes de dialogue de roman, lus par le narrateur en tranche 1. */
   readonly dialogueBlocks: number;
@@ -95,7 +95,56 @@ interface Part {
   readonly stage: boolean;
   /** La ponctuation qui suivait l'indication et finit cette réplique : `Viens (bas) ?`. */
   readonly closing?: string;
+  /** L'état du personnage sur ce passage. */
+  readonly states?: readonly StageState[];
 }
+
+/** Dans quel état parle le personnage, le temps d'une réplique. */
+interface ReplyMood {
+  /** Vues, mais aucun mot n'est encore venu : `(bas) (en riant) Viens.`. */
+  pending: StageState[];
+  /** Tiennent jusqu'à la prochaine indication ou la fin de la réplique. */
+  active: readonly StageState[];
+}
+
+function newMood(): ReplyMood {
+  return { pending: [], active: [] };
+}
+
+function statesOfReply(mood: ReplyMood, text: string): { states?: readonly StageState[] } {
+  if (!WORD.test(text)) {
+    return {};
+  }
+  if (mood.pending.length > 0) {
+    mood.active = mood.pending;
+    mood.pending = [];
+  }
+  return mood.active.length > 0 ? { states: mood.active } : {};
+}
+
+function sameStates(a: readonly StageState[] | undefined, b: readonly StageState[] | undefined): boolean {
+  return JSON.stringify(a ?? []) === JSON.stringify(b ?? []);
+}
+
+/** Une indication restée sans réplique après elle va à la dernière réplique dite. */
+function settleMood(parts: Part[], mood: ReplyMood, speakerId: string | undefined): void {
+  if (mood.pending.length === 0) {
+    return;
+  }
+  for (let index = parts.length - 1; index >= 0; index -= 1) {
+    const part = parts[index];
+    if (part !== undefined && !part.stage && part.speakerId === speakerId && speakerId !== undefined) {
+      const states = [...(part.states ?? []), ...mood.pending];
+      parts[index] = { ...part, states };
+      mood.active = states;
+      mood.pending = [];
+      return;
+    }
+  }
+}
+
+/** Seule une parenthèse se joue : l'italique sert aussi à l'emphase, `*Furieux.*` peut être une réplique. */
+const NARRATED_STAGE: StageReading = { said: true, states: [] };
 
 type Label =
   | { readonly kind: "declaration"; readonly roleId: string | undefined; readonly voiceText: string }
@@ -264,8 +313,8 @@ function isStage(body: string, before: string, after: string): boolean {
   return body.startsWith("(") ? isStageParenthesis(body, before, after) : stagePosition(before, after) !== "cut";
 }
 
-/** Une réplique, coupée autour de ses indications. */
-function replyParts(text: string, offset: number, speakerId: string | undefined): Part[] {
+/** Une réplique, coupée autour de ses indications ; une indication jouée va dans `labels`, à sa place. */
+function replyParts(text: string, offset: number, speakerId: string | undefined, mood: ReplyMood, labels: string[]): Part[] {
   if (speakerId === undefined) {
     return [{ speakerId, start: offset, end: offset + text.length, stage: false }];
   }
@@ -283,15 +332,28 @@ function replyParts(text: string, offset: number, speakerId: string | undefined)
     const closing = PUNCTUATION_ALONE.exec(after)?.[0];
     const said = WORD.test(before);
     const toReply = closing !== undefined && said && !ENDS_SENTENCE.test(before.trimEnd());
-    if (at > cursor) {
-      parts.push({ speakerId, start: offset + cursor, end: offset + at, stage: false, ...(toReply ? { closing } : {}) });
+    const reading = body.startsWith("(") ? readStage(body) : NARRATED_STAGE;
+    // `Viens (bas) ?` : l'indication porte sur ce qui la précède.
+    if (toReply) {
+      mood.pending.push(...reading.states);
     }
-    parts.push({ speakerId: undefined, start: offset + at, end: offset + end, stage: true, ...(closing !== undefined && !toReply ? { closing } : {}) });
+    if (at > cursor) {
+      parts.push({ speakerId, start: offset + cursor, end: offset + at, stage: false, ...(toReply ? { closing } : {}), ...statesOfReply(mood, before) });
+    }
+    if (!toReply) {
+      mood.pending.push(...reading.states);
+    }
+    if (reading.said) {
+      parts.push({ speakerId: undefined, start: offset + at, end: offset + end, stage: true, ...(closing !== undefined && !toReply ? { closing } : {}) });
+    } else {
+      labels.push(body);
+    }
     cursor = end + (closing?.length ?? 0);
   }
   if (cursor < text.length) {
-    parts.push({ speakerId, start: offset + cursor, end: offset + text.length, stage: false });
+    parts.push({ speakerId, start: offset + cursor, end: offset + text.length, stage: false, ...statesOfReply(mood, text.slice(cursor)) });
   }
+  settleMood(parts, mood, speakerId);
   return parts;
 }
 
@@ -310,7 +372,7 @@ function mergeParts(raw: string, parts: readonly Part[]): Part[] {
   const merged: Part[] = [];
   for (const part of parts) {
     const last = merged[merged.length - 1];
-    if (last !== undefined && last.closing === undefined && last.speakerId === part.speakerId && !last.stage && !part.stage && raw.slice(last.end, part.start).trim().length === 0) {
+    if (last !== undefined && last.closing === undefined && last.speakerId === part.speakerId && !last.stage && !part.stage && sameStates(last.states, part.states) && raw.slice(last.end, part.start).trim().length === 0) {
       merged[merged.length - 1] = { ...last, end: part.end };
     } else {
       merged.push(part);
@@ -393,6 +455,7 @@ export function parseScript(blocks: readonly SourceBlock[], options: ParseScript
   let tagged = false;
   // Le locuteur d'un `NOM` seul court d'un paragraphe à l'autre.
   let running: string | undefined;
+  let mood = newMood();
 
   const meet = (speakerId: string | undefined, name: string): void => {
     if (speakerId === undefined) {
@@ -405,6 +468,7 @@ export function parseScript(blocks: readonly SourceBlock[], options: ParseScript
   for (const block of blocks) {
     if (block.type === "heading" || block.type === "thematicBreak") {
       running = undefined;
+      mood = newMood();
     }
     if (!isAnalysed(block)) {
       out.push(block);
@@ -415,6 +479,23 @@ export function parseScript(blocks: readonly SourceBlock[], options: ParseScript
     let current = running;
     let touched = false;
     let firstLine = true;
+    if (current === undefined) {
+      mood = newMood();
+    }
+    const startReply = (): void => {
+      settleMood(parts, mood, current);
+      mood = newMood();
+    };
+    /** `NOM (bas) :` : une indication jouée rejoint l'étiquette, sinon le narrateur la dit. */
+    const aside = (body: string, start: number, end: number): void => {
+      const reading = readStage(body);
+      mood.pending.push(...reading.states);
+      if (reading.said) {
+        parts.push({ speakerId: undefined, start, end, stage: true });
+      } else {
+        labels.push(body);
+      }
+    };
     for (const { start, text } of linesOf(raw)) {
       const opensParagraph = firstLine;
       firstLine = false;
@@ -436,36 +517,50 @@ export function parseScript(blocks: readonly SourceBlock[], options: ParseScript
         tagged = tagged || label.source === "tag";
         meet(label.speakerId, label.name);
         labels.push(line.slice(0, label.labelEnd));
+        startReply();
         current = label.speakerId;
         running = undefined;
         if (label.aside !== undefined) {
-          parts.push({ speakerId: undefined, start: lineStart + label.aside.start, end: lineStart + label.aside.end, stage: true });
+          aside(line.slice(label.aside.start, label.aside.end), lineStart + label.aside.start, lineStart + label.aside.end);
           labels.push(line.slice(label.aside.end, label.replyStart));
         }
-        parts.push(...replyParts(line.slice(label.replyStart), lineStart + label.replyStart, label.speakerId));
+        parts.push(...replyParts(line.slice(label.replyStart), lineStart + label.replyStart, label.speakerId, mood, labels));
         continue;
       }
       if (label?.kind === "alone") {
         meet(label.speakerId, label.name);
         labels.push(line.slice(0, label.aside?.start ?? label.labelEnd));
+        startReply();
         current = label.speakerId;
         running = label.speakerId;
         if (label.aside !== undefined) {
-          parts.push({ speakerId: undefined, start: lineStart + label.aside.start, end: lineStart + label.aside.end, stage: true });
+          aside(line.slice(label.aside.start, label.aside.end), lineStart + label.aside.start, lineStart + label.aside.end);
         }
         continue;
       }
       if (isStructuralLine(line) || (opensParagraph && isCapsCaption(line))) {
+        startReply();
         current = undefined;
         running = undefined;
         parts.push({ speakerId: undefined, start: lineStart, end: lineStart + line.length, stage: false });
         continue;
       }
       if (WHOLE_STAGE_LINE.test(line.trim())) {
-        parts.push({ speakerId: undefined, start: lineStart, end: lineStart + line.length, stage: true });
+        const whole = line.trim();
+        // Sans personnage courant, on ne sait pas de qui elle parle : le narrateur la dit.
+        const reading = current !== undefined && whole.startsWith("(") ? readStage(whole.replace(/[.!?…]$/u, "")) : NARRATED_STAGE;
+        mood.pending.push(...reading.states);
+        if (reading.said) {
+          parts.push({ speakerId: undefined, start: lineStart, end: lineStart + line.length, stage: true });
+        } else {
+          labels.push(whole);
+        }
         continue;
       }
-      parts.push(...replyParts(line, lineStart, current));
+      parts.push(...replyParts(line, lineStart, current, mood, labels));
+    }
+    if (running === undefined) {
+      settleMood(parts, mood, current);
     }
     if (!touched && current === undefined && parts.every((part) => part.speakerId === undefined && !part.stage)) {
       // Rien à couper : le bloc garde son rendu d'origine.
@@ -481,7 +576,8 @@ export function parseScript(blocks: readonly SourceBlock[], options: ParseScript
         endOffset: block.startOffset + part.end,
         text: (part.stage ? stageText(slice, plainText) : plainText ? slice : inlineText(slice)) + (part.closing ?? ""),
         rawSource: slice,
-        ...(part.speakerId !== undefined && part.speakerId !== NARRATOR_SPEAKER_ID ? { speakerId: part.speakerId } : {})
+        ...(part.speakerId !== undefined && part.speakerId !== NARRATOR_SPEAKER_ID ? { speakerId: part.speakerId } : {}),
+        ...(part.states !== undefined ? { stage: part.states } : {})
       });
     }
   }
