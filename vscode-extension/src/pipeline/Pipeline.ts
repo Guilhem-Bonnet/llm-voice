@@ -58,7 +58,7 @@ import { documentKeyOf, documentScope } from "../direction/bible/scopes.js";
 import { assignCast } from "../direction/cast/castSegments.js";
 import { castFromBible, recastFromScratch, recordUserVoice } from "../direction/cast/castStore.js";
 import { CastPanel } from "../views/castPanel/CastPanel.js";
-import { castNotice, engineLabelOf, type CastPanelState } from "../views/castPanel/castPanelModel.js";
+import { castNotice, engineLabelOf, traitChoices, type CastPanelState } from "../views/castPanel/castPanelModel.js";
 import { createQwen3Voice, fetchQwen3VoiceSample } from "../tts/qwen3Voices.js";
 import { planReading, type ReadingPlan } from "../direction/cast/synthesisPlan.js";
 import { parseScript, plainTextBlocks } from "../direction/script/parseScript.js";
@@ -1492,7 +1492,8 @@ export class Pipeline implements PipelineFacade {
         ? castNotice({ multiVoice, canCreateVoice, characters: cast.entries.length, freeVoices: voices.filter((voice) => voice.id !== narratorVoice).length })
         : "Aucun personnage repéré dans ce document : il sera lu par le narrateur.",
       canCreateVoice,
-      slowFactor: capabilities?.wholeReadingFirst === true ? 2 : undefined
+      slowFactor: capabilities?.wholeReadingFirst === true ? 2 : undefined,
+      traitChoices: traitChoices()
     };
   }
 

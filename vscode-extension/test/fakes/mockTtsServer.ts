@@ -143,12 +143,15 @@ export class MockTtsServer {
       const form = new URLSearchParams(body);
       const name = form.get("name") ?? "";
       const description = form.get("description") ?? "";
-      if (name.length < 1 || name.length > 40 || description.length < 1 || description.length > 300) {
+      // Like `validated_creation`: an English description, ASCII only, else 400.
+      if (name.length < 1 || name.length > 40 || description.length < 1 || description.length > 300 || !/^[\x20-\x7e]+$/.test(description)) {
         res.writeHead(400, { "content-type": "application/json" });
         res.end(JSON.stringify({ detail: "mock: invalid form" }));
         return;
       }
-      if (this.options.kyutaiVoices.voices.some((voice) => voice.name === name)) {
+      // The server folds case and spaces: "Isaure  Jeune" is "isaure jeune".
+      const folded = (text: string): string => text.split(/\s+/).filter(Boolean).join(" ").toLowerCase();
+      if (this.options.kyutaiVoices.voices.some((voice) => voice.name !== undefined && folded(voice.name) === folded(name))) {
         res.writeHead(409, { "content-type": "application/json" });
         res.end(JSON.stringify({ detail: "mock: name taken" }));
         return;

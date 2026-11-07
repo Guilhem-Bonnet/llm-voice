@@ -7,6 +7,7 @@
 import {
   composeVoiceDescription,
   estimatedAudioSeconds,
+  FIRST_CREATED_VOICE_SECONDS,
   parseCastPanelMessage,
   type CastPanelMessage,
   type CastPanelState
@@ -36,6 +37,8 @@ function messageOf(error: unknown): string {
 export class CastPanelController {
   private state: CastPanelState | undefined;
   private readonly running = new Map<number, AbortController>();
+  /** Voix créées déjà lues par ce panneau : leur extrait est encodé côté serveur. */
+  private readonly warmed = new Set<string>();
   private disposed = false;
 
   constructor(
@@ -76,7 +79,11 @@ export class CastPanelController {
       case "listen": {
         const row = this.state?.rows.find((item) => item.roleId === message.roleId);
         const text = row?.firstLine ?? this.state?.narrator.firstLine ?? "";
-        await this.audio(message.requestId, this.estimate(text), (signal) => this.deps.listen(message.roleId, message.voiceId, signal));
+        const voiceId = message.voiceId ?? row?.voiceId;
+        await this.audio(message.requestId, this.estimate(text, voiceId), (signal) => this.deps.listen(message.roleId, message.voiceId, signal));
+        if (voiceId !== undefined) {
+          this.warmed.add(voiceId);
+        }
         return;
       }
       case "sampleVoice":
@@ -123,9 +130,15 @@ export class CastPanelController {
     }
   }
 
-  private estimate(text: string): number | undefined {
+  /** L'attente annoncée : jamais moins de ~30 s pour la première lecture d'une voix créée. */
+  estimate(text: string, voiceId: string | undefined): number | undefined {
     const factor = this.state?.slowFactor;
-    return factor === undefined ? undefined : Math.ceil(estimatedAudioSeconds(text) * factor);
+    if (factor === undefined) {
+      return undefined;
+    }
+    const seconds = Math.ceil(estimatedAudioSeconds(text) * factor);
+    const created = this.state?.voices.some((voice) => voice.id === voiceId && voice.created) === true;
+    return created && voiceId !== undefined && !this.warmed.has(voiceId) ? Math.max(seconds, FIRST_CREATED_VOICE_SECONDS) : seconds;
   }
 
   private async audio(requestId: number, estimateSeconds: number | undefined, run: (signal: AbortSignal) => Promise<{ uri: string }>): Promise<void> {

@@ -48,17 +48,42 @@ export interface CastPanelState {
   readonly canCreateVoice: boolean;
   /** Secondes de calcul par seconde d'audio, si le moteur est plus lent que l'écoute. */
   readonly slowFactor: number | undefined;
+  /** Les caractères du formulaire « Créer une voix », libellés français. */
+  readonly traitChoices: readonly { readonly id: string; readonly label: string }[];
 }
 
 export type Gender = "woman" | "man" | "unspecified";
 export type Age = "child" | "young" | "adult" | "elderly";
 export type Timbre = "deep" | "medium" | "high";
 
+/**
+ * Les caractères proposés : libellé français pour l'écran, traduction anglaise fixe pour la
+ * consigne. Le serveur Qwen3 refuse une description non ASCII (400) : rien de saisi librement
+ * n'y entre.
+ */
+export const VOICE_TRAITS = {
+  calm: { label: "calme", english: "calm and composed" },
+  warm: { label: "chaleureux", english: "warm and kind" },
+  tender: { label: "tendre", english: "tender and gentle" },
+  cheerful: { label: "enjoué", english: "cheerful and lively" },
+  mischievous: { label: "malicieux", english: "mischievous and playful" },
+  proud: { label: "fier", english: "proud and haughty" },
+  authoritative: { label: "autoritaire", english: "authoritative and firm" },
+  solemn: { label: "solennel", english: "solemn and grave" },
+  cold: { label: "froid", english: "cold and distant" },
+  anxious: { label: "inquiet", english: "anxious and worried" },
+  weary: { label: "las", english: "weary and tired" },
+  fierce: { label: "emporté", english: "quick-tempered and fierce" }
+} as const;
+
+export type VoiceTrait = keyof typeof VOICE_TRAITS;
+export const MAX_TRAITS = 3;
+
 export interface VoiceRecipe {
   readonly gender: Gender;
   readonly age: Age;
   readonly timbre: Timbre;
-  readonly character: string;
+  readonly traits: readonly VoiceTrait[];
 }
 
 export type CastPanelMessage =
@@ -72,7 +97,6 @@ export type CastPanelMessage =
   | { readonly type: "recast" };
 
 export const MAX_VOICE_NAME = 40;
-export const MAX_CHARACTER = 80;
 export const MAX_DESCRIPTION = 300;
 export const MAX_SAMPLE_TEXT = 300;
 
@@ -105,14 +129,14 @@ function recipeOf(raw: unknown): VoiceRecipe | undefined {
   if (!isRecord(raw)) {
     return undefined;
   }
-  const { gender, age, timbre, character } = raw;
+  const { gender, age, timbre, traits } = raw;
   if (!GENDERS.includes(gender as Gender) || !AGES.includes(age as Age) || !TIMBRES.includes(timbre as Timbre)) {
     return undefined;
   }
-  if (typeof character !== "string" || character.length > MAX_CHARACTER) {
+  if (!Array.isArray(traits) || traits.length > MAX_TRAITS || !traits.every((trait) => typeof trait === "string" && Object.hasOwn(VOICE_TRAITS, trait))) {
     return undefined;
   }
-  return { gender: gender as Gender, age: age as Age, timbre: timbre as Timbre, character };
+  return { gender: gender as Gender, age: age as Age, timbre: timbre as Timbre, traits: [...new Set(traits as VoiceTrait[])] };
 }
 
 export function parseCastPanelMessage(raw: unknown): CastPanelMessage | undefined {
@@ -162,18 +186,27 @@ const PITCH: Record<Timbre, string> = {
 
 /**
  * La consigne du moteur, en anglais : l'écoute a montré que Qwen3 suit mieux une consigne
- * anglaise. Le caractère est repris tel que saisi, entre guillemets, borné.
+ * anglaise, et le serveur refuse tout ce qui n'est pas ASCII. Composée uniquement de morceaux
+ * fixes du code ; le dernier filtre ne sert que de garde.
  */
 export function composeVoiceDescription(recipe: VoiceRecipe): string {
   const noun = NOUN[recipe.gender][recipe.age];
   const article = /^[aeiou]/.test(noun) ? "An" : "A";
-  const character = recipe.character.replace(/[\u0000-\u001f\u007f"]/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_CHARACTER);
   const parts = [`${article} ${noun} with ${PITCH[recipe.timbre]}, speaking French naturally.`];
-  if (character.length > 0) {
-    parts.push(`Character: "${character}".`);
+  const traits = recipe.traits.slice(0, MAX_TRAITS).map((trait) => VOICE_TRAITS[trait].english);
+  if (traits.length > 0) {
+    const sentence = traits.join(", ");
+    parts.push(`${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`);
   }
-  return parts.join(" ").slice(0, MAX_DESCRIPTION);
+  return parts.join(" ").replace(/[^\x20-\x7e]/g, "").slice(0, MAX_DESCRIPTION);
 }
+
+export function traitChoices(): { id: string; label: string }[] {
+  return Object.entries(VOICE_TRAITS).map(([id, trait]) => ({ id, label: trait.label }));
+}
+
+/** La première lecture figée d'une voix créée encode d'abord son extrait (~28 s, serveur Qwen3). */
+export const FIRST_CREATED_VOICE_SECONDS = 30;
 
 /** Secondes d'audio d'un texte lu, à environ 15 caractères par seconde. */
 export function estimatedAudioSeconds(text: string): number {

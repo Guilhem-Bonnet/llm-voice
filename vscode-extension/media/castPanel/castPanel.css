@@ -22,15 +22,18 @@ button.primary { background: var(--vscode-button-background); color: var(--vscod
 button.primary:hover { background: var(--vscode-button-hoverBackground); }
 button:disabled { opacity: 0.5; cursor: default; }
 .choices { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 4px; padding: 6px 0 0 12px; }
-.choice { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.choice-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Le nom de la voix garde au moins 180 px ; faute de place, les boutons passent dessous, entiers. */
+.choice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; padding: 2px 0; }
+.choice-label { flex: 1 1 180px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .footer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .create { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--vscode-panel-border, rgba(128,128,128,.3)); }
 .create h2 { margin: 0; font-size: 14px; }
 .fields { display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .fields label { display: flex; flex-direction: column; gap: 2px; font-size: 0.9em; }
 select, input { font: inherit; color: var(--vscode-input-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, transparent); padding: 3px 6px; }
-input.wide { min-width: 220px; }
+.traits { display: flex; flex-wrap: wrap; gap: 4px 12px; border: none; margin: 0; padding: 0; flex-basis: 100%; }
+.traits legend { padding: 0; margin-bottom: 4px; font-size: 0.9em; }
+.trait { flex-direction: row !important; align-items: center; gap: 4px !important; white-space: nowrap; }
 audio { display: none; }
 @media (max-width: 560px) {
   .row { grid-template-columns: minmax(0, 1fr); }

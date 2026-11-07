@@ -470,8 +470,9 @@ export default defineConfig([
       LLM_VOICE_TEST_STORAGE_DIR: voiceChainStorageDir,
       LLM_VOICE_INBOX: inboxDirVoiceChain
     },
-    // GAO-studio-distr-001: the Distribution panel plays its trials in VS Code itself.
-    launchArgs: [`--user-data-dir=${voiceChainUserDataDir}`, "--mute-audio"]
+    // GAO-studio-distr-001: the Distribution panel plays its trials in VS Code itself. `--mute-audio`
+    // first: last, VS Code read the workspace folder after it as its value, and the run had no folder.
+    launchArgs: ["--mute-audio", `--user-data-dir=${voiceChainUserDataDir}`]
   },
   {
     ...common,

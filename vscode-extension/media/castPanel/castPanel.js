@@ -140,15 +140,31 @@
       el("p", { class: "muted", text: "Quelques choix simples ; l'extension écrit la consigne pour le moteur. Le calcul prend environ 30 s." }),
       el("div", { class: "fields" }, [
         el("label", {}, [document.createTextNode("Genre"), select("create-gender", [["woman", "femme"], ["man", "homme"], ["unspecified", "non précisé"]])]),
-        el("label", {}, [document.createTextNode("Âge"), select("create-age", [["child", "enfant"], ["young", "jeune"], ["adult", "adulte"], ["elderly", "âgé"]])]),
-        el("label", {}, [document.createTextNode("Timbre"), select("create-timbre", [["deep", "grave"], ["medium", "medium"], ["high", "aigu"]])]),
-        el("label", {}, [document.createTextNode("Caractère (quelques mots, en anglais si possible)"), el("input", { id: "create-character", class: "wide", maxlength: "80" })]),
+        el("label", {}, [document.createTextNode("Âge"), select("create-age", [["adult", "adulte"], ["young", "jeune"], ["elderly", "âgé"], ["child", "enfant"]])]),
+        el("label", {}, [document.createTextNode("Timbre"), select("create-timbre", [["medium", "medium"], ["deep", "grave"], ["high", "aigu"]])]),
+        el("fieldset", { class: "traits" }, [el("legend", { text: "Caractère (trois au plus)" })].concat(
+          state.traitChoices.map((trait) => el("label", { class: "trait" }, [
+            el("input", { type: "checkbox", value: trait.id, "data-trait": trait.id, onclick: limitTraits }),
+            document.createTextNode(trait.label)
+          ]))
+        )),
         el("label", {}, [document.createTextNode("Nom de la voix"), el("input", { id: "create-name", maxlength: "40" })]),
         el("label", {}, [document.createTextNode("Attribuer à"), target])
       ]),
       el("div", { class: "footer" }, [button("Créer la voix", submitCreate, { class: "primary", id: "create-submit" })])
     ]);
     return form;
+  }
+
+  function chosenTraits() {
+    return Array.from(document.querySelectorAll("input[data-trait]:checked")).map((node) => node.value);
+  }
+
+  function limitTraits(event) {
+    if (chosenTraits().length > 3) {
+      event.target.checked = false;
+      setStatus("Trois caractères au plus.");
+    }
   }
 
   function value(id) {
@@ -165,7 +181,7 @@
       type: "createVoice",
       name,
       requestId,
-      recipe: { gender: value("create-gender"), age: value("create-age"), timbre: value("create-timbre"), character: value("create-character").slice(0, 80) }
+      recipe: { gender: value("create-gender"), age: value("create-age"), timbre: value("create-timbre"), traits: chosenTraits() }
     }, forRoleId ? { forRoleId } : {}));
   }
 

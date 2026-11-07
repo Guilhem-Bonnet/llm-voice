@@ -104,7 +104,7 @@ suite("voice-chain: panneau Distribution (GAO-studio-distr-001)", () => {
     await pipeline.dispatchCastPanelForTest({
       type: "createVoice",
       name: "Isaure jeune",
-      recipe: { gender: "woman", age: "young", timbre: "high", character: "proud, worried" },
+      recipe: { gender: "woman", age: "young", timbre: "high", traits: ["proud", "anxious"] },
       forRoleId: isaure.roleId,
       requestId: 1
     });
@@ -112,7 +112,7 @@ suite("voice-chain: panneau Distribution (GAO-studio-distr-001)", () => {
     assert.ok(create, "POST /voices/create attendu");
     const form = new URLSearchParams(create.body);
     assert.equal(form.get("name"), "Isaure jeune");
-    assert.match(form.get("description") ?? "", /^A young woman with a high-pitched/);
+    assert.equal(form.get("description"), "A young woman with a high-pitched, bright voice, speaking French naturally. Proud and haughty, anxious and worried.");
     assert.ok((form.get("sample_text") ?? "").startsWith("Quel vent"));
     assert.ok(posted.some((message) => message.type === "created" && message.requestId === 1));
     const afterCreate = pipeline.castPanelStateForTest();
