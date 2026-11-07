@@ -84,13 +84,30 @@ describe("the Qwen3 voice", () => {
 });
 
 describe("the Qwen3 provider", () => {
-  it("declares that it prepares the whole reading first, and one voice", async () => {
+  it("declares that it prepares the whole reading first, and several voices", async () => {
     const { tts } = qwen3(() => json({}));
     expect(tts.id).toBe("qwen3");
     const capabilities = await tts.getCapabilities();
     expect(capabilities.wholeReadingFirst).toBe(true);
     expect(capabilities.voices.map((voice) => voice.id)).toEqual([QWEN3_DEFAULT_VOICE]);
-    expect(capabilities.multiVoice).toBeUndefined();
+    expect(capabilities.multiVoice).toBe(true);
+  });
+
+  it("lists the voices created on this machine next to the catalogue, under their name", async () => {
+    const { tts } = qwen3(() =>
+      json({
+        voices: [
+          { id: QWEN3_DEFAULT_VOICE, name: "Voix des essais 21 et 22", available: true, played: true, description: "", origin: "catalogue" },
+          { id: "isaure-1", name: "Isaure", available: true, played: false, description: "A young woman", origin: "created" },
+          { id: "absente", name: "Absente", available: false, played: false, description: "", origin: "created" }
+        ]
+      })
+    );
+    const voices = await tts.listVoices?.();
+    expect(voices?.map((voice) => [voice.id, voice.label])).toEqual([
+      [QWEN3_DEFAULT_VOICE, "Voix des essais 21 et 22"],
+      ["isaure-1", "Isaure"]
+    ]);
   });
 
   it("sends the frozen voice by default, and no direction when the segment has none", async () => {

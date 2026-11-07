@@ -334,6 +334,8 @@ export function createTtsProvider(
         catalog: QWEN3_VOICE_CATALOG,
         engineName: "Voix Qwen3",
         loadsOnDemand: true,
+        // GAO-studio-distr-001: `GET /voices` lists the catalogue and the voices created here.
+        multiVoice: true,
         readsDirection: true,
         wholeReadingFirst: true,
         // Step 2 measures what a direction does on this engine; until then, nothing is advertised.

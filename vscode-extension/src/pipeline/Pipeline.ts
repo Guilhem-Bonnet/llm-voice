@@ -218,7 +218,7 @@ const CAST_STORE_ATTEMPTS = 5;
 const CAST_STORE_SETTLE_MS = 50;
 const SCENE_PREPARE = "Préparer";
 const SCENE_READ_ANYWAY = "Lire quand même";
-const CAST_VOICE_REQUIRED = "LLM Voice : le jeu d'acteurs demande une voix Kyutai 1.6B. La lecture reste à une voix.";
+const CAST_VOICE_REQUIRED = "LLM Voice : ce moteur ne lit qu'à une seule voix. Pour donner une voix à chaque personnage, choisissez un moteur à plusieurs voix (galerie de voix). La lecture reste à une voix.";
 const CAST_NARRATOR_ABSENT = "LLM Voice : la voix du narrateur n'est pas disponible sur le moteur de voix, elle manque à sa liste. Le jeu d'acteurs ne peut pas démarrer : choisissez une autre voix.";
 
 /** What a reading with several voices needs on top of a plain one. */
@@ -929,10 +929,10 @@ export class Pipeline implements PipelineFacade {
         ...firstPassagesMin
       });
       // GAO-qwen3-dans-l-001: an engine slower than its audio prepares the whole reading before
-      // its first sound, so that nothing cuts once it plays. A narrated reading (its passages
-      // still arrive) and several voices (their own plan, ADR-018) keep their path.
+      // its first sound, so that nothing cuts once it plays, with one voice or several (GAO-studio-distr-001).
+      // A narrated reading (its passages still arrive) keeps its path.
       const capabilities = await tts.getCapabilities(abort.signal).catch(() => undefined);
-      const wholeReading = capabilities?.wholeReadingFirst === true && !narrated && cast?.voices === undefined && toPlay.length > 1;
+      const wholeReading = capabilities?.wholeReadingFirst === true && !narrated && toPlay.length > 1;
       if (wholeReading) {
         this.reviseWait("whole-reading", {
           modelLoaded: true,

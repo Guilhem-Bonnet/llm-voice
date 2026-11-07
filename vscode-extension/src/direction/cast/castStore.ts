@@ -68,4 +68,12 @@ export async function recordUserVoice(store: BibleStore, scope: DocumentScope, r
   }
 }
 
+/** « Refaire la distribution » : les attributions automatiques de ce moteur s'en vont, les vôtres restent. */
+export async function recastFromScratch(store: BibleStore, scope: DocumentScope, providerId: string): Promise<void> {
+  const result = await store.appendUserEvent(scope, { type: "userRecast", providerId });
+  if (result.status === "refused") {
+    throw new Error("La distribution n'a pas pu être refaite.");
+  }
+}
+
 export type { CastEntry, CastResult };

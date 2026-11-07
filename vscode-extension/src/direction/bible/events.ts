@@ -154,6 +154,12 @@ const PromoteItem = z.discriminatedUnion("kind", [
 
 const UserEdit = strict({ type: z.literal("userEdit"), target: EditTarget });
 const UserRetract = strict({ type: z.literal("userRetract"), target: RetractTarget });
+/**
+ * « Refaire la distribution » (panneau Distribution) : retire, pour ce moteur, les attributions
+ * automatiques du document ; les choix de l'utilisateur restent. Rien n'est tombé : le calcul
+ * automatique peut réattribuer aussitôt, avec les voix disponibles alors.
+ */
+const UserRecast = strict({ type: z.literal("userRecast"), providerId: Key });
 const UserPromote = strict({
   type: z.literal("userPromote"),
   fromDocumentKey: z.string().regex(DOCUMENT_KEY_PATTERN),
@@ -170,6 +176,7 @@ export const BibleEventSchema = z.discriminatedUnion("type", [
   SetAnalysis,
   UserEdit,
   UserRetract,
+  UserRecast,
   UserPromote
 ]);
 
@@ -179,8 +186,8 @@ export type EditTargetOf = z.infer<typeof EditTarget>;
 export type RetractTargetOf = z.infer<typeof RetractTarget>;
 export type PromoteItem = z.infer<typeof PromoteItem>;
 
-export const USER_ONLY_EVENT_TYPES: readonly BibleEventType[] = ["userEdit", "userRetract", "userPromote"];
-export type ModelEvent = Exclude<BibleEvent, { type: "userEdit" | "userRetract" | "userPromote" }>;
+export const USER_ONLY_EVENT_TYPES: readonly BibleEventType[] = ["userEdit", "userRetract", "userRecast", "userPromote"];
+export type ModelEvent = Exclude<BibleEvent, { type: "userEdit" | "userRetract" | "userRecast" | "userPromote" }>;
 
 /** Which non-user events each model role may send. `casting` only casts voices. */
 export const MODEL_EVENT_TYPES: Readonly<Record<ModelOrigin, readonly BibleEventType[]>> = {

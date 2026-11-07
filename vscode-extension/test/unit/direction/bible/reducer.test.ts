@@ -276,3 +276,24 @@ describe("replay", () => {
     expect(applyEntry(initial, { seq: 1, at: T0, origin: "analyst", event: addRole("x") }).state).toBe(initial);
   });
 });
+
+describe("userRecast (« Refaire la distribution », GAO-studio-distr-001)", () => {
+  it("retire les attributions automatiques de ce moteur, garde les vôtres, et laisse le calcul réattribuer", () => {
+    const sim = new Sim();
+    sim.apply("analyst", addRole("anna"));
+    sim.apply("analyst", addRole("bob"));
+    sim.apply("casting", { type: "assignVoice", roleId: "anna", providerId: "qwen3", voiceRef: "v1" });
+    sim.apply("casting", { type: "assignVoice", roleId: "anna", providerId: "piper", voiceRef: "p1" });
+    sim.apply("user", { type: "userEdit", target: { kind: "assignment", roleId: "bob", providerId: "qwen3", voiceRef: "v2", locked: true } });
+    expect(sim.apply("casting", { type: "userRecast", providerId: "qwen3" } as BibleEvent)).toEqual({ kind: "refused", reason: "user-only-event" });
+    expect(sim.apply("user", { type: "userRecast", providerId: "qwen3" }).kind).toBe("applied");
+    const anna = sim.bible.characters.find((role) => role.id === "anna");
+    const bob = sim.bible.characters.find((role) => role.id === "bob");
+    expect(anna?.voice.assignments).toEqual({ piper: expect.objectContaining({ voiceRef: "p1", by: "casting" }) });
+    expect(bob?.voice.assignments?.qwen3).toMatchObject({ voiceRef: "v2", by: "user" });
+    expect(sim.apply("user", { type: "userRecast", providerId: "qwen3" }).kind).toBe("noop");
+    expect(sim.apply("casting", { type: "assignVoice", roleId: "anna", providerId: "qwen3", voiceRef: "v3" }).kind).toBe("applied");
+    expect(sim.bible.characters.find((role) => role.id === "anna")?.voice.assignments?.qwen3).toMatchObject({ voiceRef: "v3", by: "casting" });
+    expectValidBible(sim.bible);
+  });
+});

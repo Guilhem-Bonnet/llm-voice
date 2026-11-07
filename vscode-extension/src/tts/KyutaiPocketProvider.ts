@@ -254,9 +254,20 @@ export class KyutaiPocketProvider implements TtsProvider {
       if (!response.ok) {
         return [...this.catalog];
       }
-      const body = (await response.json()) as { voices?: { id?: unknown; available?: unknown }[] };
-      const available = new Set((body.voices ?? []).filter((row) => row.available === true).map((row) => row.id));
+      const body = (await response.json()) as { voices?: { id?: unknown; name?: unknown; available?: unknown; origin?: unknown }[] };
+      const rows = (body.voices ?? []).filter((row) => row.available === true);
+      const available = new Set(rows.map((row) => row.id));
       const voices = this.catalog.filter((voice) => available.has(voice.id));
+      // GAO-studio-distr-001: a server that says where each voice comes from (`origin`, Qwen3)
+      // also lists voices outside the static catalogue, created on this machine.
+      const known = new Set(this.catalog.map((voice) => voice.id));
+      const language = this.catalog[0]?.language;
+      for (const row of rows) {
+        if (typeof row.origin === "string" && typeof row.id === "string" && row.id.length > 0 && row.id.length <= 200 && !known.has(row.id)) {
+          const label = typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim().slice(0, 80) : row.id;
+          voices.push({ id: row.id, label, ...(language !== undefined ? { language } : {}) });
+        }
+      }
       return voices.length > 0 ? voices : [...this.catalog];
     } catch (error) {
       if (signal?.aborted === true) {

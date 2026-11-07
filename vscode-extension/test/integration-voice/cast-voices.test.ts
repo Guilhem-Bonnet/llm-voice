@@ -637,7 +637,7 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
         await pipeline.toggleCast(uri);
         await readToTheEnd(uri);
         assert.ok(informed.some((message) => message.includes("voix du narrateur n'est pas disponible")), informed.join(" | "));
-        assert.ok(!informed.some((message) => message.includes("demande une voix Kyutai 1.6B")), informed.join(" | "));
+        assert.ok(!informed.some((message) => message.includes("ne lit qu'à une seule voix")), informed.join(" | "));
       }
     );
   });
@@ -753,7 +753,7 @@ suite("voice-chain: jeu d'acteurs (ADR-018)", () => {
       assert.ok(bodies.length > 0);
       assert.ok(bodies.every((voice) => voice === "estelle"));
       assert.ok(!other.requests.some((request) => (fieldOf(request.body, "text") ?? "").includes("MADELEINE")));
-      assert.ok(informed.some((message) => message.includes("demande une voix Kyutai 1.6B")), informed.join(" | "));
+      assert.ok(informed.some((message) => message.includes("ne lit qu'à une seule voix")), informed.join(" | "));
     } finally {
       writeVoice({ providerId: "kyutai-1-6b", baseUrl: mainUrl, voice: NARRATOR });
       await other.close();

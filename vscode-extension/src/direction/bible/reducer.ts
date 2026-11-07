@@ -495,7 +495,28 @@ function applyRetract(work: Work, target: RetractTargetOf): ApplyOutcome {
   return removed || newTombstone ? APPLIED : NOOP;
 }
 
-function applyModelOrUserAdd(work: Work, event: Exclude<BibleEvent, { type: "userEdit" | "userRetract" | "userPromote" }>, entry: JournalEntry): ApplyOutcome {
+/** Les attributions automatiques de ce moteur s'en vont ; `by: user` et `locked` restent. Aucune tombe. */
+function applyRecast(work: Work, providerId: string): ApplyOutcome {
+  let removed = false;
+  for (const role of work.bible.characters) {
+    const assignments = role.voice.assignments;
+    const assignment = assignments !== undefined && has(assignments, providerId) ? assignments[providerId] : undefined;
+    if (assignments === undefined || assignment === undefined || assignment.by === "user" || assignment.locked === true) {
+      continue;
+    }
+    const { [providerId]: _gone, ...rest } = assignments;
+    if (Object.keys(rest).length > 0) {
+      role.voice.assignments = rest;
+    } else {
+      delete role.voice.assignments;
+    }
+    removed = true;
+  }
+  purgeCandidates(work, (c) => c.kind === "assignment" && c.key === providerId);
+  return removed ? APPLIED : NOOP;
+}
+
+function applyModelOrUserAdd(work: Work, event: Exclude<BibleEvent, { type: "userEdit" | "userRetract" | "userRecast" | "userPromote" }>, entry: JournalEntry): ApplyOutcome {
   const by = factAuthor(entry.origin);
   const locked = isModelOrigin(entry.origin) ? undefined : "locked" in event ? event.locked : undefined;
   if (event.type === "setAnalysis") {
@@ -592,6 +613,9 @@ export function applyEntry(state: BibleState, entry: JournalEntry): { state: Bib
       break;
     case "userRetract":
       outcome = applyRetract(work, event.target);
+      break;
+    case "userRecast":
+      outcome = applyRecast(work, event.providerId);
       break;
     default:
       outcome = applyModelOrUserAdd(work, event, entry);
