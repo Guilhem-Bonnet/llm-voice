@@ -19,3 +19,10 @@
 - Incrément 2 : consignes du metteur en scène pour les états hors table (« Il tire son épée ») non branchées ; aucune lecture réelle.
 - Incrément 3 (démarrage anticipé d'après la vitesse mesurée) : non commencé.
 - Aucune preuve audio réelle, aucune charge GPU lancée.
+
+## Reprise du 2026-11-07 — incrément 1 (commit `7469bf6`)
+- `vscode-extension/src/direction/director/castProposals.ts` : prompt, schéma JSON fermé (genre woman|man, âge child|young|adult|elderly, caractère = ids de `VOICE_TRAITS`), `verifyProposals` (citation absente → `quote-absent`, réduite à un nom → `name-only`, valeur hors liste → `invalid-value`), `nearestVoice` (tables de mots anglais par valeur comparées à la `description` de la voix, jamais la narratrice, voix libre devant à égalité), cache par document (`proposalCacheKey`), mode jeu → aucun appel.
+- `OllamaDirectionLlm.structured()` (appel `propose`), `Pipeline.prepareCastProposals` (journal : comptes et raisons, aucun mot du texte), colonne proposition et boutons « Proposer d'après le texte » / « Appliquer » dans `media/castPanel/castPanel.js`, `description` lue dans `GET /voices`.
+- Commandes : `npm run -s typecheck` 0 ; `lint` sans erreur ; `test:unit` 154 fichiers, 3187 tests passés ; `build` ok ; `vscode-test` integration-security 8 passing, voice-chain 52 passing ; fake-tts 1 échec au premier passage (« a narrated reading … goes past its first group », lecture narrée, hors du code touché), puis 79 passing deux fois de suite.
+- Preuve réelle (Ollama `qwen2.5:7b`, local, drapeau gpu-yield absent vérifié dans le script) sur `docs/essais-voix/07-theatre-noms-seuls.md` : `propositions-07.json` — Isaure : femme d'après « Madame » ; Le Comte : homme d'après « seigneur » ; 0 rejet ; 6,9 s. « Elle pose sa lampe » non rendu (une citation par champ).
+- Non fait : metteur en scène pour `extraDirections`, démarrage anticipé, preuve audio réelle.
