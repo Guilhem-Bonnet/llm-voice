@@ -97,23 +97,39 @@ export function relatedTexts(regions: readonly ScriptRegion[], roleId: string): 
       }
       if (next.roleId !== undefined) {
         if (next.roleId !== roleId) {
-          out.addressed.push(next.text);
+          // Le tour de parole de l'autre juste après, en entier.
+          for (let reply = after; reply < regions.length; reply += 1) {
+            const turn = regions[reply];
+            if (turn === undefined || turn.heading === true || (turn.roleId !== undefined && turn.roleId !== next.roleId)) {
+              break;
+            }
+            if (turn.roleId !== undefined) {
+              out.addressed.push(turn.text);
+            }
+          }
         }
         break;
       }
       out.following.push(next.text);
     }
+    // La réplique de l'autre juste avant : tout son tour de parole, jusqu'à un troisième ou un titre.
+    let other: string | undefined;
     for (let before = index - 1; before >= 0; before -= 1) {
       const previous = regions[before];
       if (previous === undefined || previous.heading === true) {
         break;
       }
-      if (previous.roleId !== undefined) {
-        if (previous.roleId !== roleId) {
-          out.addressed.push(previous.text);
-        }
+      if (previous.roleId === undefined) {
+        continue;
+      }
+      if (previous.roleId === roleId && other === undefined) {
         break;
       }
+      if (other !== undefined && previous.roleId !== other) {
+        break;
+      }
+      other = previous.roleId;
+      out.addressed.push(previous.text);
     }
   });
   return out;
@@ -121,7 +137,7 @@ export function relatedTexts(regions: readonly ScriptRegion[], roleId: string): 
 
 /** La citation se trouve-t-elle dans un texte rattaché au personnage, pour ce champ ? */
 export function quoteRelated(quote: string, related: Record<QuoteRelation, string[]>, relations: readonly QuoteRelation[]): boolean {
-  const wanted = normalized(quote).replace(/^["'.,;:!?…\s]+|["'.,;:!?…\s]+$/gu, "");
+  const wanted = normalized(quote).replace(/^["'.,;:!?…()\s]+|["'.,;:!?…()\s]+$/gu, "");
   return relations.some((relation) => related[relation].some((text) => normalized(text).includes(wanted)));
 }
 
@@ -144,7 +160,7 @@ function words(text: string): string[] {
  * personnage (le prénom seul ne dit rien de l'âge ni du genre).
  */
 export function quoteProblem(quote: string, documentText: string, roles: readonly ProposalRole[]): "quote-absent" | "name-only" | undefined {
-  const wanted = normalized(quote).replace(/^["'.,;:!?…\s]+|["'.,;:!?…\s]+$/gu, "");
+  const wanted = normalized(quote).replace(/^["'.,;:!?…()\s]+|["'.,;:!?…()\s]+$/gu, "");
   if (wanted.length < 2 || wanted.length > 200 || !normalized(documentText).includes(wanted)) {
     return "quote-absent";
   }

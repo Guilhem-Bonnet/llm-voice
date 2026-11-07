@@ -669,6 +669,7 @@ export class Pipeline implements PipelineFacade {
       this.pushPlayerState();
     });
     this.controller.onProgress(() => this.pushPlayerState());
+    this.controller.onEarlyStart((event) => this.output.info("lecture préparée : démarrage anticipé", { ...event }));
     // S7.3: seeds `llmVoice.state` at startup (`idle`, `PlaybackController`'s
     // initial state); `onStateChange` above keeps it in sync from then on.
     this.updatePlaybackStateContext(this.controller.getState());
@@ -984,6 +985,8 @@ export class Pipeline implements PipelineFacade {
         sink,
         sealed: !narrating,
         startAhead: wholeReading ? toPlay.length - 1 : passagesBeforeSound - 1,
+        // GAO-metteur-en-s-001: the speed measured while preparing may start the sound sooner.
+        ...(wholeReading ? { earlyStart: true } : {}),
         ...(castPlan !== undefined ? { prefetchChunks: Math.max(castPlan.prefetchChunks, this.audioPrefetchChunks()) } : {}),
         ...(wholeReading ? { prefetchChunks: toPlay.length, timeoutMs: Math.max(this.ttsTimeoutMs(), WHOLE_READING_TIMEOUT_MS) } : {}),
         ...(engineSpeed !== undefined ? { engineSpeed } : {})

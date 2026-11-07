@@ -29,6 +29,7 @@ import type { AudioSink, AudioSinkChunk } from "./AudioSink.js";
 import { InMemoryAudioCache, type AudioCacheStore } from "./AudioCache.js";
 import { AudioQueue, type AudioQueueOptions } from "./AudioQueue.js";
 import { Emitter, type Unsubscribe } from "./emitter.js";
+import { canStartEarly } from "./earlyStart.js";
 
 /** Everything one `start()` call needs; the sink and the engine are injected. */
 export interface PlaybackStartRequest {
@@ -53,6 +54,11 @@ export interface PlaybackStartRequest {
    * exchange for no cut right after it. Needs a prefetch window at least this wide.
    */
   startAhead?: number;
+  /**
+   * With `startAhead`: the sound may start before every passage is ready, as soon as the
+   * speed measured while preparing says the rest will be made before it is heard.
+   */
+  earlyStart?: boolean;
   /**
    * Overrides the queue's window for this session: passages of a few seconds with several
    * voices need more of them ahead than a narrator's long ones (ADR-018 §5.1).
@@ -128,6 +134,15 @@ interface ActiveSession {
   sealed: boolean;
   /** Consumed by the first `playIndex`: only the start of a reading waits for it. */
   startAhead: number;
+  earlyStart: boolean;
+}
+
+export interface EarlyStartEvent {
+  readonly index: number;
+  /** Passages ready beyond the first when the sound started. */
+  readonly ready: number;
+  readonly planned: number;
+  readonly measures: number;
 }
 
 /** The chunk handed to the sink with `enqueue()`, ahead of its turn. */
@@ -143,6 +158,12 @@ const DEFAULT_PREVIOUS_THRESHOLD_MS = 2000;
 export class PlaybackController {
   private readonly stateChanged = new Emitter<PlaybackStateChange>();
   private readonly chunkChanged = new Emitter<ChunkChange>();
+  private readonly earlyStarted = new Emitter<EarlyStartEvent>();
+
+  /** A prepared reading started before all its passages were ready: counts only, no text. */
+  onEarlyStart(listener: (event: EarlyStartEvent) => void): Unsubscribe {
+    return this.earlyStarted.on(listener);
+  }
   private readonly progressed = new Emitter<PlaybackProgress>();
   private readonly errored = new Emitter<PlaybackErrorInfo>();
   private readonly underran = new Emitter<PlaybackUnderrun>();
@@ -264,7 +285,8 @@ export class PlaybackController {
       queue,
       chunks: [...queue.chunks],
       sealed: request.sealed ?? true,
-      startAhead: request.startAhead ?? 0
+      startAhead: request.startAhead ?? 0,
+      earlyStart: request.earlyStart === true
     };
     this.subscribeSink(request.sink);
     this.currentIndex = 0;
@@ -626,11 +648,24 @@ export class PlaybackController {
 
     const startAhead = session.startAhead;
     session.startAhead = 0;
+    // Measured here: one synthesis at a time, so the gap between two readies is one synthesis.
+    const measured: { audioSeconds: number; synthesisSeconds: number; chars: number }[] = [];
+    let lastReady = Date.now();
     for (let ahead = 1; ahead <= startAhead && session.queue.chunks[index + ahead] !== undefined; ahead += 1) {
+      if (session.earlyStart && this.canStartNow(session, index, ahead, measured)) {
+        this.emitEarlyStart(index, ahead, startAhead, measured.length);
+        break;
+      }
       // A failure there is reported when the reading reaches it, not now.
-      await session.queue.waitFor(index + ahead);
+      const ready = await session.queue.waitFor(index + ahead);
       if (this.isStale(generation)) {
         return;
+      }
+      const now = Date.now();
+      const seconds = (now - lastReady) / 1000;
+      lastReady = now;
+      if (ready.durationMs !== undefined && ready.durationMs > 0 && seconds > 0.05) {
+        measured.push({ audioSeconds: ready.durationMs / 1000, synthesisSeconds: seconds, chars: ready.spokenText.length });
       }
     }
 
@@ -646,6 +681,26 @@ export class PlaybackController {
     // Re-arm the prefetch window now that the cursor really moved.
     session.queue.setCursor(index);
     void this.preloadAfter(index, generation);
+  }
+
+  /** `canStartEarly` on this session: the ready run from `index`, the rest by its length. */
+  private canStartNow(session: { queue: AudioQueue }, index: number, ahead: number, measured: readonly { audioSeconds: number; synthesisSeconds: number; chars: number }[]): boolean {
+    const chunks = session.queue.chunks;
+    let readyAudioSeconds = 0;
+    let next = index;
+    while (next < chunks.length && chunks[next]?.status === "ready" && chunks[next]?.durationMs !== undefined) {
+      readyAudioSeconds += (chunks[next]?.durationMs ?? 0) / 1000;
+      next += 1;
+    }
+    if (next < index + ahead) {
+      return false;
+    }
+    const remainingChars = chunks.slice(next).map((chunk) => chunk.spokenText.length);
+    return canStartEarly({ readyAudioSeconds, remainingChars, measured });
+  }
+
+  private emitEarlyStart(index: number, ready: number, planned: number, measures: number): void {
+    this.earlyStarted.emit({ index, ready, planned, measures });
   }
 
   /**

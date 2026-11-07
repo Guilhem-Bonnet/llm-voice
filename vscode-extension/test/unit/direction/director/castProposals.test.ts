@@ -73,6 +73,17 @@ describe("citation rattachée au personnage", () => {
     expect(check.rejected).toEqual([]);
     expect(check.proposals.map((p) => p.roleId)).toEqual(["isaure", "le-comte"]);
   });
+  it("tout le tour de parole de l'autre compte, et une citation entre parenthèses est reconnue", () => {
+    const regions = [
+      { roleId: "isaure", text: "Et cependant, seigneur, vous n'avez rien appris." },
+      { text: "Elle pose sa lampe sur la table." },
+      { roleId: "isaure", text: "Parlez." },
+      { roleId: "le-comte", text: "Madame, on a trouvé sa lettre et son empreinte." }
+    ];
+    const check = verifyProposals({ roles: [{ roleId: "le-comte", gender: { value: "man", quote: "seigneur" }, age: null, character: null }, { roleId: "isaure", gender: { value: "woman", quote: "(Elle pose sa lampe" }, age: null, character: null }] }, TEXT, ROLES, regions);
+    expect(check.rejected).toEqual([]);
+  });
+
   it("une citation présente mais sans lien avec le personnage est rejetée (quote-unrelated)", () => {
     const check = verifyProposals(
       { roles: [{ roleId: "pierre", gender: { value: "woman", quote: "Madame" }, age: null, character: null }, { roleId: "le-comte", gender: { value: "woman", quote: "Madame" }, age: null, character: null }] },
