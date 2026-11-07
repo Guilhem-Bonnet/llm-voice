@@ -1,0 +1,4 @@
+qwen3-stop {"stopAtEpochMs":1794074844444,"statesAfterStop":["stopped"]}
+  1 passing (31s)
+{"requetes": 3, "passages": [["2026-11-07T18:07:09Z", 25, 4.85, 200], ["2026-11-07T18:07:19Z", 91, 15.0, 200], ["2026-11-07T18:07:24Z", 102, 5.06, 499]]}
+native-real.sh: test vscode-test exit=0 ; banc prove.sh exit=0

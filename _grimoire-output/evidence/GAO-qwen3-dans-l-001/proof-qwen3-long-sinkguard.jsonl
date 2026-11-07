@@ -1,0 +1,5 @@
+{"t": "13:04:34", "stream": 214002, "sink": 212434, "null_sinks": [212434], "ok": true}
+{"fin": true, "flux": {"214002": true}}
+guard=0
+
+[exited with code 0]

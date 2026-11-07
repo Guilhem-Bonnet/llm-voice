@@ -200,7 +200,10 @@ writeFileSync(
     {
       schemaVersion: 1,
       voice:
-        ["kyutai", "cast", "response", "gallery", "player-webview"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "")
+        ["qwen3", "qwen3-stop"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "")
+          ? // GAO-qwen3-dans-l-001: the voice chosen in the gallery, no baseUrl (its own port).
+            { providerId: "qwen3", voice: "fr-essais-21-22", speed: 1 }
+          : ["kyutai", "cast", "response", "gallery", "player-webview"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "")
           ? // No baseUrl on purpose: the provider must find its own port.
             process.env.LLM_VOICE_NATIVE_REAL_ENGINE === "kyutai16"
             ? { providerId: "kyutai-1-6b", voice: "cml-577_394", speed: 1 }
@@ -227,7 +230,7 @@ writeFileSync(
           tts: {},
           // One sentence per chunk: three sentences => three segments, so the
           // Core's per-segment ids are exercised more than once.
-          chunking: { unit: "sentence", maxSentences: ["cast", "response"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "") ? 3 : 1, prefetchChunks: 1 },
+          chunking: { unit: "sentence", maxSentences: ["cast", "response", "qwen3", "qwen3-stop"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "") ? 3 : 1, prefetchChunks: 1 },
           playback: { rate: 1, volume: 1 },
           description: "Test-only mode: real Piper through the global system voice."
         },
@@ -238,7 +241,7 @@ writeFileSync(
           language: "fr-FR",
           tts: {},
           // Cast and reply proofs read as a user does: the 3 sentences of the default "Fidèle".
-          chunking: { unit: "sentence", maxSentences: ["cast", "response"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "") ? 3 : 1, prefetchChunks: 1 },
+          chunking: { unit: "sentence", maxSentences: ["cast", "response", "qwen3", "qwen3-stop"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "") ? 3 : 1, prefetchChunks: 1 },
           playback: { rate: 1, volume: 1 },
           description: "Test-only mode: real Estelle voice through pocket-tts serve, as the global voice."
         }
@@ -483,7 +486,7 @@ export default defineConfig([
       // `--response` presses the real shortcut through the browser's debugging protocol.
       ...(process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT ? [`--remote-debugging-port=${process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT}`] : []),
       // The gallery and the webview engine play in VS Code itself: their sound would reach the speakers of whoever runs this.
-      ...(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "gallery" || requestedScenario === "player-webview" ? ["--mute-audio"] : [])
+      ...(["gallery", "player-webview", "qwen3", "qwen3-stop"].includes(requestedScenario) ? ["--mute-audio"] : [])
     ]
   }
 ]);

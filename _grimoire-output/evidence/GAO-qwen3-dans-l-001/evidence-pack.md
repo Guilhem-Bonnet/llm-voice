@@ -59,3 +59,40 @@ Commit de l'incrément 2 : `df52198`.
 - `VoiceGalleryController.ts` : sonde de santé et note de la section ; `voiceGalleryHtml.ts` + `media/voiceGallery/voiceGallery.js` : section « Voix Qwen3 · voix par défaut », état du serveur, commande, Copier, Vérifier.
 - Aucun code n'écrit `global-voice.json` en dehors du clic « Choisir » existant.
 - Lu : typecheck 0, lint 0, test:unit 150 fichiers / 3154 tests (compteurs de la galerie passés à 60 voix, 3 tests galerie dans `qwen3.test.ts`), build 0, fake-tts 79 passing, integration-security 8 passing, test:integration-voice 51 passing.
+
+Commit de l'incrément 3 : `f272faa`.
+
+## Incrément 4 : preuve réelle `native-real.sh --qwen3` et `--qwen3-stop`
+
+### Outillage
+- `scripts/audio-proof/native-real.sh` : `--qwen3` (texte `vscode-extension/test/fixtures-native-real/qwen3-long.md`, 1 610 caractères, `wc -m`) et `--qwen3-stop`. Mode jeu vérifié, service 8021 vérifié, cache du VS Code de test déplacé par `mv` (jamais effacé), journal du serveur relevé. Verdict : `silence_between_sounds_ms < 1200` (le silence de préparation avant le premier son est exclu de cette mesure, il est dans `silence_max_ms`) ; pour `--qwen3-stop`, capture silencieuse exigée.
+- Pour Qwen3, le sink par défaut de la machine n'est plus basculé (le flux Firefox de l'utilisateur n'est pas déplacé) : VS Code est lancé avec `--mute-audio` (`.vscode-test.mjs`), le Core vise le sink nul (`PIPEWIRE_PROPS target.object`, `node.dont-move`).
+- `vscode-extension/test/integration-native-real/qwen3-long.test.ts` : lecture complète (état final `completed`, jamais `buffering` après le premier son) ; Stop pendant `preparing`.
+- Garde pendant chaque preuve (script du dossier temporaire, `pactl -f json`) : tout flux `llm-voice` doit être sur le sink nul `llmvoice_test`, sinon `pkill -x llm-voice-core`. Résultat : `proof-qwen3-long-sinkguard.jsonl` (flux 214002 sur le sink 212434 = sink nul, `ok: true`) et `proof-qwen3-stop-sinkguard.jsonl` (aucun flux ouvert).
+
+### Premier essai interrompu par moi (pas une preuve)
+Une première garde, mal écrite (awk), n'a pas lu le numéro du sink et a tué le Core ; `pkill -f` a aussi tué le shell de la garde. La préparation n'était pas finie : aucun son n'avait encore été joué. Run arrêté (kill des processus vscode-test), résultat écarté.
+
+### Preuve `--qwen3` (texte long), lue
+| Mesure | Valeur | Source |
+|---|---|---|
+| Premier son (depuis `start`) | 202,3 s | `qwen3-proof.firstSoundMs` |
+| Durée totale de la commande | 298,2 s | `qwen3-proof.totalMs` |
+| États de la machine | `playing` → `completed` | `qwen3-proof.states` |
+| Plus long silence entre deux sons | 800 ms | `silence_between_sounds_ms` |
+| Silence avant le premier son (préparation) | 210,3 s | `silence_max_ms` (capture démarrée avant VS Code) |
+| WER (faster-whisper) | 0,0493 | `proof-qwen3-long.json` |
+| Requêtes au serveur | 9, toutes 200, séquentielles, 5 à 33 s chacune | journal `deploy-qwen3-1` |
+| Verdict | test exit 0, prove.sh exit 0 | `proof-qwen3-long.log` |
+
+Écarts de transcription : « se dressent », « collimasson », « contine », « ils les voient », « champ grave » pour « chant grave ». Ce sont des erreurs du transcripteur ou de la voix : l'écoute de guilhem-bonnet tranchera.
+
+### Preuve `--qwen3-stop`, lue
+- Stop pressé après 20 s de préparation : état `stopped`, aucun `playing`, capture silencieuse (`silent: true`, rms 0).
+- Serveur : 3 requêtes, la troisième s'arrête en 499 (client parti) à 18:07:24Z, l'heure du Stop ; aucune requête ensuite.
+- test exit 0, verdict 0.
+
+### Tests après l'incrément 4, lus
+typecheck 0, lint 0, test:unit 150 fichiers / 3154 tests, build 0, fake-tts 79 passing, integration-security 8 passing, test:integration-voice 51 passing.
+
+Service Qwen3 laissé démarré (`deploy-qwen3-1`, voix figée chargée), comme convenu avec le coordinateur. `deploy-kyutai16-1` jamais touché.

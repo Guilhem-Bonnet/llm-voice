@@ -26,6 +26,13 @@
 # requis), via le chemin du bouton Test, pause de 2,5 s comprise :
 # `silence_between_sounds_ms` du JSON mesure ce silence.
 #
+# `--qwen3` : un texte long (test/fixtures-native-real/qwen3-long.md, 1 610 caractères) avec la
+# voix Qwen3, service `qwen3` sur le port 8021. Toute la lecture est préparée avant le premier son ;
+# le plus long silence entre deux sons (`silence_between_sounds_ms`, la longue préparation avant le
+# premier son n'en fait pas partie) doit rester celui d'une pause naturelle (< 1 200 ms).
+# `--qwen3-stop` : Stop pendant la préparation ; la capture doit rester silencieuse.
+# Le cache du VS Code de test est déplacé (mv), jamais effacé, avant ces deux preuves.
+#
 # Sortie 0 si le test est vert ET la transcription conforme (prove.sh, WER
 # <= 0.25, signal non silencieux) ; 1 sinon ; 2 erreur du banc. Le JSON de
 # prove.sh est imprimé sur stdout ; les journaux détaillés vont sur stderr.
@@ -42,9 +49,13 @@ if [ "${1:-}" = "--inner" ]; then
   original_sink=""
   cleanup_inner() { [ -n "$original_sink" ] && pactl set-default-sink "$original_sink" >/dev/null 2>&1 || true; }
   trap cleanup_inner EXIT
-  if [ -n "${PULSE_SINK:-}" ]; then
+  # Qwen3 : VS Code est lancé muet (--mute-audio) et le Core vise le sink nul par PIPEWIRE_PROPS ;
+  # le sink par défaut de la machine n'est pas touché (le son d'une autre application n'est pas déplacé).
+  if [ -n "${PULSE_SINK:-}" ] && [ "${LLM_VOICE_NATIVE_REAL_SCENARIO#qwen3}" = "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" ]; then
     original_sink="$(pactl get-default-sink 2>/dev/null || true)"
     pactl set-default-sink "$PULSE_SINK" >/dev/null 2>&1 || true
+  fi
+  if [ -n "${PULSE_SINK:-}" ]; then
     export PIPEWIRE_NODE="$PULSE_SINK"
     export PIPEWIRE_PROPS="{ node.name = llm-voice-native-real application.name = llm-voice-native-real target.object = $PULSE_SINK node.dont-move = true }"
   fi
@@ -103,6 +114,21 @@ if [ "${1:-}" = "--response" ]; then
   export LLM_VOICE_INBOX
   LLM_VOICE_INBOX="$(mktemp -d)"
   python3 -c 'import json,sys,time; now=int(time.time()*1000); json.dump({"schemaVersion":1,"provider":"claude-code","sessionId":"preuve-reponse","capturedAt":now,"cwd":"/tmp/preuve","message":sys.argv[2]},open(sys.argv[1]+"/"+str(now)+"-preuve.json","w",encoding="utf-8"),ensure_ascii=False)' "$LLM_VOICE_INBOX" "$RESPONSE_MESSAGE"
+fi
+if [ "${1:-}" = "--qwen3" ] || [ "${1:-}" = "--qwen3-stop" ]; then
+  [ ! -e "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/gpu-yield/active" ] \
+    || { echo "native-real.sh: mode jeu actif, aucune charge GPU" >&2; exit 2; }
+  curl -fs -m 3 http://localhost:8021/health >/dev/null \
+    || { echo "native-real.sh: le service qwen3 doit tourner sur le port 8021 (deploy/README.md)" >&2; exit 2; }
+  export LLM_VOICE_NATIVE_REAL_SCENARIO="${1#--}"
+  MARKDOWN="$EXT/test/fixtures-native-real/qwen3-long.md"
+  export LLM_VOICE_NATIVE_REAL_DOCUMENT="$MARKDOWN"
+  CACHE_DIR="$EXT/.vscode-test/native-real/User/globalStorage/guilhem-bonnet.llm-voice/cache"
+  if [ -z "${LLM_VOICE_NATIVE_REAL_KEEP_CACHE:-}" ] && [ -d "$CACHE_DIR" ]; then
+    mkdir -p "$EXT/.vscode-test/native-real-old-caches"
+    mv "$CACHE_DIR" "$EXT/.vscode-test/native-real-old-caches/cache-$(date +%s)"
+  fi
+  QWEN3_SINCE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 fi
 if [ "${1:-}" = "--kyutai16" ]; then
   # Même scénario avec Kyutai TTS 1.6B et la voix Camille, service `kyutai16` démarré sur le port 8020.
@@ -168,6 +194,26 @@ sys.exit(1 if found else 0)' "$RESPONSE_FORBIDDEN" \
     || { echo "native-real.sh: la transcription contient un mot qui ne doit pas être dit (balisage, URL, code, indication jouée)" >&2; PROVE_EXIT=1; }
 fi
 TEST_EXIT="$(cat "$LLM_VOICE_NATIVE_REAL_EXIT_FILE")"
+case "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" in
+  qwen3|qwen3-stop)
+    # Ce que le serveur a vraiment fait : une ligne par requête, avec son heure et sa durée.
+    docker logs --since "$QWEN3_SINCE" deploy-qwen3-1 2>/dev/null | python3 -c 'import json,sys
+rows=[json.loads(l) for l in sys.stdin if l.startswith("{") and "\"/tts\"" in l]
+print(json.dumps({"requetes":len(rows),"passages":[[r.get("timestamp"),r.get("text_chars"),r.get("duration_s"),r.get("status")] for r in rows]},ensure_ascii=False))' >&2 || true
+    ;;
+esac
+if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "qwen3" ] && [ "$PROVE_EXIT" = "0" ]; then
+  echo "$PROVE_JSON" | python3 -c 'import json,sys; sys.exit(0 if json.loads(sys.stdin.read().strip().splitlines()[-1])["silence_between_sounds_ms"] < 1200 else 1)' \
+    || { echo "native-real.sh: un silence de 1,2 s ou plus pendant la lecture" >&2; PROVE_EXIT=1; }
+fi
+if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "qwen3-stop" ]; then
+  # Rien ne doit s'entendre : le banc échoue sur un signal silencieux, c'est ici le verdict voulu.
+  if echo "$PROVE_JSON" | python3 -c 'import json,sys; sys.exit(0 if json.loads(sys.stdin.read().strip().splitlines()[-1])["silent"] else 1)'; then
+    PROVE_EXIT=0
+  else
+    echo "native-real.sh: du son a été capté alors que Stop a été pressé pendant la préparation" >&2; PROVE_EXIT=1
+  fi
+fi
 if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "cast" ]; then
   # Le journal du serveur dit quelles voix ont vraiment été demandées, et le temps de chaque passage.
   docker logs --since "$CAST_SINCE" deploy-kyutai16-1 2>/dev/null | python3 -c 'import json,sys
