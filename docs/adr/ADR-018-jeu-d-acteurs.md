@@ -28,6 +28,29 @@
 Numéros de ligne relus sur l'arbre de travail. `vscode-extension/src` évolue en parallèle : ils peuvent se
 décaler.
 
+### Amendement du 2026-11-07 (décision de guilhem-bonnet)
+
+À l'écoute, Kyutai 1.6B ne joue pas (ni souffle, ni toux, ni rire, lecture « mot à mot ») ; Qwen3-TTS
+joue. Trois points du résumé changent, le reste tient :
+
+1. **Moteur (point 1)** : Qwen3-TTS devient le moteur du jeu d'acteurs et la voix par défaut
+   (`deploy/qwen3/`, voix figée `fr-essais-21-22`) ; Kyutai 1.6B reste en repli, puis la voix système.
+   La capacité `multiVoice` reste le seul critère (invariant P0 n°3).
+2. **Voix des personnages** : créées avec Qwen3, en local : un jeu de départ varié figé une fois, et des
+   voix créées à partir d'une description. La narration et les répliques sans état passent par la voix
+   figée ; les états (essoufflé, toux, rire, chuchoté, voix dans la tête, colère) deviennent des consignes
+   du modèle qui joue, jamais des mots prononcés. Les codes entre crochets ne sont pas compris par une voix
+   figée (prononcés « Coff », « Saï », « Lafter ») : le serveur les retire.
+3. **Genre (point 5 et paragraphe « Genre »)** : le metteur en scène local peut **proposer** âge, genre et
+   caractère d'un personnage d'après les indices du texte (« Madame », « *Elle pose sa lampe* », « le
+   vieux comte »), **jamais d'après le prénom seul**, ni d'après une liste de prénoms ou une voix.
+   Chaque proposition est affichée avec sa citation ; sans indice, aucune supposition ; elle n'est qu'une
+   proposition, le choix de l'utilisateur prime et reste le seul `by: user`. Aucune branche de code par
+   genre : la proposition est une donnée transmise au metteur en scène et à l'interface.
+
+Cartes : `GAO-qwen3-plusie-001` (voix multiples), `GAO-studio-distr-001` (panneau Distribution).
+Décision consignée dans `_grimoire/_memory/decisions-log.md`.
+
 ## Contexte
 
 ### 1.1 La demande
