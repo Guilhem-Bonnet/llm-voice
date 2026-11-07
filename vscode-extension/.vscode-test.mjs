@@ -109,6 +109,11 @@ writeFileSync(
 //    `"auto"`.
 const AUTO_CHATTERBOX_CLOSED_PORT = 47601;
 const AUTO_PIPER_LOCAL_CLOSED_PORT = 47602;
+// GAO-qwen3-dans-l-001: the automatic choice probes Qwen3 (8021) and Kyutai 1.6B (8020) first.
+// Every label points those probes at closed ports, unless the caller (native-real.sh) names
+// them itself: no suite may reach the real engines of the machine running it.
+process.env.LLM_VOICE_TEST_AUTO_QWEN3_BASE_URL ??= "http://127.0.0.1:47616";
+process.env.LLM_VOICE_TEST_AUTO_KYUTAI16_BASE_URL ??= "http://127.0.0.1:47617";
 
 /** One profile, `tts: {}` — no explicit `providerId`/`baseUrl`, resolves to `llmVoice.tts.provider`'s default (`"auto"`). */
 function seedAutoProfile(profileUserDataDir) {

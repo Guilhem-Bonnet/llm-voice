@@ -13,11 +13,12 @@ import { ChatterboxProvider } from "./ChatterboxProvider.js";
 import { KokoroProvider, KOKORO_DEFAULT_FR_VOICE } from "./KokoroProvider.js";
 import { KYUTAI16_DEFAULT_VOICE, KYUTAI16_VOICE_CATALOG } from "./kyutai16VoiceCatalog.js";
 import { KyutaiPocketProvider } from "./KyutaiPocketProvider.js";
+import { QWEN3_DEFAULT_VOICE, QWEN3_VOICE_CATALOG } from "./qwen3VoiceCatalog.js";
 import { OpenAICompatibleTtsProvider } from "./OpenAICompatibleTtsProvider.js";
 import { SystemTtsProvider, type SystemTtsProcessRunner } from "./SystemTtsProvider.js";
 
 /** Which concrete class a preset instantiates; never guessed from an id (ADR-005). */
-export type TtsPresetKind = "chatterbox" | "kokoro" | "kyutai-pocket" | "kyutai-1-6b" | "openai-compatible" | "system";
+export type TtsPresetKind = "chatterbox" | "kokoro" | "kyutai-pocket" | "kyutai-1-6b" | "qwen3" | "openai-compatible" | "system";
 
 export interface TtsProviderPreset {
   id: string;
@@ -190,6 +191,22 @@ export const KYUTAI16_LOCAL_PRESET: TtsProviderPreset = {
   remote: false
 };
 
+/**
+ * Qwen3-TTS 1.7B: `deploy/qwen3/server.py`, the same HTTP contract as Kyutai 1.6B plus a
+ * `direction` field, on its own port (service `qwen3` of `deploy/docker-compose.tts.yml`,
+ * profile `qwen3`). First of the automatic choice when it answers (`Pipeline.autoSelectTts`);
+ * never forced on a voice the user chose.
+ */
+export const QWEN3_LOCAL_PRESET: TtsProviderPreset = {
+  id: "qwen3-local",
+  label: "Voix Qwen3 (local, carte graphique, service Docker qwen3)",
+  kind: "qwen3",
+  baseUrl: "http://localhost:8021",
+  languages: ["fr"],
+  voice: QWEN3_DEFAULT_VOICE,
+  remote: false
+};
+
 export const TTS_PROVIDER_PRESETS: readonly TtsProviderPreset[] = [
   CHATTERBOX_LOCAL_PRESET,
   KOKORO_LOCAL_PRESET,
@@ -197,6 +214,7 @@ export const TTS_PROVIDER_PRESETS: readonly TtsProviderPreset[] = [
   SYSTEM_LOCAL_PRESET,
   KYUTAI_POCKET_LOCAL_PRESET,
   KYUTAI16_LOCAL_PRESET,
+  QWEN3_LOCAL_PRESET,
   OPENAI_COMPATIBLE_PRESET
 ];
 
@@ -308,6 +326,20 @@ export function createTtsProvider(
         direction: { instructions: false, nonverbal: [], usesGpu: true },
         ...(options.defaultVoice !== undefined ? { defaultVoice: options.defaultVoice } : {})
       });
+    case "qwen3":
+      return new KyutaiPocketProvider({
+        ...providerOptions,
+        id: options.id ?? "qwen3",
+        languages: preset.languages ?? QWEN3_LOCAL_PRESET.languages ?? [],
+        catalog: QWEN3_VOICE_CATALOG,
+        engineName: "Voix Qwen3",
+        loadsOnDemand: true,
+        readsDirection: true,
+        wholeReadingFirst: true,
+        // Step 2 measures what a direction does on this engine; until then, nothing is advertised.
+        direction: { instructions: false, nonverbal: [], usesGpu: true },
+        defaultVoice: options.defaultVoice ?? QWEN3_DEFAULT_VOICE
+      });
     case "openai-compatible":
       return new OpenAICompatibleTtsProvider(providerOptions);
     case "system":
@@ -343,6 +375,9 @@ export function presetKindForProviderId(providerId: string): TtsPresetKind {
   }
   if (providerId === "kyutai-1-6b") {
     return "kyutai-1-6b";
+  }
+  if (providerId === "qwen3") {
+    return "qwen3";
   }
   return "openai-compatible";
 }

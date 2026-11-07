@@ -66,6 +66,10 @@ export interface KyutaiPocketProviderOptions {
   engineName?: string;
   /** The server has `POST /load` and says its `state` (`deploy/kyutai16/server.py`). `pocket-tts serve` does not. */
   loadsOnDemand?: boolean;
+  /** The server reads a `direction` form field per request (`deploy/qwen3/server.py`). */
+  readsDirection?: boolean;
+  /** See `TtsCapabilities.wholeReadingFirst`. */
+  wholeReadingFirst?: boolean;
 }
 
 export function messageOf(error: unknown): string {
@@ -76,9 +80,12 @@ export function messageOf(error: unknown): string {
  * `POST /tts` form shape (`text` + optional `voice_url`, never `voice_wav`
  * — this provider has no local-file upload path, see file header).
  */
-function buildTtsForm(text: string, voice: string | undefined): FormData {
+function buildTtsForm(text: string, voice: string | undefined, direction?: string): FormData {
   const form = new FormData();
   form.append("text", text);
+  if (direction !== undefined && direction.trim().length > 0) {
+    form.append("direction", direction);
+  }
   // "ne jamais envoyer voice_url vide" (task envelope): an explicitly empty
   // string from a stale/hand-edited profile is treated the same as no
   // voice at all, not forwarded.
@@ -111,6 +118,8 @@ export class KyutaiPocketProvider implements TtsProvider {
   private readonly loadsOnDemand: boolean;
   private readonly multiVoice: boolean;
   private readonly direction: DirectionCapabilities | undefined;
+  private readonly readsDirection: boolean;
+  private readonly wholeReadingFirst: boolean;
 
   constructor(options: KyutaiPocketProviderOptions) {
     this.id = options.id ?? DEFAULT_ID;
@@ -123,6 +132,8 @@ export class KyutaiPocketProvider implements TtsProvider {
     this.loadsOnDemand = options.loadsOnDemand === true;
     this.multiVoice = options.multiVoice === true;
     this.direction = options.direction;
+    this.readsDirection = options.readsDirection === true;
+    this.wholeReadingFirst = options.wholeReadingFirst === true;
   }
 
   /** `GET /health` → `{"status":"healthy"}`; anything else is `unreachable`, never a false `ok` (ADR-005 D10). */
@@ -138,7 +149,7 @@ export class KyutaiPocketProvider implements TtsProvider {
       if (response.ok) {
         const body = await response
           .json()
-          .then((value) => value as { status?: unknown; state?: unknown; model_loaded?: unknown; loading_since_s?: unknown })
+          .then((value) => value as { status?: unknown; state?: unknown; model_loaded?: unknown; loading_since_s?: unknown; gpu_yield?: unknown })
           .catch(() => undefined);
         if (body?.status === "healthy") {
           const known = {
@@ -148,6 +159,10 @@ export class KyutaiPocketProvider implements TtsProvider {
             endpoint: this.endpointLabel("/health"),
             ...(typeof body.model_loaded === "boolean" ? { modelLoaded: body.model_loaded } : {})
           };
+          // Game mode (`deploy/qwen3/server.py`): it answers, but every synthesis is refused.
+          if (body.gpu_yield === true || body.state === "yielded") {
+            return { ...known, status: "degraded", detail: "gpu-yield" };
+          }
           // Only what the server says: a server predating `state` stays a plain `ok`.
           if (body.state === "loading") {
             return {
@@ -209,7 +224,8 @@ export class KyutaiPocketProvider implements TtsProvider {
       formats: ["wav"],
       languages: this.languages,
       ...(this.multiVoice ? { multiVoice: true } : {}),
-      ...(this.direction !== undefined ? { direction: this.direction } : {})
+      ...(this.direction !== undefined ? { direction: this.direction } : {}),
+      ...(this.wholeReadingFirst ? { wholeReadingFirst: true } : {})
       // ADR-016 §5: no `direction` on Pocket — the bench (R6) has measured nothing
       // yet; no word-level timestamps either (R4, closed negative: neither
       // Pocket TTS nor TTS 1.6B produce them officially). Both stay absent
@@ -262,7 +278,7 @@ export class KyutaiPocketProvider implements TtsProvider {
     const voice = request.voice ?? this.defaultVoice;
     const response = await this.egress.fetch(`${this.baseUrl}/tts`, {
       method: "POST",
-      body: buildTtsForm(request.text, voice),
+      body: buildTtsForm(request.text, voice, this.readsDirection ? request.direction : undefined),
       ...(signal !== undefined ? { signal } : {})
     });
     if (!response.ok) {

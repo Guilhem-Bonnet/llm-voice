@@ -76,6 +76,12 @@ export interface TtsCapabilities {
   direction?: DirectionCapabilities;
   /** ADR-018 §3: one loaded model speaks every voice of `voices`, request by request. */
   multiVoice?: boolean;
+  /**
+   * The engine generates slower than its audio plays (Qwen3: about 2 s of work per second
+   * heard): the whole reading is generated before its first sound, so that nothing cuts once
+   * it has started. Absent = the usual rolling window.
+   */
+  wholeReadingFirst?: boolean;
 }
 
 /** One synthesis request for a single chunk of spoken text (CdC §23). */
@@ -88,6 +94,11 @@ export interface TtsRequest {
   speed?: number;
   format?: AudioFormat;
   parameters?: Readonly<Record<string, unknown>>;
+  /**
+   * How to play this one segment, in free words (Qwen3's `direction` field). Sent only by an
+   * engine that declares it reads it; nothing sets it yet (step 2 of GAO-qwen3-dans-l-001).
+   */
+  direction?: string;
 }
 
 /** Completed synthesis: an audio payload plus what is known about it. */

@@ -20,7 +20,8 @@ import {
   KOKORO_LOCAL_PRESET,
   KYUTAI16_LOCAL_PRESET,
   KYUTAI_POCKET_LOCAL_PRESET,
-  PIPER_LOCAL_PRESET
+  PIPER_LOCAL_PRESET,
+  QWEN3_LOCAL_PRESET
 } from "../tts/presets.js";
 
 /** Snapshot of `llmVoice.tts.*`, read once by the caller (`vscode.workspace.getConfiguration`). */
@@ -72,6 +73,8 @@ export function resolveTtsConfig(tts: TtsBinding, settings: TtsSettings): Resolv
     ownDefault = KYUTAI_POCKET_LOCAL_PRESET.baseUrl;
   } else if (tts.providerId === "kyutai-1-6b") {
     ownDefault = KYUTAI16_LOCAL_PRESET.baseUrl;
+  } else if (tts.providerId === "qwen3") {
+    ownDefault = QWEN3_LOCAL_PRESET.baseUrl;
   } else if (settingNamesNoServer(settings.baseUrl)) {
     if (providerId === "kokoro") {
       ownDefault = KOKORO_LOCAL_PRESET.baseUrl;
@@ -131,6 +134,10 @@ export interface AutoTtsCandidate {
 
 /** `ok` (fully up) or `degraded` (e.g. "loading", CdC §51) both count as "usable now" — only `unreachable`/`unauthorized`/`unverified` fall through to the next candidate. */
 export function isHealthyEnough(health: ProviderHealth): boolean {
+  if (health.status === "degraded" && health.detail === "gpu-yield") {
+    // It answers, but refuses every synthesis until the game ends.
+    return false;
+  }
   return health.status === "ok" || health.status === "degraded";
 }
 
@@ -160,4 +167,50 @@ export async function selectAutoTtsProvider(
     }
   }
   return fallback;
+}
+
+/** Why a reading asked of Qwen3 speaks with another voice. */
+export type Qwen3FallbackReason = "game-mode" | "unreachable";
+
+export type Qwen3Choice =
+  | { use: "qwen3" }
+  | { use: "kyutai-1-6b"; reason: Qwen3FallbackReason }
+  | { use: "system"; reason: Qwen3FallbackReason };
+
+export interface Qwen3ChoiceInput {
+  /** `$XDG_RUNTIME_DIR/gpu-yield/active` exists: no engine on the graphics card is asked anything. */
+  gameMode: boolean;
+  /** `undefined` when not probed (game mode) or when the probe itself threw. */
+  qwen3?: ProviderHealth | undefined;
+  kyutai16?: ProviderHealth | undefined;
+}
+
+/**
+ * GAO-qwen3-dans-l-001: a reading asked of Qwen3 that Qwen3 cannot give right now falls back
+ * on the existing order, Kyutai 1.6B then the system voice, for this reading only. Nothing is
+ * written: the user's choice stays Qwen3 and is tried again at the next reading.
+ */
+export function chooseQwen3OrFallback(input: Qwen3ChoiceInput): Qwen3Choice {
+  if (input.gameMode) {
+    // Kyutai runs on the same card: in game mode only the system voice is left.
+    return { use: "system", reason: "game-mode" };
+  }
+  if (input.qwen3 !== undefined && isHealthyEnough(input.qwen3)) {
+    return { use: "qwen3" };
+  }
+  const reason: Qwen3FallbackReason = input.qwen3?.detail === "gpu-yield" ? "game-mode" : "unreachable";
+  if (reason === "unreachable" && input.kyutai16 !== undefined && isHealthyEnough(input.kyutai16)) {
+    return { use: "kyutai-1-6b", reason };
+  }
+  return { use: "system", reason };
+}
+
+/** The warning shown with a fallback: what happened, who speaks instead, what to do. */
+export function qwen3FallbackMessage(choice: Exclude<Qwen3Choice, { use: "qwen3" }>): string {
+  const why =
+    choice.reason === "game-mode"
+      ? "le mode jeu réserve la carte graphique"
+      : "le service local Qwen3 ne répond pas (depuis le dépôt : docker compose -f deploy/docker-compose.tts.yml up -d qwen3)";
+  const instead = choice.use === "kyutai-1-6b" ? "Camille (Kyutai)" : "la voix système";
+  return `LLM Voice : la « Voix des essais 21 et 22 » n'est pas disponible, ${why}. Cette lecture se fait avec ${instead}.`;
 }

@@ -278,6 +278,12 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     context.extensionMode !== vscode.ExtensionMode.Production
       ? process.env.LLM_VOICE_TEST_AUTO_PIPER_BASE_URL
       : undefined;
+  // GAO-qwen3-dans-l-001: the automatic choice now probes Qwen3 and Kyutai 1.6B first. A suite
+  // must never reach the real ones of the machine running it (GPU, sound).
+  const autoQwen3BaseUrlOverride =
+    context.extensionMode !== vscode.ExtensionMode.Production ? process.env.LLM_VOICE_TEST_AUTO_QWEN3_BASE_URL : undefined;
+  const autoKyutai16BaseUrlOverride =
+    context.extensionMode !== vscode.ExtensionMode.Production ? process.env.LLM_VOICE_TEST_AUTO_KYUTAI16_BASE_URL : undefined;
 
   // Bug fix (voice-selection-not-applied / infinite loop, coordinator
   // review): replaces `SystemTtsProvider`'s real `child_process`/`fs`
@@ -360,6 +366,8 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     ...(ttsProviderOverride !== undefined ? { ttsProviderOverride } : {}),
     ...(autoChatterboxBaseUrlOverride !== undefined ? { autoChatterboxBaseUrlOverride } : {}),
     ...(autoPiperLocalBaseUrlOverride !== undefined ? { autoPiperLocalBaseUrlOverride } : {}),
+    ...(autoQwen3BaseUrlOverride !== undefined ? { autoQwen3BaseUrlOverride } : {}),
+    ...(autoKyutai16BaseUrlOverride !== undefined ? { autoKyutai16BaseUrlOverride } : {}),
     ...(systemRunnerOverride !== undefined ? { systemRunnerOverride } : {})
   });
   pipelineRef.current = pipeline;

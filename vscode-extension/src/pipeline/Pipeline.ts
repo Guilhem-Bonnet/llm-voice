@@ -37,6 +37,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as vscode from "vscode";
 import { createGpuYieldProbe } from "../direction/director/gpuYield.js";
+import { KYUTAI16_DEFAULT_VOICE } from "../tts/kyutai16VoiceCatalog.js";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
 import type { PlaybackState, ResponseCodeChipView } from "../core/playback.js";
@@ -126,7 +127,9 @@ import {
   INSTALL_VOICE_ACTION_LABEL,
   installPiperVoice as runPiperInstall,
   KYUTAI_POCKET_LOCAL_PRESET,
+  KYUTAI16_LOCAL_PRESET,
   nextActionFor,
+  QWEN3_LOCAL_PRESET,
   OpenAICompatibleTtsProvider,
   PIPER_LOCAL_PRESET,
   presetKindForProviderId,
@@ -146,6 +149,8 @@ import { decidePlay, decidePlayPause, type PlayDecision } from "../commands/play
 import { plainScriptSegments, plainTextSegments, rangesOverlap } from "./textSegments.js";
 import { createInstallFreshnessCheck, installedBundlePath } from "./installFreshness.js";
 import {
+  chooseQwen3OrFallback,
+  qwen3FallbackMessage,
   resolveNarratorConfig,
   resolveTtsConfig,
   selectAutoTtsProvider,
@@ -385,6 +390,9 @@ export interface PipelineOptions {
    */
   autoChatterboxBaseUrlOverride?: string;
   autoPiperLocalBaseUrlOverride?: string;
+  /** Test-only, same gate: where the automatic choice and the Qwen3 fallback probe Qwen3 and Kyutai 1.6B. */
+  autoQwen3BaseUrlOverride?: string;
+  autoKyutai16BaseUrlOverride?: string;
   /**
    * Test-only (coordinator review, same trace as the two overrides above):
    * replaces `SystemTtsProvider`'s process/filesystem runner entirely
@@ -406,6 +414,10 @@ export class Pipeline implements PipelineFacade {
   private readonly narratorProviderOverride: NarratorProvider | undefined;
   private readonly autoChatterboxBaseUrlOverride: string | undefined;
   private readonly autoPiperLocalBaseUrlOverride: string | undefined;
+  private readonly autoQwen3BaseUrlOverride: string | undefined;
+  private readonly autoKyutai16BaseUrlOverride: string | undefined;
+  /** One warning per cause and per VS Code session: the voice shown in the panel says the rest. */
+  private readonly qwen3FallbackNoticesShown = new Set<string>();
   private readonly systemRunnerOverride: SystemTtsProcessRunner | undefined;
   private wait: WaitTracker | undefined;
   private waitTicker: ReturnType<typeof setInterval> | undefined;
@@ -544,6 +556,8 @@ export class Pipeline implements PipelineFacade {
     this.narratorProviderOverride = options.narratorProviderOverride;
     this.autoChatterboxBaseUrlOverride = options.autoChatterboxBaseUrlOverride;
     this.autoPiperLocalBaseUrlOverride = options.autoPiperLocalBaseUrlOverride;
+    this.autoQwen3BaseUrlOverride = options.autoQwen3BaseUrlOverride;
+    this.autoKyutai16BaseUrlOverride = options.autoKyutai16BaseUrlOverride;
     this.systemRunnerOverride = options.systemRunnerOverride;
 
     this.egress = createEgressGuard({
@@ -792,7 +806,7 @@ export class Pipeline implements PipelineFacade {
       // voice it speaks with, and never needs to know where that voice came from.
       const profile: VoiceProfile = options.systemVoice === true
         ? { ...reading.effective, tts: { providerId: "system", baseUrl: "" } }
-        : reading.effective;
+        : await this.withQwen3Fallback(reading.effective, abort.signal);
       this.waitTitle = doc.title ?? "";
       this.currentProfileLabel = profile.label;
       this.currentVoiceLabel = describeVoice(profile.tts);
@@ -969,6 +983,43 @@ export class Pipeline implements PipelineFacade {
         this.endWait();
       }
     }
+  }
+
+  /**
+   * GAO-qwen3-dans-l-001: a reading asked of Qwen3 (chosen, or picked by the automatic choice)
+   * that Qwen3 cannot give right now is read with Kyutai 1.6B, else the system voice, for this
+   * reading only, and says so. Nothing is written: the next reading asks Qwen3 again.
+   */
+  private async withQwen3Fallback(profile: VoiceProfile, signal: AbortSignal): Promise<VoiceProfile> {
+    const resolved = resolveTtsConfig(profile.tts, this.ttsSettings());
+    if (resolved.providerId !== "qwen3") {
+      return profile;
+    }
+    const gameMode = createGpuYieldProbe()();
+    const kyutai16BaseUrl = this.autoKyutai16BaseUrlOverride ?? KYUTAI16_LOCAL_PRESET.baseUrl;
+    const probe = async (preset: typeof QWEN3_LOCAL_PRESET, baseUrl: string) =>
+      createTtsProvider(preset, { id: `fallback-probe-${preset.kind}`, baseUrl, egress: this.egress })
+        .health(signal)
+        .catch(() => undefined);
+    const qwen3 = gameMode ? undefined : await probe(QWEN3_LOCAL_PRESET, resolved.baseUrl);
+    const needsKyutai = !gameMode && (qwen3 === undefined || qwen3.status === "unreachable" || qwen3.status === "unauthorized" || qwen3.status === "unverified");
+    const kyutai16 = needsKyutai ? await probe(KYUTAI16_LOCAL_PRESET, kyutai16BaseUrl) : undefined;
+    const choice = chooseQwen3OrFallback({ gameMode, qwen3, kyutai16 });
+    if (choice.use === "qwen3") {
+      return profile;
+    }
+    const message = qwen3FallbackMessage(choice);
+    this.output.warn("qwen3 fallback", { use: choice.use, reason: choice.reason });
+    const noticeKey = `${choice.use}:${choice.reason}`;
+    if (!this.qwen3FallbackNoticesShown.has(noticeKey)) {
+      this.qwen3FallbackNoticesShown.add(noticeKey);
+      void vscode.window.showWarningMessage(message);
+    }
+    const tts =
+      choice.use === "kyutai-1-6b"
+        ? { providerId: "kyutai-1-6b", baseUrl: kyutai16BaseUrl, voice: KYUTAI16_DEFAULT_VOICE }
+        : { providerId: "system", baseUrl: "" };
+    return { ...profile, tts };
   }
 
   // ------------------------------------------------------------ several voices (ADR-018)
@@ -3001,7 +3052,8 @@ export class Pipeline implements PipelineFacade {
   }
 
   /**
-   * ADR-009's zero-config default (S7.1): Chatterbox (if `health()`
+   * ADR-009's zero-config default (S7.1), Qwen3 and Kyutai 1.6B first since
+   * GAO-qwen3-dans-l-001: Chatterbox (if `health()`
    * answers) → Piper local (same) → système (`SystemTtsProvider`, always
    * eligible — no server to be down). Memoised for `HEALTH_CACHE_TTL_MS`
    * (`autoTtsCache`): every call in that window reuses the last resolution
@@ -3024,8 +3076,16 @@ export class Pipeline implements PipelineFacade {
       baseUrl: piperLocalBaseUrl,
       egress: this.egress
     });
+    const qwen3BaseUrl = this.autoQwen3BaseUrlOverride ?? QWEN3_LOCAL_PRESET.baseUrl;
+    const kyutai16BaseUrl = this.autoKyutai16BaseUrlOverride ?? KYUTAI16_LOCAL_PRESET.baseUrl;
+    const qwen3Probe = createTtsProvider(QWEN3_LOCAL_PRESET, { id: "auto-probe-qwen3", baseUrl: qwen3BaseUrl, egress: this.egress });
+    const kyutai16Probe = createTtsProvider(KYUTAI16_LOCAL_PRESET, { id: "auto-probe-kyutai16", baseUrl: kyutai16BaseUrl, egress: this.egress });
+    // GAO-qwen3-dans-l-001: Qwen3 first, then Kyutai 1.6B, then the order of ADR-009. In game
+    // mode both servers say `gpu_yield` and are skipped (`isHealthyEnough`).
     const config = await selectAutoTtsProvider(
       [
+        { providerId: "qwen3", baseUrl: qwen3BaseUrl, health: (s) => qwen3Probe.health(s) },
+        { providerId: "kyutai-1-6b", baseUrl: kyutai16BaseUrl, health: (s) => kyutai16Probe.health(s) },
         { providerId: "chatterbox", baseUrl: chatterboxBaseUrl, health: (s) => chatterboxProbe.health(s) },
         { providerId: "piper-local", baseUrl: piperLocalBaseUrl, health: (s) => piperLocalProbe.health(s) }
       ],

@@ -9,13 +9,14 @@ import type { GlobalVoice, ReadingMode, TtsBinding } from "../core/profile.js";
 import type { TtsParameterDescriptor, Voice } from "../core/tts.js";
 import { KYUTAI16_VOICE_CATALOG } from "../tts/kyutai16VoiceCatalog.js";
 import { KYUTAI_POCKET_VOICE_CATALOG } from "../tts/kyutaiVoiceCatalog.js";
+import { QWEN3_VOICE_CATALOG } from "../tts/qwen3VoiceCatalog.js";
 import { PIPER_VOICE_ID } from "../tts/SystemTtsProvider.js";
 import { friendlyTtsProviderLabel } from "./ttsProviderLabel.js";
 
 export type VoiceOrigin = "global" | "mode";
 
 /** Every voice the interface can name by id. `estelle` is in both, under the same name and language. */
-const NAMED_VOICES: readonly Voice[] = [...KYUTAI_POCKET_VOICE_CATALOG, ...KYUTAI16_VOICE_CATALOG];
+const NAMED_VOICES: readonly Voice[] = [...KYUTAI_POCKET_VOICE_CATALOG, ...KYUTAI16_VOICE_CATALOG, ...QWEN3_VOICE_CATALOG];
 
 /** A mode as stored, and as it reads: `tts` of `effective` is the voice retained. */
 export interface EffectiveMode {
