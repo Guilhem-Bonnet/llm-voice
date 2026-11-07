@@ -55,7 +55,74 @@ export interface ProposalRole {
 export interface ProposalCheck {
   readonly proposals: readonly VerifiedProposal[];
   /** Raisons de rejet, sans aucun mot du document (journal). */
-  readonly rejected: readonly { readonly roleId: string; readonly field: string; readonly reason: "quote-absent" | "name-only" | "invalid-value" | "unknown-role" }[];
+  readonly rejected: readonly { readonly roleId: string; readonly field: string; readonly reason: "quote-absent" | "name-only" | "quote-unrelated" | "invalid-value" | "unknown-role" }[];
+}
+
+/** Un bloc du texte dans l'ordre : réplique d'un personnage (`roleId`), ou indication et récit. */
+export interface ScriptRegion {
+  readonly roleId?: string;
+  readonly text: string;
+  /** Un titre coupe le fil : ce qui le suit ne se rattache pas à la réplique d'avant. */
+  readonly heading?: boolean;
+}
+
+export type QuoteRelation = "own" | "addressed" | "following";
+
+/**
+ * Où une citation peut fonder chaque champ : une donnée. Le genre ne se lit jamais dans la
+ * bouche du personnage (« Madame » qu'il dit désigne quelqu'un d'autre).
+ */
+export const FIELD_RELATIONS: Readonly<Record<"age" | "gender" | "character", readonly QuoteRelation[]>> = {
+  gender: ["addressed", "following"],
+  age: ["own", "addressed", "following"],
+  character: ["own", "addressed", "following"]
+};
+
+/**
+ * Les textes rattachés à un personnage : ses répliques (`own`), la réplique d'un autre juste
+ * avant ou juste après une des siennes (`addressed`), les indications et le récit qui suivent sa
+ * réplique jusqu'à la réplique suivante (`following`).
+ */
+export function relatedTexts(regions: readonly ScriptRegion[], roleId: string): Record<QuoteRelation, string[]> {
+  const out: Record<QuoteRelation, string[]> = { own: [], addressed: [], following: [] };
+  regions.forEach((region, index) => {
+    if (region.roleId !== roleId) {
+      return;
+    }
+    out.own.push(region.text);
+    for (let after = index + 1; after < regions.length; after += 1) {
+      const next = regions[after];
+      if (next === undefined || next.heading === true) {
+        break;
+      }
+      if (next.roleId !== undefined) {
+        if (next.roleId !== roleId) {
+          out.addressed.push(next.text);
+        }
+        break;
+      }
+      out.following.push(next.text);
+    }
+    for (let before = index - 1; before >= 0; before -= 1) {
+      const previous = regions[before];
+      if (previous === undefined || previous.heading === true) {
+        break;
+      }
+      if (previous.roleId !== undefined) {
+        if (previous.roleId !== roleId) {
+          out.addressed.push(previous.text);
+        }
+        break;
+      }
+    }
+  });
+  return out;
+}
+
+/** La citation se trouve-t-elle dans un texte rattaché au personnage, pour ce champ ? */
+export function quoteRelated(quote: string, related: Record<QuoteRelation, string[]>, relations: readonly QuoteRelation[]): boolean {
+  const wanted = normalized(quote).replace(/^["'.,;:!?…\s]+|["'.,;:!?…\s]+$/gu, "");
+  return relations.some((relation) => related[relation].some((text) => normalized(text).includes(wanted)));
 }
 
 function normalized(text: string): string {
@@ -101,7 +168,7 @@ function field<T extends string>(raw: unknown, allowed: readonly string[]): { va
 }
 
 /** Ce que le modèle a rendu, passé au crible du document. Pur. */
-export function verifyProposals(raw: unknown, documentText: string, roles: readonly ProposalRole[]): ProposalCheck {
+export function verifyProposals(raw: unknown, documentText: string, roles: readonly ProposalRole[], regions?: readonly ScriptRegion[]): ProposalCheck {
   const list = typeof raw === "object" && raw !== null ? (raw as { roles?: unknown }).roles : undefined;
   const known = new Set(roles.map((role) => role.roleId));
   const proposals: VerifiedProposal[] = [];
@@ -133,6 +200,10 @@ export function verifyProposals(raw: unknown, documentText: string, roles: reado
       const problem = quoteProblem(found.quote, documentText, roles);
       if (problem !== undefined) {
         rejected.push({ roleId, field: name, reason: problem });
+        continue;
+      }
+      if (regions !== undefined && !quoteRelated(found.quote, relatedTexts(regions, roleId), FIELD_RELATIONS[name as keyof typeof FIELD_RELATIONS])) {
+        rejected.push({ roleId, field: name, reason: "quote-unrelated" });
         continue;
       }
       kept[name] = found;
@@ -262,7 +333,7 @@ export type ProposeOutcome =
   | { readonly status: "failed"; readonly reason: string };
 
 /** Un appel, hors du chemin de lecture. Mode jeu : aucun appel, aucune proposition. */
-export async function proposeCast(documentText: string, roles: readonly ProposalRole[], llm: ProposalLlm, options: ProposeOptions): Promise<ProposeOutcome> {
+export async function proposeCast(documentText: string, roles: readonly ProposalRole[], llm: ProposalLlm, options: ProposeOptions & { readonly regions?: readonly ScriptRegion[] }): Promise<ProposeOutcome> {
   if (options.gpuYield()) {
     return { status: "gpu-yield" };
   }
@@ -272,7 +343,7 @@ export async function proposeCast(documentText: string, roles: readonly Proposal
   const started = Date.now();
   try {
     const raw = await llm.structured(proposalSystemPrompt(), proposalUserPrompt(documentText, roles), PROPOSAL_JSON_SCHEMA, options.signal);
-    return { status: "ok", check: verifyProposals(raw, documentText, roles), durationMs: Date.now() - started };
+    return { status: "ok", check: verifyProposals(raw, documentText, roles, options.regions), durationMs: Date.now() - started };
   } catch (error) {
     return { status: "failed", reason: error instanceof Error ? error.name : "error" };
   }

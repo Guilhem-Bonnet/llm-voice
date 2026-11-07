@@ -55,6 +55,36 @@ describe("citations", () => {
   });
 });
 
+describe("citation rattachée au personnage", () => {
+  const REGIONS = [
+    { roleId: "isaure", text: "Quel vent sur les remparts ! Et cependant, seigneur, vous n'avez rien appris." },
+    { text: "Elle pose sa lampe sur la table." },
+    { roleId: "le-comte", text: "Madame, on a trouvé sa lettre et son empreinte." },
+    { heading: true, text: "Acte II" },
+    { roleId: "pierre", text: "Bonjour." }
+  ];
+  it("« Madame », dit par le comte juste après elle, et l'indication qui la suit, se rattachent à Isaure", () => {
+    const check = verifyProposals(
+      { roles: [{ roleId: "isaure", gender: { value: "woman", quote: "Elle pose sa lampe" }, age: null, character: null }, { roleId: "le-comte", gender: { value: "man", quote: "seigneur" }, age: null, character: null }] },
+      TEXT,
+      ROLES,
+      REGIONS
+    );
+    expect(check.rejected).toEqual([]);
+    expect(check.proposals.map((p) => p.roleId)).toEqual(["isaure", "le-comte"]);
+  });
+  it("une citation présente mais sans lien avec le personnage est rejetée (quote-unrelated)", () => {
+    const check = verifyProposals(
+      { roles: [{ roleId: "pierre", gender: { value: "woman", quote: "Madame" }, age: null, character: null }, { roleId: "le-comte", gender: { value: "woman", quote: "Madame" }, age: null, character: null }] },
+      TEXT,
+      ROLES,
+      REGIONS
+    );
+    expect(check.proposals).toEqual([]);
+    expect(check.rejected.map((r) => `${r.roleId}:${r.reason}`)).toEqual(["pierre:quote-unrelated", "le-comte:quote-unrelated"]);
+  });
+});
+
 describe("voix la plus proche", () => {
   const voices = [
     { id: "narr", label: "Narratrice", description: "A French woman, calm narrator" },

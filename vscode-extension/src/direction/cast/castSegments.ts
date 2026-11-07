@@ -16,10 +16,10 @@ export interface AssignCastOptions {
   /** The engine plays a written state (`instructions`): only then does a line carry a direction. */
   readonly playsStates?: boolean;
   /**
-   * What the stage director added for a state outside the table, per segment id; already
-   * checked against the text. Read only where the table gives nothing.
+   * What the stage director added for a state outside the table (already checked against the
+   * text), found by the line's speaker and words. Read only where the table gives nothing.
    */
-  readonly extraDirections?: ReadonlyMap<string, string>;
+  readonly extraDirectionOf?: (speakerId: string, spokenText: string) => string | undefined;
 }
 
 function speakerOf(segment: NarrationSegment): string {
@@ -50,7 +50,7 @@ export function assignCast(segments: readonly NarrationSegment[], options: Assig
         )
       : [];
   return segments.map((segment, index) => {
-    const extra = speakerOf(segment) !== NARRATOR_SPEAKER_ID ? options.extraDirections?.get(segment.id) : undefined;
+    const extra = options.playsStates === true && speakerOf(segment) !== NARRATOR_SPEAKER_ID ? options.extraDirectionOf?.(speakerOf(segment), segment.spokenText) : undefined;
     const direction = directions[index] ?? (extra !== undefined && isSendableDirection(extra) ? extra : undefined);
     const voice = speech[index]?.request.voice;
     const speakerId = speakerOf(segment);

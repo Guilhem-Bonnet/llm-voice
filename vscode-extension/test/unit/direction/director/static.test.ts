@@ -32,6 +32,7 @@ describe("src/direction/director static rules", () => {
       "gpuYield.ts",
       "index.ts",
       "llm.ts",
+      "stateDirections.ts",
       "tolerantJson.ts"
     ]);
   });

@@ -8,6 +8,8 @@
 import type { StageState } from "../../core/source.js";
 
 export interface StagePlayRow {
+  /** L'identifiant que rend le metteur en scène local : jamais une consigne écrite par lui. */
+  readonly id: string;
   /** Sur l'étiquette de l'état, en minuscules (`essoufflé`, `en toussant`, `à voix basse`). */
   readonly pattern: RegExp;
   readonly direction: string;
@@ -18,29 +20,33 @@ export interface StagePlayRow {
 /** Validées à l'écoute sur Qwen3 (essoufflé, toux, soupir, rire, chuchoté, voix intérieure, colère). */
 export const STAGE_PLAY_TABLE: readonly StagePlayRow[] = [
   {
-    pattern: /essouffl|halet|suffoqu|hors d'haleine|à bout de souffle|soufflant/u,
+    id: "breathless", pattern: /essouffl|halet|suffoqu|hors d'haleine|à bout de souffle|soufflant/u,
     direction: "Completely out of breath after running: panting, audible gasps for air between the phrases",
     lasting: true
   },
   {
-    pattern: /tous(?:se|sant|sote)|toux|racle la gorge|éclaircit la voix|s'étrangle|enrou/u,
+    id: "coughing", pattern: /tous(?:se|sant|sote)|toux|racle la gorge|éclaircit la voix|s'étrangle|enrou/u,
     direction: "Voice hoarse and strained from coughing, throat irritated",
     lasting: true
   },
-  { pattern: /soupir/u, direction: "With a long weary sigh before speaking, tired and resigned" },
-  { pattern: /\bri(?:t|ant|re|res)\b|rican|glouss|pouff|esclaff|amusé/u, direction: "Speaking while laughing, amused, the laughter audible in the voice" },
-  { pattern: /chuchot|murmur|voix basse|mi-voix|demi-voix|tout bas|^bas$|voix étouffée/u, direction: "Whispering very softly, almost inaudible, secretive" },
-  { pattern: /à part|à (?:lui|elle)-même|en (?:lui|elle)-même|pensée/u, direction: "An inner thought spoken inside the head: very close to the microphone, intimate, soft, voice-over narration" },
+  { id: "sigh", pattern: /soupir/u, direction: "With a long weary sigh before speaking, tired and resigned" },
+  { id: "laughing", pattern: /\bri(?:t|ant|re|res)\b|rican|glouss|pouff|esclaff|amusé/u, direction: "Speaking while laughing, amused, the laughter audible in the voice" },
+  { id: "whisper", pattern: /chuchot|murmur|voix basse|mi-voix|demi-voix|tout bas|^bas$|voix étouffée/u, direction: "Whispering very softly, almost inaudible, secretive" },
+  { id: "inner", pattern: /à part|à (?:lui|elle)-même|en (?:lui|elle)-même|pensée/u, direction: "An inner thought spoken inside the head: very close to the microphone, intimate, soft, voice-over narration" },
   {
-    pattern: /colère|furi|rage|irrit|exaspér|excédé|énerv|fâch|indign|outr|cri(?:e|ant)\b|hurl|tonn|violemment|menaç/u,
+    id: "angry", pattern: /colère|furi|rage|irrit|exaspér|excédé|énerv|fâch|indign|outr|cri(?:e|ant)\b|hurl|tonn|violemment|menaç/u,
     direction: "Angry and furious, voice raised and tense, words bitten off"
   },
-  { pattern: /pleur|sanglot|larmes|gémi/u, direction: "Crying, voice breaking with sobs, tearful" },
-  { pattern: /trembl|effray|terrifi|apeur|panique|angoiss|inquiet|anxieu/u, direction: "Frightened, voice trembling and unsteady, anxious" },
-  { pattern: /épuisé|fatigué|^las(?:se)?$|lass/u, direction: "Exhausted, slow and heavy voice, drained of energy" },
-  { pattern: /tendre|douce|doucement|tendrement|tendresse/u, direction: "Tender and gentle, warm soft voice" },
-  { pattern: /ironi|sarcast|moqu|narquois|raill/u, direction: "Ironic and mocking, a sneer in the voice" },
-  { pattern: /bégai|balbuti|bafouill|bredouill|hésit/u, direction: "Hesitant and stammering, searching for words" }
+  { id: "crying", pattern: /pleur|sanglot|larmes|gémi/u, direction: "Crying, voice breaking with sobs, tearful" },
+  { id: "afraid", pattern: /trembl|effray|terrifi|apeur|panique|angoiss|inquiet|anxieu/u, direction: "Frightened, voice trembling and unsteady, anxious" },
+  { id: "tired", pattern: /épuisé|fatigué|^las(?:se)?$|lass/u, direction: "Exhausted, slow and heavy voice, drained of energy" },
+  { id: "tender", pattern: /tendre|douce|doucement|tendrement|tendresse/u, direction: "Tender and gentle, warm soft voice" },
+  { id: "ironic", pattern: /ironi|sarcast|moqu|narquois|raill/u, direction: "Ironic and mocking, a sneer in the voice" },
+  { id: "hesitant", pattern: /bégai|balbuti|bafouill|bredouill|hésit/u, direction: "Hesitant and stammering, searching for words" },
+  { id: "determined", pattern: /résolu|déterminé|ferme|fermement|décidé/u, direction: "Determined and resolute, a firm steady voice, ready to fight" },
+  { id: "surprised", pattern: /surpris|étonn|stupéf|ébahi/u, direction: "Surprised and astonished, voice rising with disbelief" },
+  { id: "joyful", pattern: /joyeu|ravi|radieu|enjou|gai/u, direction: "Joyful and delighted, bright smiling voice" },
+  { id: "solemn", pattern: /solennel|grave|gravement/u, direction: "Solemn and grave, slow measured voice" }
 ];
 
 /** Plus de deux consignes à la fois brouillent le jeu : les deux premières, dans l'ordre du texte. */

@@ -58,6 +58,8 @@ import { documentKeyOf, documentScope } from "../direction/bible/scopes.js";
 import { assignCast } from "../direction/cast/castSegments.js";
 import { nearestVoice, proposalCacheKey, proposalLabels, proposeCast, type ProposalRole, type VerifiedProposal } from "../direction/director/castProposals.js";
 import { DEFAULT_DIRECTION_MODEL, OllamaDirectionLlm } from "../direction/director/OllamaDirectionLlm.js";
+import { directStates, directionLookup, type StateDirection } from "../direction/director/stateDirections.js";
+import type { ScriptRegion } from "../direction/director/castProposals.js";
 import { castFromBible, recastFromScratch, recordUserVoice } from "../direction/cast/castStore.js";
 import { CastPanel } from "../views/castPanel/CastPanel.js";
 import { castNotice, engineLabelOf, traitChoices, type CastPanelState, type CastProposal } from "../views/castPanel/castPanelModel.js";
@@ -461,6 +463,8 @@ export class Pipeline implements PipelineFacade {
   private readonly egress: EgressGuardHandle;
   /** Propositions de voix d'après le texte, par document (clé : texte, personnages, modèle). */
   private readonly castProposals = new Map<string, readonly VerifiedProposal[]>();
+  /** Consignes du metteur en scène local pour les états hors table, même clé. */
+  private readonly stateDirections = new Map<string, readonly StateDirection[]>();
   private readonly registry = new TtsProviderRegistry<TtsProvider>();
   private readonly narratorRegistry = new TtsProviderRegistry<NarratorProvider>();
   private readonly diskCache: DiskAudioCache;
@@ -1226,7 +1230,12 @@ export class Pipeline implements PipelineFacade {
     const engineSpeed = await this.engineSpeedFor(tts, requestedSpeed(reading.voice, reading.mode), signal);
     const binding: AudioQueueBinding = bindingFrom(engine.effective, engineSpeed);
     const faithful = await buildSession(segments, profile);
-    const narration = groupPassages(assignCast(faithful.segments, { binding, voiceOf: (speakerId) => voiceOfRole.get(speakerId), playsStates: engine.playsStates }), {
+    const narration = groupPassages(assignCast(faithful.segments, {
+        binding,
+        voiceOf: (speakerId) => voiceOfRole.get(speakerId),
+        playsStates: engine.playsStates,
+        ...this.extraDirectionsFor(doc.rawText, script)
+      }), {
       maxSentences: profile.chunking.maxSentences,
       lang: profile.language
     });
@@ -1503,6 +1512,16 @@ export class Pipeline implements PipelineFacade {
   }
 
   /** Les personnages tels que l'analyste les voit : identifiant et nom affiché, rien d'autre. */
+  /** Les blocs du texte dans l'ordre : à qui chacun se rattache. */
+  private regionsOf(script: ReturnType<typeof parseScript>): ScriptRegion[] {
+    return script.blocks
+      .filter((block) => block.text.trim().length > 0)
+      .map((block) => {
+        const roleId = (block as { speakerId?: string }).speakerId;
+        return { text: block.text, ...(roleId !== undefined ? { roleId } : {}), ...(block.type === "heading" ? { heading: true } : {}) };
+      });
+  }
+
   private proposalRolesOf(script: ReturnType<typeof parseScript>): ProposalRole[] {
     return script.roles.map((role) => ({ roleId: role.roleId, name: role.name }));
   }
@@ -1517,10 +1536,11 @@ export class Pipeline implements PipelineFacade {
     const roles = this.proposalRolesOf(script);
     const llm = new OllamaDirectionLlm({ egress: this.egress, model: DEFAULT_DIRECTION_MODEL, temperature: 0 });
     const key = proposalCacheKey(text, roles, llm.model);
-    if (this.castProposals.has(key)) {
+    if (this.castProposals.has(key) && this.stateDirections.has(key)) {
       return "Propositions déjà prêtes pour ce texte.";
     }
-    const outcome = await proposeCast(text, roles, llm, { gpuYield: createGpuYieldProbe(), ...(signal !== undefined ? { signal } : {}) });
+    const regions = this.regionsOf(script);
+    const outcome = await proposeCast(text, roles, llm, { gpuYield: createGpuYieldProbe(), regions, ...(signal !== undefined ? { signal } : {}) });
     if (outcome.status === "gpu-yield") {
       this.output.info("distribution : propositions différées, mode jeu actif");
       return "Mode jeu actif : les propositions attendront la fin de la partie.";
@@ -1530,6 +1550,19 @@ export class Pipeline implements PipelineFacade {
       return "L'analyste local ne répond pas (Ollama). Aucune proposition.";
     }
     this.castProposals.set(key, outcome.check.proposals);
+    // Le metteur en scène, dans la même préparation : jamais pendant une lecture.
+    const states = await directStates(regions, roles, llm, { gpuYield: createGpuYieldProbe(), ...(signal !== undefined ? { signal } : {}) });
+    if (states.status === "ok") {
+      this.stateDirections.set(key, states.check.directions);
+      this.output.info("distribution : consignes de jeu", {
+        candidates: states.candidates,
+        directed: states.check.directions.map((item) => item.stateId),
+        rejected: states.check.rejected.map((item) => item.reason),
+        durationMs: states.durationMs
+      });
+    } else {
+      this.output.warn("distribution : consignes de jeu indisponibles, voix figée", { status: states.status });
+    }
     this.output.info("distribution : propositions", {
       roles: roles.length,
       proposed: outcome.check.proposals.length,
@@ -1540,6 +1573,12 @@ export class Pipeline implements PipelineFacade {
     return outcome.check.proposals.length > 0
       ? "Propositions prêtes, avec les mots du texte qui les fondent. Vous gardez le dernier mot."
       : "Aucun indice écrit sur l'âge ou le genre : aucune proposition.";
+  }
+
+  /** Les consignes déjà préparées pour ce texte, s'il y en a : jamais d'appel ici, on lit. */
+  private extraDirectionsFor(text: string, script: ReturnType<typeof parseScript>): { extraDirectionOf?: (speakerId: string, spokenText: string) => string | undefined } {
+    const directions = this.stateDirections.get(proposalCacheKey(text, this.proposalRolesOf(script), DEFAULT_DIRECTION_MODEL));
+    return directions !== undefined && directions.length > 0 ? { extraDirectionOf: directionLookup(directions) } : {};
   }
 
   /** Une proposition déjà préparée pour ce personnage, et la voix la plus proche par sa description. */
