@@ -25,7 +25,7 @@ STARTER = (
     ("Jeune homme vif", "Young man in his twenties, energetic tenor voice, quick and bright."),
     ("Homme mûr grave", "Middle-aged man, deep low voice, slow and grave."),
     ("Homme âgé rauque", "Old man in his seventies, hoarse raspy voice, low and weathered."),
-    ("Voix d'enfant", "Child around ten years old, high light voice, neutral and clear."),
+    ("Voix d'enfant", "French child around ten years old, native speaker from Paris, high light voice, clear French pronunciation."),
     ("Voix androgyne douce", "Androgynous adult voice, soft gentle mid-range pitch, calm and smooth."),
 )
 
