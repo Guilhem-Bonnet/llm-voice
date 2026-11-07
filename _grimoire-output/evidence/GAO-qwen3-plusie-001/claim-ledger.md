@@ -11,7 +11,7 @@ affirmation qui pèse sur une décision ou une livraison à ce qui la prouve.
 | ID | Affirmation | Type | Source ou preuve | Statut | Confiance | Décision |
 |---|---|---|---|---|---|---|
 | CL-001 | Les tests du serveur passent (96) | résultat | `python3 -P deploy/qwen3/test_server.py` → OK, relancé par l'orchestrateur le 2026-11-07 | prouvé | élevée | utiliser |
-| CL-002 | Le service réel liste 9 voix dont les 8 créées | fait | `curl http://127.0.0.1:8021/voices` relu par l'orchestrateur : 9 noms | prouvé | élevée | utiliser |
+| CL-002 | Le service réel liste 9 voix dont les 8 créées | fait | `_grimoire-output/evidence/GAO-qwen3-plusie-001/voices-live-orchestrateur.json` (GET /voices relu par l'orchestrateur : 9 noms) | prouvé | élevée | utiliser |
 | CL-003 | Les voix créées survivent au redémarrage | résultat | `_grimoire-output/evidence/GAO-qwen3-plusie-001/voices-after-restart.json` après `up --force-recreate` (agent) | prouvé (par l'agent) | moyenne | utiliser |
 | CL-004 | Trois lectures réelles transcrites sans erreur | résultat | `_grimoire-output/evidence/GAO-qwen3-plusie-001/transcription-wer.json` : WER 0,0 ×3 | prouvé (par l'agent) | moyenne | utiliser |
 | CL-005 | Les 8 voix sonnent différemment | hypothèse | `_grimoire-output/evidence/GAO-qwen3-plusie-001/speaker-similarities.json` 0,915-0,990 ; encodeur peu discriminant, aucune écoute | hypothèse | faible | vérifier |
