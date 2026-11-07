@@ -1,0 +1,20 @@
+{"timestamp": "2026-11-07T20:08:32Z", "service": "qwen3", "event": "voice_created", "voice": "v-6562692073", "seed": 281841195, "sample_seconds": 9.12}
+{"timestamp": "2026-11-07T20:08:32Z", "service": "qwen3", "event": "request", "status": 201, "duration_s": 17.47, "route": "/voices/create", "mode": "played", "name_chars": 16, "description_chars": 67, "text_chars": 148, "voice": "v-6562692073"}
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+{"timestamp": "2026-11-07T20:08:52Z", "service": "qwen3", "event": "voice_created", "voice": "v-6be443c3cf", "seed": 1364656495, "sample_seconds": 10.96}
+{"timestamp": "2026-11-07T20:08:52Z", "service": "qwen3", "event": "request", "status": 201, "duration_s": 20.27, "route": "/voices/create", "mode": "played", "name_chars": 22, "description_chars": 73, "text_chars": 148, "voice": "v-6be443c3cf"}
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+{"timestamp": "2026-11-07T20:09:05Z", "service": "qwen3", "event": "voice_created", "voice": "v-b527772c75", "seed": 1688992912, "sample_seconds": 7.52}
+{"timestamp": "2026-11-07T20:09:05Z", "service": "qwen3", "event": "request", "status": 201, "duration_s": 13.38, "route": "/voices/create", "mode": "played", "name_chars": 15, "description_chars": 67, "text_chars": 148, "voice": "v-b527772c75"}
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+{"timestamp": "2026-11-07T20:09:21Z", "service": "qwen3", "event": "voice_created", "voice": "v-b0d22ecbc1", "seed": 1232198818, "sample_seconds": 8.4}
+{"timestamp": "2026-11-07T20:09:21Z", "service": "qwen3", "event": "request", "status": 201, "duration_s": 16.12, "route": "/voices/create", "mode": "played", "name_chars": 15, "description_chars": 48, "text_chars": 148, "voice": "v-b0d22ecbc1"}
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+{"timestamp": "2026-11-07T20:09:49Z", "service": "qwen3", "event": "voice_created", "voice": "v-38985c7f63", "seed": 523179133, "sample_seconds": 14.32}
+{"timestamp": "2026-11-07T20:09:49Z", "service": "qwen3", "event": "request", "status": 201, "duration_s": 27.94, "route": "/voices/create", "mode": "played", "name_chars": 16, "description_chars": 64, "text_chars": 148, "voice": "v-38985c7f63"}
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+{"timestamp": "2026-11-07T20:10:08Z", "service": "qwen3", "event": "voice_created", "voice": "v-40312004fc", "seed": 1878787757, "sample_seconds": 10.08}
+{"timestamp": "2026-11-07T20:10:08Z", "service": "qwen3", "event": "request", "status": 201, "duration_s": 18.38, "route": "/voices/create", "mode": "played", "name_chars": 13, "description_chars": 64, "text_chars": 148, "voice": "v-40312004fc"}
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+{"timestamp": "2026-11-07T20:10:25Z", "service": "qwen3", "event": "voice_created", "voice": "v-f5fd8d24bb", "seed": 50304451, "sample_seconds": 9.04}
+{"timestamp": "2026-11-07T20:10:25Z", "service": "qwen3", "event": "request", "status": 201, "duration_s": 16.95, "route": "/voices/create", "mode": "played", "name_chars": 20, "description_chars": 70, "text_chars": 148, "voice": "v-f5fd8d24bb"}

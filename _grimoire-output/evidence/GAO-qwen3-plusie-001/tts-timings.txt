@@ -1,0 +1,3 @@
+fige-homme-mur-grave 200 28.368561s
+fige-jeune-femme-claire 200 7.512088s
+joue-femme-agee 200 13.947535s

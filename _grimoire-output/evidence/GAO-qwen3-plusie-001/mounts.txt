@@ -1,0 +1,7 @@
+/lab/extras rw=false
+/lab/hf rw=false
+/lab/refs rw=false
+/srv/qwen3 rw=false
+/lab/refs/created rw=true
+/run/user/1000/gpu-yield rw=false
+

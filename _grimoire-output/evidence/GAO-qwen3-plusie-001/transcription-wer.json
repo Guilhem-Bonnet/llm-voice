@@ -1,0 +1,21 @@
+{
+  "whisper_model": "small",
+  "reference": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+  "files": {
+    "fige-homme-mur-grave.wav": {
+      "transcript": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+      "wer": 0.0,
+      "duration_s": 3.84
+    },
+    "fige-jeune-femme-claire.wav": {
+      "transcript": "Le train s'est arrêté au milieu de la campagne sans la moindre annonce.",
+      "wer": 0.0,
+      "duration_s": 3.84
+    },
+    "joue-femme-agee.wav": {
+      "transcript": "Le train s'est arrêté au milieu de la campagne sans la moindre annonce.",
+      "wer": 0.0,
+      "duration_s": 5.12
+    }
+  }
+}

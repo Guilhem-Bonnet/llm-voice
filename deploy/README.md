@@ -152,6 +152,21 @@ Les deux tirent la graine de la voix (11) : même texte, même consigne, même s
 `out-gao/rire-en-s11.wav` et `chuchote-en-s11.wav` (extraits 21 et 22 des essais). Aucun extrait
 n'entre dans le dépôt. Un extrait absent rend la voix figée indisponible (503), pas le service.
 
+**Créer une voix** (voix des personnages) : `POST /voices/create`, formulaire `name` (1 à 40
+caractères), `description` (anglais, ASCII seulement, 1 à 300 caractères, par exemple
+`Older man, deep low voice, slow and grave.`) et `sample_text` optionnel (français). Le serveur génère un
+extrait avec VoiceDesign, tire une graine qu'il garde, et répond 201 `{id, name, description, seed,
+sample_seconds}` en 13 à 33 s ; 400 si invalide, 409 si le nom existe déjà (casse et espaces ignorés), 503
+en mode jeu. L'identifiant (`v-` + 10 caractères) vient toujours du serveur. La voix est encodée pour le
+modèle Base à sa première lecture figée (environ 28 s cette fois-là). `GET /voices` donne `origin`
+(`catalogue` ou `created`) et `description` ; `GET /voices/<id>/sample` rend l'extrait d'écoute.
+
+Les voix créées vivent dans `~/.llm-voice/voices-lab/qwen3/created/<id>/` (`sample.wav`, `voice.json`),
+seul dossier monté en écriture (`/lab/refs/created`) ; elles survivent au redémarrage. Jeu de départ, à
+lancer une fois, service démarré : `python3 -P deploy/qwen3/create_starter_voices.py` (8 voix : jeune
+femme claire, femme mûre posée, femme âgée chaleureuse, jeune homme vif, homme mûr grave, homme âgé
+rauque, voix d'enfant, voix androgyne douce). Pas de suppression depuis le service.
+
 Ce qu'il faut savoir :
 
 - **Chargement.** Chaque modèle se charge à son premier usage, ou d'avance par `POST /load`

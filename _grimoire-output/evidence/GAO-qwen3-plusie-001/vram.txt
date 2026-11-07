@@ -1,0 +1,4 @@
+vram_used_avant_creation=7540973568
+vram_used_apres_creation=13197897728
+vram_used_apres_lectures=13420613632
+vram_used_apres_joue=16717697024
