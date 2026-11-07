@@ -138,6 +138,11 @@ export function buildPlayerHtml(inputs: PlayerHtmlInputs): string {
     <button id="btn-stop" class="transport-button" type="button" aria-label="Arrêter">⏹</button>
   </div>
 
+  <div id="response-code-line" class="line" hidden>
+    <button id="btn-response-code" class="action-button" type="button" aria-pressed="false" title="Lire ou non les blocs de code de cette réponse"></button>
+    <span id="response-code-note" class="wait-line" hidden></span>
+  </div>
+
   <div id="notice" hidden>
     <p id="notice-title"></p>
     <p id="notice-body"></p>

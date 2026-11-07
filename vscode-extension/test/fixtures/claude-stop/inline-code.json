@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-inline-code-0001",
+  "cwd": "/home/user/projects/exemple",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "Lance `npm run test:unit`, puis appelle `dispose()`. Évite `git log --format='%h %s' | grep -v fixup | head -n 20`, et `const answer = compute(a, b);`."
+}

@@ -105,6 +105,16 @@ export interface PlayerStateView {
   notice?: PlayerNotice;
   /** "Juliette · voix Camille", in a reading with several voices (ADR-018 §4.3). */
   speaker?: string;
+  /** While a reply with a fenced block is read: whether its code is said. */
+  responseCode?: ResponseCodeChipView;
+}
+
+/** The chip "Code : ignoré / lu". */
+export interface ResponseCodeChipView {
+  text: string;
+  pressed: boolean;
+  /** Present when the choice waits for the next reading. */
+  note?: string;
 }
 
 /** What the panel shows when the engine holds back (mode jeu, memory). */
@@ -153,6 +163,8 @@ export type PlayerUserAction =
   | "readWithSystemVoice"
   // The script line of the "Document ouvert" block: a setting and a list, never a reading.
   | "toggleCast"
+  // The chip of a reply being read: a setting, never a reading.
+  | "toggleResponseCode"
   | "chooseCastVoices";
 
 /** Commands sent Extension Host → Webview (D4). */

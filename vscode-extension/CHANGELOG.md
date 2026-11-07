@@ -13,6 +13,14 @@ Ce fichier est la seule source de vérité (voir `CONTRIBUTING.md`) ; le
 
 ## [Unreleased]
 
+### Changed
+
+- Une réponse se dit au lieu d'être dictée : plus de balisage, un chemin se réduit au nom du fichier, une URL devient « un lien », un bloc de code devient « un exemple de code », un tableau se lit « colonne : valeur » sur cinq lignes au plus, une liste élément par élément. Les documents et les sélections ne changent pas de mots.
+
+### Added
+
+- Puce « Code : ignoré / lu » dans le panneau pendant la lecture d'une réponse qui contient un bloc de code, et réglage `llmVoice.responses.readCode` pour le défaut. Le choix vaut à partir de la lecture suivante.
+
 ### Ajouté
 
 - **Réponses** : « Inbox » et « Réponses de Claude » deviennent la liste « Réponses », pour tous les outils. La commande « Lire la dernière réponse » (`Ctrl+Alt+V` puis `R`, aussi depuis le terminal intégré) lit la plus récente, quel que soit l'outil ; son nouvel identifiant est `llmVoice.speakLatestResponse`, l'ancien `llmVoice.speakLatestClaudeResponse` reste exécutable. Chaque ligne donne d'abord la durée estimée (`27 s · Claude Code · TTS-Voice · il y a 12 min`, sur une hypothèse de 17 caractères par seconde), un bouton Lire toujours visible, et le reste dans un menu `…`. La vue « Réponses » devient une webview. Le panneau gagne un bloc « Dernière réponse » sous le lecteur. Rien ne se lit tout seul.

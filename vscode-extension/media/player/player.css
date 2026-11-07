@@ -221,6 +221,16 @@ body:not([data-state="idle"]) #welcome {
   outline-offset: 1px;
 }
 
+#response-code-line {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+#response-code-line[hidden],
+#response-code-note[hidden] {
+  display: none;
+}
+
 .wait-line {
   margin: 2px 0;
   color: var(--vscode-descriptionForeground);

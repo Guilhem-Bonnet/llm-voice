@@ -5,6 +5,7 @@
  */
 
 import type { InboxEntry } from "../core/inbox.js";
+import { approximateResponseSpeech } from "../parser/ResponseReading.js";
 import { normalize } from "../parser/SpokenTextNormalizer.js";
 import { formatRelativeTime } from "./inboxFormat.js";
 
@@ -33,9 +34,9 @@ const TERMINAL_ESCAPE = /\p{Cc}\[[0-9;?]*[A-Za-z]/gu;
 const CONTROL_CHARACTER = /\p{Cc}/gu;
 const LINE_MARKER = /^\s*(?:#{1,6}\s+|>\s*)+/;
 
-/** The text a reading adapts today. A later card narrows it, and the duration follows. */
+/** About what a reading of this reply says (`ResponseReading`), for its displayed duration. */
 export function spokenTextOf(message: string): string {
-  return normalize(message);
+  return normalize(approximateResponseSpeech(message));
 }
 
 export function estimateSpeechSeconds(spokenText: string): number {

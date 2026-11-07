@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-lists-0001",
+  "cwd": "/home/user/projects/exemple",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "Trois points :\n\n- Le **premier** point\n- Le second, dans src/parser/Segmenter.ts\n  - un détail imbriqué\n- [x] Le troisième est fait\n\n1. Une étape\n2. Une autre étape."
+}

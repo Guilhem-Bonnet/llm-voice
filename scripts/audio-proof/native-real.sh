@@ -17,6 +17,9 @@
 # `--response` : dépose une réponse de test dans un dossier temporaire et la lit par
 # Ctrl+Alt+V puis R, vraie frappe, focus dans le terminal intégré (Kyutai 1.6B).
 #
+# `--response-adapted` : même chemin, avec une réponse qui porte du balisage, un chemin, des URL
+# et un bloc de code. La transcription doit suivre ce qui se dit, et ne contenir aucun de ces mots.
+#
 # `--kyutai` : même chaîne avec la voix Estelle (`pocket-tts serve --language french`
 # requis), via le chemin du bouton Test, pause de 2,5 s comprise :
 # `silence_between_sounds_ms` du JSON mesure ce silence.
@@ -72,6 +75,16 @@ if [ "${1:-}" = "--cast" ]; then
   CAST_SINCE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 fi
 RESPONSE_TEXT="Les deux pannes sont corrigées. La lecture part maintenant du raccourci. Rien ne se lit tout seul."
+RESPONSE_MESSAGE="$RESPONSE_TEXT"
+RESPONSE_FORBIDDEN=""
+if [ "${1:-}" = "--response-adapted" ]; then
+  # GAO-r-ponses-2-l-001 : ce qui s'entend n'est pas ce qui est écrit.
+  RESPONSE_MESSAGE="$(printf '%s\n' '## Bilan' '' 'Le **correctif** touche `src/core/tts.ts`. La documentation est sur [le guide](https://example.test/guide) et sur https://example.test/docs.' '' '```ts' 'const hiddenValue = computeTheAnswer();' '```' '' 'Le test passe maintenant.')"
+  RESPONSE_TEXT="Bilan. Le correctif touche tts.ts. La documentation est sur le guide et sur un lien. Un exemple de code. Le test passe maintenant."
+  RESPONSE_FORBIDDEN="http www example.test src/ hidden compute answer const astérisque étoile dièse crochet parenthèse"
+  export LLM_VOICE_NATIVE_REAL_RESPONSE_HAS_CODE=1
+  set -- --response
+fi
 if [ "${1:-}" = "--response" ]; then
   # GAO-r-ponses-1-l-001 : une réponse de test dans un dossier temporaire, jamais l'inbox de
   # l'utilisateur, lue par Ctrl+Alt+V puis R avec le focus dans le terminal. Kyutai 1.6B, port 8020.
@@ -83,7 +96,7 @@ if [ "${1:-}" = "--response" ]; then
     || rm -rf "$EXT/.vscode-test/native-real/User/globalStorage/guilhem-bonnet.llm-voice/cache"
   export LLM_VOICE_INBOX
   LLM_VOICE_INBOX="$(mktemp -d)"
-  python3 -c 'import json,sys,time; now=int(time.time()*1000); json.dump({"schemaVersion":1,"provider":"claude-code","sessionId":"preuve-reponse","capturedAt":now,"cwd":"/tmp/preuve","message":sys.argv[2]},open(sys.argv[1]+"/"+str(now)+"-preuve.json","w",encoding="utf-8"),ensure_ascii=False)' "$LLM_VOICE_INBOX" "$RESPONSE_TEXT"
+  python3 -c 'import json,sys,time; now=int(time.time()*1000); json.dump({"schemaVersion":1,"provider":"claude-code","sessionId":"preuve-reponse","capturedAt":now,"cwd":"/tmp/preuve","message":sys.argv[2]},open(sys.argv[1]+"/"+str(now)+"-preuve.json","w",encoding="utf-8"),ensure_ascii=False)' "$LLM_VOICE_INBOX" "$RESPONSE_MESSAGE"
 fi
 if [ "${1:-}" = "--kyutai16" ]; then
   # Même scénario avec Kyutai TTS 1.6B et la voix Camille, service `kyutai16` démarré sur le port 8020.
@@ -138,6 +151,14 @@ if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "kyutai" ] && [ "$PROVE_EXIT" = "0"
   # La pause du test dure 2,5 s : sans ce silence dans le son capté, elle n'a rien arrêté.
   echo "$PROVE_JSON" | python3 -c 'import json,sys; sys.exit(0 if json.loads(sys.stdin.read().strip().splitlines()[-1])["silence_between_sounds_ms"] >= 2000 else 1)' \
     || { echo "native-real.sh: la pause n'a pas laissé 2 s de silence dans la capture" >&2; PROVE_EXIT=1; }
+fi
+if [ -n "$RESPONSE_FORBIDDEN" ]; then
+  echo "$PROVE_JSON" | python3 -c 'import json,sys
+heard=json.loads(sys.stdin.read().strip().splitlines()[-1])["transcription"].lower()
+found=[word for word in sys.argv[1].split() if word in heard]
+print(json.dumps({"entendu":heard,"mots_interdits_entendus":found},ensure_ascii=False))
+sys.exit(1 if found else 0)' "$RESPONSE_FORBIDDEN" \
+    || { echo "native-real.sh: la transcription contient du balisage, une URL ou du code" >&2; PROVE_EXIT=1; }
 fi
 TEST_EXIT="$(cat "$LLM_VOICE_NATIVE_REAL_EXIT_FILE")"
 if [ "${LLM_VOICE_NATIVE_REAL_SCENARIO:-}" = "cast" ]; then

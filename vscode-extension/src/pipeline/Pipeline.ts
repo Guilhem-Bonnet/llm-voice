@@ -39,7 +39,7 @@ import * as vscode from "vscode";
 import { createGpuYieldProbe } from "../direction/director/gpuYield.js";
 import packageJson from "../../package.json";
 import type { CaptureContext, SourceAdapter, SourceDocument, SourceSegment } from "../core/source.js";
-import type { PlaybackState } from "../core/playback.js";
+import type { PlaybackState, ResponseCodeChipView } from "../core/playback.js";
 import type { SyncMode, TtsBinding, VoiceProfile } from "../core/profile.js";
 import { isRemoteProfile } from "../core/profile.schema.js";
 import type { NarratorProvider } from "../core/narration.js";
@@ -47,6 +47,8 @@ import type { ProviderHealth, ProviderHealthStatus } from "../core/health.js";
 import type { TtsParameterDescriptor, TtsProvider, Voice } from "../core/tts.js";
 import type { MarkdownPolicy, SegmentationPolicy, SourceBlock } from "../parser/types.js";
 import { parseMarkdown } from "../parser/MarkdownParser.js";
+import { readResponse } from "../parser/ResponseReading.js";
+import { responseCodeChipOf, type ResponseBeingRead } from "../views/player/responseCodeChip.js";
 import { NARRATOR_SPEAKER_ID } from "../core/direction.js";
 import type { NarrationSegment } from "../core/narration.js";
 import type { AudioChunk, PlayerScriptView } from "../core/playback.js";
@@ -414,6 +416,10 @@ export class Pipeline implements PipelineFacade {
   private heldTts: TtsProvider | undefined;
   private castBible: BibleStore | undefined;
   private currentSpeakers: CastSpeakers | undefined;
+  /** The reply being read, when it is one: what the chip "Code : ignoré / lu" needs. */
+  private responseBeingRead: ResponseBeingRead | undefined;
+  /** A click on that chip, and the setting it was made against. */
+  private responseCodeChoice: { value: boolean; setting: boolean } | undefined;
   private preparer: ReadingPreparer | undefined;
   /** Not part of `PipelineFacade`: what the integration tests await. */
   private preparation: Promise<void> | undefined;
@@ -777,6 +783,7 @@ export class Pipeline implements PipelineFacade {
       }
 
       this.currentSpeakers = undefined;
+      this.responseBeingRead = undefined;
       const doc = await source.capture(captureContext, abort.signal);
       const reading = await this.profiles.resolveReading(doc.sourceType, this.modesBySourceSettings());
       // ADR-017 §1.3: everything downstream receives the effective mode, whichever
@@ -1526,9 +1533,47 @@ export class Pipeline implements PipelineFacade {
   }
 
   private async buildSegments(doc: SourceDocument, profile: VoiceProfile): Promise<SourceSegment[]> {
+    if (doc.sourceType === "claude-code") {
+      return this.responseSegments(doc, profile);
+    }
     const all = await this.plainReadingOf(doc, profile);
     this.currentHeadings = all.filter((seg) => seg.type === "heading");
     return this.withinCapture(doc, all);
+  }
+
+  /**
+   * A reply is said, not dictated. Only this source: a document keeps its profile's policy and
+   * a selection its text as written, which is also why `plainReadingOf`, the cast's reference,
+   * stays as it is. No section line yet: a reply's sections are another card.
+   */
+  private async responseSegments(doc: SourceDocument, profile: VoiceProfile): Promise<SourceSegment[]> {
+    const codeRead = this.responseCodeRead();
+    const reading = await readResponse(doc.rawText, { readCode: codeRead, lang: profile.language });
+    this.responseBeingRead = { hasCode: reading.hasCode, codeRead };
+    this.currentHeadings = [];
+    return reading.segments;
+  }
+
+  /** The chip's choice holds for the session, until the setting itself changes. */
+  private responseCodeRead(): boolean {
+    const setting = vscode.workspace.getConfiguration("llmVoice").get<boolean>("responses.readCode", false);
+    return this.responseCodeChoice?.setting === setting ? this.responseCodeChoice.value : setting;
+  }
+
+  /** The chip "Code : ignoré / lu". A reading under way keeps its text: the next one takes the choice. */
+  toggleResponseCode(): void {
+    const setting = vscode.workspace.getConfiguration("llmVoice").get<boolean>("responses.readCode", false);
+    this.responseCodeChoice = { value: !this.responseCodeRead(), setting };
+    this.pushPlayerState();
+  }
+
+  private responseCodeChip(state: PlaybackState): ResponseCodeChipView | undefined {
+    return responseCodeChipOf(this.responseBeingRead, this.responseCodeRead(), state);
+  }
+
+  /** @internal test seam */
+  getResponseCodeChipForTest(): ResponseCodeChipView | undefined {
+    return this.responseCodeChip(this.controller.getState());
   }
 
   /** Keeps what the selection or the cursor asked for. */
@@ -3597,6 +3642,10 @@ export class Pipeline implements PipelineFacade {
       ...(ahead !== undefined ? { ahead } : {}),
       ...(reading !== undefined ? { reading } : {}),
       ...(this.notice !== undefined ? { notice: this.notice } : {}),
+      ...((): { responseCode?: ResponseCodeChipView } => {
+        const chip = this.responseCodeChip(wait !== undefined && state === "idle" ? "preparing" : state);
+        return chip !== undefined ? { responseCode: chip } : {};
+      })(),
       ...((): { speaker?: string } => {
         const speaker = state === "playing" || state === "paused" ? this.speakerLine(current) : undefined;
         return speaker !== undefined ? { speaker } : {};

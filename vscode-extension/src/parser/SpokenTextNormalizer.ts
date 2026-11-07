@@ -23,11 +23,16 @@ function isFrench(lang: string): boolean {
   return lang.toLowerCase().startsWith("fr");
 }
 
+/** How `->` is said. */
+export function spokenArrow(lang: string): string {
+  return isFrench(lang) ? " flèche " : " arrow ";
+}
+
 /** Normalises spoken text for `lang` (BCP-47, e.g. `fr`, `fr-FR`, `en-US`). Defaults to French phrasing. */
 export function normalize(text: string, lang = "fr"): string {
   const french = isFrench(lang);
   const codePhrase = french ? "code : $1" : "code: $1";
-  const arrowWord = french ? " flèche " : " arrow ";
+  const arrowWord = spokenArrow(lang);
 
   let result = text;
   result = result.replace(IMAGE_RE, "$1");

@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-table-long-0001",
+  "cwd": "/home/user/projects/exemple",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "| Nom | Rôle |\n| --- | --- |\n| A | un |\n| B | deux |\n| C | trois |\n| D | quatre |\n| E | cinq |\n| F | six |\n| G | sept |\n| H | huit |"
+}

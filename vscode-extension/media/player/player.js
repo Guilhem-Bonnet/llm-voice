@@ -41,6 +41,11 @@
     cancel: document.getElementById("btn-wait-cancel")
   };
 
+  const responseCode = {
+    line: document.getElementById("response-code-line"),
+    button: document.getElementById("btn-response-code"),
+    note: document.getElementById("response-code-note")
+  };
   const readingLine = document.getElementById("reading-line");
   const readingEl = document.getElementById("reading");
   const speakerEl = document.getElementById("speaker");
@@ -163,6 +168,16 @@
     readingLine.hidden = readingEl.textContent.length === 0 && ahead.length === 0 && speakerEl.textContent.length === 0;
   }
 
+  function renderResponseCode(view) {
+    const shown = view !== null && typeof view === "object";
+    const note = shown && typeof view.note === "string" ? view.note : "";
+    responseCode.line.hidden = !shown;
+    responseCode.button.textContent = shown && typeof view.text === "string" ? view.text : "";
+    responseCode.button.setAttribute("aria-pressed", shown && view.pressed === true ? "true" : "false");
+    responseCode.note.textContent = note;
+    responseCode.note.hidden = note.length === 0;
+  }
+
   function renderNotice(view) {
     const shown = view !== null && typeof view === "object";
     notice.block.hidden = !shown;
@@ -279,6 +294,7 @@
         setState(state.state);
         renderReading(state);
         renderNotice(state.notice);
+        renderResponseCode(state.responseCode);
         // `textContent` only — never an HTML-parsing sink. `state.title` is
         // derived from the first line of a Claude response or a document
         // heading, i.e. untrusted text that routinely contains `<`, `&`,
@@ -378,6 +394,9 @@
   // A setting and a list: neither one starts a reading.
   documentBlock.toggleCast.addEventListener("click", () => post({ type: "userAction", action: "toggleCast" }));
   documentBlock.castVoices.addEventListener("click", () => post({ type: "userAction", action: "chooseCastVoices" }));
+
+  // A setting too: the reading under way keeps its text, the next one takes the choice.
+  responseCode.button.addEventListener("click", () => post({ type: "userAction", action: "toggleResponseCode" }));
 
   post({ type: "ready" });
 })();

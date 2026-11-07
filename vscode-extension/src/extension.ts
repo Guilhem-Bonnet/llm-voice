@@ -420,6 +420,9 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
         case "toggleCast":
           void pipeline.toggleCast();
           break;
+        case "toggleResponseCode":
+          pipeline.toggleResponseCode();
+          break;
         case "chooseCastVoices":
           void pipeline.chooseCastVoices();
           break;

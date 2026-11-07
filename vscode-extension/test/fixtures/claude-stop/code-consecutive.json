@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-code-consecutive-0001",
+  "cwd": "/home/user/projects/exemple",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "Voici les deux fichiers :\n\n```ts\nexport const a = 1;\n```\n\n```bash\nnpm test\n```\n\nPuis un autre exemple :\n\n```\n}\nsans langage\n```\n\nC'est tout."
+}

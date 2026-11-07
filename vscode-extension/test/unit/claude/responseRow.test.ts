@@ -39,6 +39,13 @@ describe("the duration of a reply", () => {
     expect(estimateSpeechSeconds("x".repeat(17 * 27))).toBe(27);
   });
 
+  it("does not count a code block, a URL or a whole path as said", () => {
+    const code = "x = 1\n".repeat(200);
+    expect(spokenTextOf(`Avant.\n\n\`\`\`py\n${code}\`\`\`\n\nAprès.`)).toBe("Avant. un exemple de code. Après.");
+    expect(spokenTextOf("Voir src/core/tts.ts et https://example.test/a/b/c.")).toBe("Voir tts.ts et un lien.");
+    expect(spokenTextOf("Lance `git status`.")).toBe("Lance git status.");
+  });
+
   it("counts the adapted text, not the markup around it", () => {
     expect(spokenTextOf("**Les deux pannes** sont [corrigées](https://example.test/a).")).toBe("Les deux pannes sont corrigées.");
     expect(estimateSpeechSeconds(spokenTextOf("**abc**"))).toBe(estimateSpeechSeconds("abc"));

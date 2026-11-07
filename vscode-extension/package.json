@@ -800,6 +800,11 @@
           "minimum": 0,
           "description": "Taille maximale du cache audio en mégaoctets."
         },
+        "llmVoice.responses.readCode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Lit les blocs de code d'une réponse, langage annoncé, au lieu de dire « un exemple de code ». La puce du panneau change ce choix pour la session, à partir de la lecture suivante."
+        },
         "llmVoice.claude.inboxPath": {
           "type": "string",
           "default": "",

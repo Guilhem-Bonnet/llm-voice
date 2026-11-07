@@ -19,6 +19,8 @@ interface TestPipeline {
   getPlaybackState(): string;
   speakLatestResponse(): Promise<void>;
   stop(): Promise<void>;
+  toggleResponseCode(): void;
+  getResponseCodeChipForTest(): { text: string; pressed: boolean; note?: string } | undefined;
 }
 
 async function waitFor(
@@ -145,6 +147,51 @@ suite("LLM Voice inbox (S5.1, AC-12..15)", () => {
 
     await waitFor(() => pipeline.getPlaybackState() === "playing");
     assert.equal(pipeline.getCurrentProfileLabelForTest(), "Fidèle");
+    await pipeline.stop();
+  });
+
+  test("a reply is said, not dictated: mark-up, path, URL and code never reach the engine", async () => {
+    const { api, pipeline } = await activateExtension();
+    const tts = api.ttsProvider as FakeTtsProvider;
+    tts.reset();
+    const message =
+      "## Bilan\n\nLe **correctif** touche `src/core/tts.ts`, voir https://example.test/doc.\n\n```ts\nconst hiddenValue = 1;\n```\n\nC'est fini.";
+    writtenPaths.push(depositMessage({ message }));
+    await waitForEntryContaining(pipeline, message);
+
+    await vscode.commands.executeCommand("llmVoice.speakLatestResponse");
+    await waitFor(() => tts.requests.map((request) => request.text).join(" ").includes("un exemple de code"));
+    assert.deepEqual(pipeline.getResponseCodeChipForTest(), { text: "Code : ignoré", pressed: false });
+
+    pipeline.toggleResponseCode();
+    assert.deepEqual(pipeline.getResponseCodeChipForTest(), { text: "Code : lu", pressed: true, note: "À la prochaine lecture." });
+    await waitFor(() => tts.requests.map((request) => request.text).join(" ").includes("C'est fini."));
+    const ignored = tts.requests.map((request) => request.text).join(" ");
+    assert.ok(ignored.includes("Bilan. Le correctif touche tts.ts, voir un lien."), ignored);
+    assert.doesNotMatch(ignored, /\*\*|`|##|https?:|src\/|hiddenValue/);
+    assert.ok(!ignored.includes("un exemple de code en TypeScript"), "the reading under way keeps its text");
+    await pipeline.stop();
+
+    // The next reading takes the choice: this one says the code, language first.
+    tts.reset();
+    await vscode.commands.executeCommand("llmVoice.speakLatestResponse");
+    await waitFor(() => tts.requests.map((request) => request.text).join(" ").includes("const hiddenValue = 1;"));
+    const read = tts.requests.map((request) => request.text).join(" ");
+    assert.ok(read.includes("un exemple de code en TypeScript :"), read);
+    assert.deepEqual(pipeline.getResponseCodeChipForTest(), { text: "Code : lu", pressed: true });
+    await pipeline.stop();
+    pipeline.toggleResponseCode();
+  });
+
+  test("a reply without a fenced block offers no chip", async () => {
+    const { pipeline } = await activateExtension();
+    const message = "Une réponse sans bloc, avec `git status` seulement.";
+    writtenPaths.push(depositMessage({ message }));
+    await waitForEntryContaining(pipeline, message);
+
+    await vscode.commands.executeCommand("llmVoice.speakLatestResponse");
+    await waitFor(() => pipeline.getPlaybackState() === "playing");
+    assert.equal(pipeline.getResponseCodeChipForTest(), undefined);
     await pipeline.stop();
   });
 

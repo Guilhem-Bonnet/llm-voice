@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-table-short-0001",
+  "cwd": "/home/user/projects/exemple",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "Résultat :\n\n| Moteur | État |\n| --- | --- |\n| **Kyutai** | prêt |\n| Piper | `arrêté` |\n\nFin."
+}

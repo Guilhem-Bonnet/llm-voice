@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-paths-urls-0001",
+  "cwd": "/home/user/projects/exemple",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "Le correctif touche `src/core/tts.ts` et vscode-extension/media/player/player.js:42, ainsi que ~/.llm-voice/inbox/ (dossier).\n\nLa doc est sur https://example.test/docs?a=1#b, et sur www.example.test. Le service répond sur `http://localhost:8020/health`.\n\nÀ noter : et/ou, km/h, TCP/IP et le 12/10/2026 restent tels quels."
+}

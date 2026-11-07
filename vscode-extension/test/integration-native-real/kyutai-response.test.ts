@@ -13,6 +13,7 @@ import type { ExtensionTestApi } from "../../src/extension.js";
 interface TestPipeline {
   getPlaybackState(): string;
   listInboxEntriesForTest(): Promise<readonly { id: string; read: boolean }[]>;
+  getResponseCodeChipForTest(): { text: string } | undefined;
 }
 
 const enabled = process.env.LLM_VOICE_NATIVE_REAL === "1" && process.env.LLM_VOICE_NATIVE_REAL_SCENARIO === "response";
@@ -134,8 +135,17 @@ const CHORD = { key: "v", code: "KeyV", keyCode: 86, modifiers: CTRL_ALT };
     const deadline = Date.now() + 240_000;
     while (!["completed", "error", "stopped"].includes(state)) {
       assert.ok(Date.now() < deadline, `state stayed "${state}"`);
-      if (state === "playing") {
-        firstSoundMs ??= Date.now() - startedAt;
+      if (state === "playing" && firstSoundMs === undefined) {
+        firstSoundMs = Date.now() - startedAt;
+        // Pendant la lecture, la puce ne se montre que si la réponse a un bloc de code.
+        const expected = process.env.LLM_VOICE_NATIVE_REAL_RESPONSE_HAS_CODE === "1" ? "Code : ignoré" : undefined;
+        assert.equal(pipeline.getResponseCodeChipForTest()?.text, expected);
+        const chipShot = process.env.LLM_VOICE_NATIVE_REAL_CHIP_SHOT;
+        if (chipShot !== undefined) {
+          await vscode.commands.executeCommand("llmVoice.playerView.focus");
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          await photograph(port, chipShot);
+        }
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
       state = pipeline.getPlaybackState();
