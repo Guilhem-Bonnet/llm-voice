@@ -238,10 +238,26 @@
     }
   }
 
+  // Seule une ressource de la webview se joue (la CSP `media-src` le garantit déjà) : jamais
+  // un autre schéma, ni une adresse construite ailleurs.
+  function safeMediaUri(uri) {
+    try {
+      const url = new URL(String(uri));
+      return url.protocol === "https:" && url.hostname.endsWith(".vscode-cdn.net") ? url.href : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   function play(id, uri) {
+    const src = safeMediaUri(uri);
+    if (src === undefined) {
+      showCardMessage(id, "Échantillon illisible.");
+      return;
+    }
     silence();
     playing = { id };
-    audio.src = uri;
+    audio.src = src;
     const card = cards.get(id);
     if (card) {
       card.message = undefined;
@@ -502,7 +518,7 @@
         const finished = settlePending(message);
         if (finished) {
           refusedEngine = message.engine === "kyutai16" || message.engine === "qwen3" ? refusedEngine : message.engine;
-          if (engines[message.engine]) {
+          if (typeof message.engine === "string" && Object.hasOwn(engines, message.engine)) {
             engines[message.engine].status = "stopped";
           }
           showCardMessage(finished.id, "Serveur arrêté.");

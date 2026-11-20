@@ -159,8 +159,8 @@ function card(input: CardInput): Record<string, unknown> {
 
 const CARDS = [
   card({ id: "system", label: "Voix système", section: "local", ready: true, state: "Prête" }),
-  card({ id: "estelle", label: "Estelle", sampleUri: "res://voices/estelle.ogg", engine: "kyutai" }),
-  card({ id: "eponine", label: "Éponine", sampleUri: "res://voices/eponine.ogg", engine: "kyutai" }),
+  card({ id: "estelle", label: "Estelle", sampleUri: "https://file+.vscode-resource.vscode-cdn.net/voices/estelle.ogg", engine: "kyutai" }),
+  card({ id: "eponine", label: "Éponine", sampleUri: "https://file+.vscode-resource.vscode-cdn.net/voices/eponine.ogg", engine: "kyutai" }),
   card({
     id: "chatterbox",
     label: "Chatterbox",
@@ -271,10 +271,24 @@ describe("listening never starts without a click", () => {
     const { audio, receive } = runGallery();
     receive(state());
 
-    receive({ type: "trialAudio", requestId: 1, voiceId: "estelle", uri: "res://evil.wav" });
+    receive({ type: "trialAudio", requestId: 1, voiceId: "estelle", uri: "https://file+.vscode-resource.vscode-cdn.net/evil.wav" });
 
     expect(audio.playCalls).toBe(0);
     expect(audio.src).toBeUndefined();
+  });
+
+  it("an audio address outside the webview resources is never played", () => {
+    const { audio, posted, receive, cardOf } = runGallery();
+    receive(state());
+    button(cardOf("estelle"), "Écouter").click();
+    const requestId = posted.at(-1)?.requestId;
+    const before = { calls: audio.playCalls, src: audio.src };
+
+    receive({ type: "trialAudio", requestId, voiceId: "estelle", uri: "javascript:alert(1)" });
+
+    expect(audio.playCalls).toBe(before.calls);
+    expect(audio.src).toBe(before.src);
+    expect(String(audio.src ?? "")).not.toContain("javascript:");
   });
 
   it("the document carries no audio source and no autoplay", () => {
@@ -295,7 +309,7 @@ describe("Écouter", () => {
 
     button(cardOf("estelle"), "Écouter").click();
 
-    expect(audio.src).toBe("res://voices/estelle.ogg");
+    expect(audio.src).toBe("https://file+.vscode-resource.vscode-cdn.net/voices/estelle.ogg");
     expect(audio.playCalls).toBe(1);
     expect(posted).toEqual([{ type: "ready" }]);
   });
@@ -307,7 +321,7 @@ describe("Écouter", () => {
     button(cardOf("estelle"), "Écouter").click();
     button(cardOf("eponine"), "Écouter").click();
 
-    expect(audio.src).toBe("res://voices/eponine.ogg");
+    expect(audio.src).toBe("https://file+.vscode-resource.vscode-cdn.net/voices/eponine.ogg");
     expect(audio.pauseCalls).toBeGreaterThan(0);
     expect(cardOf("estelle").buttonNamed("Arrêter")).toBeUndefined();
 
@@ -385,9 +399,9 @@ describe("phrase d'essai", () => {
     vi.restoreAllMocks();
     expect(cardOf("estelle").all().some((element) => element.textContent === "Génération… 3 s")).toBe(true);
 
-    receive({ type: "trialAudio", requestId, voiceId: "estelle", uri: "res://trial/a.wav" });
+    receive({ type: "trialAudio", requestId, voiceId: "estelle", uri: "https://file+.vscode-resource.vscode-cdn.net/trial/a.wav" });
 
-    expect(audio.src).toBe("res://trial/a.wav");
+    expect(audio.src).toBe("https://file+.vscode-resource.vscode-cdn.net/trial/a.wav");
     expect(audio.playCalls).toBe(1);
   });
 
@@ -400,7 +414,7 @@ describe("phrase d'essai", () => {
 
     expect(posted.at(-1)).toEqual({ type: "cancelTrial", requestId });
     expect(intervals.size).toBe(0);
-    receive({ type: "trialAudio", requestId, voiceId: "estelle", uri: "res://trial/late.wav" });
+    receive({ type: "trialAudio", requestId, voiceId: "estelle", uri: "https://file+.vscode-resource.vscode-cdn.net/trial/late.wav" });
     expect(audio.playCalls).toBe(0);
   });
 
@@ -411,7 +425,7 @@ describe("phrase d'essai", () => {
     button(cardOf("estelle"), "Écouter").click();
 
     expect(element("phrase").value).toBe("");
-    expect(audio.src).toBe("res://voices/estelle.ogg");
+    expect(audio.src).toBe("https://file+.vscode-resource.vscode-cdn.net/voices/estelle.ogg");
     expect(posted).toEqual([{ type: "ready" }]);
   });
 
@@ -729,8 +743,8 @@ describe("the Kyutai narration section", () => {
 
     expect(posted).toContainEqual({ type: "trial", voiceId: "kyutai16:cml-577_394", text: "Une phrase à moi.", requestId: 1 });
     expect(audio.playCalls).toBe(0);
-    receive({ type: "trialAudio", requestId: 1, voiceId: "kyutai16:cml-577_394", uri: "res://trial/c.wav" });
-    expect(audio.src).toBe("res://trial/c.wav");
+    receive({ type: "trialAudio", requestId: 1, voiceId: "kyutai16:cml-577_394", uri: "https://file+.vscode-resource.vscode-cdn.net/trial/c.wav" });
+    expect(audio.src).toBe("https://file+.vscode-resource.vscode-cdn.net/trial/c.wav");
     expect(audio.playCalls).toBe(1);
   });
 

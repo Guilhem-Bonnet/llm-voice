@@ -37,8 +37,8 @@ async function attach(url: string): Promise<CdpClient> {
   const waiting = new Map<number, (reply: CdpReply) => void>();
   socket.addEventListener("message", (event) => {
     const reply = JSON.parse(String(event.data)) as CdpReply;
-    const resolve = reply.id === undefined ? undefined : waiting.get(reply.id);
-    if (resolve !== undefined) {
+    const resolve = typeof reply.id === "number" ? waiting.get(reply.id) : undefined;
+    if (typeof resolve === "function") {
       waiting.delete(reply.id as number);
       resolve(reply);
     } else {

@@ -308,7 +308,7 @@ async function main() {
       console.log(`Meilleure variante SANS consignes circulaires : ${nonCircular.step.name} [${nonCircular.step.id}] — ${pct(n.accuracy)} (${n.correct}/${n.total}), p95 ${ms(n.p95)}.`);
     }
     if (winner.step.kind === "knn") {
-      const groupId = `${winner.step.id.replace(/^hybrid\+/, "hybrid+")}-group`;
+      const groupId = `${winner.step.id}-group`;
       const grouped = runs.find((r) => r.step.id === groupId && r.metrics);
       if (grouped) console.log(`Même k-NN, catégorie du cas exclue (généralisation) : ${pct(grouped.metrics.accuracy)} (${grouped.metrics.correct}/${grouped.metrics.total}). Un k-NN exige un jeu étiqueté livré avec le produit.`);
       const zeroShot = eligible.find((r) => r.step.kind === "semif" && !r.step.guidelines);
