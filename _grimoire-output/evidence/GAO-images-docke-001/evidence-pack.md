@@ -43,3 +43,13 @@ Mode jeu : `$XDG_RUNTIME_DIR/gpu-yield/active` absent avant le test (le dossier 
   périphériques diffèrent.
 - Port publié 127.0.0.1 (vérifié par `docker compose config`, `QWEN3_PORT=8031`) mais non sollicité pendant
   le test : le serveur testé tournait sans réseau, requêtes par `docker exec`.
+
+<!-- grimoire:observed-inventory:start -->
+## Inventaire observé
+
+Régénéré automatiquement depuis `evidence-log.jsonl` (hooks du host) — ne pas éditer à la main ; la section manuelle « Evidence inventory » ci-dessus reste éditable et prime en cas de doute.
+
+| Preuve | Détail | Source | Résultat |
+|---|---|---|---|
+| Aucune preuve observée pour l'instant |  |  |  |
+<!-- grimoire:observed-inventory:end -->
