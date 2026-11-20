@@ -241,10 +241,8 @@ fn load_pcm16le(path: &Path, sample_rate: u32, channels: u16) -> Result<Clip, St
     if bytes.len() % 2 != 0 {
         return Err("taille impaire pour du PCM 16 bits".to_string());
     }
-    let samples = bytes
-        .chunks_exact(2)
-        .map(|b| i16::from_le_bytes([b[0], b[1]]))
-        .collect();
+    let (pairs, _) = bytes.as_chunks::<2>();
+    let samples = pairs.iter().map(|pair| i16::from_le_bytes(*pair)).collect();
     Ok(Clip {
         samples,
         sample_rate,
