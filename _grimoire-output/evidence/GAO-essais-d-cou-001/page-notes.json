@@ -1,6 +1,6 @@
 {
  "intro": "Douze textes identiques pour tous les moteurs : narration, trois répliques naturelles, six répliques à état (essoufflé, toux puis voix gênée, rire, chuchoté, voix intérieure, colère) et deux phrases difficiles. Tout est généré en local, rien n'a été joué sur les enceintes. Sous chaque extrait : WER (faster-whisper small, français), probabilités de langue détectée fr/en, durée et facteur temps réel (RTF : temps de calcul / durée audio). Un p(en) élevé sur un extrait plein de rires ou de halètements peut venir des bruits non vocaux, pas forcément d'un accent : c'est à l'oreille de trancher.",
- "recommendation": "<b>Recommandation provisoire : garder Qwen3 1.7B, avec la voix figée (Base) pour la narration et la voix jouée (VoiceDesign) pour les états. Le chantier ouvert est l'accent anglais des états joués.</b> Fish S2 Pro et Ming n'ont pas encore tourné.<br><b>Ce que disent les mesures</b><ul><li>Qwen3, voix figée : la plus propre (WER de 0 à 0,095, p(en) ≤ 0,005, timbre stable avec un cosinus de 0,99), mais elle ne joue aucun état.</li><li>Qwen3, voix jouée : elle suit les consignes. L'écoute a pourtant relevé un accent anglais sur les extraits 10, 12, 14 et 18 (essoufflé, toux, rire, voix intérieure). La mesure n'en avait signalé que deux, via p(en) : 0,27 pour l'essoufflé et 0,24 pour le rire, contre 0,011 pour la toux et 0,002 pour la voix intérieure. La détection de langue de Whisper rate donc l'accent : elle ne repère que la langue.</li><li>Qwen3 CustomVoice (Apache) : aucun timbre français natif. Ryan a lu la narration en anglais (p(en) 0,93, WER 0,96). Serena déraille sur la phrase du chevalier (p(fr) 0,005, WER 0,29). Le moteur n'est pas assez fiable pour être la voix par défaut.</li><li>Fish S2 Pro (licence non commerciale, repère seulement) : essai 1 en bf16, manque de mémoire au chargement, car le cache est réservé pour 32 768 positions. L'essai 2, avec un cache limité à 4 096 positions, est prêt mais attend que la carte soit libre.</li><li>Ming tiny (MIT) : la première tentative s'est arrêtée avant les poids, sur une erreur d'environnement du conteneur (utilisateur inconnu), corrigée depuis. Elle attend la carte. Avec 17 Go de poids bf16 pour 16 Go de mémoire, un manque de mémoire est probable.</li><li>Higgs 3 : pas de chemin ROCm et au moins 24 Go de mémoire annoncés, donc non essayé.</li></ul><b>Ce que seule l'oreille tranchera</b> : si la nouvelle consigne du serveur (le français en tête) supprime l'accent des états joués, le naturel de la narration, et le choix final des voix.",
+ "recommendation": "<b>Recommandation : Qwen3 1.7B (Apache-2.0), avec la voix figée (Base) pour la narration et le dialogue courant, et la voix jouée (VoiceDesign, consigne française en tête depuis e98a59e) pour les états.</b> C'est le seul système essayé qui joue des états, reste en français et tient sur notre carte de 16 Go. Les autres candidats ont échoué ou sont moins bons : CustomVoice dérape en anglais, Fish S2 Pro et Ming tiny ne tiennent pas en mémoire, Higgs 3 n'a pas de chemin ROCm.<br><b>Ce que disent les mesures</b><ul><li>Voix figée : la plus propre (WER de 0 à 0,095, p(en) ≤ 0,005, timbre stable avec un cosinus de 0,99), mais elle ne joue aucun état.</li><li>Voix jouée après la correction : p(en) passe de 0,274 à 0,015 pour l'essoufflé et de 0,238 à 0,073 pour le rire. Il reste au-dessus de 1 % pour l'essoufflé, le rire et le chuchoté (0,012). WER de 0 à 0,2. L'ancienne version reste dans la page pour comparer.</li><li>Attention : p(en) mesure mal l'accent. Avant correction, il n'avait signalé que 2 des 4 états où l'oreille entendait un accent anglais.</li><li>CustomVoice (Apache) : ryan lit la narration en anglais (p(en) 0,93) et serena déraille sur une phrase difficile. Écarté.</li><li>Fish S2 Pro (non commercial, repère seulement) et Ming tiny (MIT) : manque de mémoire sur 16 Go, voir plus bas. Higgs 3 n'a pas été essayé.</li></ul><b>Ce que seule l'oreille tranchera</b> : si l'accent a vraiment disparu des états joués corrigés, surtout l'essoufflé, le rire et le chuchoté ; si la narration coule naturellement ; et les variantes de voix, écoutées sur une page à part.",
  "table_note": "VRAM : pointe réservée par torch pour les moteurs en conteneur ; pour le service Qwen3, pointe de la carte entière (sysfs, autres processus compris). Stabilité : cosinus moyen entre extraits hors états avec l'encodeur de locuteur Qwen3 Base, qui resserre les écarts (les voix distinctes du catalogue sont déjà entre 0,915 et 0,99) : un écart de 0,01 compte.",
  "engines": [
   {
@@ -10,7 +10,12 @@
   },
   {
    "id": "qwen3-joue",
-   "label": "Qwen3 1.7B, voix jouée VoiceDesign (en service)",
+   "label": "Qwen3 1.7B, voix jouée VoiceDesign, consigne française en tête (serveur e98a59e)",
+   "licence": "Apache-2.0"
+  },
+  {
+   "id": "qwen3-joue-avant-e98a59e",
+   "label": "Qwen3 1.7B, voix jouée AVANT correction (accent anglais entendu sur 4 états)",
    "licence": "Apache-2.0"
   },
   {
@@ -26,17 +31,23 @@
  ],
  "not_run": [
   {
-   "label": "Fish S2 Pro",
-   "why": "Essai 1 (bf16, image dérivée de deploy-chatterbox, torch 2.9.1+rocm7.2.3 et transformers 5.19) : manque de mémoire HIP au chargement du codec, 15,65 Gio déjà alloués. Cause : le cache KV est réservé à l'initialisation pour max_seq_len=32768, soit environ 4,8 Go. L'essai 2 limite le cache à 4096 positions ; il est prêt mais en attente, car le service qwen3 ne doit pas être arrêté pour l'instant."
+   "label": "Fish S2 Pro : 2 essais, échec par manque de mémoire",
+   "why": "Essai 1 (bf16) : manque de mémoire HIP au chargement du codec, car le cache est réservé pour 32 768 positions. Essai 2 (cache limité à 4 096 positions) : les deux modèles se chargent, puis le manque de mémoire survient au premier décodage de préchauffe, avec 15,20 Gio alloués sur 15,92. La documentation de Fish annonce au moins 24 Go. Je n'ai pas construit le Dockerfile.rocm officiel : il utilise le même torch 2.9.1+rocm7.2.3, et l'échec vient de la mémoire, pas de l'image."
   },
   {
-   "label": "Ming-3.0-tts-tiny",
-   "why": "La tentative s'est arrêtée avant le chargement des poids : KeyError getpwuid(), l'uid 1000 n'existe pas dans le conteneur et le cache d'inductor appelle getpass. Corrigé avec USER=lab. Elle attend la carte : il faut arrêter le service, et 17 Go de poids bf16 dépassent les 16 Go de la carte."
+   "label": "Ming-3.0-tts-tiny : tentative réelle, échec par manque de mémoire",
+   "why": "Le runtime impose le bf16. Le transfert des 9 milliards de paramètres sur la carte échoue avec 15,64 Gio alloués (pointe torch 16 016 Mio). Le runtime n'offre aucun mode réduit ni aucun délestage vers le processeur. Une tentative précédente s'était arrêtée sur une erreur d'environnement du conteneur, corrigée avec USER=lab."
   },
   {
    "label": "Higgs TTS 3 4B (Boson AI)",
    "why": "Non essayé, comme prévu. Aucun chemin ROCm documenté : le service officiel est SGLang-Omni (image lmsysorg/sglang-omni, NVIDIA seulement) ou MLX (Mac). Mémoire annoncée : 40 Go confirmés sur A100, 24 Go sur RTX 4090 rapportés mais non vérifiés, moins de 24 Go jamais testé ; notre carte a 16 Go. Licence de recherche non commerciale, qui exclut l'intégration à un produit. Le chemin transformers communautaire n'est pas officiel."
   }
  ],
- "voices_intro": "Douze voix candidates créées par POST /voices/create, chaque description commençant par « French … native speaker from France ». Chacune a lu deux textes du banc en voix figée, puis un filtre automatique les a triées : p(en) &lt; 0,01, WER moyen ≤ 0,10, aucun mot de balise, et voix distincte. Pour la distinction, le cosinus brut de l'encodeur Qwen3 Base est trop resserré : il va de 0,915 à 0,988 entre les voix déjà au catalogue, Homme mûr grave contre Jeune femme claire donne 0,924, et toutes les candidates dépassent 0,977. J'utilise donc le cosinus centré, calculé sur les 22 voix. Le seuil retenu est 0,66, soit la plus forte similarité centrée entre deux voix déjà au catalogue (Homme âgé rauque et Homme mûr grave, 0,658) : une candidate plus proche que cela d'une voix existante ou d'une candidate mieux classée est rejetée. Résultat : 8 voix gardées, 4 rejetées et déplacées dans created-archive, jamais supprimées."
+ "voices_intro": "Douze voix candidates créées par POST /voices/create, chaque description commençant par « French … native speaker from France ». Chacune a lu deux textes du banc en voix figée, puis un filtre automatique les a triées : p(en) &lt; 0,01, WER moyen ≤ 0,10, aucun mot de balise, et voix distincte. Pour la distinction, le cosinus brut de l'encodeur Qwen3 Base est trop resserré : il va de 0,915 à 0,988 entre les voix déjà au catalogue, Homme mûr grave contre Jeune femme claire donne 0,924, et toutes les candidates dépassent 0,977. J'utilise donc le cosinus centré, calculé sur les 22 voix. Le seuil retenu est 0,66, soit la plus forte similarité centrée entre deux voix déjà au catalogue (Homme âgé rauque et Homme mûr grave, 0,658) : une candidate plus proche que cela d'une voix existante ou d'une candidate mieux classée est rejetée. Résultat : 8 voix gardées, 4 rejetées et déplacées dans created-archive, jamais supprimées.",
+ "ear_rejected": {
+  "v-c2190de959": "Vieille femme sèche",
+  "v-841f4bcf07": "Parisien gouailleur",
+  "v-78ed2ad6c3": "Femme autoritaire",
+  "v-419a69dcf2": "Vieil homme malicieux"
+ }
 }

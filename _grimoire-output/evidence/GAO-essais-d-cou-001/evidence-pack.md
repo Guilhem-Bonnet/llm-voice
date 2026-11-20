@@ -30,3 +30,10 @@
 - Higgs : documenté dans `page-notes.json`, non essayé.
 - Retour d'écoute de l'utilisateur : accent anglais sur 4 états joués, alors que p(en) n'en signalait que 2. La mesure p(en) ne détecte donc pas l'accent.
 - Page reconstruite : 72 extraits, all_ok=true (`page-check.json`), copiée dans `~/Téléchargements/ecoute-banc-moteurs.html`. La numérotation a changé avec l'ajout de CustomVoice.
+
+## Point d'étape 5 (feu vert du coordinateur pour arrêter le service)
+- Avant l'essai : mode jeu libre, aucun modèle Ollama chargé. Service arrêté à 18:25:23 (1 570 Mio encore occupés sur la carte), relancé par `up -d` à 18:28:16, healthy (`lourds-2.log`).
+- Fish essai 2 (MAX_SEQ=4096) : les deux modèles se chargent, puis HIP OOM au décodage de préchauffe, avec 15,20 Gio alloués sur 15,92 (`fish-essai2-erreur.txt`). Le `Dockerfile.rocm` officiel n'a pas été construit : il utilise le même torch, et l'échec vient de la mémoire.
+- Ming, tentative réelle : HIP OOM pendant le transfert des poids bf16 vers la carte, 15,64 Gio alloués, pointe torch 16 016 Mio (`ming-tentative-reelle-erreur.txt`).
+- Voix jouée régénérée après e98a59e (consigne française en tête). L'ancienne version a été déplacée dans `out/qwen3-joue-avant-e98a59e`. p(en) : essoufflé 0,274 → 0,015, rire 0,238 → 0,073, chuchoté 0,0115 ; tous les autres extraits ≤ 0,007.
+- Page : 84 extraits, all_ok=true, copiée dans `~/Téléchargements`. Les 4 anciennes voix y sont marquées « rejetées à l'oreille ». Les 8 variantes refaites ne sont ni filtrées ni déplacées.

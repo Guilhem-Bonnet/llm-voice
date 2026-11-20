@@ -61,7 +61,11 @@ for it in items():
             P.append(clip(w, f"{e(g['label'])} <span class=meta>— {e(meta.get('method',''))}</span>", f"{g['id']}/{it['id']}"))
 if VF:
     P.append("<h2>Voix Qwen3 créées pour ce banc</h2>" + f"<p>{NOTES.get('voices_intro','')}</p>")
-    for title, group in (("Voix gardées", VF.get("kept", [])), ("Voix rejetées (déplacées dans created-archive)", VF.get("rejected", []))):
+    ear = NOTES.get("ear_rejected", {})
+    groups = (("Voix gardées (mesure et oreille)", [v for v in VF.get("kept", []) if v["id"] not in ear]),
+              ("Gardées par la mesure, rejetées à l'oreille par l'utilisateur (archivées, remplacées par des variantes écoutées à part)", [dict(v, reason="rejetée à l'oreille ; " + v.get("reason", "")) for v in VF.get("kept", []) if v["id"] in ear]),
+              ("Voix rejetées par le filtre (déplacées dans created-archive)", VF.get("rejected", [])))
+    for title, group in groups:
         P.append(f"<h3>{title}</h3>")
         for v in group:
             P.append(f"<p><b>{e(v['name'])}</b> <span class=meta>({e(v['id'])}) — {e(v['description'])} — {e(v.get('reason',''))}</span></p>")
