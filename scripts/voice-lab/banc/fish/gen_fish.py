@@ -8,6 +8,13 @@ sys.path.insert(0, "/lab/banc"); from common import items, game_mode, vram_mb, w
 if game_mode(): print("mode jeu actif : arrêt"); sys.exit(75)
 sys.path.insert(0, "/lab/code"); os.chdir("/tmp")
 import numpy as np, torch
+import fish_speech.models.text2semantic.inference as _inf
+# Essai 2 : le cache KV est alloué à l'init pour max_seq_len=32768 (environ 4,8 Go en bf16) : borné à MAX_SEQ (défaut 4096),
+# largement assez pour la référence de 22 s et nos textes de 400 caractères au plus.
+_orig_init = _inf.init_model
+def _init_borne(*a, **k):
+    m, d = _orig_init(*a, **k); m.config.max_seq_len = int(os.environ.get("MAX_SEQ", "4096")); return m, d
+_inf.init_model = _init_borne
 from tools.server.model_manager import ModelManager
 from fish_speech.utils.schema import ServeTTSRequest, ServeReferenceAudio
 half = os.environ.get("HALF", "0") == "1"; out = Path("/lab/out") / "fish-s2"; out.mkdir(parents=True, exist_ok=True)

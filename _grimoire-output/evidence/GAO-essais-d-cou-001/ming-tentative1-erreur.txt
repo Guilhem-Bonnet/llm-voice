@@ -1,0 +1,42 @@
+ed("/lab/weights", device="cuda:0", text_normalization=False)
+  File "/lab/code/ming_tiny/api.py", line 143, in from_pretrained
+    engine = MingTinyEngine(
+  File "/lab/code/ming_tiny/inference.py", line 242, in __init__
+    from .modeling_lingv3_tts import (
+  File "/lab/code/ming_tiny/modeling_lingv3_tts.py", line 18, in <module>
+    from .modeling_bailing_moe_v3 import BailingMoeV3ForCausalLM
+  File "/lab/code/ming_tiny/modeling_bailing_moe_v3.py", line 136, in <module>
+    from fla.modules import FusedRMSNormGated, ShortConvolution
+  File "/usr/local/lib/python3.10/dist-packages/fla/modules/__init__.py", line 2, in <module>
+    from fla.modules.convolution import ImplicitLongConvolution, LongConvolution, ShortConvolution
+  File "/usr/local/lib/python3.10/dist-packages/fla/modules/convolution.py", line 4, in <module>
+    from fla.modules.conv import (
+  File "/usr/local/lib/python3.10/dist-packages/fla/modules/conv/__init__.py", line 3, in <module>
+    from .causal_conv1d import causal_conv1d
+  File "/usr/local/lib/python3.10/dist-packages/fla/modules/conv/causal_conv1d.py", line 7, in <module>
+    from fla.ops.cp import FLACPContext
+  File "/usr/local/lib/python3.10/dist-packages/fla/ops/__init__.py", line 3, in <module>
+    from .attn import parallel_attn
+  File "/usr/local/lib/python3.10/dist-packages/fla/ops/attn/__init__.py", line 3, in <module>
+    from .parallel import parallel_attn
+  File "/usr/local/lib/python3.10/dist-packages/fla/ops/attn/parallel.py", line 635, in <module>
+    class ParallelAttentionFunction(torch.autograd.Function):
+  File "/usr/local/lib/python3.10/dist-packages/torch/__init__.py", line 2626, in compile
+    from torch._inductor.compiler_bisector import CompilerBisector
+  File "/usr/local/lib/python3.10/dist-packages/torch/_inductor/compiler_bisector.py", line 628, in <module>
+    CompilerBisector.bisection_enabled = get_is_bisection_enabled()
+  File "/usr/local/lib/python3.10/dist-packages/torch/_inductor/compiler_bisector.py", line 623, in get_is_bisection_enabled
+    CompilerBisector.get_subsystem() is not None
+  File "/usr/local/lib/python3.10/dist-packages/torch/_inductor/compiler_bisector.py", line 207, in get_subsystem
+    file_path = os.path.join(cls.get_dir(), "bisect_status.txt")
+  File "/usr/local/lib/python3.10/dist-packages/torch/_inductor/compiler_bisector.py", line 125, in get_dir
+    return f"{cache_dir() if not cls.in_process_cache else cls.in_process_cache}/{SUBDIR_NAME}"
+  File "/usr/local/lib/python3.10/dist-packages/torch/_inductor/runtime/cache_dir_utils.py", line 17, in cache_dir
+    os.environ["TORCHINDUCTOR_CACHE_DIR"] = cache_dir = default_cache_dir()
+  File "/usr/local/lib/python3.10/dist-packages/torch/_inductor/runtime/cache_dir_utils.py", line 23, in default_cache_dir
+    sanitized_username = re.sub(r'[\\/:*?"<>|]', "_", getpass.getuser())
+  File "/usr/lib/python3.10/getpass.py", line 169, in getuser
+    return pwd.getpwuid(os.getuid())[0]
+KeyError: 'getpwuid(): uid not found: 1000'
+
+vram carte 578 Mio ; pointe torch 0 Mio

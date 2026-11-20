@@ -21,3 +21,12 @@
 - Empreinte vocale (`embeddings.json`, encodeur Base sur CPU) : stabilité de la voix figée 0,99 (min 0,985), voix jouée 0,969 (min 0,935).
 - Page : `~/Téléchargements/ecoute-banc-moteurs.html` (4,76 Mo, 48 extraits). `page-check.json` : 48 extraits décodés par ffmpeg sans erreur, durée MP3 à ±0,3 s du WAV, all_ok=true.
 - Image dérivée Fish construite (`llm-voice-lab-fish:local`, torch 2.9.1+rocm7.2.3, transformers 5.19.0), pas encore exécutée.
+
+## Point d'étape 4
+- CustomVoice (conteneur sans réseau, timbres serena et ryan, `instruct` pour les états) : 24 extraits, mesurés dans `analysis.json`. Ryan a lu la narration en anglais (p(en) 0,925, WER 0,959). Serena, phrase du chevalier : p(fr) 0,005, WER 0,286. Les autres extraits ont un WER ≤ 0,263. Stabilité : serena 0,986, ryan 0,981 (cosinus moyen hors états).
+- `run_lourds.sh` a arrêté le service qwen3 à 18:12:20 et l'a relancé à 18:14:42 (`up -d`, via le trap de sortie, avant que la consigne « ne pas toucher au service » soit lue) ; voir `lourds.log`.
+  - Fish, essai 1 en bf16 : HIP OOM au chargement du codec (`fish-essai1-erreur.txt`). Le cache KV est alloué à l'init pour 32 768 positions. L'essai 2 limite le cache (MAX_SEQ=4096) ; il est prêt, pas lancé.
+  - Ming : arrêt avant les poids, KeyError getpwuid sur l'uid 1000 (`ming-tentative1-erreur.txt`). Corrigé avec USER=lab ; nouvelle tentative pas lancée.
+- Higgs : documenté dans `page-notes.json`, non essayé.
+- Retour d'écoute de l'utilisateur : accent anglais sur 4 états joués, alors que p(en) n'en signalait que 2. La mesure p(en) ne détecte donc pas l'accent.
+- Page reconstruite : 72 extraits, all_ok=true (`page-check.json`), copiée dans `~/Téléchargements/ecoute-banc-moteurs.html`. La numérotation a changé avec l'ajout de CustomVoice.

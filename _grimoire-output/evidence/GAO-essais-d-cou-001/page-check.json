@@ -1,6 +1,6 @@
 {
  "page": "/home/guilhem/.llm-voice/voices-lab/banc/ecoute-banc-moteurs.html",
- "clips": 48,
+ "clips": 72,
  "all_ok": true,
  "checks": [
   {
@@ -14,6 +14,20 @@
    "wav": "qwen3-joue/01-narration.wav",
    "wav_s": 31.12,
    "mp3_s": 31.12,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-serena/01-narration.wav",
+   "wav_s": 25.2,
+   "mp3_s": 25.2,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/01-narration.wav",
+   "wav_s": 12.8,
+   "mp3_s": 12.8,
    "decode_ok": true,
    "ok": true
   },
@@ -32,6 +46,20 @@
    "ok": true
   },
   {
+   "wav": "qwen3custom-serena/02-naturel-1.wav",
+   "wav_s": 5.52,
+   "mp3_s": 5.52,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/02-naturel-1.wav",
+   "wav_s": 6.96,
+   "mp3_s": 6.96,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
    "wav": "qwen3-fige/03-naturel-2.wav",
    "wav_s": 5.28,
    "mp3_s": 5.28,
@@ -42,6 +70,20 @@
    "wav": "qwen3-joue/03-naturel-2.wav",
    "wav_s": 4.32,
    "mp3_s": 4.32,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-serena/03-naturel-2.wav",
+   "wav_s": 4.4,
+   "mp3_s": 4.4,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/03-naturel-2.wav",
+   "wav_s": 4.48,
+   "mp3_s": 4.48,
    "decode_ok": true,
    "ok": true
   },
@@ -60,6 +102,20 @@
    "ok": true
   },
   {
+   "wav": "qwen3custom-serena/04-naturel-3.wav",
+   "wav_s": 4.4,
+   "mp3_s": 4.4,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/04-naturel-3.wav",
+   "wav_s": 4.72,
+   "mp3_s": 4.72,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
    "wav": "qwen3-fige/05-essouffle.wav",
    "wav_s": 6.0,
    "mp3_s": 6.0,
@@ -70,6 +126,20 @@
    "wav": "qwen3-joue/05-essouffle.wav",
    "wav_s": 7.36,
    "mp3_s": 7.36,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-serena/05-essouffle.wav",
+   "wav_s": 10.0,
+   "mp3_s": 10.0,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/05-essouffle.wav",
+   "wav_s": 11.36,
+   "mp3_s": 11.36,
    "decode_ok": true,
    "ok": true
   },
@@ -88,6 +158,20 @@
    "ok": true
   },
   {
+   "wav": "qwen3custom-serena/06-toux-gene.wav",
+   "wav_s": 13.2,
+   "mp3_s": 13.2,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/06-toux-gene.wav",
+   "wav_s": 12.88,
+   "mp3_s": 12.88,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
    "wav": "qwen3-fige/07-rire.wav",
    "wav_s": 6.32,
    "mp3_s": 6.32,
@@ -98,6 +182,20 @@
    "wav": "qwen3-joue/07-rire.wav",
    "wav_s": 6.88,
    "mp3_s": 6.88,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-serena/07-rire.wav",
+   "wav_s": 5.52,
+   "mp3_s": 5.52,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/07-rire.wav",
+   "wav_s": 6.08,
+   "mp3_s": 6.08,
    "decode_ok": true,
    "ok": true
   },
@@ -116,6 +214,20 @@
    "ok": true
   },
   {
+   "wav": "qwen3custom-serena/08-chuchote.wav",
+   "wav_s": 6.56,
+   "mp3_s": 6.56,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/08-chuchote.wav",
+   "wav_s": 4.64,
+   "mp3_s": 4.64,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
    "wav": "qwen3-fige/09-voix-interieure.wav",
    "wav_s": 6.0,
    "mp3_s": 6.0,
@@ -130,6 +242,20 @@
    "ok": true
   },
   {
+   "wav": "qwen3custom-serena/09-voix-interieure.wav",
+   "wav_s": 5.6,
+   "mp3_s": 5.6,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/09-voix-interieure.wav",
+   "wav_s": 7.28,
+   "mp3_s": 7.28,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
    "wav": "qwen3-fige/10-colere.wav",
    "wav_s": 5.04,
    "mp3_s": 5.04,
@@ -138,6 +264,20 @@
   },
   {
    "wav": "qwen3-joue/10-colere.wav",
+   "wav_s": 5.04,
+   "mp3_s": 5.04,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-serena/10-colere.wav",
+   "wav_s": 5.52,
+   "mp3_s": 5.52,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/10-colere.wav",
    "wav_s": 5.04,
    "mp3_s": 5.04,
    "decode_ok": true,
@@ -158,6 +298,20 @@
    "ok": true
   },
   {
+   "wav": "qwen3custom-serena/11-difficile-chevalier.wav",
+   "wav_s": 7.44,
+   "mp3_s": 7.44,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/11-difficile-chevalier.wav",
+   "wav_s": 8.56,
+   "mp3_s": 8.56,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
    "wav": "qwen3-fige/12-difficile-ecureuil.wav",
    "wav_s": 6.64,
    "mp3_s": 6.64,
@@ -168,6 +322,20 @@
    "wav": "qwen3-joue/12-difficile-ecureuil.wav",
    "wav_s": 5.28,
    "mp3_s": 5.28,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-serena/12-difficile-ecureuil.wav",
+   "wav_s": 5.92,
+   "mp3_s": 5.92,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3custom-ryan/12-difficile-ecureuil.wav",
+   "wav_s": 8.32,
+   "mp3_s": 8.32,
    "decode_ok": true,
    "ok": true
   },
