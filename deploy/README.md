@@ -9,6 +9,7 @@ Cinq services indépendants (ADR-009). Aucun port publié hors `127.0.0.1`.
 | `piper` | `light` | TTS niveau 1b, CPU seul, sans GPU | 5000 |
 | `kyutai16` | `kyutai16` | Kyutai TTS 1.6B, voix de narration, GPU ROCm | 8020 |
 | `qwen3` | `qwen3` | Qwen3-TTS 1.7B, voix figée et voix jouée, GPU ROCm | 8021 |
+| `qwen3` (images) | `rocm` / `cuda` | idem, images `llm-voice-qwen3` (`docker-compose.qwen3.yml`) | 8021 |
 
 ## Prérequis
 
@@ -190,3 +191,47 @@ Ce qu'il faut savoir :
 
 Tests, sans GPU : `python3 -P deploy/qwen3/test_server.py`. Preuve réelle sur le GPU, hors ligne :
 `_grimoire-output/evidence/GAO-moteur-qwen3-001/proof_real.py`.
+
+### Qwen3 en images : sans Hugging Face, modèles et voix fournis
+
+Trois images, version `0.1.0` (`deploy/qwen3/Dockerfile.*`) :
+
+| Image | Contenu | État |
+|---|---|---|
+| `ghcr.io/guilhem-bonnet/llm-voice-qwen3:0.1.0-rocm` | serveur, PyTorch 2.9.1 ROCm 7.2.3 (AMD) | testée sur RX 9070 (gfx1201) |
+| `ghcr.io/guilhem-bonnet/llm-voice-qwen3:0.1.0-cuda` | serveur, PyTorch 2.9.1 CUDA 12.8 (NVIDIA) | **non testée** : construite, jamais lancée sur une carte NVIDIA |
+| `ghcr.io/guilhem-bonnet/llm-voice-qwen3-models:0.1.0` | Qwen3-TTS 12Hz 1.7B Base et VoiceDesign (cache Hugging Face, une couche par modèle), catalogue `voices.json`, ses extraits, les voix créées de départ, licences Apache-2.0 et NOTICE | testée avec l'image ROCm |
+
+Versions figées : images de base par empreinte, paquets pip à la version exacte
+(`requirements-*.txt`), `qwen-tts==0.1.1` sans ses dépendances (pas de gradio). Le serveur tourne
+sans root, sans capacités, système de fichiers en lecture seule (`/tmp` en mémoire),
+`HF_HUB_OFFLINE=1`, et démarre sans aucun réseau.
+
+```bash
+mkdir -p "$XDG_RUNTIME_DIR/gpu-yield"
+COMPOSE_PROFILES=rocm docker compose -f deploy/docker-compose.qwen3.yml up -d   # AMD
+COMPOSE_PROFILES=cuda docker compose -f deploy/docker-compose.qwen3.yml up -d   # NVIDIA (non testé, NVIDIA Container Toolkit)
+```
+
+Le service `qwen3-data` (image de données, sans réseau) copie modèles et voix dans trois volumes
+nommés, une fois par version, en vérifiant l'empreinte SHA-256 de chaque fichier de poids ; puis
+le serveur démarre (`depends_on: service_completed_successfully`). Modèles et catalogue sont montés
+en lecture seule, `qwen3-created` (voix créées) en écriture ; une voix créée n'est jamais écrasée
+par une nouvelle version de l'image. Variables : `QWEN3_VERSION`, `QWEN3_PORT` (8021, publié sur
+127.0.0.1 seulement), `QWEN3_REGISTRY`, `LLM_VOICE_UID/GID`, `LLM_VOICE_VIDEO_GID/RENDER_GID`.
+
+**Construire** (rien n'est poussé) :
+
+```bash
+deploy/qwen3/prepare-models-context.sh   # contexte hors dépôt : ~/.llm-voice/build/qwen3-models-0.1.0
+deploy/qwen3/build.sh                    # rocm, cuda, models (ou un seul : build.sh rocm)
+```
+
+**Publier** (`deploy/qwen3/publish.sh`, à blanc sans `--push`) attend une décision : soit la GitHub
+App du bot reçoit la permission `packages: write`, soit l'utilisateur se connecte lui-même
+(`docker login ghcr.io -u <compte>`, jeton à portée `write:packages`) puis lance
+`deploy/qwen3/publish.sh --push`. Penser ensuite à rendre les paquets publics dans GitHub.
+
+**Repli** : le mode à dossiers locaux (`docker-compose.tts.yml`, profil `qwen3`, ci-dessus) reste
+inchangé et utilisable sans ces images.
+

@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1
+# Modèles Qwen3-TTS 12Hz 1.7B (Base, VoiceDesign) et voix de LLM Voice, pour le serveur
+# llm-voice-qwen3. Contexte de construction HORS DÉPÔT, préparé par prepare-models-context.sh
+# (les poids n'entrent jamais dans git). Lancée comme service d'initialisation, l'image copie
+# son contenu vers les volumes nommés (data-init.sh), une fois par version.
+ARG BASE_IMAGE=busybox:1.37.0-musl@sha256:f6a95d611e0a8780fabdb2aec43e31275b2720dfefa3e41b16835bfc42454478
+FROM ${BASE_IMAGE}
+
+ARG VERSION=0.1.0
+LABEL org.opencontainers.image.title="llm-voice-qwen3-models" \
+      org.opencontainers.image.description="Poids Qwen3-TTS-12Hz-1.7B-Base et -VoiceDesign (cache Hugging Face) et voix synthétiques de LLM Voice ; s'initialise dans des volumes nommés." \
+      org.opencontainers.image.source="https://github.com/Guilhem-Bonnet/llm-voice" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.version="${VERSION}"
+
+# Une couche par modèle : un modèle inchangé ne se retélécharge pas.
+COPY --chown=1000:1000 hf/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base /data/hf/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base
+COPY --chown=1000:1000 hf/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-VoiceDesign /data/hf/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-VoiceDesign
+COPY --chown=1000:1000 refs /data/refs
+COPY --chown=1000:1000 created /data/created
+COPY LICENSE-Apache-2.0 NOTICE /licenses/
+COPY VERSION /data/VERSION
+COPY data-init.sh /usr/local/bin/qwen3-data-init
+RUN mkdir -p /vol/hf /vol/refs /vol/created && chown 1000:1000 /vol/hf /vol/refs /vol/created
+USER 1000:1000
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/qwen3-data-init"]

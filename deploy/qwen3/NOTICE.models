@@ -1,0 +1,22 @@
+llm-voice-qwen3-models — modèles et voix du serveur Qwen3-TTS de LLM Voice
+https://github.com/Guilhem-Bonnet/llm-voice
+
+Poids des modèles (dossier /data/hf, disposition du cache Hugging Face, inchangée) :
+  - Qwen/Qwen3-TTS-12Hz-1.7B-Base         https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base
+  - Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign  https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign
+  Auteur : équipe Qwen, Alibaba Cloud. Licence : Apache License 2.0 (fiche des modèles,
+  « license: apache-2.0 »), texte complet dans /licenses/LICENSE-Apache-2.0.
+  Fichiers redistribués tels que téléchargés depuis Hugging Face, sans modification
+  (empreintes SHA-256 vérifiées à la copie, voir data-init.sh).
+
+Bibliothèque d'inférence qwen-tts 0.1.1 (installée dans l'image serveur llm-voice-qwen3) :
+  https://pypi.org/project/qwen-tts/0.1.1/ — Apache License 2.0, même texte.
+
+Voix (dossiers /data/refs et /data/created) :
+  Tous les extraits audio sont des voix SYNTHÉTIQUES générées par Qwen3-TTS (modèle
+  VoiceDesign, à partir d'une description textuelle et d'une graine). Aucun enregistrement
+  d'une personne réelle, aucun clonage d'une voix existante.
+  - refs/voices.json et refs/out-gao/rire-en-s11.*, refs/out-gao/chuchote-en-s11.* : la voix
+    figée « fr-essais-21-22 » du catalogue ;
+  - created/v-* : voix de personnages créées par POST /voices/create.
+  Ces fichiers sont distribués sous Apache License 2.0, comme le reste de l'image.

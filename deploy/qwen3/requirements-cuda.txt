@@ -1,0 +1,7 @@
+# PyTorch CUDA 12.8 (index officiel PyTorch), roues qui embarquent leurs bibliothèques CUDA
+# (paquets nvidia-*, versions exactes imposées par torch 2.9.1). Variante NON TESTÉE : aucune
+# carte NVIDIA sur la machine de développement.
+--index-url https://download.pytorch.org/whl/cu128
+--only-binary=:all:
+torch==2.9.1
+torchaudio==2.9.1

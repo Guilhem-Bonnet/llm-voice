@@ -1,0 +1,6 @@
+# PyTorch ROCm 7.2.3 pour RDNA4 (gfx1201, RX 9070) : roues manylinux officielles d'AMD, les mêmes
+# que l'image deploy-chatterbox:latest prouvée. Roues « lw » : elles lient les bibliothèques ROCm
+# du système (/opt/rocm-7.2.3), installées par apt dans Dockerfile.rocm. cp310 seulement.
+https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2.3/triton-3.5.1%2Brocm7.2.3.gita272dfa8-cp310-cp310-linux_x86_64.whl
+https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2.3/torch-2.9.1%2Brocm7.2.3.lw.gitebc02d69-cp310-cp310-linux_x86_64.whl
+https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2.3/torchaudio-2.9.0%2Brocm7.2.3.gite3c6ee2b-cp310-cp310-linux_x86_64.whl

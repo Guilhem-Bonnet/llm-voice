@@ -1,0 +1,102 @@
+# Qwen3-TTS de LLM Voice en images : serveur (ROCm ou CUDA) + image de données (modèles, voix).
+# Aucun accès à Hugging Face : les poids viennent de llm-voice-qwen3-models, copiés une fois
+# dans des volumes nommés par le service qwen3-data.
+#
+#   mkdir -p "$XDG_RUNTIME_DIR/gpu-yield"
+#   COMPOSE_PROFILES=rocm docker compose -f deploy/docker-compose.qwen3.yml up -d   # AMD
+#   COMPOSE_PROFILES=cuda docker compose -f deploy/docker-compose.qwen3.yml up -d   # NVIDIA, NON TESTÉ
+#
+# Variables : COMPOSE_PROFILES (rocm | cuda), QWEN3_VERSION (0.1.0), QWEN3_PORT (8021, publié sur
+# 127.0.0.1 seulement), QWEN3_REGISTRY (ghcr.io/guilhem-bonnet), LLM_VOICE_UID/GID,
+# LLM_VOICE_VIDEO_GID/RENDER_GID (ROCm). Le mode à dossiers locaux reste dans
+# docker-compose.tts.yml, profil qwen3 (voir deploy/README.md).
+name: llm-voice-qwen3
+
+x-qwen3-server: &qwen3-server
+  pull_policy: missing
+  user: "${LLM_VOICE_UID:-1000}:${LLM_VOICE_GID:-1000}"
+  ports:
+    - "127.0.0.1:${QWEN3_PORT:-8021}:8021"
+  depends_on:
+    qwen3-data:
+      condition: service_completed_successfully
+  volumes:
+    - qwen3-models:/lab/hf:ro
+    - qwen3-refs:/lab/refs:ro
+    # Le seul volume en écriture : les voix créées par POST /voices/create.
+    - qwen3-created:/lab/refs/created:rw
+    # Drapeau du mode jeu : doit exister, jamais recréé en root par Docker.
+    - type: bind
+      source: ${XDG_RUNTIME_DIR:-/run/user/1000}/gpu-yield
+      target: /run/user/1000/gpu-yield
+      read_only: true
+      bind:
+        create_host_path: false
+  read_only: true
+  tmpfs:
+    - /tmp:size=2g,uid=${LLM_VOICE_UID:-1000},gid=${LLM_VOICE_GID:-1000}
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  environment:
+    - XDG_RUNTIME_DIR=/run/user/1000
+    - USER=llm-voice
+    - LOGNAME=llm-voice
+  healthcheck:
+    test: ["CMD", "python3", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8021/health', timeout=5)"]
+    interval: 15s
+    timeout: 10s
+    retries: 4
+    start_period: 20s
+  # Jamais de redémarrage tout seul : un service GPU ne revient pas pendant un jeu.
+  restart: "no"
+
+services:
+  # Copie modèles et voix de l'image de données vers les volumes, une fois par version
+  # (les voix créées ne sont jamais écrasées). Sans réseau, sans droits.
+  qwen3-data:
+    image: ${QWEN3_REGISTRY:-ghcr.io/guilhem-bonnet}/llm-voice-qwen3-models:${QWEN3_VERSION:-0.1.0}
+    pull_policy: missing
+    user: "${LLM_VOICE_UID:-1000}:${LLM_VOICE_GID:-1000}"
+    network_mode: none
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - qwen3-models:/vol/hf
+      - qwen3-refs:/vol/refs
+      - qwen3-created:/vol/created
+    restart: "no"
+
+  qwen3:
+    <<: *qwen3-server
+    profiles: ["rocm"]
+    image: ${QWEN3_REGISTRY:-ghcr.io/guilhem-bonnet}/llm-voice-qwen3:${QWEN3_VERSION:-0.1.0}-rocm
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - "${LLM_VOICE_VIDEO_GID:-39}"
+      - "${LLM_VOICE_RENDER_GID:-105}"
+
+  # NON TESTÉ : aucune carte NVIDIA sur la machine de développement.
+  # Prérequis : NVIDIA Container Toolkit.
+  qwen3-cuda:
+    <<: *qwen3-server
+    profiles: ["cuda"]
+    image: ${QWEN3_REGISTRY:-ghcr.io/guilhem-bonnet}/llm-voice-qwen3:${QWEN3_VERSION:-0.1.0}-cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  qwen3-models:
+  qwen3-refs:
+  qwen3-created:
