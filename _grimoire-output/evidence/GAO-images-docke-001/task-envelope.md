@@ -54,5 +54,5 @@
 |---|---|---|
 | Plan accepted or autonomous assumption recorded | Brief du 2026-11-20 ; hypothèses ci-dessus | done |
 | Implementation complete | `deploy/qwen3/Dockerfile.*`, scripts, `deploy/docker-compose.qwen3.yml`, README | done |
-| Validation complete | evidence-pack « Validation » | pending |
-| Deviations documented | evidence-pack « Deviations » | pending |
+| Validation complete | evidence-pack « Validation » | done |
+| Deviations documented | evidence-pack « Deviations » | done |

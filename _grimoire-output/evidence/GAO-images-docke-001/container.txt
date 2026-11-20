@@ -1,0 +1,2 @@
+network_mode=none user=1000:1000 readonly=true capdrop=[ALL] image=ghcr.io/guilhem-bonnet/llm-voice-qwen3:0.1.0-rocm
+réseau : injoignable (OSError)

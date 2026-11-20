@@ -1,0 +1,8 @@
+{
+  "compose_up_s": 67.3,
+  "health_after_up_s": 0.3,
+  "tts_s": 39.2,
+  "audio_s": 6.24,
+  "text": "Le serveur tourne dans son image, sans réseau, et lit cette phrase avec la voix figée.",
+  "voices": null
+}

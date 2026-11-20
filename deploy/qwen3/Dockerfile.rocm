@@ -43,9 +43,16 @@ ENV LD_LIBRARY_PATH=/opt/rocm/lib
 
 COPY requirements-rocm.txt requirements-common.txt /tmp/req/
 RUN python3 -m pip install -r /tmp/req/requirements-rocm.txt
-RUN python3 -m pip install -r /tmp/req/requirements-common.txt \
+# sox 1.5.0 n'existe qu'en source et importe numpy à la construction : numpy d'abord,
+# puis sox sans isolation (le pip 22 d'Ubuntu 22.04 ne le fait pas tout seul).
+RUN python3 -m pip install numpy==2.2.6 \
+ && python3 -m pip install --no-build-isolation sox==1.5.0 \
+ && python3 -m pip install -r /tmp/req/requirements-common.txt \
  && python3 -m pip install --no-deps qwen-tts==0.1.1 \
  && { python3 -m pip check || true; }
+
+# libgomp1 (OpenMP) : réclamé par les bibliothèques ROCm à l'import de torch, absent d'ubuntu:22.04.
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --uid 1000 --user-group --no-create-home --home-dir /tmp llm-voice \
  && install -d -o 1000 -g 1000 /lab /lab/hf /lab/refs /srv/qwen3

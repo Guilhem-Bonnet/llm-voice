@@ -1,0 +1,7 @@
+# Test de l'image ROCm : projet compose distinct (-p llm-voice-qwen3-test), volumes distincts,
+# et AUCUN réseau pour le serveur (network_mode: none) : il doit démarrer hors ligne.
+# Les requêtes passent par `docker exec` sur la boucle locale du conteneur.
+services:
+  qwen3:
+    network_mode: none
+    ports: !reset []
