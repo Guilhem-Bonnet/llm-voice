@@ -76,7 +76,7 @@ DEFAULT_SAMPLE_TEXT = (
     "chaque mot, pour que l'écoute reste agréable du début à la fin."
 )
 # Placée entre la description et l'accent : un extrait posé fige une voix posée.
-CREATE_DIRECTION = "Calm, neutral reading at a steady pace."
+CREATE_DIRECTION = "Natural reading at a steady pace, in the character's own tone."
 ORIGIN_CATALOGUE = "catalogue"
 ORIGIN_CREATED = "created"
 MAX_BODY_BYTES = 256 * 1024
@@ -320,7 +320,9 @@ def find_references(catalog: Catalog, root: Path, log: Callable[..., None] = emi
 
 
 def played_instruction(voice: Voice, direction: str) -> str:
-    return f"{voice.description} {direction} {voice.accent}"
+    # Le français en tête : placé après une longue consigne de jeu en anglais, l'accent de la voix
+    # cède (essoufflé, toux, rire, voix intérieure entendus avec un accent anglais, 2026-11-20).
+    return f"{voice.accent} {voice.description} {direction}"
 
 
 def wav_bytes(pcm: bytes, rate: int) -> bytes:
@@ -757,7 +759,7 @@ class Qwen3Service:
             accent=accent,
             origin=ORIGIN_CREATED,
         )
-        instruct = f"{creation.description} {CREATE_DIRECTION} {accent}"
+        instruct = f"{accent} {creation.description} {CREATE_DIRECTION}"
         job = Job(MODE_PLAYED, creation.sample_text, voice.id, seed, instruct)
 
         def finish(pcm: bytes, rate: int) -> dict[str, object]:

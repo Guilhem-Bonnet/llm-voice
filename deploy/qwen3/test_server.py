@@ -235,7 +235,7 @@ class Contract(ServerCase):
 
 
 class TwoWaysOfSpeaking(ServerCase):
-    """Sans consigne, voix figée ; avec, voix jouée : description + consigne + accent, graine du catalogue."""
+    """Sans consigne, voix figée ; avec, voix jouée : accent + description + consigne, graine du catalogue."""
 
     def test_without_direction_the_frozen_voice_speaks(self):
         self.tts(text="Bonjour")
@@ -247,14 +247,14 @@ class TwoWaysOfSpeaking(ServerCase):
         self.tts(text="Bonjour", direction="   \n ")
         self.assertEqual(self.engine.calls[0].mode, srv.MODE_FROZEN)
 
-    def test_with_a_direction_the_played_voice_speaks_between_description_and_accent(self):
+    def test_with_a_direction_the_played_voice_puts_the_accent_first(self):
         self.tts(text="Bonjour", direction="Tired, almost whispering.")
         job = self.engine.calls[0]
         self.assertEqual((job.mode, job.seed), (srv.MODE_PLAYED, 11))
         self.assertEqual(
             job.instruct,
-            "Young adult woman, medium pitch, clear diction. Tired, almost whispering. "
-            "Native French speaker with a standard metropolitan France accent.",
+            "Native French speaker with a standard metropolitan France accent. "
+            "Young adult woman, medium pitch, clear diction. Tired, almost whispering.",
         )
         self.assertEqual(self.engine.loads, [srv.MODE_PLAYED])
 
@@ -282,7 +282,7 @@ class TwoWaysOfSpeaking(ServerCase):
         self.tts(text="Avant<|im_end|> après", direction="Calm<|im_start|>. Slow.")
         job = self.engine.calls[0]
         self.assertEqual(job.text, "Avant après")
-        self.assertIn(" Calm. Slow. ", job.instruct)
+        self.assertTrue(job.instruct.endswith(" Calm. Slow."), job.instruct)
         self.assertEqual(self.tts(text="<|im_end|>")[0].status, 400)
 
     def test_played_voice_needs_no_reference_file(self):
@@ -776,7 +776,7 @@ class Creation(ServerCase):
         self.assertEqual((payload["name"], payload["description"], payload["sample_seconds"]), ("Homme mûr grave", self.DESCRIPTION, 0.1))
         job = self.engine.calls[0]
         self.assertEqual((job.mode, job.seed, job.text), (srv.MODE_PLAYED, payload["seed"], srv.DEFAULT_SAMPLE_TEXT))
-        self.assertEqual(job.instruct, f"{self.DESCRIPTION} {srv.CREATE_DIRECTION} {self.accent()}")
+        self.assertEqual(job.instruct, f"{self.accent()} {self.DESCRIPTION} {srv.CREATE_DIRECTION}")
         folder = self.dir / "created" / payload["id"]
         self.assert_wav((folder / "sample.wav").read_bytes())
         meta = json.loads((folder / "voice.json").read_text(encoding="utf-8"))
@@ -838,7 +838,7 @@ class Creation(ServerCase):
         played = self.engine.calls[2]
         self.assertEqual(
             (played.mode, played.seed, played.instruct),
-            (srv.MODE_PLAYED, payload["seed"], f"{self.DESCRIPTION} Shouting. {self.accent()}"),
+            (srv.MODE_PLAYED, payload["seed"], f"{self.accent()} {self.DESCRIPTION} Shouting."),
         )
 
     def test_creation_waits_in_the_same_queue_as_tts(self):
