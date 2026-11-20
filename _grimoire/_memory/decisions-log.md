@@ -268,3 +268,22 @@
 ### [2026-11-06] Écoute : Kyutai 1.6B ne joue pas
 - **Décision** : réécrire le texte pour Kyutai 1.6B ne donne ni souffle, ni toux, ni rire : seulement des phrases hachées, et une lecture littéraire « mot à mot ». Le jeu doit venir de codes compris par le modèle de voix (balises), donc d'un moteur qui en a. Remet en question le moteur unique décidé le 2026-11-06, selon l'écoute des essais ; Kyutai reste en place d'ici là.
 - **Agent** : concierge, sur l'écoute de guilhem-bonnet
+
+### [2026-11-07] Qwen3-TTS devient la piste principale du jeu d'acteurs
+- **Décision** : à l'écoute, Qwen3-TTS joue (essoufflé, voix gênée, soupir, rire, chuchoté, voix dans la tête, colère, répliques parlées), là où Kyutai ne jouait pas ; Ming convainc sur ses codes placés avant la phrase ([Cough], [Sigh], [Laughter]). La voix des extraits 21 et 22 (Qwen3, graine 11) est voulue par défaut à la place de Camille, sous réserve de pouvoir la figer. Temps de chargement long accepté, à condition qu'aucune coupure ne survienne pendant l'écoute. Remet en cause la décision du 2026-11-06 « Moteur retenu : Kyutai TTS 1.6B » pour le jeu d'acteurs ; moteur et intégration restent à trancher après l'écoute de la voix figée.
+- **Agent** : concierge, sur décision de guilhem-bonnet (« on tient une bonne piste », « c'est pas grave que ça prenne du temps de chargement, tant qu'ensuite on a pas de problème durant l'écoute »)
+
+### [2026-11-07] Distribution : personnages visibles, voix créées avec Qwen3, déduction d'après le texte
+- **Contexte** : sur `docs/essais-voix/07-theatre-noms-seuls.md` avec Qwen3, ni personnages ni choix de voix : la distribution exclut la voix du narrateur et Qwen3 n'en a qu'une ; seul un Quick Pick existait (ADR-018 §7 étape 4), le panneau Studio > Distribution n'est pas construit.
+- **Décision** : (1) panneau Studio > Distribution : tous les personnages, écoute d'essai d'une voix sur une réplique du personnage, attribution ; (2) les voix des personnages sont créées avec Qwen3 (jeu de départ varié figé une fois, création à partir d'une description), tout en local ; (3) amendement d'ADR-018 (« Aucun genre déduit ») : le metteur en scène local peut proposer âge, genre et caractère d'après les indices du texte (« Madame », « Elle pose sa lampe », « le vieux comte »), jamais d'après le prénom seul ; la proposition est affichée avec sa citation, sans indice aucune supposition, l'utilisateur garde le dernier mot.
+- **Agent** : concierge, sur décision de guilhem-bonnet (réponses « Oui, d'après le texte », « Créées avec Qwen3 »)
+
+### [2026-11-20] Empaquetage et publication de la voix Qwen3, essais de moteurs
+- **Décision** : images Docker du serveur Qwen3 pour AMD (ROCm, testée) et NVIDIA (CUDA, publiée « non testée ») ; modèles et voix (catalogue + 9 voix créées) dans une image de données séparée, sans passer par Hugging Face ; push de la branche et fusion dans main (PR #72) ; essais d'écoute autorisés de Qwen3 CustomVoice, Ming-3.0 grand (MIT), Fish S2 Pro et Higgs TTS 3 (ces deux derniers comme repères seulement, licences non commerciales).
+- **Blocage** : la GitHub App du bot n'a pas `packages: write` ; publication des images en attente d'une décision de guilhem-bonnet.
+- **Agent** : concierge, sur décision de guilhem-bonnet (réponses du 2026-11-20)
+
+### [2026-11-20] Publication : code fusionné, images publiques
+- **Fait** : PR #72 fusionnée dans main (commit `cbfa22b`, approuvée par guilhem-bonnet) après correction de zod 4.6.7 (GHSA-mrhx-c7xc-m3w5), du lint `as_chunks` de Rust 1.100, de 5 alertes CodeQL et d'un test sans moteur instable sous Windows. Images publiées et publiques sur GHCR : `llm-voice-qwen3:0.1.0-rocm` (testée hors réseau), `llm-voice-qwen3:0.1.0-cuda` (non testée sur GPU NVIDIA), `llm-voice-qwen3-models:0.1.0` (modèles Base + VoiceDesign, catalogue et 9 voix créées) ; accès anonyme vérifié (200).
+- **Contrainte apprise** : une GitHub App ne peut pas créer un paquet GHCR sur un compte personnel (`installation not allowed to Create organization package`) ; premier envoi et passage en public faits par guilhem-bonnet ; le dépôt `llm-voice` a l'accès Write aux paquets pour les versions suivantes.
+- **Agent** : concierge, sur décision de guilhem-bonnet

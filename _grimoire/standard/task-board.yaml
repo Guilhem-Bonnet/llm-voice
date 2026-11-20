@@ -60,6 +60,11 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : chaque voix a une fiche complète (source, licence, consentement)'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-adr-015-1-te-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-adr-015-1-te-001/decision-trace.yaml
@@ -84,6 +89,12 @@ tasks:
       pattern: commande_code_sortie
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings:
+    - criterion: 'test : scripts du banc en code de sortie 0 sur les trois genres (tests 4 à 7)'
+      code: depense_payante
+      message: "dépense payante : remplacez le banc ou l'API facturée par un contrôle gratuit (fixture, doublure) ou faites
+        arbitrer la dépense hors de la tâche"
     raised_by: no_declared_command
   blockers:
   - reason: dépend de GAO-adr-015-5-an-001
@@ -111,6 +122,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers:
   - reason: dépend de GAO-adr-015-5-an-001
@@ -138,6 +151,8 @@ tasks:
       pattern: gate
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers:
   - reason: dépend de GAO-adr-015-6-ba-001
@@ -167,6 +182,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers:
   - reason: dépend de GAO-banc-d-une-j-001
@@ -197,6 +214,14 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : tableau ROCm, VRAM, RTF, temps au premier son et WER par moteur dans evidence-pack'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: "gate : écoute ABX de l'utilisateur consignée dans acceptance-record"
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-banc-d-une-j-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-banc-d-une-j-001/decision-trace.yaml
@@ -223,6 +248,15 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : E2E réel sur profil jetable, son capturé et transcrit par le banc, zéro NotAllowedError'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings:
+    - criterion: 'test : E2E réel sur profil jetable, son capturé et transcrit par le banc, zéro NotAllowedError'
+      code: depense_payante
+      message: "dépense payante : remplacez le banc ou l'API facturée par un contrôle gratuit (fixture, doublure) ou faites
+        arbitrer la dépense hors de la tâche"
   blockers:
   - reason: dépend de GAO-packaging-5-001
     target: GAO-packaging-5-001
@@ -252,6 +286,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-file-de-lect-001/context-bundle.yaml
@@ -278,6 +314,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fournisseur-001/context-bundle.yaml
@@ -310,6 +348,18 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : synthèse FR via le Core transcrite par le banc, TTFA consigné'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test : aucune connexion sortante du Core'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings:
+    - criterion: 'test : synthèse FR via le Core transcrite par le banc, TTFA consigné'
+      code: depense_payante
+      message: "dépense payante : remplacez le banc ou l'API facturée par un contrôle gratuit (fixture, doublure) ou faites
+        arbitrer la dépense hors de la tâche"
   blockers:
   - reason: dépend de GAO-bascule-par-001
     target: GAO-bascule-par-001
@@ -341,6 +391,14 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'build/CI : workflow vert sur les 5 cibles'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test : chaque VSIX contient le binaire de sa cible et le Core répond sur /health'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers:
   - reason: dépend de GAO-s4-windows-f-001
     target: GAO-s4-windows-f-001
@@ -376,6 +434,14 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: spawn sans shell, arguments fixes, écoute sur 127.0.0.1 uniquement'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test: attente de /health et arrêt à la fermeture'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-006/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-006/decision-trace.yaml
@@ -414,6 +480,12 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: chaque état du lecteur a son rendu et son action (attente, préparation, lecture, pause, document modifié,
+        erreur)'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-007/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-007/decision-trace.yaml
@@ -450,6 +522,14 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: "test: aucun libellé n'affiche $(comment-discussion)"
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test: liste limitée à 20 avec Tout afficher'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-008/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-008/decision-trace.yaml
@@ -481,6 +561,11 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: "test: libellés sans jargon (Provider, Profile, Inbox) dans les menus et la barre d'état"
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-009/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-009/decision-trace.yaml
@@ -513,6 +598,11 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: "test: l'accueil ne s'ouvre qu'une fois et ne lance aucune lecture"
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers:
   - reason: dépend de GAO-refonte-ux-0-007
     target: GAO-refonte-ux-0-007
@@ -547,6 +637,11 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: import, export, duplication, suppression et mode par source conservés'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-1-002/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-1-002/decision-trace.yaml
@@ -582,6 +677,14 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: "test: rien n'est appliqué sans accord explicite"
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test: aucune requête réseau pendant le parcours'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-1-003/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-1-003/decision-trace.yaml
@@ -611,6 +714,11 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: chaque résultat donne une conclusion et une action en français'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-1-004/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-1-004/decision-trace.yaml
@@ -643,6 +751,11 @@ tasks:
       pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: capture des vues à 260, 320 et 500 px en thèmes sombre et clair'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers:
   - reason: dépend de GAO-refonte-ux-0-006
     target: GAO-refonte-ux-0-006
@@ -688,6 +801,8 @@ tasks:
       pattern: build_ci
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-s0-hygi-ne-d-001/context-bundle.yaml
@@ -714,6 +829,11 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'gate : décision consignée dans decisions-log avec sources, carte inférence locale mise à jour'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-s0-licence-p-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-s0-licence-p-001/decision-trace.yaml
@@ -729,15 +849,21 @@ tasks:
   - 'gate : ADR-014 versé dans docs/adr, relu par un vérificateur indépendant'
   - 'gate : grimoire standard gate check --strict vert'
   verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate : ADR-014 versé dans docs/adr, relu par un vérificateur indépendant'"
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (validation_humaine) : 'gate : ADR-014 versé dans docs/adr, relu par un vérificateur indépendant'"
     criteria:
     - criterion: 'gate : ADR-014 versé dans docs/adr, relu par un vérificateur indépendant'
-      pattern:
+      pattern: validation_humaine
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings:
+    - criterion: 'gate : ADR-014 versé dans docs/adr, relu par un vérificateur indépendant'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
   blockers:
   - reason: dépend de GAO-s2-design-ma-001
     target: GAO-s2-design-ma-001
@@ -765,6 +891,11 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : un test unitaire échoue si une description de package.json contient ADR-, CdC, §, chunk ou RTF'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-s2-design-r-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-s2-design-r-001/decision-trace.yaml
@@ -792,6 +923,14 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : E2E runner macOS, lecture via le Core sans NotAllowedError'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'gate : écoute utilisateur consignée dans acceptance-record'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers:
   - reason: dépend de GAO-s3-macos-por-001
     target: GAO-s3-macos-por-001
@@ -821,6 +960,14 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'build/CI : workflow vert sur darwin-arm64 et darwin-x64'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test : Core démarre et /health répond sur runner macOS'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers:
   - reason: dépend de GAO-bascule-par-001
     target: GAO-bascule-par-001
@@ -852,6 +999,14 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'build/CI : workflow vert sur win32-x64'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test : Core démarre et /health répond sur runner Windows'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers:
   - reason: dépend de GAO-s3-macos-cli-001
     target: GAO-s3-macos-cli-001
@@ -881,6 +1036,11 @@ tasks:
       pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: une consigne libre atteint le LLM et ne sort jamais du contrôle de fidélité'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-style-de-lec-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-style-de-lec-001/decision-trace.yaml
@@ -911,6 +1071,11 @@ tasks:
       pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: chaque voix du catalogue porte région, licence et source, aucune région sans preuve'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-voix-fran-ai-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-voix-fran-ai-001/decision-trace.yaml
@@ -919,9 +1084,8 @@ tasks:
     la galerie. Une voix sans accent documenté reste non étiquetée. Articuler avec GAO-adr-015-1-te-001.'
   directives_pending: 2
   directives_unacknowledged: 2
-- task_id: GAO-attente-lisi-001
-  title: 'Attente lisible et gestes de lecture : délai du premier chargement, étapes sans faux pourcentage, bloc Document
-    ouvert, sélections multiples'
+- task_id: GAO-critures-de-001
+  title: "Écritures de globalState perdues : favoris, voix récentes, mesures d'attente"
   status: ready
   priority: medium
   owner: guilhem-bonnet
@@ -929,54 +1093,27 @@ tasks:
   - implementation
   acceptance_criteria:
   - 'test: npm --prefix vscode-extension run test:unit vert'
-  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
   - 'gate: grimoire standard gate check --strict vert'
   verifiability:
     class: V1
-    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
-      aucun critère ne reste ambigu.
-    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
+    explanation: "Remontée de V0 : les critères nomment un verdict mécanique mais aucune commande n'est déclarée (`checks`)
+      — rien à exécuter, le verdict reste à rendre par une revue."
+    reason: "aucune commande déclarée (checks) : le verdict mécanique n'est pas exécutable"
     criteria:
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
-    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
-      pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
+    raised_by: no_declared_command
   blockers: []
-  context_bundle_ref: _grimoire-output/context/GAO-attente-lisi-001/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-attente-lisi-001/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-attente-lisi-001/evidence-pack.md
-  description: 'Vues : Panneau-preparation, Panneau-attente-incidents, Panneau-document, Lancer-lecture, Panneau-lecture-detail.
-    Validé le 2026-11-06.'
-- task_id: GAO-jeu-d-acteur-001
-  title: "Jeu d'acteurs : plusieurs voix pour le théâtre et le livre, narrateur et personnages"
-  status: ready
-  priority: medium
-  owner: guilhem-bonnet
-  agent_roles:
-  - implementation
-  acceptance_criteria:
-  - 'test: npm --prefix vscode-extension run test:unit vert'
-  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
-  - 'gate: grimoire standard gate check --strict vert'
-  verifiability:
-    class: V1
-    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
-      aucun critère ne reste ambigu.
-    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
-    criteria:
-    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
-      pattern: test
-    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
-      pattern: revue
-    - criterion: 'gate: grimoire standard gate check --strict vert'
-      pattern: gate
-  blockers: []
-  context_bundle_ref: _grimoire-output/context/GAO-jeu-d-acteur-001/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-jeu-d-acteur-001/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-jeu-d-acteur-001/evidence-pack.md
-  description: Demande du 2026-11-06. S'appuie sur ADR-015 (bible, partition) ; moteurs Kyutai. Texte local uniquement.
+  context_bundle_ref: _grimoire-output/context/GAO-critures-de-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-critures-de-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-critures-de-001/evidence-pack.md
+  description: "Deux écritures à quelques ms d'écart perdent la seconde (sonde 118 sur 400 ; onDidChangeStorage remplace _value
+    par l'écho, VS Code 1.145). Corrigé pour toggleCast seulement (storeCastChoices). Reste : favoris, voix récentes, mesures
+    d'attente, autres écrivains. Solution commune à trouver."
 - task_id: GAO-lexique-de-p-001
   title: Lexique de prononciation, reprise de lecture et bouton pour les blocs de code
   status: ready
@@ -1000,6 +1137,8 @@ tasks:
       pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-lexique-de-p-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-lexique-de-p-001/decision-trace.yaml
@@ -1029,11 +1168,43 @@ tasks:
       pattern: lint_typage
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-mode-auto-im-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-mode-auto-im-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-mode-auto-im-001/evidence-pack.md
+- task_id: GAO-moteur-webvi-001
+  title: 'Moteur webview : prouver que la lecture sonne après le correctif du 401'
+  status: ready
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:integration-voice vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: "Remontée de V0 : les critères nomment un verdict mécanique mais aucune commande n'est déclarée (`checks`)
+      — rien à exécuter, le verdict reste à rendre par une revue."
+    reason: "aucune commande déclarée (checks) : le verdict mécanique n'est pas exécutable"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:integration-voice vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes: []
+    warnings: []
+    raised_by: no_declared_command
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-moteur-webvi-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-moteur-webvi-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-moteur-webvi-001/evidence-pack.md
+  description: "Le cache audio du moteur webview, valeur par défaut de llmVoice.audio.engine, recevait aussi un 401 en VS
+    Code 1.144. Corrigé : 206 et readyState 4, mais le clic sur Lecture n'a pas fait avancer l'audio (état paused). Touche
+    les utilisateurs par défaut. Prouver ou corriger, sans son sur les enceintes."
 - task_id: GAO-orchestratio-001
   title: 'Orchestration concierge : sessions de pilotage (routage, vérification, commits, Kanban)'
   status: ready
@@ -1051,6 +1222,8 @@ tasks:
     criteria:
     - criterion: 'gate : grimoire standard gate check --strict vert à chaque fin de session de pilotage'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-orchestratio-001/context-bundle.yaml
@@ -1058,6 +1231,151 @@ tasks:
   evidence_pack_ref: _grimoire-output/evidence/GAO-orchestratio-001/evidence-pack.md
   directives_pending: 0
   directives_unacknowledged: 0
+- task_id: GAO-r-ponses-3-c-001
+  title: 'Réponses 3 · Capture : presse-papiers, CLI installable, Codex notify'
+  status: ready
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  - 'revue: accord de guilhem-bonnet consigné'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: accord de guilhem-bonnet consigné'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      pattern: revue
+    v2_causes: []
+    warnings:
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-r-ponses-3-c-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-r-ponses-3-c-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-r-ponses-3-c-001/evidence-pack.md
+  description: Le presse-papiers lu entre dans la liste Réponses ; llm-voice-inbox rendu installable ; Codex par notify,
+    écriture de ~/.codex/config.toml seulement avec accord explicite et testée sur un vrai Codex ; ADR-007 et ADR-008 
+    révisés après relecture humaine de la page de dépréciation Chat Participant. Aucune lecture d'historique privé ; 
+    bySource distingue le vrai fournisseur.
+  directives_pending: 1
+  directives_unacknowledged: 1
+- task_id: GAO-r-ponses-4-s-001
+  title: Réponses 4 · Sections, barre d'état, lues et non lues
+  status: ready
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  - 'revue: accord de guilhem-bonnet consigné'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: accord de guilhem-bonnet consigné'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      pattern: revue
+    v2_causes: []
+    warnings:
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-r-ponses-4-s-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-r-ponses-4-s-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-r-ponses-4-s-001/evidence-pack.md
+  description: Planche Reponses-lecture. Vérifier d'abord que les frontières de sections survivent à la segmentation. 
+    Section précédente et suivante, section nommée, reprise, compteur dans la barre d'état, groupes Nouvelles et Déjà 
+    lues. Notification et son désactivés par défaut, jamais pendant une lecture ni un jeu.
+- task_id: GAO-r-ponses-5-l-001
+  title: Réponses 5 · L'essentiel et résumé à la demande
+  status: ready
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  - 'revue: accord de guilhem-bonnet consigné'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: accord de guilhem-bonnet consigné'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      pattern: revue
+    v2_causes: []
+    warnings:
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-r-ponses-5-l-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-r-ponses-5-l-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-r-ponses-5-l-001/evidence-pack.md
+  description: Mode déterministe plafonné vers 150 mots, à régler après écoute sur de vraies réponses ; annoncé comme 
+    extrait avec retour au texte entier. Résumé IA à la demande, étiqueté, indisponible en mode jeu.
+- task_id: GAO-r-ponses-6-a-001
+  title: Réponses 6 · Antigravity et essai MCP de dépôt
+  status: ready
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  - 'revue: accord de guilhem-bonnet consigné'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: accord de guilhem-bonnet consigné'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      pattern: revue
+    v2_causes: []
+    warnings:
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-r-ponses-6-a-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-r-ponses-6-a-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-r-ponses-6-a-001/evidence-pack.md
+  description: Lire la documentation hooks d'Antigravity avant de construire ; mesurer sur un essai si un serveur MCP 
+    local deposit reçoit le texte complet depuis Copilot Chat. Ne rien livrer sans preuve.
 - task_id: GAO-adr-015-5-an-001
   title: 'ADR-015 · 5 Analyste et metteur en scène (LLM local) : anticipation, cache de partition, repli mode jeu'
   status: in_progress
@@ -1079,6 +1397,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-adr-015-5-an-001/context-bundle.yaml
@@ -1101,11 +1421,43 @@ tasks:
     criteria:
     - criterion: gate check --strict vert, son audible prouvé sur profil jetable, ADR Rust tranché
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-diagnostic-s-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-diagnostic-s-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-diagnostic-s-001/evidence-pack.md
+- task_id: GAO-essais-de-mo-001
+  title: Essais de moteurs capables de jouer en français, à part
+  status: in_progress
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'revue: écoute de guilhem-bonnet consignée'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: écoute de guilhem-bonnet consignée'"
+    criteria:
+    - criterion: 'revue: écoute de guilhem-bonnet consignée'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes: []
+    warnings: []
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-essais-de-mo-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-essais-de-mo-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-essais-de-mo-001/evidence-pack.md
+  description: Accord de guilhem-bonnet le 2026-11-06 pour télécharger et essayer. Ming-3.0-tts d'abord, puis Qwen3-TTS,
+    Fish S2-Pro si utile. Dossier à part, texte local, mode jeu respecté.
+  directives_pending: 3
+  directives_unacknowledged: 3
 - task_id: GAO-essais-voix-001
   title: "Essais voix : textes d'essai et banc d'écoute pour le ton, les personnages et les mots techniques"
   status: in_progress
@@ -1132,6 +1484,8 @@ tasks:
       pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-essais-voix-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-essais-voix-001/decision-trace.yaml
@@ -1139,6 +1493,165 @@ tasks:
   description: "Retour du 2026-11-06 : voix convaincantes, accrochages sur des mots techniques ; demande de jouer avec le
     ton, l'intonation, le style, et plusieurs personnages. Alimente GAO-adr-015-6-ba-001 et GAO-banc-d-une-j-001 sans les
     remplacer."
+- task_id: GAO-jeu-d-acteur-001
+  title: "Jeu d'acteurs : plusieurs voix pour le théâtre et le livre, narrateur et personnages"
+  status: in_progress
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes: []
+    warnings: []
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-jeu-d-acteur-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-jeu-d-acteur-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-jeu-d-acteur-001/evidence-pack.md
+  description: Demande du 2026-11-06. S'appuie sur ADR-015 (bible, partition) ; moteurs Kyutai. Texte local uniquement.
+  directives_pending: 1
+  directives_unacknowledged: 1
+- task_id: GAO-metteur-en-s-001
+  title: "Metteur en scène local : propositions de voix d'après le texte, états joués, lecture qui démarre plus tôt"
+  status: in_progress
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'test: preuve réelle sur docs/essais-voix/07-theatre-noms-seuls.md, indications jamais prononcées, états envoyés en consigne'
+  - 'revue: écoute et accord de guilhem-bonnet consignés'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'test: preuve réelle sur docs/essais-voix/07-theatre-noms-seuls.md, indications
+      jamais prononcées, états envoyés en consigne'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'test: preuve réelle sur docs/essais-voix/07-theatre-noms-seuls.md, indications jamais prononcées, états
+        envoyés en consigne'
+      pattern:
+    - criterion: 'revue: écoute et accord de guilhem-bonnet consignés'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes:
+    - criterion: 'test: preuve réelle sur docs/essais-voix/07-theatre-noms-seuls.md, indications jamais prononcées, états
+        envoyés en consigne'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings:
+    - criterion: 'revue: écoute et accord de guilhem-bonnet consignés'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-metteur-en-s-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-metteur-en-s-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-metteur-en-s-001/evidence-pack.md
+  directives_pending: 1
+  directives_unacknowledged: 1
+- task_id: GAO-qwen3-dans-l-001
+  title: "Qwen3 dans l'extension : voix par défaut, lecture préparée sans coupure, jeu par consignes"
+  status: in_progress
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'test: preuve réelle native-real Qwen3 sur un long texte, aucun silence anormal pendant la lecture, son capté sur sink
+    nul'
+  - 'revue: écoute et accord de guilhem-bonnet consignés'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'test: preuve réelle native-real Qwen3 sur un long texte, aucun silence anormal
+      pendant la lecture, son capté sur sink nul'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'test: preuve réelle native-real Qwen3 sur un long texte, aucun silence anormal pendant la lecture, son capté
+        sur sink nul'
+      pattern:
+    - criterion: 'revue: écoute et accord de guilhem-bonnet consignés'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes:
+    - criterion: 'test: preuve réelle native-real Qwen3 sur un long texte, aucun silence anormal pendant la lecture, son capté
+        sur sink nul'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings:
+    - criterion: 'revue: écoute et accord de guilhem-bonnet consignés'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-qwen3-dans-l-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-qwen3-dans-l-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-qwen3-dans-l-001/evidence-pack.md
+  directives_pending: 1
+  directives_unacknowledged: 1
+- task_id: GAO-studio-distr-001
+  title: "Studio > Distribution : personnages, écoute d'essai et attribution des voix"
+  status: in_progress
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'test: xvfb-run vscode-test --label fake-tts vert'
+  - 'revue: accord de guilhem-bonnet sur le panneau consigné'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: accord de guilhem-bonnet sur le panneau consigné'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'test: xvfb-run vscode-test --label fake-tts vert'
+      pattern: test
+    - criterion: 'revue: accord de guilhem-bonnet sur le panneau consigné'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes: []
+    warnings:
+    - criterion: 'revue: accord de guilhem-bonnet sur le panneau consigné'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-studio-distr-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-studio-distr-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-studio-distr-001/evidence-pack.md
+  directives_pending: 1
+  directives_unacknowledged: 1
 - task_id: GAO-valuation-m-001
   title: 'Évaluation · Mode Auto : jeu de 45 cas variés étiqueté, amélioration du score au-delà du témoin à règles'
   status: in_progress
@@ -1159,9 +1672,18 @@ tasks:
     - criterion: 'test : run-all.mjs produit le tableau de précision par approche sur le jeu complet'
       pattern:
     - criterion: 'gate : étiquettes validées par guilhem-bonnet consignées dans acceptance-record'
-      pattern:
+      pattern: validation_humaine
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : run-all.mjs produit le tableau de précision par approche sur le jeu complet'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings:
+    - criterion: 'gate : étiquettes validées par guilhem-bonnet consignées dans acceptance-record'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-valuation-m-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-valuation-m-001/decision-trace.yaml
@@ -1186,6 +1708,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-feat-l-assis-001/context-bundle.yaml
@@ -1196,39 +1720,6 @@ tasks:
     qu'appliquer un palier de provider, sans jamais ouvrir de sélecteur de voix. Corrigé : handleVoiceTier ouvre désormais
     le vrai sélecteur (Pipeline.browseVoices, déjà existant) juste après les paliers système et Piper (joignables localement
     sans attendre un serveur)."
-- task_id: GAO-fix-la-lectu-001
-  title: "Fix : la lecture s'arrête après le premier groupe en mode narré ; lecture de tout fichier texte et depuis l'aperçu
-    Markdown"
-  status: review
-  priority: medium
-  owner: guilhem-bonnet
-  agent_roles:
-  - implementation
-  acceptance_criteria:
-  - 'test: npm --prefix vscode-extension run test:unit vert'
-  - 'test: scripts/audio-proof/native-real.sh vert sur un document de plusieurs sections'
-  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
-  - 'gate: grimoire standard gate check --strict vert'
-  verifiability:
-    class: V1
-    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
-      aucun critère ne reste ambigu.
-    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
-    criteria:
-    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
-      pattern: test
-    - criterion: 'test: scripts/audio-proof/native-real.sh vert sur un document de plusieurs sections'
-      pattern: test
-    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
-      pattern: revue
-    - criterion: 'gate: grimoire standard gate check --strict vert'
-      pattern: gate
-  blockers: []
-  context_bundle_ref: _grimoire-output/context/GAO-fix-la-lectu-001/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-fix-la-lectu-001/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-fix-la-lectu-001/evidence-pack.md
-  description: "Signalement du 2026-11-06 : tous les boutons de lecture s'arrêtent à la section. Cause : Pipeline démarre
-    sealed avec build.segments et n'écoute pas onSegmentsAppended."
 - task_id: GAO-fix-wav-cass-001
   title: 'fix: WAV cassés en cache et fenêtre sur code périmé empêchent la voix choisie de parler'
   status: review
@@ -1249,6 +1740,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fix-wav-cass-001/context-bundle.yaml
@@ -1257,38 +1750,206 @@ tasks:
   description: "Retour utilisateur 2026-11-05 : la voix enregistrée ne s'entend pas à la lecture d'un document. Journal et
     cache : fenêtre non rechargée depuis 16:58 (correctif installé 17:14), 5 WAV cassés créés à 17:23. Un WAV cassé en cache
     échoue indéfiniment, et rien ne signale qu'une fenêtre tourne sur un code périmé."
-- task_id: GAO-moteur-kyuta-001
-  title: "Moteur Kyutai TTS 1.6B dans l'extension : serveur local sur carte AMD, voix françaises prénommées, galerie"
+- task_id: GAO-galerie-les-001
+  title: 'Galerie : les échantillons Kyutai narration sont illisibles'
   status: review
   priority: medium
   owner: guilhem-bonnet
   agent_roles:
   - implementation
   acceptance_criteria:
-  - 'test: npm --prefix vscode-extension run test:unit et test:integration-voice verts'
-  - 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'
-  - 'revue: écoute par guilhem-bonnet consignée dans acceptance-record'
+  - 'test: npm --prefix vscode-extension run test:integration-voice vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  - 'revue: accord de guilhem-bonnet consigné'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: accord de guilhem-bonnet consigné'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:integration-voice vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      pattern: revue
+    v2_causes: []
+    warnings:
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-galerie-les-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-galerie-les-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-galerie-les-001/evidence-pack.md
+  description: "Signalé par guilhem-bonnet après rechargement : Échantillon illisible, aucun son, section Kyutai narration.
+    WAV d'essai valides, serveur en 200 (2026-11-06 20:48), donc échec à la lecture dans la webview."
+- task_id: GAO-images-docke-001
+  title: 'Images Docker Qwen3 : serveur ROCm et CUDA, modèles et voix en image séparée'
+  status: review
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: image ROCm démarrée en local, /health et /tts réels verts'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: "Remontée de V0 : les critères nomment un verdict mécanique mais aucune commande n'est déclarée (`checks`)
+      — rien à exécuter, le verdict reste à rendre par une revue."
+    reason: "aucune commande déclarée (checks) : le verdict mécanique n'est pas exécutable"
+    criteria:
+    - criterion: 'test: image ROCm démarrée en local, /health et /tts réels verts'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes: []
+    warnings: []
+    raised_by: no_declared_command
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-images-docke-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-images-docke-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-images-docke-001/evidence-pack.md
+  directives_pending: 1
+  directives_unacknowledged: 1
+- task_id: GAO-moteur-qwen3-001
+  title: 'Moteur Qwen3 : serveur local hors ligne, voix figée et voix jouée'
+  status: review
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: serveur Qwen3 local répond avec --network none et gpu-yield respecté, preuve réelle en audio'
   - 'gate: grimoire standard gate check --strict vert'
   verifiability:
     class: V2
     explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
       : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'"
+    reason: "critère sans verdict reconnu : 'test: serveur Qwen3 local répond avec --network none et gpu-yield respecté, preuve
+      réelle en audio'"
     criteria:
-    - criterion: 'test: npm --prefix vscode-extension run test:unit et test:integration-voice verts'
-      pattern: test
-    - criterion: 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'
+    - criterion: 'test: serveur Qwen3 local répond avec --network none et gpu-yield respecté, preuve réelle en audio'
       pattern:
-    - criterion: 'revue: écoute par guilhem-bonnet consignée dans acceptance-record'
-      pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: serveur Qwen3 local répond avec --network none et gpu-yield respecté, preuve réelle en audio'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
-  context_bundle_ref: _grimoire-output/context/GAO-moteur-kyuta-001/context-bundle.yaml
-  decision_trace_ref: _grimoire-output/decisions/GAO-moteur-kyuta-001/decision-trace.yaml
-  evidence_pack_ref: _grimoire-output/evidence/GAO-moteur-kyuta-001/evidence-pack.md
-  description: "Choix du 2026-11-06 : qualité jugée bonne, essayer cml-577_394. Serveur local à l'API de Pocket, mode jeu
-    respecté, texte jamais hors machine."
+  context_bundle_ref: _grimoire-output/context/GAO-moteur-qwen3-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-moteur-qwen3-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-moteur-qwen3-001/evidence-pack.md
+- task_id: GAO-qwen3-plusie-001
+  title: "Qwen3 : plusieurs voix, jeu de départ et création à partir d'une description"
+  status: review
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: python3 -P deploy/qwen3/test_server.py vert'
+  - "test: preuve réelle hors ligne de création d'une voix et de lecture avec elle"
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : \"test: preuve réelle hors ligne de création d'une voix et de lecture avec elle\""
+    criteria:
+    - criterion: 'test: python3 -P deploy/qwen3/test_server.py vert'
+      pattern: test
+    - criterion: "test: preuve réelle hors ligne de création d'une voix et de lecture avec elle"
+      pattern:
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes:
+    - criterion: "test: preuve réelle hors ligne de création d'une voix et de lecture avec elle"
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-qwen3-plusie-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-qwen3-plusie-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-qwen3-plusie-001/evidence-pack.md
+- task_id: GAO-r-ponses-1-l-001
+  title: Réponses 1 · Liste Réponses, dernière réponse, raccourci, durées
+  status: review
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  - 'revue: accord de guilhem-bonnet consigné'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: accord de guilhem-bonnet consigné'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      pattern: revue
+    v2_causes: []
+    warnings:
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-r-ponses-1-l-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-r-ponses-1-l-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-r-ponses-1-l-001/evidence-pack.md
+  description: Planche Reponses-liste. Renommer Inbox et Réponses de Claude ; carte Dernière réponse ; raccourci 
+    Ctrl+Alt+V R (speakLatestClaudeResponse renommé) ; durée estimée par ligne ; bouton Lire visible et reste dans un 
+    menu ; textes anglais et mot profile du Quick Pick corrigés. Boutons vérifiés à 260, 320 et 500 px.
+  directives_pending: 1
+  directives_unacknowledged: 1
+- task_id: GAO-r-ponses-2-l-001
+  title: Réponses 2 · Lecture adaptée à l'oral et bascule Code
+  status: review
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'gate: grimoire standard gate check --strict vert'
+  - 'revue: accord de guilhem-bonnet consigné'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: accord de guilhem-bonnet consigné'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      pattern: revue
+    v2_causes: []
+    warnings:
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-r-ponses-2-l-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-r-ponses-2-l-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-r-ponses-2-l-001/evidence-pack.md
+  description: Planches Reponses-lecture et Reponses-options. Retirer le balisage, chemin réduit au nom du fichier, URL 
+    dite un lien, bloc de code annoncé et ignoré par défaut avec bascule, tableaux lus 5 lignes au plus. Recouvre le 
+    bouton blocs de code de GAO-lexique-de-p-001. Preuve audio réelle sur de vraies formes de réponses.
 - task_id: GAO-s1-fedora-pa-001
   title: 'S1 Fedora · Packaging linux-x64 seul : cargo + vsce package --target linux-x64, gate VSIX, smoke /health'
   status: review
@@ -1312,6 +1973,14 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'build/CI : workflow vert sur linux-x64'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test : le VSIX linux-x64 contient le binaire du Core et /health répond'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-s1-fedora-pa-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-s1-fedora-pa-001/decision-trace.yaml
@@ -1340,6 +2009,16 @@ tasks:
       pattern: commande_code_sortie
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'build/CI : job rust ajouté à ci.yml (vert après push)'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings:
+    - criterion: 'test : npm run e2e:local enchaîne banc, attaques, Wayland, services réels et native-real avec code de sortie
+        0'
+      code: depense_payante
+      message: "dépense payante : remplacez le banc ou l'API facturée par un contrôle gratuit (fixture, doublure) ou faites
+        arbitrer la dépense hors de la tâche"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-tests-rust-e-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-tests-rust-e-001/decision-trace.yaml
@@ -1357,17 +2036,24 @@ tasks:
     verdict dans evidence-pack'
   - 'gate : grimoire standard gate check --strict vert'
   verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate : ADR-012 versé dans docs/adr/ADR-012-*.md, relu par un vérificateur indépendant
-      (agent-optimizer, contexte neuf), verdict dans evidence-pack'"
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (validation_humaine) : 'gate : ADR-012 versé dans docs/adr/ADR-012-*.md, relu par un vérificateur
+      indépendant (agent-optimizer, contexte neuf), verdict dans evidence-pack'"
     criteria:
     - criterion: 'gate : ADR-012 versé dans docs/adr/ADR-012-*.md, relu par un vérificateur indépendant (agent-optimizer,
         contexte neuf), verdict dans evidence-pack'
-      pattern:
+      pattern: validation_humaine
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings:
+    - criterion: 'gate : ADR-012 versé dans docs/adr/ADR-012-*.md, relu par un vérificateur indépendant (agent-optimizer,
+        contexte neuf), verdict dans evidence-pack'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-adr-012-lect-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-adr-012-lect-001/decision-trace.yaml
@@ -1385,17 +2071,24 @@ tasks:
     contexte neuf) dont le verdict est dans evidence-pack'
   - 'gate : grimoire standard gate check --strict vert'
   verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate : ADR rédigé dans docs/adr/ADR-013-*.md au format des ADR existants, relu
-      par un vérificateur indépendant (Sonnet, contexte neuf) dont le verdict est dans evidence-pack'"
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (validation_humaine) : 'gate : ADR rédigé dans docs/adr/ADR-013-*.md au format des ADR existants,
+      relu par un vérificateur indépendant (Sonnet, contexte neuf) dont le verdict est dans evidence-pack'"
     criteria:
     - criterion: 'gate : ADR rédigé dans docs/adr/ADR-013-*.md au format des ADR existants, relu par un vérificateur indépendant
         (Sonnet, contexte neuf) dont le verdict est dans evidence-pack'
-      pattern:
+      pattern: validation_humaine
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings:
+    - criterion: 'gate : ADR rédigé dans docs/adr/ADR-013-*.md au format des ADR existants, relu par un vérificateur indépendant
+        (Sonnet, contexte neuf) dont le verdict est dans evidence-pack'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-adr-013-four-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-adr-013-four-001/decision-trace.yaml
@@ -1422,6 +2115,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-adr-015-1-co-001/context-bundle.yaml
@@ -1447,6 +2142,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-adr-015-2-tr-001/context-bundle.yaml
@@ -1472,6 +2169,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-adr-015-3-bi-001/context-bundle.yaml
@@ -1497,6 +2196,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-adr-015-4-co-001/context-bundle.yaml
@@ -1514,20 +2215,58 @@ tasks:
   - 'gate : ADR-015 versé dans docs/adr, relu par un vérificateur indépendant, décision utilisateur consignée'
   - 'gate : grimoire standard gate check --strict vert'
   verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate : ADR-015 versé dans docs/adr, relu par un vérificateur indépendant, décision
-      utilisateur consignée'"
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (validation_humaine) : 'gate : ADR-015 versé dans docs/adr, relu par un vérificateur indépendant,
+      décision utilisateur consignée'"
     criteria:
     - criterion: 'gate : ADR-015 versé dans docs/adr, relu par un vérificateur indépendant, décision utilisateur consignée'
-      pattern:
+      pattern: validation_humaine
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings:
+    - criterion: 'gate : ADR-015 versé dans docs/adr, relu par un vérificateur indépendant, décision utilisateur consignée'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-adr-015-dire-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-adr-015-dire-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-adr-015-dire-001/evidence-pack.md
+- task_id: GAO-attente-lisi-001
+  title: 'Attente lisible et gestes de lecture : délai du premier chargement, étapes sans faux pourcentage, bloc Document
+    ouvert, sélections multiples'
+  status: accepted
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes: []
+    warnings: []
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-attente-lisi-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-attente-lisi-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-attente-lisi-001/evidence-pack.md
+  description: 'Vues : Panneau-preparation, Panneau-attente-incidents, Panneau-document, Lancer-lecture, Panneau-lecture-detail.
+    Validé le 2026-11-06.'
 - task_id: GAO-audit-s-curi-001
   title: Audit sécurité du Core local (WebSocket loopback, jeton, Origin, rebinding DNS, zéro autoplay, aucune socket 
     sortante)
@@ -1552,6 +2291,11 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : aucune connexion non-loopback ouverte par le Core'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-audit-s-curi-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-audit-s-curi-001/decision-trace.yaml
@@ -1566,13 +2310,20 @@ tasks:
   acceptance_criteria:
   - "gate: rapport d'audit versé dans docs/ux/, relu par un second agent indépendant"
   verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : \"gate: rapport d'audit versé dans docs/ux/, relu par un second agent indépendant\""
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (validation_humaine) : \"gate: rapport d'audit versé dans docs/ux/, relu par un second agent
+      indépendant\""
     criteria:
     - criterion: "gate: rapport d'audit versé dans docs/ux/, relu par un second agent indépendant"
-      pattern:
+      pattern: validation_humaine
+    v2_causes: []
+    warnings:
+    - criterion: "gate: rapport d'audit versé dans docs/ux/, relu par un second agent indépendant"
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-audit-ux-com-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-audit-ux-com-001/decision-trace.yaml
@@ -1603,6 +2354,8 @@ tasks:
       pattern: commande_code_sortie
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-banc-de-preu-001/context-bundle.yaml
@@ -1631,6 +2384,12 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : un enqueue refusé (400) fait passer le PlaybackController en erreur et affiche le message Réessayer
+        / Passer / Arrêter'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-bogue-un-seg-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-bogue-un-seg-001/decision-trace.yaml
@@ -1658,6 +2417,12 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'lint : chaque chemin de fichier source cité dans decision-points-map-v1.md existe dans le dépôt (script
+        de vérification exécuté, sortie dans evidence-pack)'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-cartographie-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-cartographie-001/decision-trace.yaml
@@ -1688,6 +2453,8 @@ tasks:
       pattern: lint_typage
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-contrat-audi-001/context-bundle.yaml
@@ -1723,6 +2490,18 @@ tasks:
       pattern: lint_typage
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : intégration Linux, lecture via le Core capturée et transcrite par le banc'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test : deux clients, une seule lecture'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings:
+    - criterion: 'test : intégration Linux, lecture via le Core capturée et transcrite par le banc'
+      code: depense_payante
+      message: "dépense payante : remplacez le banc ou l'API facturée par un contrôle gratuit (fixture, doublure) ou faites
+        arbitrer la dépense hors de la tâche"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-core-rust-mi-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-core-rust-mi-001/decision-trace.yaml
@@ -1747,6 +2526,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-dette-de-tes-001/context-bundle.yaml
@@ -1772,6 +2553,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-feat-v-rific-001/context-bundle.yaml
@@ -1802,6 +2585,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fix-boucle-i-001/context-bundle.yaml
@@ -1832,6 +2617,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fix-l-url-du-001/context-bundle.yaml
@@ -1841,6 +2628,41 @@ tasks:
     de profil, la synthèse échouait avec « fetch failed » sur http://127.0.0.1:8004 (port de Chatterbox, pas celui de Kyutai,
     8000). Cause : le champ Base URL ne se mettait jamais à jour automatiquement en changeant de provider dans le menu déroulant
     — il gardait l'adresse du provider précédent."
+- task_id: GAO-fix-la-lectu-001
+  title: "Fix : la lecture s'arrête après le premier groupe en mode narré ; lecture de tout fichier texte et depuis l'aperçu
+    Markdown"
+  status: accepted
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit vert'
+  - 'test: scripts/audio-proof/native-real.sh vert sur un document de plusieurs sections'
+  - 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (revue) : 'revue: essai de guilhem-bonnet consigné dans acceptance-record'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
+      pattern: test
+    - criterion: 'test: scripts/audio-proof/native-real.sh vert sur un document de plusieurs sections'
+      pattern: test
+    - criterion: 'revue: essai de guilhem-bonnet consigné dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes: []
+    warnings: []
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-fix-la-lectu-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-fix-la-lectu-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-fix-la-lectu-001/evidence-pack.md
+  description: "Signalement du 2026-11-06 : tous les boutons de lecture s'arrêtent à la section. Cause : Pipeline démarre
+    sealed avec build.segments et n'écoute pas onSegmentsAppended."
 - task_id: GAO-fix-le-choix-001
   title: 'fix: le choix de voix ne déclenche aucun rafraîchissement visuel immédiat (panneau lecture, barre de statut)'
   status: accepted
@@ -1861,6 +2683,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fix-le-choix-001/context-bundle.yaml
@@ -1892,6 +2716,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fix-liste-de-001/context-bundle.yaml
@@ -1925,6 +2751,12 @@ tasks:
     - criterion: 'test: kyutai-pocket apparaît dans le <select> du profil et « Parcourir les voix » retourne estelle/alba
         sans appel réseau'
       pattern:
+    v2_causes:
+    - criterion: 'test: kyutai-pocket apparaît dans le <select> du profil et « Parcourir les voix » retourne estelle/alba
+        sans appel réseau'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fix-provider-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-fix-provider-001/decision-trace.yaml
@@ -1960,6 +2792,14 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: warnIfInstallIsNewer couvert'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test: action visible et efficace en preparing et buffering'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fix-reliquat-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-fix-reliquat-001/decision-trace.yaml
@@ -1986,6 +2826,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fix-test-de-001/context-bundle.yaml
@@ -2015,6 +2857,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-fix-voix-fra-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-fix-voix-fra-001/decision-trace.yaml
@@ -2049,6 +2893,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-impl-mente-l-001/context-bundle.yaml
@@ -2079,6 +2925,8 @@ tasks:
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert, provider testé contre un fake bâti sur une réponse
         réelle capturée'
       pattern: test
+    v2_causes: []
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-kyutai-pocke-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-kyutai-pocke-001/decision-trace.yaml
@@ -2114,6 +2962,8 @@ tasks:
       pattern: gate
     - criterion: 'test: npm --prefix vscode-extension run test:unit vert'
       pattern: test
+    v2_causes: []
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-kyutai-pocke-002/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-kyutai-pocke-002/decision-trace.yaml
@@ -2145,19 +2995,62 @@ tasks:
   - 'gate: grimoire standard gate check --strict vert'
   - 'gate: ADR-016 versé dans docs/adr, relu par un vérificateur indépendant'
   verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate: ADR-016 versé dans docs/adr, relu par un vérificateur indépendant'"
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (validation_humaine) : 'gate: ADR-016 versé dans docs/adr, relu par un vérificateur indépendant'"
     criteria:
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
     - criterion: 'gate: ADR-016 versé dans docs/adr, relu par un vérificateur indépendant'
-      pattern:
+      pattern: validation_humaine
+    v2_causes: []
+    warnings:
+    - criterion: 'gate: ADR-016 versé dans docs/adr, relu par un vérificateur indépendant'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-kyutai-tts-c-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-kyutai-tts-c-001/decision-trace.yaml
   evidence_pack_ref: _grimoire-output/evidence/GAO-kyutai-tts-c-001/evidence-pack.md
+- task_id: GAO-moteur-kyuta-001
+  title: "Moteur Kyutai TTS 1.6B dans l'extension : serveur local sur carte AMD, voix françaises prénommées, galerie"
+  status: accepted
+  priority: medium
+  owner: guilhem-bonnet
+  agent_roles:
+  - implementation
+  acceptance_criteria:
+  - 'test: npm --prefix vscode-extension run test:unit et test:integration-voice verts'
+  - 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'
+  - 'revue: écoute par guilhem-bonnet consignée dans acceptance-record'
+  - 'gate: grimoire standard gate check --strict vert'
+  verifiability:
+    class: V2
+    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
+      : sa vérifiabilité reste à démontrer."
+    reason: "critère sans verdict reconnu : 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'"
+    criteria:
+    - criterion: 'test: npm --prefix vscode-extension run test:unit et test:integration-voice verts'
+      pattern: test
+    - criterion: 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'
+      pattern:
+    - criterion: 'revue: écoute par guilhem-bonnet consignée dans acceptance-record'
+      pattern: revue
+    - criterion: 'gate: grimoire standard gate check --strict vert'
+      pattern: gate
+    v2_causes:
+    - criterion: 'test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
+  blockers: []
+  context_bundle_ref: _grimoire-output/context/GAO-moteur-kyuta-001/context-bundle.yaml
+  decision_trace_ref: _grimoire-output/decisions/GAO-moteur-kyuta-001/decision-trace.yaml
+  evidence_pack_ref: _grimoire-output/evidence/GAO-moteur-kyuta-001/evidence-pack.md
+  description: "Choix du 2026-11-06 : qualité jugée bonne, essayer cml-577_394. Serveur local à l'API de Pocket, mode jeu
+    respecté, texte jamais hors machine."
 - task_id: GAO-narrateur-in-001
   title: 'Narrateur : installer qwen2.5:7b (modèle par défaut) sur la machine dev et prouver la santé du narrateur Ollama'
   status: accepted
@@ -2181,6 +3074,12 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : ollama list contient qwen2.5:7b et POST /api/chat avec format JSON Schema renvoie un JSON valide
+        (sortie journalisée dans evidence-pack)'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-narrateur-in-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-narrateur-in-001/decision-trace.yaml
@@ -2216,6 +3115,20 @@ tasks:
       pattern:
     - criterion: fichiers kit obsolètes retirés, aucun fichier sous vscode-extension/ touché
       pattern:
+    v2_causes:
+    - criterion: grimoire --version = 3.46.1 et grimoire doctor sans FAIL
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: grimoire host sync --dry-run n'écrit plus rien sur les 5 hôtes
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: policies.yaml, llm-provider-registry.yaml, tool-registry.yaml remplis ; hooks git 6/6
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: fichiers kit obsolètes retirés, aucun fichier sous vscode-extension/ touché
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-phase-10-gri-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-phase-10-gri-001/decision-trace.yaml
@@ -2243,6 +3156,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-protocole-co-001/context-bundle.yaml
@@ -2271,6 +3186,11 @@ tasks:
       pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'gate: maquette publiée couvrant les vues listées dans la description'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-001/decision-trace.yaml
@@ -2297,17 +3217,27 @@ tasks:
   - 'revue: accord de guilhem-bonnet consigné'
   - 'gate: grimoire standard gate check --strict vert'
   verifiability:
-    class: V2
-    explanation: "Au moins un critère ne nomme ni verdict mécanique reconnu ni revue reconnue — ou la tâche n'a aucun critère
-      : sa vérifiabilité reste à démontrer."
-    reason: "critère sans verdict reconnu : 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'"
+    class: V1
+    explanation: Au moins un critère nomme une revue, un jugement ou une validation par une personne ou un agent, et 
+      aucun critère ne reste ambigu.
+    reason: "critère de revue (validation_humaine) : 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'"
     criteria:
     - criterion: 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'
-      pattern:
+      pattern: validation_humaine
     - criterion: 'revue: accord de guilhem-bonnet consigné'
       pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings:
+    - criterion: 'gate: ADR-017 versé dans docs/adr, relu par un vérificateur indépendant'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
+    - criterion: 'revue: accord de guilhem-bonnet consigné'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-002/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-002/decision-trace.yaml
@@ -2343,6 +3273,11 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: chaque voix du catalogue porte une licence vérifiée et sa source, aucune voix NC'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-003/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-003/decision-trace.yaml
@@ -2379,6 +3314,14 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test: migration couverte sur un profiles.json existant, sans perte'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test: la voix choisie est bien celle utilisée à la lecture du document'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-004/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-004/decision-trace.yaml
@@ -2416,6 +3359,15 @@ tasks:
       pattern: test
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: "test: l'écoute ne se lance jamais sans clic"
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings:
+    - criterion: 'revue: écoute et validation par guilhem-bonnet'
+      code: validation_personne
+      message: "attente d'une personne nommée : reformulez en vérification (test, capture comparée à une image de référence)
+        ou en revue par le relecteur — la validation par une personne n'est pas un verdict reproductible"
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-refonte-ux-0-005/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-refonte-ux-0-005/decision-trace.yaml
@@ -2445,6 +3397,12 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings:
+    - criterion: 'test : banc audio vert sur sortie par défaut et après bascule de sink à chaud'
+      code: depense_payante
+      message: "dépense payante : remplacez le banc ou l'API facturée par un contrôle gratuit (fixture, doublure) ou faites
+        arbitrer la dépense hors de la tâche"
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-s1-fedora-va-001/context-bundle.yaml
@@ -2474,6 +3432,12 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings:
+    - criterion: 'test : banc vert pour Rust et pour mpv, tableau comparatif dans evidence-pack'
+      code: depense_payante
+      message: "dépense payante : remplacez le banc ou l'API facturée par un contrôle gratuit (fixture, doublure) ou faites
+        arbitrer la dépense hors de la tâche"
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-spike-moteur-001/context-bundle.yaml
@@ -2506,6 +3470,15 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: "test : les scripts du spike s'exécutent de bout en bout sur le jeu (mode non étiqueté accepté) et produisent
+        un tableau exactitude/latence, sortie dans evidence-pack"
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    - criterion: 'test : jeu de 50 réponses exporté hors git (~/.llm-voice/eval/) avec colonne label vide, comptage vérifié'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-spike-valuat-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-spike-valuat-001/decision-trace.yaml
@@ -2533,6 +3506,8 @@ tasks:
       pattern: test
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes: []
+    warnings: []
     raised_by: no_declared_command
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-tests-int-gr-001/context-bundle.yaml
@@ -2559,6 +3534,11 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'test : narrator-eval produit un taux de fidélité par profil narré sur au moins 20 textes'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-valuation-f-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-valuation-f-001/decision-trace.yaml
@@ -2584,6 +3564,11 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'gate : rapport sourcé dans _grimoire-output/research/reports avec shortlist testable'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-veille-moteu-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-veille-moteu-001/decision-trace.yaml
@@ -2611,6 +3596,11 @@ tasks:
       pattern: revue
     - criterion: 'gate: grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: "test: page d'écoute générée, audio chargé dans Firefox"
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-essai-qwen3-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-essai-qwen3-001/decision-trace.yaml
@@ -2639,6 +3629,11 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'gate : maquette versée dans _grimoire-output/design/ et décision utilisateur consignée dans acceptance-record'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-maquette-com-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-maquette-com-001/decision-trace.yaml
@@ -2667,6 +3662,11 @@ tasks:
       pattern:
     - criterion: 'gate : grimoire standard gate check --strict vert'
       pattern: gate
+    v2_causes:
+    - criterion: 'gate : décision utilisateur consignée dans acceptance-record'
+      reformulation: reformulez en verdict mécanique (test, lint, code de sortie, fichier attendu) ou en revue par le 
+        relecteur, par exemple « pytest tests/unit/... passe » ou « `<commande>` retourne 0 »
+    warnings: []
   blockers: []
   context_bundle_ref: _grimoire-output/context/GAO-s2-design-ma-001/context-bundle.yaml
   decision_trace_ref: _grimoire-output/decisions/GAO-s2-design-ma-001/decision-trace.yaml
