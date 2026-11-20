@@ -33,7 +33,14 @@ export class KokoroProvider extends OpenAICompatibleTtsProvider {
 
   override async getCapabilities(signal?: AbortSignal): Promise<TtsCapabilities> {
     const base = await super.getCapabilities(signal);
-    return { ...base, parameters: PARAMETERS };
+    return {
+      ...base,
+      parameters: PARAMETERS,
+      // `speed` (0.5-2) is Kokoro's one knob (ADR-015 §5.3: tempo only). CPU or GPU
+      // depends on how the local server was started: not verifiable here, so GPU
+      // is assumed (game mode then prefers the system engine).
+      direction: { tempo: { parameter: "speed", min: 0.5, max: 2 }, instructions: false, nonverbal: [], usesGpu: true }
+    };
   }
 
   protected override buildSpeechRequestBody(request: TtsRequest): Record<string, unknown> {

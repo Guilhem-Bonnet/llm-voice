@@ -181,6 +181,21 @@ describe("buildSession — narrated mode", () => {
     expect(appended).toEqual([2, 2]);
   });
 
+  it("does not report a cancelled reading as an unavailable narrator", async () => {
+    const warnings: unknown[] = [];
+    const controller = new AbortController();
+    controller.abort();
+    const build = await buildSession(makeSourceSegments(4), narratedProfile, new FakeNarratorProvider(), {
+      groupSize: 2,
+      signal: controller.signal,
+      onWarning: (warning) => warnings.push(warning)
+    });
+    await build.completion;
+
+    expect(warnings).toEqual([]);
+    expect(build.degraded).toBe(true);
+  });
+
   it("stops narrating remaining groups once cancelled (CdC §62)", async () => {
     const narrator = new ManualNarrator();
     const building = buildSession(makeSourceSegments(6), narratedProfile, narrator, {

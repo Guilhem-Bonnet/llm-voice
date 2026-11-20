@@ -14,6 +14,7 @@
 
 import * as vscode from "vscode";
 import type { VoiceProfile } from "../../core/profile.js";
+import type { ProviderHealth } from "../../core/health.js";
 import { isEnglishVoice } from "../../profiles/voiceBrowser.js";
 import { validateProfileFormData } from "../../profiles/profileForm.js";
 import type { TtsParameterDescriptor, Voice } from "../../core/tts.js";
@@ -32,11 +33,23 @@ export interface ProfileEditorDeps {
   listParameters(profile: VoiceProfile): Promise<readonly TtsParameterDescriptor[]>;
   /** Reuses the `Browse Voices` picker (volet 1); `undefined` if the user cancelled. */
   pickVoice(profile: VoiceProfile): Promise<Voice | undefined>;
+  /**
+   * Real-user bug (2026-11-05): a provider/Base URL mismatch (e.g. Kyutai
+   * selected, Chatterbox's port left in the field) only ever surfaced as a
+   * cryptic "fetch failed" once the user tried to actually speak something
+   * — minutes, sometimes a full debugging session, after the mismatch was
+   * introduced. This probes the *unsaved* form's provider/baseUrl the same
+   * way `health()` already does everywhere else (ADR-005), so the editor
+   * can show "joignable"/"injoignable" immediately, before Save.
+   */
+  checkHealth(profile: VoiceProfile): Promise<ProviderHealth>;
 }
 
 export interface WebviewToExtensionMessage {
-  type: "ready" | "save" | "test" | "duplicate" | "delete" | "browseVoices";
+  type: "ready" | "save" | "test" | "duplicate" | "delete" | "browseVoices" | "checkHealth";
   profile?: unknown;
+  /** `checkHealth` only (Sentinel review, race-condition guard) — echoed back verbatim on `healthResult` so the webview can discard a stale reply. */
+  requestId?: number;
 }
 
 export class ProfileEditorPanel {
@@ -139,6 +152,9 @@ export class ProfileEditorPanel {
       case "browseVoices":
         await this.handleBrowseVoices(message.profile);
         return;
+      case "checkHealth":
+        await this.handleCheckHealth(message.profile, message.requestId);
+        return;
       default:
         return;
     }
@@ -221,6 +237,35 @@ export class ProfileEditorPanel {
       voiceId: picked.id,
       ...(warning !== undefined ? { warning } : {})
     });
+  }
+
+  /**
+   * Real-user bug (2026-11-05): probes the *unsaved* form's provider/Base
+   * URL and reports back immediately — see `ProfileEditorDeps.checkHealth`'s
+   * doc comment for why this exists. `validateProfileFormData` failing here
+   * (e.g. an empty/malformed Base URL) is reported the same way a real
+   * `unreachable` health result would be, rather than silently doing
+   * nothing — a broken form field should never look like "all good".
+   */
+  private async handleCheckHealth(rawProfile: unknown, requestId: number | undefined): Promise<void> {
+    const candidate = { ...(rawProfile as Record<string, unknown>), id: this.profileId };
+    const validation = validateProfileFormData(candidate);
+    if (!validation.ok) {
+      await this.panel.webview.postMessage({
+        type: "healthResult",
+        requestId,
+        status: "unreachable",
+        detail: validation.errors.join(" ; ")
+      });
+      return;
+    }
+    try {
+      const health = await this.deps.checkHealth(validation.profile);
+      await this.panel.webview.postMessage({ type: "healthResult", requestId, ...health });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      await this.panel.webview.postMessage({ type: "healthResult", requestId, status: "unreachable", detail });
+    }
   }
 
   dispose(): void {

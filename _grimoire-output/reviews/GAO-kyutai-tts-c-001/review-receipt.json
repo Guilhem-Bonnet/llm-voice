@@ -1,0 +1,11 @@
+{
+  "$schema": "grimoire-review-receipt/v1",
+  "task_id": "GAO-kyutai-tts-c-001",
+  "verdict": "READY",
+  "findings": [],
+  "reviewer_id": "cli",
+  "model": "",
+  "tree_fingerprint": "77402e5ca06508a69134cd3bf59c10b78050735919d78a98ef64dd60522a3ced",
+  "evidence_pack_sha256": null,
+  "written_at": "2026-11-05T15:41:08.633115+00:00"
+}

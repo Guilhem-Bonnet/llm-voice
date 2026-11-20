@@ -242,6 +242,9 @@
               "mode"
             ],
             "additionalProperties": false
+          },
+          "hidden": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -255,6 +258,10 @@
         ],
         "additionalProperties": false
       }
+    },
+    "voiceMigration": {
+      "type": "number",
+      "const": 1
     }
   },
   "required": [

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Generates `schemas/profile-collection.schema.json` from
- * `ProfileCollectionSchema` (`src/core/profile.schema.ts`), using zod v4's
+ * Generates `schemas/profile-collection.schema.json` and
+ * `schemas/global-voice.schema.json` from `ProfileCollectionSchema` and
+ * `GlobalVoiceFileSchema` (`src/core/profile.schema.ts`), using zod v4's
  * built-in `z.toJSONSchema` — the single source of truth stays the Zod
  * schema, this script only serialises it (ADR-004: JSON Schema attached to
  * `profiles.json` via `contributes.jsonValidation`).
@@ -16,7 +17,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { ProfileCollectionSchema } from "../out/src/core/profile.schema.js";
+import { GlobalVoiceFileSchema, ProfileCollectionSchema } from "../out/src/core/profile.schema.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
@@ -32,3 +33,12 @@ await mkdir(outDir, { recursive: true });
 const outFile = join(outDir, "profile-collection.schema.json");
 await writeFile(outFile, `${JSON.stringify(jsonSchema, null, 2)}\n`, "utf8");
 console.log(`Generated ${outFile}`);
+
+const voiceSchema = z.toJSONSchema(GlobalVoiceFileSchema, { target: "draft-7" });
+voiceSchema.$schema = "http://json-schema.org/draft-07/schema#";
+voiceSchema.title = "LLM Voice — global-voice.json";
+voiceSchema.description =
+  "Generated from src/core/profile.schema.ts (GlobalVoiceFileSchema); do not edit by hand.";
+const voiceFile = join(outDir, "global-voice.schema.json");
+await writeFile(voiceFile, `${JSON.stringify(voiceSchema, null, 2)}\n`, "utf8");
+console.log(`Generated ${voiceFile}`);

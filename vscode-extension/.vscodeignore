@@ -48,3 +48,8 @@ docs/**
 # folder. They must never ship in a published extension.
 _grimoire-output/**
 _grimoire/**
+
+# bin/<target>/llm-voice-core (ADR-012 §7, GAO-s1-fedora-pa-001) is NOT
+# ignored here on purpose: `stage-core.mjs` puts the Core release binary
+# there right before `vsce package --target <target>`, and it must reach
+# the VSIX. Git-ignored (`.gitignore`), never `.vscodeignore`-d.

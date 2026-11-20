@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/http/pause.request.schema.json",
+  "title": "POST /v1/pause",
+  "description": "Suspend la lecture ; la position est conservée (`TrackQueue::pause`).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "token"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "token": { "$ref": "../common.schema.json#/$defs/token" }
+  }
+}

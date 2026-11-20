@@ -1,0 +1,74 @@
+[
+  {
+    "id": "v-ff6f77df89",
+    "name": "Jeune femme claire",
+    "description": "Young woman in her twenties, bright clear voice, light and lively.",
+    "seed": 964072940,
+    "sample_seconds": 7.92,
+    "status": "created",
+    "duration_s": 33.1
+  },
+  {
+    "id": "v-6562692073",
+    "name": "Femme mûre posée",
+    "description": "Woman in her fifties, warm medium-low voice, composed and measured.",
+    "seed": 281841195,
+    "sample_seconds": 9.12,
+    "status": "created",
+    "duration_s": 17.5
+  },
+  {
+    "id": "v-6be443c3cf",
+    "name": "Femme âgée chaleureuse",
+    "description": "Elderly woman in her seventies, soft slightly husky voice, warm and kind.",
+    "seed": 1364656495,
+    "sample_seconds": 10.96,
+    "status": "created",
+    "duration_s": 20.3
+  },
+  {
+    "id": "v-b527772c75",
+    "name": "Jeune homme vif",
+    "description": "Young man in his twenties, energetic tenor voice, quick and bright.",
+    "seed": 1688992912,
+    "sample_seconds": 7.52,
+    "status": "created",
+    "duration_s": 13.4
+  },
+  {
+    "id": "v-b0d22ecbc1",
+    "name": "Homme mûr grave",
+    "description": "Middle-aged man, deep low voice, slow and grave.",
+    "seed": 1232198818,
+    "sample_seconds": 8.4,
+    "status": "created",
+    "duration_s": 16.1
+  },
+  {
+    "id": "v-38985c7f63",
+    "name": "Homme âgé rauque",
+    "description": "Old man in his seventies, hoarse raspy voice, low and weathered.",
+    "seed": 523179133,
+    "sample_seconds": 14.32,
+    "status": "created",
+    "duration_s": 27.9
+  },
+  {
+    "id": "v-40312004fc",
+    "name": "Voix d'enfant",
+    "description": "Child around ten years old, high light voice, neutral and clear.",
+    "seed": 1878787757,
+    "sample_seconds": 10.08,
+    "status": "created",
+    "duration_s": 18.4
+  },
+  {
+    "id": "v-f5fd8d24bb",
+    "name": "Voix androgyne douce",
+    "description": "Androgynous adult voice, soft gentle mid-range pitch, calm and smooth.",
+    "seed": 50304451,
+    "sample_seconds": 9.04,
+    "status": "created",
+    "duration_s": 17.0
+  }
+]

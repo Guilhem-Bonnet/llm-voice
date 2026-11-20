@@ -16,6 +16,10 @@ npm-debug.log*
 out/
 dist/
 *.vsix
+# Staged Core release binary (ADR-012 §7, GAO-s1-fedora-pa-001) — rebuilt by
+# `stage-core.mjs` from `target/release/`, never committed; still reaches
+# the VSIX because `.vscodeignore` does not exclude it.
+vscode-extension/bin/
 # Copied from integrations/claude-code/ at build time (npm run copy:claude-integration)
 vscode-extension/resources/claude-code/
 # vscode-extension/schemas/profile-collection.schema.json is committed
@@ -37,3 +41,39 @@ coverage/
 
 _grimoire/_memory/grimoire_lexical.sqlite3
 vscode-extension/_grimoire-output/
+
+# Rust (Core, ADR-012)
+/target/
+# Traces Grimoire écrites quand un hook tourne depuis src/
+vscode-extension/src/_grimoire-output/
+
+# Banc d écoute : audio régénérable par scripts/voice-lab/run.sh
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-france/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-france/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute/index.html
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-france/index.html
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-narrateurs/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-narrateurs/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-narrateurs/index.html
+
+# Banc Kyutai TTS 1.6B : audio régénérable par scripts/voice-lab/kyutai16.py
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-kyutai16/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-kyutai16/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-kyutai16/index.html
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-classique/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-classique/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-classique/index.html
+deploy/kyutai16/__pycache__/
+deploy/qwen3/__pycache__/
+# Preuve du serveur Qwen3 : audio régénérable par proof_real.py, mesures commitées
+_grimoire-output/evidence/GAO-moteur-qwen3-001/*.wav
+
+# Banc Qwen3-TTS : audio régénérable par scripts/voice-lab/qwen3.py
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-qwen3/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-qwen3/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-qwen3/index.html
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-rythme/wav/
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-rythme/*.ogg
+_grimoire-output/evidence/GAO-essais-voix-001/ecoute-rythme/index.html

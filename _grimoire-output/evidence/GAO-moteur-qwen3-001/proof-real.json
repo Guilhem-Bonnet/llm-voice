@@ -1,0 +1,610 @@
+{
+  "date": "2026-11-07T01:57:48",
+  "vram_total_mb": 16304,
+  "kyutai_health": {
+    "status": "healthy",
+    "engine": "kyutai-tts-1.6b",
+    "state": "ready",
+    "model_loaded": true,
+    "gpu_yield": false,
+    "voices": 36
+  },
+  "before_A": {
+    "waited_s": 436,
+    "card_used": 6202,
+    "qwen3": 0,
+    "kyutai": 5011,
+    "ollama": 0
+  },
+  "phase_a": {
+    "vram_mb": {
+      "before": {
+        "card_used": 6202,
+        "qwen3": 0,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "server_idle": {
+        "card_used": 6202,
+        "qwen3": 0,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "load_frozen_peak": {
+        "card_peak": 10835,
+        "qwen3_peak": 4638,
+        "ollama_seen": false
+      },
+      "frozen_loaded": {
+        "card_used": 10835,
+        "qwen3": 4638,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "frozen_after_synthesis": {
+        "card_used": 11867,
+        "qwen3": 5666,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "load_played_peak": {
+        "card_peak": 15079,
+        "qwen3_peak": 8874,
+        "ollama_seen": false
+      },
+      "both_loaded": {
+        "card_used": 15079,
+        "qwen3": 8874,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "both_after_played_synthesis": {
+        "card_used": 15284,
+        "qwen3": 9106,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "both_after_frozen_synthesis": {
+        "card_used": 16061,
+        "qwen3": 9882,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "after_kyutai_probe": {
+        "card_used": 16058,
+        "qwen3": 9853,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "container_stopped": {
+        "card_used": 6191,
+        "qwen3": 0,
+        "kyutai": 5011,
+        "ollama": 0
+      }
+    },
+    "tts": [
+      {
+        "name": "figee-1",
+        "mode": "frozen",
+        "text": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+        "status": 200,
+        "retry_after": null,
+        "elapsed_s": 9.36,
+        "vram_peak_mb": {
+          "card_peak": 11755,
+          "qwen3_peak": 5558,
+          "ollama_seen": false
+        },
+        "vram_after_mb": {
+          "card_used": 11587,
+          "qwen3": 5390,
+          "kyutai": 5011,
+          "ollama": 0
+        },
+        "audio_s": 3.52,
+        "rate": 24000,
+        "rtf": 2.66,
+        "sha256": "ecfe3b0d5fa8fb71"
+      },
+      {
+        "name": "figee-2",
+        "mode": "frozen",
+        "text": "Les voyageurs ont levé les yeux de leurs livres, puis se sont regardés sans rien dire.",
+        "status": 200,
+        "retry_after": null,
+        "elapsed_s": 8.19,
+        "vram_peak_mb": {
+          "card_peak": 11645,
+          "qwen3_peak": 5444,
+          "ollama_seen": false
+        },
+        "vram_after_mb": {
+          "card_used": 11867,
+          "qwen3": 5666,
+          "kyutai": 5011,
+          "ollama": 0
+        },
+        "audio_s": 4.16,
+        "rate": 24000,
+        "rtf": 1.97,
+        "sha256": "b8c861c86c2bfae5"
+      },
+      {
+        "name": "jouee-1",
+        "mode": "played",
+        "text": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+        "status": 200,
+        "retry_after": null,
+        "elapsed_s": 8.02,
+        "vram_peak_mb": {
+          "card_peak": 15335,
+          "qwen3_peak": 9130,
+          "ollama_seen": false
+        },
+        "vram_after_mb": {
+          "card_used": 15335,
+          "qwen3": 9130,
+          "kyutai": 5011,
+          "ollama": 0
+        },
+        "audio_s": 4.16,
+        "rate": 24000,
+        "rtf": 1.93,
+        "sha256": "aedd328d4c55bde7"
+      },
+      {
+        "name": "jouee-2",
+        "mode": "played",
+        "text": "Les voyageurs ont levé les yeux de leurs livres, puis se sont regardés sans rien dire.",
+        "status": 200,
+        "retry_after": null,
+        "elapsed_s": 9.39,
+        "vram_peak_mb": {
+          "card_peak": 15373,
+          "qwen3_peak": 9170,
+          "ollama_seen": false
+        },
+        "vram_after_mb": {
+          "card_used": 15284,
+          "qwen3": 9106,
+          "kyutai": 5011,
+          "ollama": 0
+        },
+        "audio_s": 4.72,
+        "rate": 24000,
+        "rtf": 1.99,
+        "sha256": "850cdec6aea02d1f"
+      },
+      {
+        "name": "figee-1-bis",
+        "mode": "frozen",
+        "text": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+        "status": 200,
+        "retry_after": null,
+        "elapsed_s": 7.0,
+        "vram_peak_mb": {
+          "card_peak": 16060,
+          "qwen3_peak": 9882,
+          "ollama_seen": false
+        },
+        "vram_after_mb": {
+          "card_used": 16061,
+          "qwen3": 9882,
+          "kyutai": 5011,
+          "ollama": 0
+        },
+        "audio_s": 3.52,
+        "rate": 24000,
+        "rtf": 1.99,
+        "sha256": "ecfe3b0d5fa8fb71"
+      }
+    ],
+    "health_at_start": {
+      "status": "healthy",
+      "engine": "qwen3-tts-1.7b",
+      "state": "unloaded",
+      "model_loaded": false,
+      "models": {
+        "frozen": false,
+        "played": false
+      },
+      "gpu_yield": false,
+      "voices": 1
+    },
+    "voices": {
+      "default": "fr-naturelle",
+      "voices": [
+        {
+          "id": "fr-naturelle",
+          "name": "Naturelle (provisoire)",
+          "available": true,
+          "played": true
+        }
+      ]
+    },
+    "interfaces": "['lo']",
+    "load_frozen_http": {
+      "status": 202,
+      "retry_after": null,
+      "elapsed_s": 0.0
+    },
+    "load_frozen": {
+      "load_s": 18.6,
+      "health_answered_while_loading": true,
+      "health": {
+        "status": "healthy",
+        "engine": "qwen3-tts-1.7b",
+        "state": "ready",
+        "model_loaded": true,
+        "models": {
+          "frozen": true,
+          "played": false
+        },
+        "gpu_yield": false,
+        "voices": 1
+      }
+    },
+    "load_played_http": {
+      "status": 202,
+      "retry_after": null,
+      "elapsed_s": 0.0
+    },
+    "load_played": {
+      "load_s": 5.0,
+      "health_answered_while_loading": true,
+      "health": {
+        "status": "healthy",
+        "engine": "qwen3-tts-1.7b",
+        "state": "ready",
+        "model_loaded": true,
+        "models": {
+          "frozen": true,
+          "played": true
+        },
+        "gpu_yield": false,
+        "voices": 1
+      }
+    },
+    "health_both": {
+      "status": "healthy",
+      "engine": "qwen3-tts-1.7b",
+      "state": "ready",
+      "model_loaded": true,
+      "models": {
+        "frozen": true,
+        "played": true
+      },
+      "gpu_yield": false,
+      "voices": 1
+    },
+    "health_end": {
+      "status": "healthy",
+      "engine": "qwen3-tts-1.7b",
+      "state": "ready",
+      "model_loaded": true,
+      "models": {
+        "frozen": true,
+        "played": true
+      },
+      "gpu_yield": false,
+      "voices": 1
+    },
+    "kyutai_next_door": {
+      "when": "les deux modèles Qwen3 chargés",
+      "status": 200,
+      "bytes": 84524,
+      "elapsed_s": 3.0
+    },
+    "log_leaks": []
+  },
+  "before_C": {
+    "waited_s": 0,
+    "card_used": 6191,
+    "qwen3": 0,
+    "kyutai": 5011,
+    "ollama": 0
+  },
+  "phase_c": {
+    "vram_mb": {
+      "before": {
+        "card_used": 6191,
+        "qwen3": 0,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "frozen_loaded": {
+        "card_used": 10838,
+        "qwen3": 4638,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "after_second_load": {
+        "card_used": 14889,
+        "qwen3": 8686,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "peak_loading": {
+        "card_peak": 16132,
+        "qwen3_peak": 9882,
+        "ollama_seen": false
+      },
+      "after_both_syntheses": {
+        "card_used": 15520,
+        "qwen3": 9399,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "container_stopped": {
+        "card_used": 6166,
+        "qwen3": 0,
+        "kyutai": 5011,
+        "ollama": 0
+      }
+    },
+    "tts": [
+      {
+        "name": "ordre2-jouee",
+        "mode": "played",
+        "text": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+        "status": 200,
+        "retry_after": null,
+        "elapsed_s": 14.48,
+        "vram_peak_mb": {
+          "card_peak": 15076,
+          "qwen3_peak": 8902,
+          "ollama_seen": false
+        },
+        "vram_after_mb": {
+          "card_used": 15204,
+          "qwen3": 9030,
+          "kyutai": 5011,
+          "ollama": 0
+        },
+        "audio_s": 4.16,
+        "rate": 24000,
+        "rtf": 3.48,
+        "sha256": "aedd328d4c55bde7"
+      },
+      {
+        "name": "ordre2-figee",
+        "mode": "frozen",
+        "text": "Les voyageurs ont levé les yeux de leurs livres, puis se sont regardés sans rien dire.",
+        "status": 200,
+        "retry_after": null,
+        "elapsed_s": 9.58,
+        "vram_peak_mb": {
+          "card_peak": 16124,
+          "qwen3_peak": 9551,
+          "ollama_seen": false
+        },
+        "vram_after_mb": {
+          "card_used": 15520,
+          "qwen3": 9399,
+          "kyutai": 5011,
+          "ollama": 0
+        },
+        "audio_s": 4.16,
+        "rate": 24000,
+        "rtf": 2.3,
+        "sha256": "b8c861c86c2bfae5"
+      }
+    ],
+    "load_frozen": 14.6,
+    "load_played": 3.8,
+    "models_after_second_load": {
+      "frozen": true,
+      "played": true
+    },
+    "health_end": {
+      "status": "healthy",
+      "engine": "qwen3-tts-1.7b",
+      "state": "ready",
+      "model_loaded": true,
+      "models": {
+        "frozen": true,
+        "played": true
+      },
+      "gpu_yield": false,
+      "voices": 1
+    },
+    "log_leaks": [],
+    "log_events": []
+  },
+  "before_B": {
+    "waited_s": 0,
+    "card_used": 6166,
+    "qwen3": 0,
+    "kyutai": 5011,
+    "ollama": 0
+  },
+  "phase_b": {
+    "vram_mb": {
+      "before": {
+        "card_used": 6166,
+        "qwen3": 0,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "frozen_loaded": {
+        "card_used": 10839,
+        "qwen3": 4638,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "played_after_swap": {
+        "card_used": 10854,
+        "qwen3": 4650,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "released_by_game_mode": {
+        "card_used": 7064,
+        "qwen3": 864,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "container_stopped": {
+        "card_used": 6168,
+        "qwen3": 0,
+        "kyutai": 5011,
+        "ollama": 0
+      }
+    },
+    "tts": [
+      {
+        "name": "apres-annulation",
+        "mode": "played",
+        "text": "Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.",
+        "status": 200,
+        "retry_after": null,
+        "elapsed_s": 9.13,
+        "vram_peak_mb": {
+          "card_peak": 10986,
+          "qwen3_peak": 4784,
+          "ollama_seen": false
+        },
+        "vram_after_mb": {
+          "card_used": 11176,
+          "qwen3": 4998,
+          "kyutai": 5011,
+          "ollama": 0
+        },
+        "audio_s": 4.16,
+        "rate": 24000,
+        "rtf": 2.19,
+        "sha256": "aedd328d4c55bde7"
+      },
+      {
+        "name": "apres-jeu",
+        "mode": "frozen",
+        "text": "Les voyageurs ont levé les yeux de leurs livres, puis se sont regardés sans rien dire.",
+        "status": 200,
+        "retry_after": null,
+        "elapsed_s": 11.08,
+        "vram_peak_mb": {
+          "card_peak": 11768,
+          "qwen3_peak": 5580,
+          "ollama_seen": false
+        },
+        "vram_after_mb": {
+          "card_used": 11616,
+          "qwen3": 5428,
+          "kyutai": 5011,
+          "ollama": 0
+        },
+        "audio_s": 4.16,
+        "rate": 24000,
+        "rtf": 2.66,
+        "sha256": "b8c861c86c2bfae5"
+      }
+    ],
+    "load_played_swap": {
+      "load_s": 3.3,
+      "health_answered_while_loading": true,
+      "health": {
+        "status": "healthy",
+        "engine": "qwen3-tts-1.7b",
+        "state": "ready",
+        "model_loaded": true,
+        "models": {
+          "frozen": false,
+          "played": true
+        },
+        "gpu_yield": false,
+        "voices": 1
+      }
+    },
+    "health_after_swap": {
+      "status": "healthy",
+      "engine": "qwen3-tts-1.7b",
+      "state": "ready",
+      "model_loaded": true,
+      "models": {
+        "frozen": false,
+        "played": true
+      },
+      "gpu_yield": false,
+      "voices": 1
+    },
+    "client_left": {
+      "status": "client_left",
+      "elapsed_s": 4.0
+    },
+    "next_after_cancel_ok": true,
+    "flag_during_synthesis": {
+      "status": 503,
+      "retry_after": "60",
+      "elapsed_s": 5.2,
+      "seconds_after_flag": 0.24
+    },
+    "health_in_game": {
+      "status": "healthy",
+      "engine": "qwen3-tts-1.7b",
+      "state": "yielded",
+      "model_loaded": false,
+      "models": {
+        "frozen": false,
+        "played": false
+      },
+      "gpu_yield": true,
+      "voices": 1
+    },
+    "during_game": {
+      "tts_frozen": {
+        "status": 503,
+        "retry_after": "60",
+        "elapsed_s": 0.0,
+        "body": "{\"detail\": \"Mode jeu actif (gpu-yield) : aucune synthèse tant qu'il dure. Réessayez une fois le jeu terminé.\", \"reason\": \"gpu_yield\"}"
+      },
+      "tts_played": {
+        "status": 503,
+        "retry_after": "60",
+        "elapsed_s": 0.0,
+        "body": "{\"detail\": \"Mode jeu actif (gpu-yield) : aucune synthèse tant qu'il dure. Réessayez une fois le jeu terminé.\", \"reason\": \"gpu_yield\"}"
+      },
+      "load": {
+        "status": 503,
+        "retry_after": "60",
+        "elapsed_s": 0.0,
+        "body": "{\"detail\": \"Mode jeu actif (gpu-yield) : aucune synthèse tant qu'il dure. Réessayez une fois le jeu terminé.\", \"reason\": \"gpu_yield\"}"
+      },
+      "vram_before_mb": {
+        "card_used": 7064,
+        "qwen3": 864,
+        "kyutai": 5011,
+        "ollama": 0
+      },
+      "vram_after_mb": {
+        "card_used": 7064,
+        "qwen3": 864,
+        "kyutai": 5011,
+        "ollama": 0
+      }
+    },
+    "health_after_game": {
+      "status": "healthy",
+      "engine": "qwen3-tts-1.7b",
+      "state": "ready",
+      "model_loaded": true,
+      "models": {
+        "frozen": true,
+        "played": false
+      },
+      "gpu_yield": false,
+      "voices": 1
+    },
+    "log_leaks": [],
+    "log_events": [
+      "{\"timestamp\": \"2026-11-07T07:07:24Z\", \"service\": \"qwen3\", \"event\": \"model_swapped_out\", \"mode\": \"frozen\", \"why\": \"memory_low\"}",
+      "{\"timestamp\": \"2026-11-07T07:07:32Z\", \"service\": \"qwen3\", \"event\": \"request\", \"status\": 499, \"duration_s\": 4.08, \"route\": \"/tts\", \"voice\": \"fr-naturelle\", \"mode\": \"played\", \"text_chars\": 299, \"direction_chars\": 125}",
+      "{\"timestamp\": \"2026-11-07T07:07:47Z\", \"service\": \"qwen3\", \"event\": \"model_unloaded\"}",
+      "{\"timestamp\": \"2026-11-07T07:07:47Z\", \"service\": \"qwen3\", \"event\": \"request\", \"status\": 503, \"duration_s\": 5.2, \"route\": \"/tts\", \"voice\": \"fr-naturelle\", \"mode\": \"played\", \"text_chars\": 299, \"direction_chars\": 125}",
+      "{\"timestamp\": \"2026-11-07T07:07:50Z\", \"service\": \"qwen3\", \"event\": \"request\", \"status\": 503, \"duration_s\": 0.0, \"route\": \"/tts\", \"voice\": \"fr-naturelle\", \"mode\": \"frozen\", \"text_chars\": 72, \"direction_chars\": 0}",
+      "{\"timestamp\": \"2026-11-07T07:07:50Z\", \"service\": \"qwen3\", \"event\": \"request\", \"status\": 503, \"duration_s\": 0.0, \"route\": \"/tts\", \"voice\": \"fr-naturelle\", \"mode\": \"played\", \"text_chars\": 72, \"direction_chars\": 125}",
+      "{\"timestamp\": \"2026-11-07T07:07:50Z\", \"service\": \"qwen3\", \"event\": \"request\", \"status\": 503, \"duration_s\": 0.0, \"route\": \"/load\", \"mode\": \"frozen\"}"
+    ]
+  },
+  "game_mode_seen": false
+}

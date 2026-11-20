@@ -1,0 +1,1 @@
+{"status": "healthy", "engine": "qwen3-tts-1.7b", "state": "ready", "model_loaded": true, "models": {"frozen": true, "played": false}, "gpu_yield": false, "voices": 10}

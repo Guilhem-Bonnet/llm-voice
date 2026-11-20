@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "documentKey": "79ea09addacd06995c8c8208e1ec50f50baa772a89112e003bcfeba7207acee6",
+  "bibleRevision": 0,
+  "cues": [
+    {
+      "cueId": "r-1",
+      "sourceIds": [
+        "blk-1"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "J'ai corrigé le bug dans le fichier de configuration.",
+      "emotion": {
+        "label": "posé",
+        "intensity": 0.2
+      },
+      "pauseAfterMs": 300
+    },
+    {
+      "cueId": "r-2",
+      "sourceIds": [
+        "blk-2"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Les vingt-quatre tests passent maintenant.",
+      "emphasis": [
+        "vingt-quatre"
+      ],
+      "tempo": 1.05
+    },
+    {
+      "cueId": "r-3",
+      "sourceIds": [
+        "blk-3"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Souhaitez-vous que je crée aussi la carte de suivi ?",
+      "emotion": {
+        "label": "engageant",
+        "intensity": 0.3
+      },
+      "pauseBeforeMs": 400
+    }
+  ]
+}

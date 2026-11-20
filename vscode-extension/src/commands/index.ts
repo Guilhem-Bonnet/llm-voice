@@ -4,8 +4,9 @@
  * `clearHighlight` is the only one handled purely locally.
  */
 
+import { matchPreviewSource, previewFileName } from "./previewSource.js";
 import * as vscode from "vscode";
-import type { CaptureContext, CaptureScope, SourceRange } from "../core/source.js";
+import { normalizeSelections, type CaptureContext, type CaptureScope, type SourceRange } from "../core/source.js";
 import type { HighlightController } from "../highlight/HighlightController.js";
 import type { PlayerViewProvider } from "../views/player/PlayerViewProvider.js";
 import type { SpeakSectionArgs } from "../ui/CodeLensProvider.js";
@@ -37,6 +38,37 @@ function activeEditorContext(): Pick<CaptureContext, "uri" | "languageId"> {
   };
 }
 
+/** The document behind the focused Markdown preview, which is a webview with no text editor. */
+async function markdownPreviewContext(): Promise<Pick<CaptureContext, "uri" | "languageId">> {
+  const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+  if (!(tab?.input instanceof vscode.TabInputWebview) || !tab.input.viewType.includes("markdown.preview")) {
+    return {};
+  }
+  const name = previewFileName(tab.label);
+  if (name === undefined) {
+    return {};
+  }
+  const open = vscode.workspace.textDocuments.map((document) => document.uri.toString());
+  const inTabs = vscode.window.tabGroups.all
+    .flatMap((group) => group.tabs)
+    .flatMap((other) => (other.input instanceof vscode.TabInputText ? [other.input.uri.toString()] : []));
+  let source = matchPreviewSource(name, [...open, ...inTabs]);
+  if (source.kind === "none") {
+    const glob = `**/${name.replace(/[[\]{}*?]/g, "?")}`;
+    const files = await vscode.workspace.findFiles(glob, "**/node_modules/**", 5);
+    source = matchPreviewSource(name, files.map((uri) => uri.toString()));
+  }
+  if (source.kind === "found") {
+    return { uri: source.uri, languageId: "markdown" };
+  }
+  void vscode.window.showInformationMessage(
+    source.kind === "ambiguous"
+      ? `LLM Voice : plusieurs fichiers s'appellent « ${name} ». Ouvrez le bon fichier, puis lancez la lecture.`
+      : `LLM Voice : fichier « ${name} » introuvable. Ouvrez-le, puis lancez la lecture.`
+  );
+  return {};
+}
+
 /** Registers all `llmVoice.*` commands and returns their disposables. */
 export function registerCommands(deps: CommandDependencies): vscode.Disposable[] {
   const { pipeline, highlight, player } = deps;
@@ -45,9 +77,10 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     scope: CaptureScope,
     extra: Partial<CaptureContext> = {}
   ): Promise<void> => {
+    const editorContext = activeEditorContext();
     const context: CaptureContext = {
       scope,
-      ...activeEditorContext(),
+      ...(editorContext.uri === undefined && scope === "document" ? await markdownPreviewContext() : editorContext),
       ...extra
     };
     player.reveal();
@@ -73,7 +106,9 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
       // sélection") but only *after* opening the player and briefly showing
       // "preparing". Catching it here, before capture even starts, offers
       // the document instead of just reporting the empty result.
-      if (editor === undefined || editor.selection.isEmpty) {
+      const passages = editor === undefined ? [] : normalizeSelections(editor.selections.map(selectionToSourceRange));
+      const first = passages[0];
+      if (first === undefined) {
         const choice = await vscode.window.showInformationMessage(
           "LLM Voice : aucune sélection. Lire le document entier ?",
           "Lire le document"
@@ -83,7 +118,10 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
         }
         return;
       }
-      await runCapture("selection", { selection: selectionToSourceRange(editor.selection) });
+      await runCapture("selection", {
+        selection: first,
+        ...(passages.length > 1 ? { selections: passages } : {})
+      });
     }),
     vscode.commands.registerCommand(
       "llmVoice.speakFromCursor",
@@ -115,7 +153,14 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.stop", () => pipeline.stop()),
     vscode.commands.registerCommand("llmVoice.previousSegment", () => pipeline.previousSegment()),
     vscode.commands.registerCommand("llmVoice.nextSegment", () => pipeline.nextSegment()),
-    vscode.commands.registerCommand("llmVoice.selectProfile", () => pipeline.selectProfile()),
+    // ADR-017 §3: an id once published stays executable, a user's shortcut may name
+    // it. An alias does the same thing and is hidden from the palette.
+    vscode.commands.registerCommand("llmVoice.chooseMode", () => pipeline.chooseMode()),
+    vscode.commands.registerCommand("llmVoice.selectProfile", () => pipeline.chooseMode()),
+    vscode.commands.registerCommand("llmVoice.chooseVoice", () => pipeline.chooseVoice()),
+    vscode.commands.registerCommand("llmVoice.setupVoice", () => pipeline.chooseVoice()),
+    vscode.commands.registerCommand("llmVoice.openVoiceGallery", () => pipeline.openVoiceGallery()),
+    vscode.commands.registerCommand("llmVoice.browseVoices", () => pipeline.openVoiceGallery()),
     vscode.commands.registerCommand("llmVoice.openProfiles", () => pipeline.openProfiles()),
     vscode.commands.registerCommand("llmVoice.duplicateProfile", () => pipeline.duplicateProfile()),
     vscode.commands.registerCommand("llmVoice.deleteProfile", () => pipeline.deleteProfile()),
@@ -128,9 +173,9 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.setProviderApiKey", () => pipeline.setProviderApiKey()),
     vscode.commands.registerCommand("llmVoice.clearProviderApiKey", () => pipeline.clearProviderApiKey()),
     vscode.commands.registerCommand("llmVoice.openInbox", () => pipeline.openInbox()),
-    vscode.commands.registerCommand("llmVoice.speakLatestClaudeResponse", () =>
-      pipeline.speakLatestClaudeResponse()
-    ),
+    // Any tool's latest reply. The old id stays executable, ADR-017 §3.
+    vscode.commands.registerCommand("llmVoice.speakLatestResponse", () => pipeline.speakLatestResponse()),
+    vscode.commands.registerCommand("llmVoice.speakLatestClaudeResponse", () => pipeline.speakLatestResponse()),
     vscode.commands.registerCommand("llmVoice.clearHighlight", () => {
       // No silent no-op (S7.3): only the *active* editor is checked — good
       // enough to answer "was there anything visibly highlighted here?"
@@ -165,7 +210,6 @@ export function registerCommands(deps: CommandDependencies): vscode.Disposable[]
     vscode.commands.registerCommand("llmVoice.installClaudeHook", () => pipeline.installClaudeHook()),
     vscode.commands.registerCommand("llmVoice.uninstallClaudeHook", () => pipeline.uninstallClaudeHook()),
     vscode.commands.registerCommand("llmVoice.installPiperVoice", () => pipeline.installPiperVoice()),
-    vscode.commands.registerCommand("llmVoice.browseVoices", () => pipeline.browseVoices()),
     vscode.commands.registerCommand("llmVoice.useOwnVoice", () => pipeline.useOwnVoice()),
     vscode.commands.registerCommand("llmVoice.editProfile", () => pipeline.editProfile())
   ];

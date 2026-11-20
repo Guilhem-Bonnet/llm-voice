@@ -1,0 +1,7 @@
+{
+  "active": true,
+  "roles": ["geronte", "florine", "scapin"],
+  "absent": ["GÉRONTE :", "**SCAPIN**", "SCAPIN."],
+  "narrateur": ["Elle prend son panier", "à part", "Il sort sa bourse", "Scapin entre en sifflant", "ACTE I"],
+  "repliques": { "florine": ["Vous parlez tout seul, à présent"], "scapin": ["Bonjour la compagnie"] }
+}

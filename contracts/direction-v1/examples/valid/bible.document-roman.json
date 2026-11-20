@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "scope": "document",
+  "scopeKey": "file:///home/guilhem/livres/la-taverne.md",
+  "revision": 3,
+  "analysis": {
+    "genre": "roman",
+    "intent": "raconter",
+    "audience": "adulte",
+    "baseTone": "sombre",
+    "narratorPersona": "conteur posé",
+    "readingProfileId": "narrated-story"
+  },
+  "narrator": {
+    "id": "narrator",
+    "names": [],
+    "traits": {
+      "registre": {
+        "value": "soutenu",
+        "by": "analyst",
+        "at": "2026-09-29T10:15:00Z"
+      }
+    },
+    "voice": {
+      "descriptor": {
+        "value": "voix grave et posée",
+        "by": "analyst",
+        "at": "2026-09-29T10:15:00Z"
+      },
+      "assignments": {
+        "chatterbox": {
+          "voiceRef": "voix-narrateur",
+          "by": "casting"
+        }
+      }
+    }
+  },
+  "characters": [
+    {
+      "id": "marguerite",
+      "names": [
+        "Marguerite",
+        "la tavernière"
+      ],
+      "traits": {
+        "age": {
+          "value": "quarante ans",
+          "by": "analyst",
+          "at": "2026-09-29T10:15:00Z"
+        },
+        "timbre": {
+          "value": "rauque",
+          "by": "director",
+          "at": "2026-09-29T10:15:00Z",
+          "sourceIds": [
+            "p1-s2"
+          ]
+        },
+        "caractere": {
+          "value": "directe",
+          "by": "user",
+          "at": "2026-09-29T10:15:00Z",
+          "locked": true
+        }
+      },
+      "states": [
+        {
+          "label": "épuisée",
+          "fromSourceId": "p1-s2",
+          "untilSourceId": "p4-s9",
+          "by": "director"
+        }
+      ],
+      "voice": {
+        "descriptor": {
+          "value": "voix de femme mûre, rauque",
+          "by": "analyst",
+          "at": "2026-09-29T10:15:00Z"
+        },
+        "assignments": {
+          "chatterbox": {
+            "voiceRef": "voix-femme-2",
+            "by": "casting"
+          },
+          "piper": {
+            "voiceRef": "fr_FR-siwis-medium",
+            "by": "user",
+            "locked": true
+          }
+        }
+      }
+    },
+    {
+      "id": "victor",
+      "names": [
+        "Victor",
+        "le capitaine"
+      ],
+      "traits": {
+        "age": {
+          "value": "cinquante ans",
+          "by": "analyst",
+          "at": "2026-09-29T10:15:00Z"
+        }
+      },
+      "voice": {
+        "assignments": {
+          "chatterbox": {
+            "voiceRef": "voix-homme-3",
+            "by": "casting"
+          }
+        }
+      }
+    }
+  ]
+}

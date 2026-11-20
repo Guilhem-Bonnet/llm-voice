@@ -1,0 +1,107 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.models
+#1 transferring dockerfile: 1.78kB done
+#1 DONE 0.2s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 2.8s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+#3 resolve docker.io/docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183 0.1s done
+#3 DONE 0.1s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 0B / 15.19MB 0.2s
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 2.10MB / 15.19MB 0.5s
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 4.19MB / 15.19MB 0.6s
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 6.29MB / 15.19MB 0.8s
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 7.34MB / 15.19MB 0.9s
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 10.49MB / 15.19MB 1.1s
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 11.53MB / 15.19MB 1.2s
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 14.68MB / 15.19MB 1.4s
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 15.19MB / 15.19MB 1.5s done
+#3 extracting sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315
+#3 extracting sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 0.7s done
+#3 DONE 2.4s
+
+#4 [internal] load metadata for docker.io/library/busybox:1.37.0-musl@sha256:f6a95d611e0a8780fabdb2aec43e31275b2720dfefa3e41b16835bfc42454478
+#4 DONE 1.1s
+
+#5 [internal] load .dockerignore
+#5 transferring context:
+#5 transferring context: 2B 0.0s done
+#5 DONE 0.3s
+
+#6 [internal] load build context
+#6 DONE 0.0s
+
+#7 [1/9] FROM docker.io/library/busybox:1.37.0-musl@sha256:f6a95d611e0a8780fabdb2aec43e31275b2720dfefa3e41b16835bfc42454478
+#7 resolve docker.io/library/busybox:1.37.0-musl@sha256:f6a95d611e0a8780fabdb2aec43e31275b2720dfefa3e41b16835bfc42454478 0.1s done
+#7 DONE 0.2s
+
+#7 [1/9] FROM docker.io/library/busybox:1.37.0-musl@sha256:f6a95d611e0a8780fabdb2aec43e31275b2720dfefa3e41b16835bfc42454478
+#7 DONE 0.3s
+
+#6 [internal] load build context
+#6 ...
+
+#7 [1/9] FROM docker.io/library/busybox:1.37.0-musl@sha256:f6a95d611e0a8780fabdb2aec43e31275b2720dfefa3e41b16835bfc42454478
+#7 extracting sha256:c5d667da52f4bd7995a1024b423218afbb209f6cc465000d5141ced100827f4a 0.1s done
+#7 DONE 0.4s
+
+#6 [internal] load build context
+#6 transferring context: 249.15MB 3.6s
+#6 transferring context: 631.55MB 8.7s
+#6 transferring context: 1.02GB 13.7s
+#6 transferring context: 1.45GB 18.7s
+#6 transferring context: 1.86GB 23.8s
+#6 transferring context: 2.32GB 28.9s
+#6 transferring context: 2.68GB 34.0s
+#6 transferring context: 3.15GB 39.0s
+#6 transferring context: 3.62GB 44.0s
+#6 transferring context: 4.16GB 49.2s
+#6 transferring context: 4.75GB 54.2s
+#6 transferring context: 5.69GB 59.2s
+#6 transferring context: 6.67GB 64.3s
+#6 transferring context: 7.69GB 69.3s
+#6 transferring context: 8.67GB 74.3s
+#6 transferring context: 9.07GB 76.3s done
+#6 DONE 76.4s
+
+#8 [2/9] COPY --chown=1000:1000 hf/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base /data/hf/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base
+#8 DONE 5.1s
+
+#9 [3/9] COPY --chown=1000:1000 hf/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-VoiceDesign /data/hf/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-VoiceDesign
+#9 DONE 5.1s
+
+#10 [4/9] COPY --chown=1000:1000 refs /data/refs
+#10 DONE 0.1s
+
+#11 [5/9] COPY --chown=1000:1000 created /data/created
+#11 DONE 0.1s
+
+#12 [6/9] COPY LICENSE-Apache-2.0 NOTICE /licenses/
+#12 DONE 0.1s
+
+#13 [7/9] COPY VERSION /data/VERSION
+#13 DONE 0.1s
+
+#14 [8/9] COPY data-init.sh /usr/local/bin/qwen3-data-init
+#14 DONE 0.1s
+
+#15 [9/9] RUN mkdir -p /vol/hf /vol/refs /vol/created && chown 1000:1000 /vol/hf /vol/refs /vol/created
+#15 DONE 0.2s
+
+#16 exporting to image
+#16 exporting layers
+#16 exporting layers 202.3s done
+#16 exporting manifest sha256:da6e95e2dcac08845bf6e0e12f1fcdfa3cc105fb19b55d560de231c98a9a5b69 0.0s done
+#16 exporting config sha256:5cb9ca20adc715e4086d450c805855dac6065ed22a30feb81cd289222f0572a2 done
+#16 exporting attestation manifest sha256:ddf923a082a1069e2e4d7ca12a696f5566501b39a735280bd9fa287a1ddd3046 0.0s done
+#16 exporting manifest list sha256:73ee9369e30a6b104deb00fde5e778ed1090f3b6cb85be7dadbbee7b4b8b5471 0.0s done
+#16 naming to ghcr.io/guilhem-bonnet/llm-voice-qwen3-models:0.1.0 done
+#16 unpacking to ghcr.io/guilhem-bonnet/llm-voice-qwen3-models:0.1.0
+#16 unpacking to ghcr.io/guilhem-bonnet/llm-voice-qwen3-models:0.1.0 99.6s done
+#16 DONE 302.1s
+models rc=0

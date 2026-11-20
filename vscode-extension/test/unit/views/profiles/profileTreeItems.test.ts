@@ -66,11 +66,83 @@ describe("buildProfileTreeItems", () => {
     expect(items[0]?.tooltip).toBe("A");
   });
 
-  it("uses the profile's own description as tooltip when present", () => {
+  it("leads the tooltip with the profile's own description, technical provider pair kept below it (GAO-fix-liste-de-001)", () => {
     const items = buildProfileTreeItems(
-      [profile({ id: "a", label: "A", description: "Une description." })],
+      [profile({ id: "a", label: "A", description: "Une description.", tts: { providerId: "system" } })],
       undefined
     );
-    expect(items[0]?.tooltip).toBe("Une description.");
+    expect(items[0]?.tooltip).toBe("Une description.\n\nlecture fidèle · Voix système");
+  });
+
+  it("shows the plain-language description on the visible row instead of the technical provider pair (real user feedback: 'ollama · chatterbox' means nothing to them)", () => {
+    const items = buildProfileTreeItems(
+      [
+        profile({
+          id: "teacher",
+          label: "Professeur technique",
+          mode: "narrated",
+          tts: { providerId: "chatterbox" },
+          narrator: { providerId: "ollama" },
+          description: "Explication orale pédagogique, avec analogies quand elles aident."
+        })
+      ],
+      undefined
+    );
+    expect(items[0]?.description).toBe("Explication orale pédagogique, avec analogies quand elles aident.");
+    expect(items[0]?.description).not.toMatch(/ollama|chatterbox/);
+  });
+
+  it("falls back to the technical provider pair on the visible row when a profile has no human description (e.g. a hand-edited one)", () => {
+    const items = buildProfileTreeItems([profile({ id: "a", label: "A", tts: { providerId: "chatterbox" } })], undefined);
+    expect(items[0]?.description).toBe("lecture fidèle · Chatterbox (qualité maximale)");
+  });
+
+  it("falls back to the technical pair when `description` is an empty string, not a silently blank row (Sentinel review, GAO-fix-liste-de-001)", () => {
+    const items = buildProfileTreeItems(
+      [profile({ id: "a", label: "A", tts: { providerId: "chatterbox" }, description: "" })],
+      undefined
+    );
+    expect(items[0]?.description).toBe("lecture fidèle · Chatterbox (qualité maximale)");
+    expect(items[0]?.tooltip).toBe("A");
+  });
+
+  it("prefixes the active profile's row with 'Actif — ' even when it has a human description (Sentinel review: untested combination)", () => {
+    const items = buildProfileTreeItems(
+      [
+        profile({
+          id: "teacher",
+          label: "Professeur technique",
+          description: "Explication orale pédagogique, avec analogies quand elles aident."
+        })
+      ],
+      "teacher"
+    );
+    expect(items[0]?.description).toBe("Actif — Explication orale pédagogique, avec analogies quand elles aident.");
+  });
+
+  it("a mode with its own voice leads with it, the one case the global voice is not what is heard (ADR-017 §1.3)", () => {
+    const items = buildProfileTreeItems(
+      [
+        profile({
+          id: "a",
+          label: "A",
+          description: "Une description.",
+          tts: { providerId: "kyutai-pocket", voice: "estelle" }
+        }),
+        profile({ id: "b", label: "B", description: "Une autre." })
+      ],
+      undefined,
+      new Set(["a"])
+    );
+    expect(items[0]?.description).toBe("Voix propre : Estelle — Une description.");
+    expect(items[1]?.description).toBe("Une autre.");
+  });
+
+  it("V16: a mode inheriting a remote global voice shows the cloud, judged on its effective voice", () => {
+    const items = buildProfileTreeItems(
+      [profile({ id: "a", label: "A", tts: { providerId: "openai-compatible", baseUrl: "https://tts.corp.example.com" } })],
+      undefined
+    );
+    expect(items[0]?.icon).toBe("cloud");
   });
 });

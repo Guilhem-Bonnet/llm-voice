@@ -4,9 +4,9 @@
 
 - Project: LLM Voice (repo TTS-Voice)
 - Owner: guilhem-bonnet
-- Selected profile: `starter`
+- Selected profile: `controlled` (need `provider-neutral`, depuis Grimoire Kit 3.46.1 le 2026-09-13 ; `starter` du 2026-09-08 au 2026-09-12)
 - Upstream standard reference: processus-developpement-agentique/docs/norme-structure-agentique.md
-- Date: 2026-09-08
+- Date: 2026-09-08 (mis à jour 2026-09-13)
 
 ## Scope
 
@@ -21,6 +21,8 @@
 |---|---|---|
 | Phase 0 cadrage | review, brainstorm, sécurité, plan repo, plan maître | evidence-pack bootstrap |
 | Phases 1-6 MVP 0.1 | AC-01..AC-17 + AC-SEC-01..10 verts, VSIX publié | evidence-pack par phase, rapports QA, traçabilité AC ↔ tests |
+| Phases 7-9 (0.1.1 → 0.2.1) | voix autonome sans Docker, vue dédiée, correctifs de sélection de voix | evidence-pack phase-7..9, releases GitHub |
+| Phase 10 outillage | kit Grimoire 3.46.1, profil `controlled`, politiques temporelles, hooks git | evidence-pack phase-10, `grimoire standard verify` |
 
 ## Mandatory capabilities
 
@@ -44,5 +46,5 @@
 
 | Deviation | Reason | Expiry or review trigger |
 |---|---|---|
-| `llm-provider-registry.yaml` et `knowledge-source-registry.yaml` non générés | profil starter | phase 1, si `grimoire standard init --needs` est retenu |
-| Repo GitHub non créé | action publique L4 | confirmation utilisateur |
+| `knowledge-source-registry.yaml` non généré | aucune source externe indexée ; profil `controlled` ne l'exige pas | dès qu'une source documentaire est indexée (profil `orchestrated`) |
+| ~~Repo GitHub non créé~~ | levée : repo `Guilhem-Bonnet/llm-voice` créé le 2026-09-08 sur confirmation utilisateur | — |

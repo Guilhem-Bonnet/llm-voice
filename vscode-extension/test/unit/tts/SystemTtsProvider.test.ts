@@ -302,6 +302,43 @@ describe("SystemTtsProvider — isRunningInFlatpak", () => {
   });
 });
 
+describe("SystemTtsProvider — the engine in the audio cache (ADR-017, 'Ce qui reste ouvert' 1)", () => {
+  it("an espeak-ng voice, then Piper installed: same provider id, not the same identity, so not the same audio", async () => {
+    const runner = new FakeRunner();
+    runner.whichAnswers.set("espeak-ng", "/usr/bin/espeak-ng");
+    const provider = new SystemTtsProvider({
+      id: "system@",
+      platform: "linux",
+      piperInstallDir: "/piper",
+      runner,
+      isFlatpak: false
+    });
+    expect(await provider.cacheIdentity()).toBe("system@#espeak-ng");
+
+    runner.existsAnswers.set("/piper/bin/piper", true);
+    runner.existsAnswers.set("/piper/voices/fr_FR-siwis-medium.onnx", true);
+    expect(await provider.cacheIdentity()).toBe("system@#piper");
+  });
+
+  it("no engine at all: the id alone, no throw on the way to the error the reading reports", async () => {
+    const provider = new SystemTtsProvider({ id: "system@", platform: "linux", runner: new FakeRunner(), isFlatpak: false });
+    expect(await provider.cacheIdentity()).toBe("system@");
+  });
+
+  it("the voice the Piper tier names is not sent to another engine: it would refuse it", async () => {
+    const runner = new FakeRunner();
+    runner.whichAnswers.set("espeak-ng", "/usr/bin/espeak-ng");
+    const provider = new SystemTtsProvider({ platform: "linux", runner, isFlatpak: false });
+    await provider.synthesize({ text: "Bonjour.", language: "fr-FR", voice: "fr_FR-siwis-medium" });
+    const args = runner.runCalls[0]?.invocation.args ?? [];
+    expect(args[args.indexOf("-v") + 1]).toBe("fr");
+
+    await provider.synthesize({ text: "Bonjour.", language: "fr-FR", voice: "french" });
+    const named = runner.runCalls[1]?.invocation.args ?? [];
+    expect(named[named.indexOf("-v") + 1]).toBe("french");
+  });
+});
+
 describe("SystemTtsProvider — detection order and engine selection", () => {
   it("Linux: prefers Piper over espeak-ng when both are available", async () => {
     const runner = new FakeRunner();

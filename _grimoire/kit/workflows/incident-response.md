@@ -5,7 +5,6 @@ triggers:
   - alerte critique résolue
   - incident infra détecté
   - incident sécurité détecté
-team: team-ops
 ---
 <p align="right"><a href="../../README.md">README</a> · <a href="../../docs">Docs</a></p>
 
@@ -26,7 +25,7 @@ présents dans le projet ; un rôle sans agent installé rend « aucun ».
 
 **But :** Fournir un processus structuré de diagnostic et de post-mortem pour tout incident infra ou sécurité. Ce workflow est partagé entre tous les agents opérationnels.
 
-**Qui peut le déclencher :** Tout agent (Forge, Vault, Hawk, Helm, Phoenix, Flow) ou manuellement par l'utilisateur.
+**Qui peut le déclencher :** Tout agent (Forge, aucun, Hawk, aucun, aucun, aucun) ou manuellement par l'utilisateur.
 
 <img src="../../docs/assets/divider.svg" width="100%" alt="">
 
@@ -35,9 +34,9 @@ présents dans le projet ; un rôle sans agent installé rend « aucun ».
 
 | Variante | Lead | Support | Quand |
 |----------|------|---------|-------|
-| **Incident Infra** | Forge ou Helm (selon périmètre LXC/K3s) | Hawk (métriques), Flow (CI/CD) | Container down, service inaccessible, performance dégradée |
-| **Incident Sécurité** | Vault | Forge (isolation), Hawk (logs), Helm (K8s RBAC) | Tentative d'intrusion, secret exposé, container compromis |
-| **Incident Données** | Phoenix | Helm (Longhorn), Forge (Proxmox) | Perte de données, corruption, backup échoué |
+| **Incident Infra** | Forge ou aucun (selon périmètre LXC/K3s) | Hawk (métriques), aucun (CI/CD) | Container down, service inaccessible, performance dégradée |
+| **Incident Sécurité** | aucun | Forge (isolation), Hawk (logs), aucun (K8s RBAC) | Tentative d'intrusion, secret exposé, container compromis |
+| **Incident Données** | aucun | aucun (Longhorn), Forge (Proxmox) | Perte de données, corruption, backup échoué |
 
 <img src="../../docs/assets/divider.svg" width="100%" alt="">
 
@@ -66,10 +65,10 @@ Recueillir immédiatement :
 ### 1.3 Assignation du lead
 
 - Composant LXC (Terraform/Ansible/Docker) → **Forge** lead
-- Composant K3s (pods/FluxCD/Longhorn) → **Helm** lead
-- Composant sécurité (secrets, intrusion, TLS) → **Vault** lead
+- Composant K3s (pods/FluxCD/Longhorn) → **aucun** lead
+- Composant sécurité (secrets, intrusion, TLS) → **aucun** lead
 - Composant monitoring (alertes fausses, TSDB) → **Hawk** lead
-- Composant données (backup échoué, corruption) → **Phoenix** lead
+- Composant données (backup échoué, corruption) → **aucun** lead
 
 <img src="../../docs/assets/divider.svg" width="100%" alt="">
 

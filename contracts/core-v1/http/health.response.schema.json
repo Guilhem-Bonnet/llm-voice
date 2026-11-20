@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/http/health.response.schema.json",
+  "title": "GET /health — réponse",
+  "description": "Réponse à l'unique route HTTP non authentifiée (ADR-012 §4) : version et capacités, avant toute ouverture de WebSocket.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "status", "capabilities"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "status": { "type": "string", "const": "ok" },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formats", "engine"],
+      "properties": {
+        "formats": {
+          "type": "array",
+          "items": { "$ref": "../common.schema.json#/$defs/audioFormat" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "engine": { "type": "string", "enum": ["cpal"] }
+      }
+    }
+  }
+}

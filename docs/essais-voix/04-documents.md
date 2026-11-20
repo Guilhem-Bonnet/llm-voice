@@ -1,0 +1,6 @@
+# Passages longs
+
+@documentation: Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.
+@recit: La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.
+@reponse: Le correctif est prêt. La cause était simple : la clé du cache ignorait la langue, donc deux lectures différentes partageaient le même fichier. J'ai ajouté la langue à la clé et un test qui échoue sans ce changement. Il reste une limite : le cache sera reconstruit une fois, ce qui ajoute un peu d'attente à la première relecture.
+@chiffres: La facture numéro 2047 du 14 mars 2026 s'élève à 1 280,50 euros, soit 18 % de plus qu'en février. Le paiement est attendu avant le 30 avril, à 17 h 45 au plus tard.

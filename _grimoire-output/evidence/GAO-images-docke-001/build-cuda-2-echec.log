@@ -1,0 +1,122 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.cuda
+#1 transferring dockerfile: 2.43kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.2s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+#3 resolve docker.io/docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183 0.1s done
+#3 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 15.19MB / 15.19MB 1.5s done
+#3 extracting sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 0.7s done
+#3 DONE 2.4s
+
+#4 [internal] load metadata for docker.io/library/python:3.10.19-slim-bookworm@sha256:23f63358922e79a794f71be8f3723c84e5ccca9638af3f74456dc73d6184499e
+#4 DONE 0.1s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [1/8] FROM docker.io/library/python:3.10.19-slim-bookworm@sha256:23f63358922e79a794f71be8f3723c84e5ccca9638af3f74456dc73d6184499e
+#6 resolve docker.io/library/python:3.10.19-slim-bookworm@sha256:23f63358922e79a794f71be8f3723c84e5ccca9638af3f74456dc73d6184499e 0.1s done
+#6 CACHED
+
+#7 [internal] load build context
+#7 transferring context: 644B done
+#7 DONE 0.0s
+
+#8 [2/8] COPY requirements-cuda.txt requirements-common.txt /tmp/req/
+#8 DONE 0.8s
+
+#9 [3/8] RUN python3 -m pip install -r /tmp/req/requirements-cuda.txt
+#9 1.785 Looking in indexes: https://download.pytorch.org/whl/cu128
+#9 1.871 Collecting torch==2.9.1
+#9 1.871   Obtaining dependency information for torch==2.9.1 from https://download-r2.pytorch.org/whl/cu128/torch-2.9.1%2Bcu128-cp310-cp310-manylinux_2_28_x86_64.whl.metadata
+#9 2.001   Downloading https://download-r2.pytorch.org/whl/cu128/torch-2.9.1%2Bcu128-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (30 kB)
+#9 2.174 Collecting torchaudio==2.9.1
+#9 2.174   Obtaining dependency information for torchaudio==2.9.1 from https://download-r2.pytorch.org/whl/cu128/torchaudio-2.9.1%2Bcu128-cp310-cp310-manylinux_2_28_x86_64.whl.metadata
+#9 2.233   Downloading https://download-r2.pytorch.org/whl/cu128/torchaudio-2.9.1%2Bcu128-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (6.9 kB)
+#9 2.415 Collecting triton==3.5.1
+#9 2.415   Obtaining dependency information for triton==3.5.1 from https://download-r2.pytorch.org/whl/triton-3.5.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata
+#9 2.605   Downloading https://download-r2.pytorch.org/whl/triton-3.5.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (1.7 kB)
+#9 2.627 Collecting nvidia-cufft-cu12==11.3.3.83
+#9 2.700   Downloading https://pypi.nvidia.com/nvidia-cufft-cu12/nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (193.1 MB)
+#9 5.228      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 193.1/193.1 MB 89.1 MB/s eta 0:00:00
+#9 5.740 Collecting nvidia-nccl-cu12==2.27.5
+#9 5.757   Downloading https://pypi.nvidia.com/nvidia-nccl-cu12/nvidia_nccl_cu12-2.27.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (322.3 MB)
+#9 8.902      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 322.3/322.3 MB 115.1 MB/s eta 0:00:00
+#9 9.764 Collecting nvidia-nvjitlink-cu12==12.8.93
+#9 9.776   Downloading https://pypi.nvidia.com/nvidia-nvjitlink-cu12/nvidia_nvjitlink_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (39.3 MB)
+#9 10.13      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 39.3/39.3 MB 121.3 MB/s eta 0:00:00
+#9 10.25 Collecting nvidia-cuda-cupti-cu12==12.8.90
+#9 10.27   Downloading https://pypi.nvidia.com/nvidia-cuda-cupti-cu12/nvidia_cuda_cupti_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (10.2 MB)
+#9 10.37      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.2/10.2 MB 104.2 MB/s eta 0:00:00
+#9 10.42 Collecting nvidia-cufile-cu12==1.13.1.3
+#9 10.44   Downloading https://pypi.nvidia.com/nvidia-cufile-cu12/nvidia_cufile_cu12-1.13.1.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.2 MB)
+#9 10.46      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 79.2 MB/s eta 0:00:00
+#9 10.60 Collecting typing-extensions>=4.10.0
+#9 10.60   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl.metadata
+#9 10.64   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+#9 10.64 Discarding https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl#sha256=481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.9): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl#sha256=481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.64   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl.metadata
+#9 10.65   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+#9 10.65 Discarding https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl#sha256=f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548 (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.9): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl#sha256=f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548 (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.65   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/b5/00/d631e67a838026495268c2f6884f3711a15a9a2a96cd244fdaea53b823fb/typing_extensions-4.14.1-py3-none-any.whl.metadata
+#9 10.66   Downloading typing_extensions-4.14.1-py3-none-any.whl.metadata (3.0 kB)
+#9 10.66 Discarding https://files.pythonhosted.org/packages/b5/00/d631e67a838026495268c2f6884f3711a15a9a2a96cd244fdaea53b823fb/typing_extensions-4.14.1-py3-none-any.whl#sha256=d1e1e3b58374dc93031d6eda2420a48ea44a36c2b4766a4fdeb3710755731d76 (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.9): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/b5/00/d631e67a838026495268c2f6884f3711a15a9a2a96cd244fdaea53b823fb/typing_extensions-4.14.1-py3-none-any.whl#sha256=d1e1e3b58374dc93031d6eda2420a48ea44a36c2b4766a4fdeb3710755731d76 (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.67   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/69/e0/552843e0d356fbb5256d21449fa957fa4eff3bbc135a74a691ee70c7c5da/typing_extensions-4.14.0-py3-none-any.whl.metadata
+#9 10.67   Downloading typing_extensions-4.14.0-py3-none-any.whl.metadata (3.0 kB)
+#9 10.67 Discarding https://files.pythonhosted.org/packages/69/e0/552843e0d356fbb5256d21449fa957fa4eff3bbc135a74a691ee70c7c5da/typing_extensions-4.14.0-py3-none-any.whl#sha256=a1514509136dd0b477638fc68d6a91497af5076466ad0fa6c338e44e359944af (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.9): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/69/e0/552843e0d356fbb5256d21449fa957fa4eff3bbc135a74a691ee70c7c5da/typing_extensions-4.14.0-py3-none-any.whl#sha256=a1514509136dd0b477638fc68d6a91497af5076466ad0fa6c338e44e359944af (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.68   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/8b/54/b1ae86c0973cc6f0210b53d508ca3641fb6d0c56823f288d108bc7ab3cc8/typing_extensions-4.13.2-py3-none-any.whl.metadata
+#9 10.68   Downloading typing_extensions-4.13.2-py3-none-any.whl.metadata (3.0 kB)
+#9 10.68 Discarding https://files.pythonhosted.org/packages/8b/54/b1ae86c0973cc6f0210b53d508ca3641fb6d0c56823f288d108bc7ab3cc8/typing_extensions-4.13.2-py3-none-any.whl#sha256=a439e7c04b49fec3e5d3e2beaa21755cadbbdc391694e28ccdd36ca4a1408f8c (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/8b/54/b1ae86c0973cc6f0210b53d508ca3641fb6d0c56823f288d108bc7ab3cc8/typing_extensions-4.13.2-py3-none-any.whl#sha256=a439e7c04b49fec3e5d3e2beaa21755cadbbdc391694e28ccdd36ca4a1408f8c (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.69   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/df/c5/e7a0b0f5ed69f94c8ab7379c599e6036886bffcde609969a5325f47f1332/typing_extensions-4.13.1-py3-none-any.whl.metadata
+#9 10.70   Downloading typing_extensions-4.13.1-py3-none-any.whl.metadata (3.0 kB)
+#9 10.70 Discarding https://files.pythonhosted.org/packages/df/c5/e7a0b0f5ed69f94c8ab7379c599e6036886bffcde609969a5325f47f1332/typing_extensions-4.13.1-py3-none-any.whl#sha256=4b6cf02909eb5495cfbc3f6e8fd49217e6cc7944e145cdda8caa3734777f9e69 (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/df/c5/e7a0b0f5ed69f94c8ab7379c599e6036886bffcde609969a5325f47f1332/typing_extensions-4.13.1-py3-none-any.whl#sha256=4b6cf02909eb5495cfbc3f6e8fd49217e6cc7944e145cdda8caa3734777f9e69 (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.70   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/e0/86/39b65d676ec5732de17b7e3c476e45bb80ec64eb50737a8dce1a4178aba1/typing_extensions-4.13.0-py3-none-any.whl.metadata
+#9 10.71   Downloading typing_extensions-4.13.0-py3-none-any.whl.metadata (3.0 kB)
+#9 10.71 Discarding https://files.pythonhosted.org/packages/e0/86/39b65d676ec5732de17b7e3c476e45bb80ec64eb50737a8dce1a4178aba1/typing_extensions-4.13.0-py3-none-any.whl#sha256=c8dd92cc0d6425a97c18fbb9d1954e5ff92c1ca881a309c45f06ebc0b79058e5 (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/e0/86/39b65d676ec5732de17b7e3c476e45bb80ec64eb50737a8dce1a4178aba1/typing_extensions-4.13.0-py3-none-any.whl#sha256=c8dd92cc0d6425a97c18fbb9d1954e5ff92c1ca881a309c45f06ebc0b79058e5 (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.71   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl.metadata
+#9 10.72   Downloading typing_extensions-4.12.2-py3-none-any.whl.metadata (3.0 kB)
+#9 10.72 Discarding https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl#sha256=04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl#sha256=04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.72   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/b6/53/84a859aaddfe7378a6e5820e864a2d75763e82b6fcbda1a00e92ec620bb7/typing_extensions-4.12.1-py3-none-any.whl.metadata
+#9 10.73   Downloading typing_extensions-4.12.1-py3-none-any.whl.metadata (3.0 kB)
+#9 10.73 Discarding https://files.pythonhosted.org/packages/b6/53/84a859aaddfe7378a6e5820e864a2d75763e82b6fcbda1a00e92ec620bb7/typing_extensions-4.12.1-py3-none-any.whl#sha256=6024b58b69089e5a89c347397254e35f1bf02a907728ec7fee9bf0fe837d203a (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/b6/53/84a859aaddfe7378a6e5820e864a2d75763e82b6fcbda1a00e92ec620bb7/typing_extensions-4.12.1-py3-none-any.whl#sha256=6024b58b69089e5a89c347397254e35f1bf02a907728ec7fee9bf0fe837d203a (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.74   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/e1/4d/d612de852a0bc64a64418e1cef25fe1914c5b1611e34cc271ed7e36174c8/typing_extensions-4.12.0-py3-none-any.whl.metadata
+#9 10.74   Downloading typing_extensions-4.12.0-py3-none-any.whl.metadata (3.0 kB)
+#9 10.74 Discarding https://files.pythonhosted.org/packages/e1/4d/d612de852a0bc64a64418e1cef25fe1914c5b1611e34cc271ed7e36174c8/typing_extensions-4.12.0-py3-none-any.whl#sha256=b349c66bea9016ac22978d800cfff206d5f9816951f12a7d0ec5578b0a819594 (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/e1/4d/d612de852a0bc64a64418e1cef25fe1914c5b1611e34cc271ed7e36174c8/typing_extensions-4.12.0-py3-none-any.whl#sha256=b349c66bea9016ac22978d800cfff206d5f9816951f12a7d0ec5578b0a819594 (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.75   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/01/f3/936e209267d6ef7510322191003885de524fc48d1b43269810cd589ceaf5/typing_extensions-4.11.0-py3-none-any.whl.metadata
+#9 10.75   Downloading typing_extensions-4.11.0-py3-none-any.whl.metadata (3.0 kB)
+#9 10.76 Discarding https://files.pythonhosted.org/packages/01/f3/936e209267d6ef7510322191003885de524fc48d1b43269810cd589ceaf5/typing_extensions-4.11.0-py3-none-any.whl#sha256=c1f94d72897edaf4ce775bb7558d5b79d8126906a14ea5ed1635921406c0387a (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/01/f3/936e209267d6ef7510322191003885de524fc48d1b43269810cd589ceaf5/typing_extensions-4.11.0-py3-none-any.whl#sha256=c1f94d72897edaf4ce775bb7558d5b79d8126906a14ea5ed1635921406c0387a (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.76   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/f9/de/dc04a3ea60b22624b51c703a84bbe0184abcd1d0b9bc8074b5d6b7ab90bb/typing_extensions-4.10.0-py3-none-any.whl.metadata
+#9 10.77   Downloading typing_extensions-4.10.0-py3-none-any.whl.metadata (3.0 kB)
+#9 10.77 Discarding https://files.pythonhosted.org/packages/f9/de/dc04a3ea60b22624b51c703a84bbe0184abcd1d0b9bc8074b5d6b7ab90bb/typing_extensions-4.10.0-py3-none-any.whl#sha256=69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475 (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/f9/de/dc04a3ea60b22624b51c703a84bbe0184abcd1d0b9bc8074b5d6b7ab90bb/typing_extensions-4.10.0-py3-none-any.whl#sha256=69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475 (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+#9 10.77 ERROR: Could not find a version that satisfies the requirement typing-extensions>=4.10.0 (from torch) (from versions: 3.6.2, 3.6.2.1, 3.6.5, 3.6.6, 3.7.2, 3.7.4, 3.7.4.1, 3.7.4.2, 3.7.4.3, 3.10.0.0, 3.10.0.1, 3.10.0.2, 4.0.0, 4.0.1, 4.1.0, 4.1.1, 4.2.0, 4.3.0, 4.4.0, 4.5.0, 4.6.0, 4.6.1, 4.6.2, 4.6.3, 4.7.0rc1, 4.7.0, 4.7.1, 4.8.0rc1, 4.8.0, 4.9.0rc1, 4.9.0, 4.10.0rc1, 4.10.0, 4.11.0rc1, 4.11.0, 4.12.0a2, 4.12.0rc1, 4.12.0, 4.12.1, 4.12.2, 4.13.0rc1, 4.13.0, 4.13.1, 4.13.2, 4.14.0rc1, 4.14.0, 4.14.1, 4.15.0rc1, 4.15.0, 4.16.0rc1, 4.16.0rc2, 4.16.0)
+#9 10.77 ERROR: No matching distribution found for typing-extensions>=4.10.0
+#9 ERROR: process "/bin/sh -c python3 -m pip install -r /tmp/req/requirements-cuda.txt" did not complete successfully: exit code: 1
+------
+ > [3/8] RUN python3 -m pip install -r /tmp/req/requirements-cuda.txt:
+10.74   Downloading typing_extensions-4.12.0-py3-none-any.whl.metadata (3.0 kB)
+10.74 Discarding https://files.pythonhosted.org/packages/e1/4d/d612de852a0bc64a64418e1cef25fe1914c5b1611e34cc271ed7e36174c8/typing_extensions-4.12.0-py3-none-any.whl#sha256=b349c66bea9016ac22978d800cfff206d5f9816951f12a7d0ec5578b0a819594 (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/e1/4d/d612de852a0bc64a64418e1cef25fe1914c5b1611e34cc271ed7e36174c8/typing_extensions-4.12.0-py3-none-any.whl#sha256=b349c66bea9016ac22978d800cfff206d5f9816951f12a7d0ec5578b0a819594 (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+10.75   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/01/f3/936e209267d6ef7510322191003885de524fc48d1b43269810cd589ceaf5/typing_extensions-4.11.0-py3-none-any.whl.metadata
+10.75   Downloading typing_extensions-4.11.0-py3-none-any.whl.metadata (3.0 kB)
+10.76 Discarding https://files.pythonhosted.org/packages/01/f3/936e209267d6ef7510322191003885de524fc48d1b43269810cd589ceaf5/typing_extensions-4.11.0-py3-none-any.whl#sha256=c1f94d72897edaf4ce775bb7558d5b79d8126906a14ea5ed1635921406c0387a (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/01/f3/936e209267d6ef7510322191003885de524fc48d1b43269810cd589ceaf5/typing_extensions-4.11.0-py3-none-any.whl#sha256=c1f94d72897edaf4ce775bb7558d5b79d8126906a14ea5ed1635921406c0387a (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+10.76   Obtaining dependency information for typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/f9/de/dc04a3ea60b22624b51c703a84bbe0184abcd1d0b9bc8074b5d6b7ab90bb/typing_extensions-4.10.0-py3-none-any.whl.metadata
+10.77   Downloading typing_extensions-4.10.0-py3-none-any.whl.metadata (3.0 kB)
+10.77 Discarding https://files.pythonhosted.org/packages/f9/de/dc04a3ea60b22624b51c703a84bbe0184abcd1d0b9bc8074b5d6b7ab90bb/typing_extensions-4.10.0-py3-none-any.whl#sha256=69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475 (from https://download.pytorch.org/whl/cu128/typing-extensions/) (requires-python:>=3.8): Requested typing-extensions>=4.10.0 from https://files.pythonhosted.org/packages/f9/de/dc04a3ea60b22624b51c703a84bbe0184abcd1d0b9bc8074b5d6b7ab90bb/typing_extensions-4.10.0-py3-none-any.whl#sha256=69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475 (from torch==2.9.1->-r /tmp/req/requirements-cuda.txt (line 6)) has inconsistent Name: expected 'typing-extensions', but metadata has 'typing_extensions'
+10.77 ERROR: Could not find a version that satisfies the requirement typing-extensions>=4.10.0 (from torch) (from versions: 3.6.2, 3.6.2.1, 3.6.5, 3.6.6, 3.7.2, 3.7.4, 3.7.4.1, 3.7.4.2, 3.7.4.3, 3.10.0.0, 3.10.0.1, 3.10.0.2, 4.0.0, 4.0.1, 4.1.0, 4.1.1, 4.2.0, 4.3.0, 4.4.0, 4.5.0, 4.6.0, 4.6.1, 4.6.2, 4.6.3, 4.7.0rc1, 4.7.0, 4.7.1, 4.8.0rc1, 4.8.0, 4.9.0rc1, 4.9.0, 4.10.0rc1, 4.10.0, 4.11.0rc1, 4.11.0, 4.12.0a2, 4.12.0rc1, 4.12.0, 4.12.1, 4.12.2, 4.13.0rc1, 4.13.0, 4.13.1, 4.13.2, 4.14.0rc1, 4.14.0, 4.14.1, 4.15.0rc1, 4.15.0, 4.16.0rc1, 4.16.0rc2, 4.16.0)
+10.77 ERROR: No matching distribution found for typing-extensions>=4.10.0
+------
+Dockerfile.cuda:24
+--------------------
+  22 |     
+  23 |     COPY requirements-cuda.txt requirements-common.txt /tmp/req/
+  24 | >>> RUN python3 -m pip install -r /tmp/req/requirements-cuda.txt
+  25 |     RUN python3 -m pip install -r /tmp/req/requirements-common.txt \
+  26 |      && python3 -m pip install --no-deps qwen-tts==0.1.1 \
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c python3 -m pip install -r /tmp/req/requirements-cuda.txt" did not complete successfully: exit code: 1
+cuda rc=1

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/ws/segment_ended.event.schema.json",
+  "title": "Événement WS — segment_ended",
+  "description": "Émis seulement après vidange complète du tampon audio du segment, jamais avant que le périphérique ait fini de jouer ses échantillons (GAO-spike-moteur-001, CL-004 : la cause du dernier mot tronqué était un `ended` posté avant vidange — cette règle s'applique identiquement à `segment_ended`).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "type", "segmentId", "positionMs"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "type": { "const": "segment_ended" },
+    "segmentId": { "$ref": "../common.schema.json#/$defs/segmentId" },
+    "positionMs": { "$ref": "../common.schema.json#/$defs/positionMs" }
+  }
+}

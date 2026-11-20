@@ -37,10 +37,29 @@ body {
   white-space: nowrap;
 }
 
+#profile-group {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 #profile {
   color: var(--vscode-descriptionForeground);
-  white-space: nowrap;
-  flex-shrink: 0;
+}
+
+/* Provider/voice indicator (audit 2026-11-05, P1): the only persistent,
+   always-visible confirmation that a voice choice actually took effect —
+   everywhere else, the only feedback was a transitory toast. */
+#voice {
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+
+#voice:not(:empty)::before {
+  content: "· ";
 }
 
 #time {
@@ -71,6 +90,22 @@ body {
   background-color: var(--vscode-progressBar-background, var(--vscode-button-background));
 }
 
+/* Takes no height while empty, and stays in the page so that assistive
+   technology announces each change of its text. */
+#status-line {
+  min-height: 0;
+  justify-content: center;
+}
+
+#status {
+  min-width: 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 #transport {
   justify-content: center;
   gap: 4px;
@@ -82,9 +117,14 @@ body {
   background: transparent;
   color: var(--vscode-foreground);
   cursor: pointer;
-  padding: 2px 8px;
+  flex: none;
+  width: 32px;
+  height: 24px;
+  padding: 0;
   font-size: 16px;
   line-height: 1;
+  white-space: nowrap;
+  text-align: center;
   border-radius: 4px;
 }
 
@@ -114,6 +154,8 @@ body {
 
 .welcome-button {
   appearance: none;
+  flex: none;
+  white-space: nowrap;
   border: 1px solid var(--vscode-button-border, transparent);
   border-radius: 4px;
   background-color: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
@@ -134,10 +176,161 @@ body {
 }
 
 body[data-state="idle"] #transport,
-body[data-state="idle"] #progress-track {
+body[data-state="idle"] #progress-line {
   display: none;
 }
 
 body:not([data-state="idle"]) #welcome {
+  display: none;
+}
+
+/* `display` set below would otherwise win over the attribute. */
+[hidden] {
+  display: none !important;
+}
+
+/* Fixed size: never stretched, never wrapped. The row wraps, the label does not. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.action-button {
+  appearance: none;
+  flex: none;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 4px;
+  background-color: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
+  cursor: pointer;
+  font-size: var(--vscode-font-size);
+  font-family: var(--vscode-font-family);
+  white-space: nowrap;
+}
+
+.action-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
+}
+
+.action-button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+
+#response-code-line {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+#response-code-line[hidden],
+#response-code-note[hidden] {
+  display: none;
+}
+
+.wait-line {
+  margin: 2px 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+#wait {
+  padding: 4px 0;
+}
+
+#wait-elapsed {
+  flex: none;
+  color: var(--vscode-descriptionForeground);
+  font-variant-numeric: tabular-nums;
+}
+
+#wait-bar {
+  height: 4px;
+  margin: 6px 0;
+  border-radius: 2px;
+  overflow: hidden;
+  background-color: var(--vscode-scrollbarSlider-background);
+}
+
+#wait-fill {
+  height: 100%;
+  width: 0%;
+  background-color: var(--vscode-progressBar-background, var(--vscode-button-background));
+  transition: width 1s linear;
+}
+
+/* The value and the text only. */
+@media (prefers-reduced-motion: reduce) {
+  #wait-fill {
+    transition: none;
+  }
+}
+
+/* The wait block takes the place of the progress line, and speaks through the status below. */
+#wait:not([hidden]) ~ #progress-line {
+  display: none;
+}
+
+#wait:not([hidden]) ~ #status-line {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+#notice {
+  padding: 6px 0;
+}
+
+#notice-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+#notice-body {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+}
+
+#document {
+  padding: 8px 0 0;
+}
+
+#document-heading {
+  margin: 0 0 4px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#document-name {
+  margin: 0;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#document-empty-text {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+}
+
+/* During a reading the panel talks about that reading. */
+body[data-state="preparing"] #document,
+body[data-state="buffering"] #document,
+body[data-state="playing"] #document,
+body[data-state="paused"] #document {
+  display: none;
+}
+
+#document-script[hidden],
+#document-script-actions[hidden] {
   display: none;
 }

@@ -62,7 +62,7 @@ suite("ProfileRepository migration (bug fix: voice-selection-not-applied, defect
     assert.ok(raw.profiles.every((profile) => profile.tts.providerId === "chatterbox"));
   });
 
-  test("load() migrates a legacy profiles.json in place: every profile now resolves through 'auto', schemaVersion bumped, persisted to disk", async () => {
+  test("load() migrates a legacy profiles.json in place: every mode inherits a global voice on 'auto', schemaVersion bumped, persisted to disk", async () => {
     await mkdir(storageDir, { recursive: true });
     const profilesPath = join(storageDir, "profiles.json");
     await writeFile(profilesPath, await legacyFixtureText(), "utf8");
@@ -72,15 +72,14 @@ suite("ProfileRepository migration (bug fix: voice-selection-not-applied, defect
 
     assert.equal(collection.schemaVersion, CURRENT_PROFILE_SCHEMA_VERSION);
     for (const profile of collection.profiles) {
-      assert.equal(profile.tts.providerId, "auto", `${profile.id} should resolve through auto after migration`);
-      assert.equal(profile.tts.baseUrl, undefined, `${profile.id} should no longer pin a baseUrl`);
+      assert.deepEqual(profile.tts, {}, `${profile.id} should inherit after migration`);
     }
-    // The specific profile from the bug report: selected by default, was
-    // pinned to a stopped Chatterbox, now free to fall back to
-    // Piper/système via `resolveTtsProviderConfig` → `autoSelectTts`.
-    const faithful = collection.profiles.find((profile) => profile.id === "faithful-local");
-    assert.ok(faithful);
-    assert.equal(faithful?.tts.providerId, "auto");
+    // The specific case of the bug report: was pinned to a stopped Chatterbox,
+    // now free to fall back to Piper/système via `resolveTtsProviderConfig`
+    // → `autoSelectTts`, through the global voice.
+    const voice = await repository.getGlobalVoice();
+    assert.equal(voice.providerId, "auto");
+    assert.equal(voice.baseUrl, undefined);
 
     // Persisted: re-reading the raw file directly (not through the
     // repository) proves this is not an in-memory-only migration.

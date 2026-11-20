@@ -1,15 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeInboxBadge, formatRelativeTime, inboxProviderIcon } from "../../../src/claude/inboxFormat.js";
-
-describe("inboxProviderIcon", () => {
-  it("returns a distinct codicon for known providers, generic otherwise", () => {
-    expect(inboxProviderIcon("claude-code")).toBe("$(comment-discussion)");
-    expect(inboxProviderIcon("codex")).toBe("$(terminal)");
-    expect(inboxProviderIcon("gemini-cli")).toBe("$(star-full)");
-    expect(inboxProviderIcon("copilot")).toBe("$(github)");
-    expect(inboxProviderIcon("some-unknown-tool")).toBe("$(circle-outline)");
-  });
-});
+import { computeInboxBadge, formatRelativeTime } from "../../../src/claude/inboxFormat.js";
 
 describe("formatRelativeTime", () => {
   const now = Date.parse("2026-09-08T12:00:00.000Z");
@@ -36,11 +26,12 @@ describe("computeInboxBadge", () => {
     expect(computeInboxBadge(0)).toBeUndefined();
   });
 
-  it("returns a value + French tooltip for one unread message", () => {
-    expect(computeInboxBadge(1)).toEqual({ value: 1, tooltip: "1 message(s) non lu(s)" });
+  it("says one reply in the singular, several in the plural", () => {
+    expect(computeInboxBadge(1)).toEqual({ value: 1, tooltip: "1 réponse non lue" });
+    expect(computeInboxBadge(3)).toEqual({ value: 3, tooltip: "3 réponses non lues" });
   });
 
   it("returns a value + French tooltip for several unread messages", () => {
-    expect(computeInboxBadge(7)).toEqual({ value: 7, tooltip: "7 message(s) non lu(s)" });
+    expect(computeInboxBadge(7)).toEqual({ value: 7, tooltip: "7 réponses non lues" });
   });
 });

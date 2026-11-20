@@ -9,13 +9,15 @@ commande dans le kit) puis resynchronisez.
 
 | Surface | Contenu |
 |---|---|
-| Sous-agents | 18 — `.claude/agents/` |
-| Skills | 2 — `.claude/skills/` |
-| Commandes | 9 — `.claude/commands/` |
-| Hooks | 2 — `.claude/settings.json` |
+| Sous-agents | 9 — `.claude/agents/` |
+| Skills transversales | 2 — `.claude/skills/`, chargées toutes sessions |
+| Skills attachées | 11 — repliées dans le fichier de leur agent, payées seulement quand il tourne |
+| Commandes | 12 — `.claude/commands/` |
+| Hooks | 7 — `.claude/settings.json` |
 
 ## Hooks bloquants
 
 - `PreToolUse` — Refus des mutations destructrices et des accès secrets, selon le profil de risque.
+- `Stop` — Une clôture sans gates verts est une tâche non terminée — la règle devient contrainte ici.
 
 Un hook bloquant refuse une action ou une clôture. Pour désactiver temporairement la gouvernance, retirez l'entrée de `.claude/settings.json` et n'exécutez pas `grimoire host sync` avant de l'avoir remise.

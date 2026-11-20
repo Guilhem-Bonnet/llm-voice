@@ -10,11 +10,12 @@ import type { PipelineFacade } from "./commands/PipelineFacade.js";
 import { Pipeline } from "./pipeline/Pipeline.js";
 import { ProfileRepository } from "./profiles/ProfileRepository.js";
 import type { AudioSink } from "./playback/index.js";
+import { CoreProcess } from "./playback/CoreProcess.js";
+import { NativeAudioSink } from "./playback/NativeAudioSink.js";
 import type { TtsProvider } from "./core/tts.js";
 import type { SystemTtsProcessRunner } from "./tts/SystemTtsProvider.js";
 import type { PlayerUserAction } from "./core/playback.js";
 import { createLogger, parseLogLevel, type Logger } from "./infrastructure/logger.js";
-import { setupVoice } from "./onboarding/SetupVoice.js";
 import { openWalkthroughExample, openWalkthroughOnFirstActivation } from "./onboarding/Walkthrough.js";
 // Type-only: erased at compile time, never pulls `test/fakes/*` into the
 // bundle (see `requireTestFixture` below for the runtime-safe counterpart).
@@ -26,6 +27,12 @@ let logger: Logger | undefined;
 /** `llmVoice.log.level` (default `info`, CdC §81). */
 function readLogLevel(): ReturnType<typeof parseLogLevel> {
   return parseLogLevel(vscode.workspace.getConfiguration("llmVoice").get<string>("log.level"));
+}
+
+/** `llmVoice.audio.engine` (ADR-012); anything but the literal `"native"` stays on the webview engine. */
+function readAudioEngine(): "webview" | "native" {
+  const value = vscode.workspace.getConfiguration("llmVoice").get<string>("audio.engine", "webview");
+  return value === "native" ? "native" : "webview";
 }
 
 /**
@@ -73,6 +80,18 @@ function isTestFakeTtsEnabled(context: vscode.ExtensionContext): boolean {
   return (
     context.extensionMode !== vscode.ExtensionMode.Production &&
     process.env.LLM_VOICE_TEST_FAKE_TTS === "1"
+  );
+}
+
+/**
+ * ADR-017 § Tests (`voice-chain`): the fake sink alone, with the real
+ * `ttsFor`/`createTtsProvider`/`ChatterboxProvider` chain. Same gate as the
+ * fake TTS above: never honoured by a packaged install.
+ */
+function isTestFakeSinkEnabled(context: vscode.ExtensionContext): boolean {
+  return (
+    context.extensionMode !== vscode.ExtensionMode.Production &&
+    process.env.LLM_VOICE_TEST_FAKE_SINK === "1"
   );
 }
 
@@ -141,7 +160,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     context.globalState
   );
   const profilesTree = new ProfilesTreeProvider(
-    () => profilesRepositoryForViews.list(),
+    () => profilesRepositoryForViews.listEffective(),
     () => profilesRepositoryForViews.getSelected().then((profile) => profile.id)
   );
   context.subscriptions.push(
@@ -153,7 +172,10 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   // full Profile Editor webview, `Open Profiles`' JSON editor, `Duplicate
   // Profile`/`Delete Profile` from the palette…).
   const profilesFileWatcher = vscode.workspace.createFileSystemWatcher(
-    new vscode.RelativePattern(vscode.Uri.file(path.dirname(profilesRepositoryForViews.uri.fsPath)), "profiles.json")
+    new vscode.RelativePattern(
+      vscode.Uri.file(path.dirname(profilesRepositoryForViews.uri.fsPath)),
+      "{profiles,global-voice}.json"
+    )
   );
   context.subscriptions.push(
     profilesFileWatcher,
@@ -173,6 +195,8 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   let sinkOverride: AudioSink | undefined;
   let ttsProviderOverride: TtsProvider | undefined;
   let testAudioSink: FakeAudioSink | undefined;
+  let coreProcess: CoreProcess | undefined;
+  let nativeAudioSink: NativeAudioSink | undefined;
 
   if (isTestFakeTtsEnabled(context)) {
     try {
@@ -202,6 +226,41 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     }
   }
 
+  if (sinkOverride === undefined && isTestFakeSinkEnabled(context)) {
+    try {
+      const sinkModule = requireTestFixture<{ FakeAudioSink: new () => FakeAudioSink }>(
+        context,
+        "FakeAudioSink.js"
+      );
+      testAudioSink = new sinkModule.FakeAudioSink();
+      sinkOverride = testAudioSink;
+      log.info("LLM_VOICE_TEST_FAKE_SINK=1 — using FakeAudioSink with the real TTS chain (ADR-017).");
+    } catch (error) {
+      log.error("failed to load the fake sink fixture", { error: String(error) });
+    }
+  }
+
+  // ADR-012 (GAO-core-rust-mi-001, étape B): `llmVoice.audio.engine` picks
+  // the playback engine `Pipeline` drives, same override slot the fake-TTS
+  // block above uses (`sinkOverride`) — whichever runs last would win, so
+  // this is deliberately gated on `sinkOverride === undefined` to never
+  // shadow the fake sink the dev/test profile just installed. Default stays
+  // `"webview"` (no-op here): the switch to `"native"` by default is a
+  // separate, later card once the engine is validated end-to-end.
+  if (sinkOverride === undefined && readAudioEngine() === "native") {
+    const corePathSetting = vscode.workspace.getConfiguration("llmVoice").get<string>("audio.corePath", "");
+    coreProcess = new CoreProcess({
+      cacheDir: vscode.Uri.joinPath(context.globalStorageUri, "cache").fsPath,
+      extensionPath: context.extensionUri.fsPath,
+      ...(corePathSetting.length > 0 ? { corePathOverride: corePathSetting } : {}),
+      log
+    });
+    const capturedCoreProcess = coreProcess;
+    nativeAudioSink = new NativeAudioSink({ connect: () => capturedCoreProcess.ensureRunning(), log });
+    sinkOverride = nativeAudioSink;
+    log.info("llmVoice.audio.engine=native — using NativeAudioSink + CoreProcess (ADR-012).");
+  }
+
   // Bug fix (voice-selection-not-applied / infinite loop review): same
   // dev/test-mode gate as `LLM_VOICE_TEST_FAKE_TTS` above — deterministic
   // integration coverage of `Pipeline.autoSelectTts()`'s "provider
@@ -219,6 +278,12 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     context.extensionMode !== vscode.ExtensionMode.Production
       ? process.env.LLM_VOICE_TEST_AUTO_PIPER_BASE_URL
       : undefined;
+  // GAO-qwen3-dans-l-001: the automatic choice now probes Qwen3 and Kyutai 1.6B first. A suite
+  // must never reach the real ones of the machine running it (GPU, sound).
+  const autoQwen3BaseUrlOverride =
+    context.extensionMode !== vscode.ExtensionMode.Production ? process.env.LLM_VOICE_TEST_AUTO_QWEN3_BASE_URL : undefined;
+  const autoKyutai16BaseUrlOverride =
+    context.extensionMode !== vscode.ExtensionMode.Production ? process.env.LLM_VOICE_TEST_AUTO_KYUTAI16_BASE_URL : undefined;
 
   // Bug fix (voice-selection-not-applied / infinite loop, coordinator
   // review): replaces `SystemTtsProvider`'s real `child_process`/`fs`
@@ -264,7 +329,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
         void pipelineRef.current?.stop();
         break;
       case "selectProfile":
-        void pipelineRef.current?.selectProfile();
+        void pipelineRef.current?.chooseMode();
         break;
       case "openInbox":
         void pipelineRef.current?.openInbox();
@@ -281,25 +346,13 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   }, statusBarMenuCommand);
   context.subscriptions.push(statusBar);
   context.subscriptions.push(
-    vscode.commands.registerCommand(statusBarMenuCommand, () => statusBar.openMenu())
+    vscode.commands.registerCommand(statusBarMenuCommand, () => statusBar.openMenu()),
+    vscode.commands.registerCommand("llmVoice.toggleCast", () => pipeline.toggleCast()),
+    vscode.commands.registerCommand("llmVoice.chooseCastVoices", () => pipeline.chooseCastVoices()),
+    vscode.commands.registerCommand("llmVoice.openCastPanel", () => pipeline.openCastPanel())
   );
+  player.setScriptDescriber((document) => pipeline.describeScript(document));
 
-  // S7.2 (onboarding): registered here rather than `commands/index.ts` so
-  // this story never has to depend on that file's ownership by S7.1/S7.3.
-  //
-  // Bug fix (voice-selection-not-applied / infinite loop, 2026-09-12):
-  // `setupVoice` now needs `Pipeline.applyVoiceTierChoice` to actually
-  // persist the chosen tier — resolved lazily through `pipelineRef` exactly
-  // like every other command below, since this registration runs *before*
-  // `Pipeline` itself is constructed (`const pipeline = new Pipeline(...)`,
-  // a few lines down).
-  context.subscriptions.push(
-    vscode.commands.registerCommand("llmVoice.setupVoice", () =>
-      setupVoice(async (tier) => {
-        await pipelineRef.current?.applyVoiceTierChoice(tier);
-      })
-    )
-  );
   context.subscriptions.push(
     vscode.commands.registerCommand("llmVoice.walkthroughOpenExample", () => openWalkthroughExample(context))
   );
@@ -314,10 +367,20 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
     ...(ttsProviderOverride !== undefined ? { ttsProviderOverride } : {}),
     ...(autoChatterboxBaseUrlOverride !== undefined ? { autoChatterboxBaseUrlOverride } : {}),
     ...(autoPiperLocalBaseUrlOverride !== undefined ? { autoPiperLocalBaseUrlOverride } : {}),
+    ...(autoQwen3BaseUrlOverride !== undefined ? { autoQwen3BaseUrlOverride } : {}),
+    ...(autoKyutai16BaseUrlOverride !== undefined ? { autoKyutai16BaseUrlOverride } : {}),
     ...(systemRunnerOverride !== undefined ? { systemRunnerOverride } : {})
   });
   pipelineRef.current = pipeline;
   context.subscriptions.push({ dispose: () => pipeline.dispose() });
+  if (nativeAudioSink !== undefined || coreProcess !== undefined) {
+    context.subscriptions.push({
+      dispose: () => {
+        nativeAudioSink?.dispose();
+        coreProcess?.dispose();
+      }
+    });
+  }
 
   // Mini-player transport buttons (ADR-001 `userAction`), independent of
   // which sink actually drives playback.
@@ -340,13 +403,37 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
           void pipeline.previousSegment();
           break;
         case "selectProfile":
-          void pipeline.selectProfile();
+          void pipeline.chooseMode();
           break;
         case "setupVoice":
-          void vscode.commands.executeCommand("llmVoice.setupVoice");
+          void pipeline.chooseVoice();
           break;
         case "speakCurrentDocument":
           void vscode.commands.executeCommand("llmVoice.speakDocument");
+          break;
+        case "speakSelection":
+          void vscode.commands.executeCommand("llmVoice.speakSelection");
+          break;
+        case "speakFromCursor":
+          void vscode.commands.executeCommand("llmVoice.speakFromCursor");
+          break;
+        case "speakClipboard":
+          void vscode.commands.executeCommand("llmVoice.speakClipboard");
+          break;
+        case "retryHold":
+          void pipeline.retryAfterHold();
+          break;
+        case "readWithSystemVoice":
+          void pipeline.readWithSystemVoice();
+          break;
+        case "toggleCast":
+          void pipeline.toggleCast();
+          break;
+        case "toggleResponseCode":
+          pipeline.toggleResponseCode();
+          break;
+        case "chooseCastVoices":
+          void pipeline.openCastPanel();
           break;
         default:
           break;

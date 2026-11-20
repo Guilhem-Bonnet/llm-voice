@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "documentKey": "35d7968e3d8218fc5796181e1fda886edb3b3893698e4b98247eb18003d1ae1e",
+  "bibleRevision": 0,
+  "cues": [
+    {
+      "cueId": "faithful-seg-1",
+      "sourceIds": [
+        "seg-1"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Bonjour et bienvenue.",
+      "tempo": 1,
+      "pauseBeforeMs": 0,
+      "pauseAfterMs": 0
+    },
+    {
+      "cueId": "faithful-seg-2",
+      "sourceIds": [
+        "seg-2"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Voici la suite du texte.",
+      "tempo": 1,
+      "pauseBeforeMs": 0,
+      "pauseAfterMs": 0
+    }
+  ]
+}

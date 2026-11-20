@@ -54,6 +54,17 @@ export interface TtsBinding {
 }
 
 /**
+ * The voice every mode without its own speaks with (ADR-017 §1.2, stored in
+ * `global-voice.json`): a whole `TtsBinding`, engine included, plus the speed
+ * factor of the voice. `providerId` may still be `"auto"` (ADR-009).
+ */
+export interface GlobalVoice extends TtsBinding {
+  providerId: string;
+  /** 0.5 to 2, multiplied by `playback.rate` of the mode (ADR-017 §1.4). */
+  speed: number;
+}
+
+/**
  * Optional narrator binding; absent means faithful reading only.
  *
  * Same fallback as `TtsBinding` above: an omitted `providerId`/`baseUrl`/
@@ -118,7 +129,19 @@ export interface VoiceProfile {
    * block is omitted.
    */
   synchronization?: SynchronizationSettings;
+  /**
+   * Still resolved by id, never offered in a list (ADR-017 §1.3): the migrated
+   * `system-voice`, which was a voice and not a way of reading.
+   */
+  hidden?: boolean;
 }
+
+/**
+ * ADR-017 §1.3: what a `VoiceProfile` means from now on. The word leaves the
+ * interface, not the code: same type, same file, same ids. `tts: {}` inherits
+ * the global voice; any other `tts`, whatever it holds, is a voice of its own.
+ */
+export type ReadingMode = VoiceProfile;
 
 /**
  * The `profiles.json` document, versioned for future migrations.
@@ -132,4 +155,9 @@ export interface ProfileCollection {
   schemaVersion: 1 | 2;
   defaultProfileId: string;
   profiles: VoiceProfile[];
+  /**
+   * ADR-017 §2: "this file has been classified". Its absence covers the first
+   * upgrade, a restored backup and a file rewritten by 0.3 with one test.
+   */
+  voiceMigration?: 1;
 }

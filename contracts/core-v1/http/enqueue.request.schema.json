@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/http/enqueue.request.schema.json",
+  "title": "POST /v1/segments — enqueue",
+  "description": "Ajoute un segment (chemin de fichier du cache, jamais un contenu inline) à la fin de la file. `sampleRate`/`channels` sont obligatoires pour `pcm16le` (format sans en-tête auto-descriptif) et ignorés pour `wav`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "token", "segmentId", "path", "format"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "token": { "$ref": "../common.schema.json#/$defs/token" },
+    "segmentId": { "$ref": "../common.schema.json#/$defs/segmentId" },
+    "path": { "$ref": "../common.schema.json#/$defs/absolutePath" },
+    "format": { "$ref": "../common.schema.json#/$defs/audioFormat" },
+    "sampleRate": { "type": "integer", "minimum": 8000, "maximum": 192000 },
+    "channels": { "type": "integer", "minimum": 1, "maximum": 2 }
+  },
+  "if": {
+    "properties": { "format": { "const": "pcm16le" } },
+    "required": ["format"]
+  },
+  "then": {
+    "required": ["sampleRate", "channels"]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "scope": "document",
+  "scopeKey": "msg-42.json",
+  "revision": 0,
+  "analysis": {
+    "genre": "réponse d'IA",
+    "intent": "informer",
+    "baseTone": "posé"
+  },
+  "narrator": {
+    "id": "narrator",
+    "names": [],
+    "traits": {},
+    "voice": {}
+  },
+  "characters": []
+}

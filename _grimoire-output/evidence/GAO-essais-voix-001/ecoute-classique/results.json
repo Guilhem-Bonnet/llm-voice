@@ -1,0 +1,873 @@
+{
+ "items": [
+  {
+   "section": "Adèle",
+   "id": "Adèle-court",
+   "title": "Adèle · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Adèle-court.ogg",
+   "measures": {
+    "duration_s": 8.32,
+    "speech_ratio": 0.65,
+    "pause_count": 3,
+    "pause_total_s": 1.29,
+    "pitch_hz": 266.67,
+    "pitch_spread_hz": 30.38,
+    "loudness_spread_db": 5.16
+   },
+   "note": "enregistrement Kyutai, CC0"
+  },
+  {
+   "section": "Adèle",
+   "id": "Adèle-recit",
+   "title": "Adèle · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Adèle-recit.ogg",
+   "measures": {
+    "duration_s": 18.64,
+    "speech_ratio": 0.63,
+    "pause_count": 12,
+    "pause_total_s": 4.53,
+    "pitch_hz": 282.35,
+    "pitch_spread_hz": 31.4,
+    "loudness_spread_db": 4.9
+   },
+   "note": "enregistrement Kyutai, CC0"
+  },
+  {
+   "section": "Adèle",
+   "id": "Adèle-documentation",
+   "title": "Adèle · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Adèle-documentation.ogg",
+   "measures": {
+    "duration_s": 18.96,
+    "speech_ratio": 0.74,
+    "pause_count": 5,
+    "pause_total_s": 1.8,
+    "pitch_hz": 258.06,
+    "pitch_spread_hz": 24.36,
+    "loudness_spread_db": 5.16
+   },
+   "note": "enregistrement Kyutai, CC0"
+  },
+  {
+   "section": "Aimé",
+   "id": "Aimé-court",
+   "title": "Aimé · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Aimé-court.ogg",
+   "measures": {
+    "duration_s": 8.56,
+    "speech_ratio": 0.62,
+    "pause_count": 8,
+    "pause_total_s": 1.8,
+    "pitch_hz": 110.09,
+    "pitch_spread_hz": 44.09,
+    "loudness_spread_db": 5.7
+   },
+   "note": "enregistrement Kyutai, CC0"
+  },
+  {
+   "section": "Aimé",
+   "id": "Aimé-recit",
+   "title": "Aimé · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Aimé-recit.ogg",
+   "measures": {
+    "duration_s": 20.08,
+    "speech_ratio": 0.61,
+    "pause_count": 13,
+    "pause_total_s": 5.1,
+    "pitch_hz": 105.73,
+    "pitch_spread_hz": 35.18,
+    "loudness_spread_db": 5.46
+   },
+   "note": "enregistrement Kyutai, CC0"
+  },
+  {
+   "section": "Aimé",
+   "id": "Aimé-documentation",
+   "title": "Aimé · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Aimé-documentation.ogg",
+   "measures": {
+    "duration_s": 17.76,
+    "speech_ratio": 0.69,
+    "pause_count": 6,
+    "pause_total_s": 2.16,
+    "pitch_hz": 110.35,
+    "pitch_spread_hz": 45.93,
+    "loudness_spread_db": 5.16
+   },
+   "note": "enregistrement Kyutai, CC0"
+  },
+  {
+   "section": "Alma",
+   "id": "Alma-court",
+   "title": "Alma · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Alma-court.ogg",
+   "measures": {
+    "duration_s": 8.0,
+    "speech_ratio": 0.65,
+    "pause_count": 3,
+    "pause_total_s": 1.11,
+    "pitch_hz": 130.43,
+    "pitch_spread_hz": 26.47,
+    "loudness_spread_db": 5.09
+   },
+   "note": "enregistrement Kyutai, CC0"
+  },
+  {
+   "section": "Alma",
+   "id": "Alma-recit",
+   "title": "Alma · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Alma-recit.ogg",
+   "measures": {
+    "duration_s": 18.88,
+    "speech_ratio": 0.63,
+    "pause_count": 10,
+    "pause_total_s": 4.35,
+    "pitch_hz": 141.18,
+    "pitch_spread_hz": 37.45,
+    "loudness_spread_db": 4.73
+   },
+   "note": "enregistrement Kyutai, CC0"
+  },
+  {
+   "section": "Alma",
+   "id": "Alma-documentation",
+   "title": "Alma · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Alma-documentation.ogg",
+   "measures": {
+    "duration_s": 20.32,
+    "speech_ratio": 0.7,
+    "pause_count": 9,
+    "pause_total_s": 2.34,
+    "pitch_hz": 131.51,
+    "pitch_spread_hz": 25.29,
+    "loudness_spread_db": 5.11
+   },
+   "note": "enregistrement Kyutai, CC0"
+  },
+  {
+   "section": "Basile",
+   "id": "Basile-court",
+   "title": "Basile · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Basile-court.ogg",
+   "measures": {
+    "duration_s": 9.28,
+    "speech_ratio": 0.68,
+    "pause_count": 4,
+    "pause_total_s": 1.44,
+    "pitch_hz": 101.27,
+    "pitch_spread_hz": 24.2,
+    "loudness_spread_db": 5.47
+   },
+   "note": "don de voix « LC », CC0, langue non déclarée"
+  },
+  {
+   "section": "Basile",
+   "id": "Basile-recit",
+   "title": "Basile · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Basile-recit.ogg",
+   "measures": {
+    "duration_s": 20.16,
+    "speech_ratio": 0.67,
+    "pause_count": 12,
+    "pause_total_s": 4.05,
+    "pitch_hz": 93.39,
+    "pitch_spread_hz": 25.35,
+    "loudness_spread_db": 5.65
+   },
+   "note": "don de voix « LC », CC0, langue non déclarée"
+  },
+  {
+   "section": "Basile",
+   "id": "Basile-documentation",
+   "title": "Basile · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Basile-documentation.ogg",
+   "measures": {
+    "duration_s": 20.24,
+    "speech_ratio": 0.67,
+    "pause_count": 11,
+    "pause_total_s": 2.73,
+    "pitch_hz": 98.56,
+    "pitch_spread_hz": 22.17,
+    "loudness_spread_db": 5.27
+   },
+   "note": "don de voix « LC », CC0, langue non déclarée"
+  },
+  {
+   "section": "Blanche",
+   "id": "Blanche-court",
+   "title": "Blanche · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Blanche-court.ogg",
+   "measures": {
+    "duration_s": 8.32,
+    "speech_ratio": 0.62,
+    "pause_count": 3,
+    "pause_total_s": 1.77,
+    "pitch_hz": 142.86,
+    "pitch_spread_hz": 30.36,
+    "loudness_spread_db": 5.3
+   },
+   "note": "don de voix « Giovanne », CC0, langue non déclarée"
+  },
+  {
+   "section": "Blanche",
+   "id": "Blanche-recit",
+   "title": "Blanche · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Blanche-recit.ogg",
+   "measures": {
+    "duration_s": 18.96,
+    "speech_ratio": 0.59,
+    "pause_count": 11,
+    "pause_total_s": 4.53,
+    "pitch_hz": 132.6,
+    "pitch_spread_hz": 43.71,
+    "loudness_spread_db": 5.52
+   },
+   "note": "don de voix « Giovanne », CC0, langue non déclarée"
+  },
+  {
+   "section": "Blanche",
+   "id": "Blanche-documentation",
+   "title": "Blanche · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Blanche-documentation.ogg",
+   "measures": {
+    "duration_s": 20.96,
+    "speech_ratio": 0.58,
+    "pause_count": 17,
+    "pause_total_s": 5.25,
+    "pitch_hz": 118.52,
+    "pitch_spread_hz": 44.3,
+    "loudness_spread_db": 5.11
+   },
+   "note": "don de voix « Giovanne », CC0, langue non déclarée"
+  },
+  {
+   "section": "Céleste",
+   "id": "Céleste-court",
+   "title": "Céleste · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Céleste-court.ogg",
+   "measures": {
+    "duration_s": 10.48,
+    "speech_ratio": 0.5,
+    "pause_count": 10,
+    "pause_total_s": 3.15,
+    "pitch_hz": 97.56,
+    "pitch_spread_hz": 52.08,
+    "loudness_spread_db": 5.41
+   },
+   "note": "don de voix « gmaskell92 », CC0, langue non déclarée"
+  },
+  {
+   "section": "Céleste",
+   "id": "Céleste-recit",
+   "title": "Céleste · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Céleste-recit.ogg",
+   "measures": {
+    "duration_s": 20.16,
+    "speech_ratio": 0.58,
+    "pause_count": 13,
+    "pause_total_s": 5.1,
+    "pitch_hz": 96.97,
+    "pitch_spread_hz": 25.71,
+    "loudness_spread_db": 5.7
+   },
+   "note": "don de voix « gmaskell92 », CC0, langue non déclarée"
+  },
+  {
+   "section": "Céleste",
+   "id": "Céleste-documentation",
+   "title": "Céleste · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Céleste-documentation.ogg",
+   "measures": {
+    "duration_s": 20.88,
+    "speech_ratio": 0.66,
+    "pause_count": 14,
+    "pause_total_s": 3.42,
+    "pitch_hz": 96.39,
+    "pitch_spread_hz": 25.0,
+    "loudness_spread_db": 5.01
+   },
+   "note": "don de voix « gmaskell92 », CC0, langue non déclarée"
+  },
+  {
+   "section": "Clément",
+   "id": "Clément-court",
+   "title": "Clément · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Clément-court.ogg",
+   "measures": {
+    "duration_s": 11.52,
+    "speech_ratio": 0.56,
+    "pause_count": 9,
+    "pause_total_s": 3.42,
+    "pitch_hz": 138.73,
+    "pitch_spread_hz": 13.94,
+    "loudness_spread_db": 4.46
+   },
+   "note": "don de voix « Esteban_Aguirre_Arias », CC0, langue non déclarée"
+  },
+  {
+   "section": "Clément",
+   "id": "Clément-recit",
+   "title": "Clément · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Clément-recit.ogg",
+   "measures": {
+    "duration_s": 25.44,
+    "speech_ratio": 0.68,
+    "pause_count": 18,
+    "pause_total_s": 5.19,
+    "pitch_hz": 142.86,
+    "pitch_spread_hz": 20.02,
+    "loudness_spread_db": 5.0
+   },
+   "note": "don de voix « Esteban_Aguirre_Arias », CC0, langue non déclarée"
+  },
+  {
+   "section": "Clément",
+   "id": "Clément-documentation",
+   "title": "Clément · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Clément-documentation.ogg",
+   "measures": {
+    "duration_s": 23.36,
+    "speech_ratio": 0.75,
+    "pause_count": 12,
+    "pause_total_s": 2.94,
+    "pitch_hz": 140.35,
+    "pitch_spread_hz": 21.75,
+    "loudness_spread_db": 5.21
+   },
+   "note": "don de voix « Esteban_Aguirre_Arias », CC0, langue non déclarée"
+  },
+  {
+   "section": "Colette",
+   "id": "Colette-court",
+   "title": "Colette · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Colette-court.ogg",
+   "measures": {
+    "duration_s": 9.28,
+    "speech_ratio": 0.59,
+    "pause_count": 7,
+    "pause_total_s": 2.25,
+    "pitch_hz": 136.36,
+    "pitch_spread_hz": 14.04,
+    "loudness_spread_db": 5.48
+   },
+   "note": "don de voix « 1dd0 », CC0, langue non déclarée"
+  },
+  {
+   "section": "Colette",
+   "id": "Colette-recit",
+   "title": "Colette · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Colette-recit.ogg",
+   "measures": {
+    "duration_s": 17.76,
+    "speech_ratio": 0.62,
+    "pause_count": 9,
+    "pause_total_s": 3.66,
+    "pitch_hz": 130.43,
+    "pitch_spread_hz": 22.34,
+    "loudness_spread_db": 5.07
+   },
+   "note": "don de voix « 1dd0 », CC0, langue non déclarée"
+  },
+  {
+   "section": "Colette",
+   "id": "Colette-documentation",
+   "title": "Colette · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Colette-documentation.ogg",
+   "measures": {
+    "duration_s": 19.76,
+    "speech_ratio": 0.7,
+    "pause_count": 7,
+    "pause_total_s": 2.16,
+    "pitch_hz": 132.6,
+    "pitch_spread_hz": 21.96,
+    "loudness_spread_db": 5.43
+   },
+   "note": "don de voix « 1dd0 », CC0, langue non déclarée"
+  },
+  {
+   "section": "Damien",
+   "id": "Damien-court",
+   "title": "Damien · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Damien-court.ogg",
+   "measures": {
+    "duration_s": 9.12,
+    "speech_ratio": 0.55,
+    "pause_count": 5,
+    "pause_total_s": 2.37,
+    "pitch_hz": 128.34,
+    "pitch_spread_hz": 14.47,
+    "loudness_spread_db": 5.17
+   },
+   "note": "don de voix « Jeffrey », CC0, langue non déclarée"
+  },
+  {
+   "section": "Damien",
+   "id": "Damien-recit",
+   "title": "Damien · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Damien-recit.ogg",
+   "measures": {
+    "duration_s": 17.84,
+    "speech_ratio": 0.57,
+    "pause_count": 9,
+    "pause_total_s": 4.71,
+    "pitch_hz": 120.0,
+    "pitch_spread_hz": 16.11,
+    "loudness_spread_db": 4.98
+   },
+   "note": "don de voix « Jeffrey », CC0, langue non déclarée"
+  },
+  {
+   "section": "Damien",
+   "id": "Damien-documentation",
+   "title": "Damien · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Damien-documentation.ogg",
+   "measures": {
+    "duration_s": 20.0,
+    "speech_ratio": 0.65,
+    "pause_count": 5,
+    "pause_total_s": 3.21,
+    "pitch_hz": 125.0,
+    "pitch_spread_hz": 16.23,
+    "loudness_spread_db": 5.09
+   },
+   "note": "don de voix « Jeffrey », CC0, langue non déclarée"
+  },
+  {
+   "section": "Delphine",
+   "id": "Delphine-court",
+   "title": "Delphine · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Delphine-court.ogg",
+   "measures": {
+    "duration_s": 10.16,
+    "speech_ratio": 0.68,
+    "pause_count": 5,
+    "pause_total_s": 1.5,
+    "pitch_hz": 112.68,
+    "pitch_spread_hz": 15.85,
+    "loudness_spread_db": 5.0
+   },
+   "note": "don de voix « Yuush », CC0, langue non déclarée"
+  },
+  {
+   "section": "Delphine",
+   "id": "Delphine-recit",
+   "title": "Delphine · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Delphine-recit.ogg",
+   "measures": {
+    "duration_s": 20.08,
+    "speech_ratio": 0.66,
+    "pause_count": 9,
+    "pause_total_s": 4.11,
+    "pitch_hz": 114.83,
+    "pitch_spread_hz": 19.26,
+    "loudness_spread_db": 5.09
+   },
+   "note": "don de voix « Yuush », CC0, langue non déclarée"
+  },
+  {
+   "section": "Delphine",
+   "id": "Delphine-documentation",
+   "title": "Delphine · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Delphine-documentation.ogg",
+   "measures": {
+    "duration_s": 20.16,
+    "speech_ratio": 0.75,
+    "pause_count": 6,
+    "pause_total_s": 1.59,
+    "pitch_hz": 115.38,
+    "pitch_spread_hz": 22.86,
+    "loudness_spread_db": 4.49
+   },
+   "note": "don de voix « Yuush », CC0, langue non déclarée"
+  },
+  {
+   "section": "Édith",
+   "id": "Édith-court",
+   "title": "Édith · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Édith-court.ogg",
+   "measures": {
+    "duration_s": 9.76,
+    "speech_ratio": 0.61,
+    "pause_count": 6,
+    "pause_total_s": 1.74,
+    "pitch_hz": 190.48,
+    "pitch_spread_hz": 20.61,
+    "loudness_spread_db": 4.98
+   },
+   "note": "don de voix « bathri », CC0, langue non déclarée"
+  },
+  {
+   "section": "Édith",
+   "id": "Édith-recit",
+   "title": "Édith · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Édith-recit.ogg",
+   "measures": {
+    "duration_s": 19.04,
+    "speech_ratio": 0.68,
+    "pause_count": 9,
+    "pause_total_s": 3.36,
+    "pitch_hz": 183.21,
+    "pitch_spread_hz": 26.06,
+    "loudness_spread_db": 5.13
+   },
+   "note": "don de voix « bathri », CC0, langue non déclarée"
+  },
+  {
+   "section": "Édith",
+   "id": "Édith-documentation",
+   "title": "Édith · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Édith-documentation.ogg",
+   "measures": {
+    "duration_s": 19.2,
+    "speech_ratio": 0.74,
+    "pause_count": 6,
+    "pause_total_s": 1.62,
+    "pitch_hz": 203.39,
+    "pitch_spread_hz": 31.91,
+    "loudness_spread_db": 5.48
+   },
+   "note": "don de voix « bathri », CC0, langue non déclarée"
+  },
+  {
+   "section": "Émile",
+   "id": "Émile-court",
+   "title": "Émile · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Émile-court.ogg",
+   "measures": {
+    "duration_s": 9.52,
+    "speech_ratio": 0.66,
+    "pause_count": 5,
+    "pause_total_s": 1.8,
+    "pitch_hz": 190.48,
+    "pitch_spread_hz": 21.02,
+    "loudness_spread_db": 5.54
+   },
+   "note": "don de voix « awais_shah », CC0, langue non déclarée"
+  },
+  {
+   "section": "Émile",
+   "id": "Émile-recit",
+   "title": "Émile · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Émile-recit.ogg",
+   "measures": {
+    "duration_s": 22.96,
+    "speech_ratio": 0.66,
+    "pause_count": 14,
+    "pause_total_s": 4.95,
+    "pitch_hz": 188.98,
+    "pitch_spread_hz": 26.27,
+    "loudness_spread_db": 5.06
+   },
+   "note": "don de voix « awais_shah », CC0, langue non déclarée"
+  },
+  {
+   "section": "Émile",
+   "id": "Émile-documentation",
+   "title": "Émile · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Émile-documentation.ogg",
+   "measures": {
+    "duration_s": 24.08,
+    "speech_ratio": 0.66,
+    "pause_count": 13,
+    "pause_total_s": 4.23,
+    "pitch_hz": 206.9,
+    "pitch_spread_hz": 30.06,
+    "loudness_spread_db": 5.3
+   },
+   "note": "don de voix « awais_shah », CC0, langue non déclarée"
+  },
+  {
+   "section": "Flore",
+   "id": "Flore-court",
+   "title": "Flore · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Flore-court.ogg",
+   "measures": {
+    "duration_s": 9.84,
+    "speech_ratio": 0.66,
+    "pause_count": 5,
+    "pause_total_s": 1.83,
+    "pitch_hz": 176.47,
+    "pitch_spread_hz": 25.12,
+    "loudness_spread_db": 6.18
+   },
+   "note": "don de voix « rewi », CC0, langue non déclarée"
+  },
+  {
+   "section": "Flore",
+   "id": "Flore-recit",
+   "title": "Flore · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Flore-recit.ogg",
+   "measures": {
+    "duration_s": 18.48,
+    "speech_ratio": 0.69,
+    "pause_count": 8,
+    "pause_total_s": 3.63,
+    "pitch_hz": 176.47,
+    "pitch_spread_hz": 35.17,
+    "loudness_spread_db": 5.83
+   },
+   "note": "don de voix « rewi », CC0, langue non déclarée"
+  },
+  {
+   "section": "Flore",
+   "id": "Flore-documentation",
+   "title": "Flore · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Flore-documentation.ogg",
+   "measures": {
+    "duration_s": 21.28,
+    "speech_ratio": 0.73,
+    "pause_count": 12,
+    "pause_total_s": 3.06,
+    "pitch_hz": 162.16,
+    "pitch_spread_hz": 32.2,
+    "loudness_spread_db": 5.97
+   },
+   "note": "don de voix « rewi », CC0, langue non déclarée"
+  },
+  {
+   "section": "Gaspard",
+   "id": "Gaspard-court",
+   "title": "Gaspard · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Gaspard-court.ogg",
+   "measures": {
+    "duration_s": 10.0,
+    "speech_ratio": 0.64,
+    "pause_count": 5,
+    "pause_total_s": 1.68,
+    "pitch_hz": 172.66,
+    "pitch_spread_hz": 25.41,
+    "loudness_spread_db": 5.04
+   },
+   "note": "don de voix « Imran_475 », CC0, langue non déclarée"
+  },
+  {
+   "section": "Gaspard",
+   "id": "Gaspard-recit",
+   "title": "Gaspard · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Gaspard-recit.ogg",
+   "measures": {
+    "duration_s": 19.76,
+    "speech_ratio": 0.68,
+    "pause_count": 11,
+    "pause_total_s": 3.6,
+    "pitch_hz": 171.43,
+    "pitch_spread_hz": 20.15,
+    "loudness_spread_db": 4.46
+   },
+   "note": "don de voix « Imran_475 », CC0, langue non déclarée"
+  },
+  {
+   "section": "Gaspard",
+   "id": "Gaspard-documentation",
+   "title": "Gaspard · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Gaspard-documentation.ogg",
+   "measures": {
+    "duration_s": 22.4,
+    "speech_ratio": 0.75,
+    "pause_count": 9,
+    "pause_total_s": 2.61,
+    "pitch_hz": 180.45,
+    "pitch_spread_hz": 23.07,
+    "loudness_spread_db": 5.0
+   },
+   "note": "don de voix « Imran_475 », CC0, langue non déclarée"
+  },
+  {
+   "section": "Hélène",
+   "id": "Hélène-court",
+   "title": "Hélène · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Hélène-court.ogg",
+   "measures": {
+    "duration_s": 9.6,
+    "speech_ratio": 0.57,
+    "pause_count": 6,
+    "pause_total_s": 2.25,
+    "pitch_hz": 173.91,
+    "pitch_spread_hz": 25.5,
+    "loudness_spread_db": 5.54
+   },
+   "note": "don de voix « P0LFR », CC0, langue non déclarée"
+  },
+  {
+   "section": "Hélène",
+   "id": "Hélène-recit",
+   "title": "Hélène · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Hélène-recit.ogg",
+   "measures": {
+    "duration_s": 17.36,
+    "speech_ratio": 0.64,
+    "pause_count": 10,
+    "pause_total_s": 3.9,
+    "pitch_hz": 169.01,
+    "pitch_spread_hz": 29.33,
+    "loudness_spread_db": 5.36
+   },
+   "note": "don de voix « P0LFR », CC0, langue non déclarée"
+  },
+  {
+   "section": "Hélène",
+   "id": "Hélène-documentation",
+   "title": "Hélène · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Hélène-documentation.ogg",
+   "measures": {
+    "duration_s": 19.04,
+    "speech_ratio": 0.63,
+    "pause_count": 9,
+    "pause_total_s": 3.24,
+    "pitch_hz": 161.07,
+    "pitch_spread_hz": 24.84,
+    "loudness_spread_db": 5.18
+   },
+   "note": "don de voix « P0LFR », CC0, langue non déclarée"
+  },
+  {
+   "section": "Irène",
+   "id": "Irène-court",
+   "title": "Irène · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Irène-court.ogg",
+   "measures": {
+    "duration_s": 9.76,
+    "speech_ratio": 0.71,
+    "pause_count": 4,
+    "pause_total_s": 1.14,
+    "pitch_hz": 184.62,
+    "pitch_spread_hz": 26.42,
+    "loudness_spread_db": 5.17
+   },
+   "note": "don de voix « Bijay », CC0, langue non déclarée"
+  },
+  {
+   "section": "Irène",
+   "id": "Irène-recit",
+   "title": "Irène · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Irène-recit.ogg",
+   "measures": {
+    "duration_s": 23.12,
+    "speech_ratio": 0.79,
+    "pause_count": 10,
+    "pause_total_s": 2.52,
+    "pitch_hz": 188.98,
+    "pitch_spread_hz": 37.06,
+    "loudness_spread_db": 5.22
+   },
+   "note": "don de voix « Bijay », CC0, langue non déclarée"
+  },
+  {
+   "section": "Irène",
+   "id": "Irène-documentation",
+   "title": "Irène · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Irène-documentation.ogg",
+   "measures": {
+    "duration_s": 20.24,
+    "speech_ratio": 0.79,
+    "pause_count": 6,
+    "pause_total_s": 1.56,
+    "pitch_hz": 186.05,
+    "pitch_spread_hz": 21.68,
+    "loudness_spread_db": 5.22
+   },
+   "note": "don de voix « Bijay », CC0, langue non déclarée"
+  },
+  {
+   "section": "Jean-Marc",
+   "id": "Jean-Marc-court",
+   "title": "Jean-Marc · court",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans.",
+   "file": "Jean-Marc-court.ogg",
+   "measures": {
+    "duration_s": 7.92,
+    "speech_ratio": 0.59,
+    "pause_count": 6,
+    "pause_total_s": 1.86,
+    "pitch_hz": 179.1,
+    "pitch_spread_hz": 28.4,
+    "loudness_spread_db": 5.02
+   },
+   "note": "don de voix « Liquescent », CC0, langue non déclarée"
+  },
+  {
+   "section": "Jean-Marc",
+   "id": "Jean-Marc-recit",
+   "title": "Jean-Marc · recit",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "Jean-Marc-recit.ogg",
+   "measures": {
+    "duration_s": 20.0,
+    "speech_ratio": 0.63,
+    "pause_count": 15,
+    "pause_total_s": 5.19,
+    "pitch_hz": 165.52,
+    "pitch_spread_hz": 22.87,
+    "loudness_spread_db": 5.5
+   },
+   "note": "don de voix « Liquescent », CC0, langue non déclarée"
+  },
+  {
+   "section": "Jean-Marc",
+   "id": "Jean-Marc-documentation",
+   "title": "Jean-Marc · documentation",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "Jean-Marc-documentation.ogg",
+   "measures": {
+    "duration_s": 17.76,
+    "speech_ratio": 0.7,
+    "pause_count": 8,
+    "pause_total_s": 2.28,
+    "pitch_hz": 181.82,
+    "pitch_spread_hz": 21.86,
+    "loudness_spread_db": 5.1
+   },
+   "note": "don de voix « Liquescent », CC0, langue non déclarée"
+  }
+ ],
+ "errors": [],
+ "screened": 231
+}

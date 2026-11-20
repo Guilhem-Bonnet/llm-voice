@@ -1,0 +1,118 @@
+[
+  {
+    "file": "package.json",
+    "card": "0-009",
+    "texts": [
+      "LLM Voice: Activate Profile",
+      "LLM Voice: Delete Profile",
+      "LLM Voice: Delete Profile",
+      "LLM Voice: Duplicate Profile",
+      "LLM Voice: Duplicate Profile",
+      "LLM Voice: Edit Profile",
+      "LLM Voice: Edit Profile",
+      "LLM Voice: Export Profile",
+      "LLM Voice: Import Profile",
+      "LLM Voice: New Profile",
+      "LLM Voice: Open Profiles",
+      "LLM Voice: Select Profile",
+      "LLM Voice: Set Default Profile",
+      "Nombre de phrases du tout premier chunk audio d'un document, avant la taille normale du profil (CdC §63 : la lecture doit démarrer dès le premier chunk). Sans effet si ≥ à la taille de chunk du profil."
+    ]
+  },
+  {
+    "file": "package.json",
+    "card": "1-005",
+    "texts": [
+      "Profil par défaut pour le presse-papiers.",
+      "Profil par défaut pour les réponses.",
+      "Profil par défaut pour un document Markdown.",
+      "Profil par défaut pour une sélection de texte.",
+      "Profil par défaut selon la source de capture (CdC §47) : markdown, text (sélection), clipboard, claude-code. Une source non renseignée utilise le dernier profil sélectionné."
+    ]
+  },
+  {
+    "file": "src/extension.ts",
+    "card": "1-002",
+    "texts": [
+      "LLM Voice : profil «",
+      "LLM Voice : supprimer ce profil ?"
+    ]
+  },
+  {
+    "file": "src/pipeline/Pipeline.ts",
+    "card": "0-009",
+    "texts": [
+      "LLM Voice : dupliquer quel profil ?",
+      "LLM Voice : exporter quel profil ?",
+      "LLM Voice : modifier quel profil ?",
+      "LLM Voice : profil exporté vers",
+      "LLM Voice : profil inconnu «",
+      "LLM Voice : profil par défaut",
+      "LLM Voice : profil par défaut mis à jour.",
+      "LLM Voice : profil supprimé.",
+      "LLM Voice : profil «",
+      "LLM Voice : profil «",
+      "LLM Voice : supprimer le profil «",
+      "LLM Voice : supprimer quel profil ?",
+      "Profile apiKeyRef ignored: it does not match the resolved provider"
+    ]
+  },
+  {
+    "file": "src/profiles/migrations.ts",
+    "card": "0-009",
+    "texts": [
+      "profiles.json contains no profile"
+    ]
+  },
+  {
+    "file": "src/profiles/profileStore.ts",
+    "card": "0-009",
+    "texts": [
+      "LLM Voice : impossible de supprimer le dernier profil.",
+      "LLM Voice : l'identifiant d'un profil ne peut pas changer via update().",
+      "LLM Voice : profil inconnu «",
+      "LLM Voice : profil inconnu «",
+      "LLM Voice : profil inconnu «",
+      "LLM Voice : profil inconnu «",
+      "LLM Voice : profil inconnu «",
+      "profiles.json contains no profile"
+    ]
+  },
+  {
+    "file": "src/ui/StatusBar.ts",
+    "card": "0-009",
+    "texts": [
+      "$(mic) Changer de profil"
+    ]
+  },
+  {
+    "file": "src/views/player/playerHtml.ts",
+    "card": "0-007",
+    "texts": [
+      "<span id=\"profile\"></span>",
+      "<span id=\"profile-group\">"
+    ]
+  },
+  {
+    "file": "src/views/profileEditor/ProfileEditorPanel.ts",
+    "card": "1-002",
+    "texts": [
+      "LLM Voice : profil supprimé.",
+      "LLM Voice : profil «",
+      "LLM Voice : profil «",
+      "LLM Voice : supprimer le profil «",
+      "LLM Voice — Profil",
+      "ProfileEditorPanel.testOnlyDispatch: no open editor for \"",
+      "Voix anglophone pour un profil dont la langue n'est pas l'anglais."
+    ]
+  },
+  {
+    "file": "src/views/profileEditor/profileEditorHtml.ts",
+    "card": "1-002",
+    "texts": [
+      "<div id=\"actions\" role=\"toolbar\" aria-label=\"Actions du profil\">",
+      "<form id=\"profile-form\" aria-label=\"Éditeur de profil\">",
+      "<title>LLM Voice — Éditeur de profil</title>"
+    ]
+  }
+]

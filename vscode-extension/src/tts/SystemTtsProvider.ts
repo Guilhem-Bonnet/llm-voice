@@ -63,6 +63,7 @@ import { spawn } from "node:child_process";
 import type { ProviderHealth } from "../core/health.js";
 import type {
   AudioResult,
+  DirectionCapabilities,
   TtsCapabilities,
   TtsParameterDescriptor,
   TtsProvider,
@@ -187,6 +188,18 @@ const SPEED_PARAMETER: readonly TtsParameterDescriptor[] = [
     description: "Vitesse de lecture appliquée par le moteur système (espeak-ng/Piper/say/SAPI)."
   }
 ];
+
+/**
+ * ADR-015 §5.3, Piper / espeak-ng / say / SAPI: no emotion control, `speed`
+ * (0.5-2, same range as `SPEED_PARAMETER`) carries the tempo, everything else
+ * is ignored. All four engines run on the CPU.
+ */
+const SYSTEM_DIRECTION: DirectionCapabilities = {
+  tempo: { parameter: "speed", min: 0.5, max: 2 },
+  instructions: false,
+  nonverbal: [],
+  usesGpu: false
+};
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -665,9 +678,18 @@ export class SystemTtsProvider implements TtsProvider {
     return { providerId: this.id, status: "ok", checkedAt, latencyMs, endpoint: `local:${engine.kind}` };
   }
 
+  /**
+   * ADR-017 "Ce qui reste ouvert" 1: an `espeak-ng` reading and a Piper one of the
+   * same text are not the same audio, yet both come from this one provider id.
+   */
+  async cacheIdentity(): Promise<string> {
+    const engine = await this.detectEngine();
+    return engine === undefined ? this.id : `${this.id}#${engine.kind}`;
+  }
+
   async getCapabilities(signal?: AbortSignal): Promise<TtsCapabilities> {
     const voices = await this.listVoices(signal).catch(() => []);
-    return { streaming: false, voices, parameters: SPEED_PARAMETER, formats: ["wav"], languages: [] };
+    return { streaming: false, voices, parameters: SPEED_PARAMETER, formats: ["wav"], languages: [], direction: SYSTEM_DIRECTION };
   }
 
   async listVoices(signal?: AbortSignal): Promise<Voice[]> {
@@ -728,7 +750,12 @@ export class SystemTtsProvider implements TtsProvider {
         outputPath,
         ...(request.language !== undefined ? { language: request.language } : {}),
         ...(request.speed !== undefined ? { speed: request.speed } : {}),
-        ...(request.voice !== undefined ? { voice: request.voice } : {})
+        // The Piper tier names its voice (`ttsBindingForTier`, ADR-017 §1.3); until
+        // Piper is installed the engine found here may be another one, which would
+        // refuse that name instead of reading with its own default voice.
+        ...(request.voice !== undefined && (request.voice !== PIPER_VOICE_ID || engine.kind === "piper")
+          ? { voice: request.voice }
+          : {})
       };
       let invocation: SystemTtsInvocation;
       switch (engine.kind) {

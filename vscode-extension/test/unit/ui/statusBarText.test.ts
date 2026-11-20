@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatStatusBarText,
+  formatStatusBarTooltip,
   formatTime,
   type StatusBarViewModel
 } from "../../../src/ui/statusBarText.js";
@@ -57,7 +58,16 @@ describe("formatStatusBarText", () => {
   });
 
   it("renders the buffering text (ADR-005's reported-to-phase-4 gap, S4.2)", () => {
-    expect(formatStatusBarText({ ...base, state: "buffering" })).toBe("⏳ Buffering…");
+    expect(formatStatusBarText({ ...base, state: "buffering" })).toBe("$(sync~spin) Passage suivant…");
+  });
+
+  it("shows the step and its seconds during a wait, in place of the state's text", () => {
+    const wait = { shortLabel: "Moteur en démarrage…", elapsedSeconds: 12, showElapsed: true };
+    expect(formatStatusBarText({ ...base, state: "preparing", wait })).toBe("$(sync~spin) Moteur en démarrage… 12 s");
+    expect(formatStatusBarText({ ...base, state: "buffering", wait: { ...wait, shortLabel: "Passage suivant…", showElapsed: false } })).toBe(
+      "$(sync~spin) Passage suivant…"
+    );
+    expect(formatStatusBarTooltip({ ...base, state: "preparing", wait })).toBe("LLM Voice — cliquer pour annuler");
   });
 
   it("renders the stale text regardless of profile (D6, ADR-011)", () => {
@@ -69,6 +79,26 @@ describe("formatStatusBarText", () => {
   it("renders an error text", () => {
     expect(formatStatusBarText({ ...base, state: "error" })).toBe(
       "$(error) Erreur de lecture"
+    );
+  });
+});
+
+describe("formatStatusBarTooltip", () => {
+  it("includes the profile label without a voice when none is given (audit 2026-11-05 P1)", () => {
+    expect(formatStatusBarTooltip(base)).toBe(
+      "LLM Voice — Professeur technique — cliquer pour les actions de lecture"
+    );
+  });
+
+  it("appends the voice label in parentheses when present — the only persistent confirmation of a voice choice", () => {
+    expect(formatStatusBarTooltip({ ...base, voiceLabel: "Chatterbox (qualité maximale)" })).toBe(
+      "LLM Voice — Professeur technique (Chatterbox (qualité maximale)) — cliquer pour les actions de lecture"
+    );
+  });
+
+  it("stays on the dedicated error tooltip, ignoring profile/voice, when state is error", () => {
+    expect(formatStatusBarTooltip({ ...base, state: "error", voiceLabel: "Kokoro" })).toBe(
+      "LLM Voice : erreur de lecture — cliquer pour reprendre"
     );
   });
 });

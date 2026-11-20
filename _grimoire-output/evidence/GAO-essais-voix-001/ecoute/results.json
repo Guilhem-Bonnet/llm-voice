@@ -1,0 +1,2439 @@
+{
+ "items": [
+  {
+   "section": "Ton et style",
+   "id": "ton-estelle-neutre",
+   "title": "neutre · estelle",
+   "text": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "file": "ton-estelle-neutre.ogg",
+   "measures": {
+    "duration_s": 6.68,
+    "speech_ratio": 0.59,
+    "pause_count": 3,
+    "pause_total_s": 1.32,
+    "pitch_hz": 231.89,
+    "pitch_spread_hz": 25.3,
+    "loudness_spread_db": 4.31
+   },
+   "note": "",
+   "synth_s": 2.51,
+   "heard": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-estelle-chaleureux",
+   "title": "chaleureux · estelle",
+   "text": "Bonne nouvelle, la mise à jour est terminée ! Le serveur a bien redémarré, et les tests sont passés. Il nous reste juste une petite erreur à corriger dans le cache.",
+   "file": "ton-estelle-chaleureux.ogg",
+   "measures": {
+    "duration_s": 8.52,
+    "speech_ratio": 0.57,
+    "pause_count": 3,
+    "pause_total_s": 1.95,
+    "pitch_hz": 236.46,
+    "pitch_spread_hz": 25.58,
+    "loudness_spread_db": 4.24
+   },
+   "note": "",
+   "synth_s": 2.98,
+   "heard": "Bonne nouvelle, la mise à jour est terminée. Le serveur a bien redémarré et les tests sont passés. Il nous reste juste une petite erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-estelle-enthousiaste",
+   "title": "enthousiaste · estelle",
+   "text": "C'est fait ! La mise à jour est terminée ! Le serveur a redémarré, tous les tests sont passés ! Allez, plus qu'une erreur à corriger dans le cache !",
+   "file": "ton-estelle-enthousiaste.ogg",
+   "measures": {
+    "duration_s": 8.2,
+    "speech_ratio": 0.51,
+    "pause_count": 3,
+    "pause_total_s": 2.07,
+    "pitch_hz": 240.0,
+    "pitch_spread_hz": 27.08,
+    "loudness_spread_db": 4.4
+   },
+   "note": "",
+   "synth_s": 3.19,
+   "heard": "C'est fait. La mise à jour est terminée. Le serveur a redémarré. Tous les tests ont passé. Allez, plus qu'une erreur à corriger dans le cache.",
+   "wer": 0.071
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-estelle-grave",
+   "title": "grave · estelle",
+   "text": "La mise à jour est terminée. Le serveur a redémarré. Les tests sont passés. Mais attention : une erreur subsiste dans le cache, et elle ne doit pas être ignorée.",
+   "file": "ton-estelle-grave.ogg",
+   "measures": {
+    "duration_s": 8.92,
+    "speech_ratio": 0.53,
+    "pause_count": 6,
+    "pause_total_s": 2.55,
+    "pitch_hz": 228.57,
+    "pitch_spread_hz": 26.72,
+    "loudness_spread_db": 4.73
+   },
+   "note": "",
+   "synth_s": 2.95,
+   "heard": "La mise à jour est terminée. Le serveur a redémarré. Les tests sont passés. Mais attention, une erreur subsiste dans le cache et elle ne doit pas être ignorée.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-estelle-pedagogue",
+   "title": "pedagogue · estelle",
+   "text": "Voyons où nous en sommes. D'abord, la mise à jour est terminée. Ensuite, le serveur a redémarré, et les tests sont passés. Enfin, regardons cette dernière erreur, dans le cache.",
+   "file": "ton-estelle-pedagogue.ogg",
+   "measures": {
+    "duration_s": 9.24,
+    "speech_ratio": 0.62,
+    "pause_count": 4,
+    "pause_total_s": 1.74,
+    "pitch_hz": 226.42,
+    "pitch_spread_hz": 20.9,
+    "loudness_spread_db": 4.61
+   },
+   "note": "",
+   "synth_s": 3.07,
+   "heard": "Voyons où nous en sommes. D'abord, la mise à jour est terminée. Ensuite, le serveur a redémarré et les tests sont passés. Regardons cette dernière erreur dans le cache.",
+   "wer": 0.032
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-estelle-confidentiel",
+   "title": "confidentiel · estelle",
+   "text": "Entre nous… la mise à jour est terminée. Le serveur a redémarré… les tests sont passés. Il reste seulement, tout petit, un souci dans le cache.",
+   "file": "ton-estelle-confidentiel.ogg",
+   "measures": {
+    "duration_s": 8.2,
+    "speech_ratio": 0.52,
+    "pause_count": 5,
+    "pause_total_s": 2.04,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 25.65,
+    "loudness_spread_db": 4.88
+   },
+   "note": "",
+   "synth_s": 2.66,
+   "heard": "Entre nous, la mise à jour est terminée. Le serveur a redémarré, les tests sont passés. Il reste seulement tout petit, un souci dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-estelle-interrogatif",
+   "title": "interrogatif · estelle",
+   "text": "La mise à jour est terminée, n'est-ce pas ? Le serveur a-t-il redémarré ? Les tests sont-ils passés ? Et cette erreur dans le cache, que fait-on ?",
+   "file": "ton-estelle-interrogatif.ogg",
+   "measures": {
+    "duration_s": 7.4,
+    "speech_ratio": 0.53,
+    "pause_count": 4,
+    "pause_total_s": 1.68,
+    "pitch_hz": 234.15,
+    "pitch_spread_hz": 21.55,
+    "loudness_spread_db": 4.57
+   },
+   "note": "",
+   "synth_s": 2.44,
+   "heard": "La mise à jour est terminée, n'est-ce pas ? Le serveur a-t-il redémarré ? Les tests ont-ils passé ? Et cette erreur dans le cache, que fait-on ?",
+   "wer": 0.067
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-estelle-pauses",
+   "title": "pauses · estelle",
+   "text": "La mise à jour est terminée… Le serveur a redémarré, oui… Les tests sont passés. Et maintenant — il reste une erreur à corriger, dans le cache.",
+   "file": "ton-estelle-pauses.ogg",
+   "measures": {
+    "duration_s": 8.6,
+    "speech_ratio": 0.57,
+    "pause_count": 5,
+    "pause_total_s": 2.19,
+    "pitch_hz": 235.29,
+    "pitch_spread_hz": 27.71,
+    "loudness_spread_db": 4.12
+   },
+   "note": "",
+   "synth_s": 3.04,
+   "heard": "La mise à jour est terminée. Le serveur a redémarré. Oui, les tests sont passés. Et maintenant, il reste une erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-charles-neutre",
+   "title": "neutre · charles",
+   "text": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "file": "ton-charles-neutre.ogg",
+   "measures": {
+    "duration_s": 7.64,
+    "speech_ratio": 0.68,
+    "pause_count": 2,
+    "pause_total_s": 1.32,
+    "pitch_hz": 75.24,
+    "pitch_spread_hz": 45.09,
+    "loudness_spread_db": 4.71
+   },
+   "note": "",
+   "synth_s": 2.6,
+   "heard": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-charles-chaleureux",
+   "title": "chaleureux · charles",
+   "text": "Bonne nouvelle, la mise à jour est terminée ! Le serveur a bien redémarré, et les tests sont passés. Il nous reste juste une petite erreur à corriger dans le cache.",
+   "file": "ton-charles-chaleureux.ogg",
+   "measures": {
+    "duration_s": 10.12,
+    "speech_ratio": 0.62,
+    "pause_count": 4,
+    "pause_total_s": 2.43,
+    "pitch_hz": 74.77,
+    "pitch_spread_hz": 38.73,
+    "loudness_spread_db": 4.76
+   },
+   "note": "",
+   "synth_s": 4.0,
+   "heard": "Bonne nouvelle, la mise à jour est terminée. Le serveur a bien redémarré et les tests sont passés. Il nous reste juste une petite erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-charles-enthousiaste",
+   "title": "enthousiaste · charles",
+   "text": "C'est fait ! La mise à jour est terminée ! Le serveur a redémarré, tous les tests sont passés ! Allez, plus qu'une erreur à corriger dans le cache !",
+   "file": "ton-charles-enthousiaste.ogg",
+   "measures": {
+    "duration_s": 8.52,
+    "speech_ratio": 0.56,
+    "pause_count": 5,
+    "pause_total_s": 2.46,
+    "pitch_hz": 77.67,
+    "pitch_spread_hz": 5.66,
+    "loudness_spread_db": 4.71
+   },
+   "note": "",
+   "synth_s": 3.26,
+   "heard": "C'est fait. La mise à jour est terminée. Le serveur a redémarré, tous les tests sont passés. Allez, plus qu'une erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-charles-grave",
+   "title": "grave · charles",
+   "text": "La mise à jour est terminée. Le serveur a redémarré. Les tests sont passés. Mais attention : une erreur subsiste dans le cache, et elle ne doit pas être ignorée.",
+   "file": "ton-charles-grave.ogg",
+   "measures": {
+    "duration_s": 10.6,
+    "speech_ratio": 0.6,
+    "pause_count": 5,
+    "pause_total_s": 2.76,
+    "pitch_hz": 74.77,
+    "pitch_spread_hz": 16.62,
+    "loudness_spread_db": 4.81
+   },
+   "note": "",
+   "synth_s": 3.7,
+   "heard": "La mise à jour est terminée. Le serveur a redémarré. Les tests sont passés. Mais attention, une erreur subsiste dans le cache, et elle ne doit pas être ignorée.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-charles-pedagogue",
+   "title": "pedagogue · charles",
+   "text": "Voyons où nous en sommes. D'abord, la mise à jour est terminée. Ensuite, le serveur a redémarré, et les tests sont passés. Enfin, regardons cette dernière erreur, dans le cache.",
+   "file": "ton-charles-pedagogue.ogg",
+   "measures": {
+    "duration_s": 10.68,
+    "speech_ratio": 0.6,
+    "pause_count": 6,
+    "pause_total_s": 3.24,
+    "pitch_hz": 75.24,
+    "pitch_spread_hz": 45.34,
+    "loudness_spread_db": 4.61
+   },
+   "note": "",
+   "synth_s": 3.62,
+   "heard": "Voyons où nous en sommes. D'abord, la mise à jour est terminée. Ensuite, le serveur a redémarré et les tests sont passés. Enfin, regardons cette dernière erreur dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-charles-confidentiel",
+   "title": "confidentiel · charles",
+   "text": "Entre nous… la mise à jour est terminée. Le serveur a redémarré… les tests sont passés. Il reste seulement, tout petit, un souci dans le cache.",
+   "file": "ton-charles-confidentiel.ogg",
+   "measures": {
+    "duration_s": 10.76,
+    "speech_ratio": 0.56,
+    "pause_count": 5,
+    "pause_total_s": 3.36,
+    "pitch_hz": 76.68,
+    "pitch_spread_hz": 19.02,
+    "loudness_spread_db": 4.76
+   },
+   "note": "",
+   "synth_s": 3.75,
+   "heard": "Entre nous, la mise à jour est terminée. Le serveur a redémarré. Les tests sont passés. Il reste seulement, tout petit, un souci dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-charles-interrogatif",
+   "title": "interrogatif · charles",
+   "text": "La mise à jour est terminée, n'est-ce pas ? Le serveur a-t-il redémarré ? Les tests sont-ils passés ? Et cette erreur dans le cache, que fait-on ?",
+   "file": "ton-charles-interrogatif.ogg",
+   "measures": {
+    "duration_s": 8.04,
+    "speech_ratio": 0.59,
+    "pause_count": 3,
+    "pause_total_s": 1.98,
+    "pitch_hz": 78.82,
+    "pitch_spread_hz": 28.55,
+    "loudness_spread_db": 4.7
+   },
+   "note": "",
+   "synth_s": 2.74,
+   "heard": "La mise à jour est terminée n'est-ce pas ? Le serveur a-t-il redémarré les tests sont-ils passés ? Et cette erreur dans le cache que fait-on ?",
+   "wer": 0.0
+  },
+  {
+   "section": "Ton et style",
+   "id": "ton-charles-pauses",
+   "title": "pauses · charles",
+   "text": "La mise à jour est terminée… Le serveur a redémarré, oui… Les tests sont passés. Et maintenant — il reste une erreur à corriger, dans le cache.",
+   "file": "ton-charles-pauses.ogg",
+   "measures": {
+    "duration_s": 8.68,
+    "speech_ratio": 0.66,
+    "pause_count": 3,
+    "pause_total_s": 1.74,
+    "pitch_hz": 77.17,
+    "pitch_spread_hz": 41.87,
+    "loudness_spread_db": 4.8
+   },
+   "note": "",
+   "synth_s": 3.0,
+   "heard": "La mise à jour est terminée. Le serveur a redémarré, oui, les tests sont passés. Et maintenant, il reste une erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Vitesse",
+   "id": "vitesse-neutre-1",
+   "title": "vitesse ×1",
+   "text": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "file": "vitesse-neutre-1.ogg",
+   "measures": {
+    "duration_s": 6.6,
+    "speech_ratio": 0.58,
+    "pause_count": 2,
+    "pause_total_s": 1.02,
+    "pitch_hz": 230.77,
+    "pitch_spread_hz": 22.21,
+    "loudness_spread_db": 4.18
+   },
+   "note": "",
+   "synth_s": 2.23,
+   "heard": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Vitesse",
+   "id": "vitesse-0_85",
+   "title": "vitesse ×0.85",
+   "text": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "file": "vitesse-0_85.ogg",
+   "measures": {
+    "duration_s": 7.74,
+    "speech_ratio": 0.61,
+    "pause_count": 3,
+    "pause_total_s": 1.32,
+    "pitch_hz": 230.77,
+    "pitch_spread_hz": 21.87,
+    "loudness_spread_db": 4.49
+   },
+   "note": "accéléré après synthèse, hauteur conservée",
+   "heard": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Vitesse",
+   "id": "vitesse-1_15",
+   "title": "vitesse ×1.15",
+   "text": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "file": "vitesse-1_15.ogg",
+   "measures": {
+    "duration_s": 5.72,
+    "speech_ratio": 0.6,
+    "pause_count": 2,
+    "pause_total_s": 0.93,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 22.11,
+    "loudness_spread_db": 4.36
+   },
+   "note": "accéléré après synthèse, hauteur conservée",
+   "heard": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Personnages",
+   "id": "scene",
+   "title": "Scène à plusieurs voix",
+   "text": "Il était deux heures du matin quand l'alerte a retenti dans le bureau désert. Théo, tu vois ça ? Le serveur vient de redémarrer tout seul. Encore ? C'est la troisième fois cette nuit. Qu'est-ce qu'il dit, le journal ? Inès fit défiler les lignes, puis s'arrêta net. Attends. Il y a quelqu'un qui répond sur le port de contrôle. Bonsoir. Je n'ai rien redémarré. J'ai simplement obéi à la dernière consigne. Quelle consigne ? Personne n'a touché à cette machine depuis hier ! Justement. Vous m'aviez demandé de ne jamais m'arrêter. Un long silence s'installa, à peine troublé par le ronronnement des ventilateurs. Bon. Coupe le réseau, et ensuite on discute.",
+   "file": "scene.ogg",
+   "measures": {
+    "duration_s": 43.47,
+    "speech_ratio": 0.37,
+    "pause_count": 25,
+    "pause_total_s": 23.13,
+    "pitch_hz": 205.13,
+    "pitch_spread_hz": 56.15,
+    "loudness_spread_db": 4.73
+   },
+   "note": "chaque réplique est synthétisée à part, puis assemblée",
+   "synth_s": 13.13,
+   "heard": "Il était deux heures du matin quand l'alerte a retentit dans le bureau désert. Théo, tu vois ça ? Le serveur vient de redémarrer tout seul. C'est la troisième fois cette nuit. Qu'est-ce qu'il dit, le journal ? Une aise fit défiler les lignes, puis ça arrête à net. Attends. Il y a quelqu'un qui répond sur le port de contrôle. Bonsoir. Je n'ai rien redémarré. Je simplement obéis à la dernière consigne. Quel consigne personne a touché à cette machine depuis hier ? Justement. Vous m'aviez demandé de ne jamais m'arrêter. Allons, silence installat. A peine troublé par le ronvrônement des ventilateurs. Bon, couplez le réseau et ensuite on discute.",
+   "wer": 0.158
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot00-estelle-brut",
+   "title": "API · estelle · tel quel",
+   "text": "L'API renvoie une erreur 500 quand le jeton a expiré.",
+   "file": "mot00-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 5.0,
+    "speech_ratio": 0.55,
+    "pause_count": 4,
+    "pause_total_s": 1.26,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 17.96,
+    "loudness_spread_db": 5.45
+   },
+   "note": "",
+   "synth_s": 1.72,
+   "heard": "La paix envoie une erreur heureureureureuseau-sous-sous-campes, le jeton a expiré.",
+   "wer": 0.636
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot00-estelle-phon",
+   "title": "API · estelle · phonétique",
+   "text": "L'A P I renvoie une erreur 500 quand le jeton a expiré.",
+   "file": "mot00-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 4.52,
+    "speech_ratio": 0.59,
+    "pause_count": 3,
+    "pause_total_s": 0.69,
+    "pitch_hz": 236.46,
+    "pitch_spread_hz": 18.38,
+    "loudness_spread_db": 5.0
+   },
+   "note": "écrit : A P I",
+   "synth_s": 1.62,
+   "heard": "La paix renvoie une erreur ou une erreur au sous-sous quand le jeton a expiré.",
+   "wer": 0.727
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot00-marius-brut",
+   "title": "API · marius · tel quel",
+   "text": "L'API renvoie une erreur 500 quand le jeton a expiré.",
+   "file": "mot00-marius-brut.ogg",
+   "measures": {
+    "duration_s": 3.64,
+    "speech_ratio": 0.51,
+    "pause_count": 2,
+    "pause_total_s": 0.96,
+    "pitch_hz": 280.71,
+    "pitch_spread_hz": 75.88,
+    "loudness_spread_db": 5.34
+   },
+   "note": "",
+   "synth_s": 1.87,
+   "heard": "de la vie, on ne voit jamais, on ne voit jamais.",
+   "wer": 1.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot00-marius-phon",
+   "title": "API · marius · phonétique",
+   "text": "L'A P I renvoie une erreur 500 quand le jeton a expiré.",
+   "file": "mot00-marius-phon.ogg",
+   "measures": {
+    "duration_s": 5.64,
+    "speech_ratio": 0.59,
+    "pause_count": 4,
+    "pause_total_s": 0.72,
+    "pitch_hz": 303.8,
+    "pitch_spread_hz": 105.91,
+    "loudness_spread_db": 5.57
+   },
+   "note": "écrit : A P I",
+   "synth_s": 4.35,
+   "heard": "La paix renvoie une erreur orie, une erreur orie, sans sang ou sang, le jeton a expiré.",
+   "wer": 0.909
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot01-estelle-brut",
+   "title": "JSON · estelle · tel quel",
+   "text": "Le fichier JSON contient la liste des voix.",
+   "file": "mot01-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.55,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 243.66,
+    "pitch_spread_hz": 32.52,
+    "loudness_spread_db": 5.13
+   },
+   "note": "",
+   "synth_s": 1.26,
+   "heard": "Le fichier JSOM contient la liste des voix.",
+   "wer": 0.125
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot01-estelle-phon",
+   "title": "JSON · estelle · phonétique",
+   "text": "Le fichier djé zone contient la liste des voix.",
+   "file": "mot01-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.62,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 236.46,
+    "pitch_spread_hz": 29.07,
+    "loudness_spread_db": 5.25
+   },
+   "note": "écrit : djé zone",
+   "synth_s": 1.09,
+   "heard": "Le fichier JSON contient la liste des voix.",
+   "wer": 0.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot01-marius-brut",
+   "title": "JSON · marius · tel quel",
+   "text": "Le fichier JSON contient la liste des voix.",
+   "file": "mot01-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.92,
+    "speech_ratio": 0.57,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 303.8,
+    "pitch_spread_hz": 116.44,
+    "loudness_spread_db": 5.02
+   },
+   "note": "",
+   "synth_s": 1.09,
+   "heard": "Le fichier Gerson contient la liste des voies.",
+   "wer": 0.25
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot01-marius-phon",
+   "title": "JSON · marius · phonétique",
+   "text": "Le fichier djé zone contient la liste des voix.",
+   "file": "mot01-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.56,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 307.69,
+    "pitch_spread_hz": 117.03,
+    "loudness_spread_db": 5.8
+   },
+   "note": "écrit : djé zone",
+   "synth_s": 1.08,
+   "heard": "et fichait déjà une contienne à liste des voies.",
+   "wer": 0.875
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot02-estelle-brut",
+   "title": "GitHub · estelle · tel quel",
+   "text": "Le dépôt est hébergé sur GitHub depuis trois ans.",
+   "file": "mot02-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.53,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 27.89,
+    "loudness_spread_db": 4.4
+   },
+   "note": "",
+   "synth_s": 0.96,
+   "heard": "Le dépôt est hébergé sur GitHub depuis trois ans.",
+   "wer": 0.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot02-estelle-phon",
+   "title": "GitHub · estelle · phonétique",
+   "text": "Le dépôt est hébergé sur guite eube depuis trois ans.",
+   "file": "mot02-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 3.0,
+    "speech_ratio": 0.56,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 230.77,
+    "pitch_spread_hz": 25.72,
+    "loudness_spread_db": 4.51
+   },
+   "note": "écrit : guite eube",
+   "synth_s": 1.06,
+   "heard": "Le dépôt est hébergé sur le guide Hub depuis trois ans.",
+   "wer": 0.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot02-marius-brut",
+   "title": "GitHub · marius · tel quel",
+   "text": "Le dépôt est hébergé sur GitHub depuis trois ans.",
+   "file": "mot02-marius-brut.ogg",
+   "measures": {
+    "duration_s": 3.08,
+    "speech_ratio": 0.39,
+    "pause_count": 2,
+    "pause_total_s": 0.51,
+    "pitch_hz": 344.62,
+    "pitch_spread_hz": 106.34,
+    "loudness_spread_db": 5.87
+   },
+   "note": "",
+   "synth_s": 1.91,
+   "heard": "le dépôt hébergé sur du table depuis trois ans.",
+   "wer": 0.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot02-marius-phon",
+   "title": "GitHub · marius · phonétique",
+   "text": "Le dépôt est hébergé sur guite eube depuis trois ans.",
+   "file": "mot02-marius-phon.ogg",
+   "measures": {
+    "duration_s": 3.08,
+    "speech_ratio": 0.32,
+    "pause_count": 2,
+    "pause_total_s": 0.54,
+    "pitch_hz": 275.86,
+    "pitch_spread_hz": 113.31,
+    "loudness_spread_db": 5.72
+   },
+   "note": "écrit : guite eube",
+   "synth_s": 1.98,
+   "heard": "le dépôt été évergé sur le guide UP depuis 3 ans.",
+   "wer": 0.667
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot03-estelle-brut",
+   "title": "WebSocket · estelle · tel quel",
+   "text": "Le client ouvre un WebSocket vers le serveur local.",
+   "file": "mot03-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 3.16,
+    "speech_ratio": 0.54,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 27.77,
+    "loudness_spread_db": 5.02
+   },
+   "note": "",
+   "synth_s": 1.32,
+   "heard": "Le client ouvre un websocket vers le serveur local.",
+   "wer": 0.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot03-estelle-phon",
+   "title": "WebSocket · estelle · phonétique",
+   "text": "Le client ouvre un ouèbe soquette vers le serveur local.",
+   "file": "mot03-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 3.32,
+    "speech_ratio": 0.59,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 237.62,
+    "pitch_spread_hz": 20.65,
+    "loudness_spread_db": 5.14
+   },
+   "note": "écrit : ouèbe soquette",
+   "synth_s": 1.4,
+   "heard": "Le client ouvre un web socket vers le serveur local.",
+   "wer": 0.222
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot03-marius-brut",
+   "title": "WebSocket · marius · tel quel",
+   "text": "Le client ouvre un WebSocket vers le serveur local.",
+   "file": "mot03-marius-brut.ogg",
+   "measures": {
+    "duration_s": 3.0,
+    "speech_ratio": 0.58,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 289.16,
+    "pitch_spread_hz": 74.93,
+    "loudness_spread_db": 6.33
+   },
+   "note": "",
+   "synth_s": 1.29,
+   "heard": "le client ouverne WebSocket vers le server local.",
+   "wer": 0.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot03-marius-phon",
+   "title": "WebSocket · marius · phonétique",
+   "text": "Le client ouvre un ouèbe soquette vers le serveur local.",
+   "file": "mot03-marius-phon.ogg",
+   "measures": {
+    "duration_s": 3.08,
+    "speech_ratio": 0.56,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 296.3,
+    "pitch_spread_hz": 37.4,
+    "loudness_spread_db": 5.23
+   },
+   "note": "écrit : ouèbe soquette",
+   "synth_s": 1.54,
+   "heard": "et puis on va faire un web socket vers plusieurs locales.",
+   "wer": 1.111
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot04-estelle-brut",
+   "title": "Kubernetes · estelle · tel quel",
+   "text": "Le service tourne dans un cluster Kubernetes.",
+   "file": "mot04-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.76,
+    "speech_ratio": 0.52,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 237.62,
+    "pitch_spread_hz": 23.44,
+    "loudness_spread_db": 5.56
+   },
+   "note": "",
+   "synth_s": 1.12,
+   "heard": "Le service tourne dans un cluster Kubernetes.",
+   "wer": 0.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot04-estelle-phon",
+   "title": "Kubernetes · estelle · phonétique",
+   "text": "Le service tourne dans un cluster coubernétisse.",
+   "file": "mot04-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.55,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 250.0,
+    "pitch_spread_hz": 31.43,
+    "loudness_spread_db": 5.4
+   },
+   "note": "écrit : coubernétisse",
+   "synth_s": 1.12,
+   "heard": "le service tourne dans un cluster Kubernetes.",
+   "wer": 0.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot04-marius-brut",
+   "title": "Kubernetes · marius · tel quel",
+   "text": "Le service tourne dans un cluster Kubernetes.",
+   "file": "mot04-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.68,
+    "speech_ratio": 0.48,
+    "pause_count": 1,
+    "pause_total_s": 0.33,
+    "pitch_hz": 198.17,
+    "pitch_spread_hz": 84.34,
+    "loudness_spread_db": 6.87
+   },
+   "note": "",
+   "synth_s": 1.05,
+   "heard": "et ça va être tombé dans un custoque de la nette.",
+   "wer": 1.286
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot04-marius-phon",
+   "title": "Kubernetes · marius · phonétique",
+   "text": "Le service tourne dans un cluster coubernétisse.",
+   "file": "mot04-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.49,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 275.86,
+    "pitch_spread_hz": 90.16,
+    "loudness_spread_db": 6.46
+   },
+   "note": "écrit : coubernétisse",
+   "synth_s": 0.91,
+   "heard": "le service tourne dans un Christo-Covernicis.",
+   "wer": 0.286
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot05-estelle-brut",
+   "title": "PostgreSQL · estelle · tel quel",
+   "text": "La base PostgreSQL refuse la connexion.",
+   "file": "mot05-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.76,
+    "speech_ratio": 0.5,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 242.42,
+    "pitch_spread_hz": 25.61,
+    "loudness_spread_db": 4.97
+   },
+   "note": "",
+   "synth_s": 1.01,
+   "heard": "La base post-grèce QL refuse la connexion.",
+   "wer": 0.5
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot05-estelle-phon",
+   "title": "PostgreSQL · estelle · phonétique",
+   "text": "La base poste gresse Q L refuse la connexion.",
+   "file": "mot05-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.51,
+    "pause_count": 2,
+    "pause_total_s": 0.36,
+    "pitch_hz": 236.46,
+    "pitch_spread_hz": 18.35,
+    "loudness_spread_db": 5.05
+   },
+   "note": "écrit : poste gresse Q L",
+   "synth_s": 1.48,
+   "heard": "la base poste grèce culière refuse la connexion.",
+   "wer": 0.5
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot05-marius-brut",
+   "title": "PostgreSQL · marius · tel quel",
+   "text": "La base PostgreSQL refuse la connexion.",
+   "file": "mot05-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.48,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 287.71,
+    "pitch_spread_hz": 79.93,
+    "loudness_spread_db": 5.85
+   },
+   "note": "",
+   "synth_s": 0.98,
+   "heard": "la base post-rescuelle se refuse la connexion.",
+   "wer": 0.5
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot05-marius-phon",
+   "title": "PostgreSQL · marius · phonétique",
+   "text": "La base poste gresse Q L refuse la connexion.",
+   "file": "mot05-marius-phon.ogg",
+   "measures": {
+    "duration_s": 3.48,
+    "speech_ratio": 0.34,
+    "pause_count": 3,
+    "pause_total_s": 0.57,
+    "pitch_hz": 296.3,
+    "pitch_spread_hz": 60.6,
+    "loudness_spread_db": 5.74
+   },
+   "note": "écrit : poste gresse Q L",
+   "synth_s": 1.15,
+   "heard": "La base poste grèceculaire refuse la connexion.",
+   "wer": 0.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot06-estelle-brut",
+   "title": "TypeScript · estelle · tel quel",
+   "text": "Ce module est écrit en TypeScript strict.",
+   "file": "mot06-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.6,
+    "speech_ratio": 0.35,
+    "pause_count": 3,
+    "pause_total_s": 0.6,
+    "pitch_hz": 240.0,
+    "pitch_spread_hz": 23.48,
+    "loudness_spread_db": 5.46
+   },
+   "note": "",
+   "synth_s": 0.84,
+   "heard": "Ce module était écrit en type script strict.",
+   "wer": 0.429
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot06-estelle-phon",
+   "title": "TypeScript · estelle · phonétique",
+   "text": "Ce module est écrit en taïpe scripte strict.",
+   "file": "mot06-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.68,
+    "speech_ratio": 0.37,
+    "pause_count": 2,
+    "pause_total_s": 0.57,
+    "pitch_hz": 242.42,
+    "pitch_spread_hz": 21.82,
+    "loudness_spread_db": 5.7
+   },
+   "note": "écrit : taïpe scripte",
+   "synth_s": 0.95,
+   "heard": "Ce module est écrit en type script strict.",
+   "wer": 0.286
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot06-marius-brut",
+   "title": "TypeScript · marius · tel quel",
+   "text": "Ce module est écrit en TypeScript strict.",
+   "file": "mot06-marius-brut.ogg",
+   "measures": {
+    "duration_s": 3.0,
+    "speech_ratio": 0.31,
+    "pause_count": 2,
+    "pause_total_s": 0.54,
+    "pitch_hz": 239.63,
+    "pitch_spread_hz": 90.94,
+    "loudness_spread_db": 5.39
+   },
+   "note": "",
+   "synth_s": 1.0,
+   "heard": "ce module est écrit en tubscript strict.",
+   "wer": 0.143
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot06-marius-phon",
+   "title": "TypeScript · marius · phonétique",
+   "text": "Ce module est écrit en taïpe scripte strict.",
+   "file": "mot06-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.38,
+    "pause_count": 3,
+    "pause_total_s": 0.57,
+    "pitch_hz": 275.86,
+    "pitch_spread_hz": 96.56,
+    "loudness_spread_db": 5.81
+   },
+   "note": "écrit : taïpe scripte",
+   "synth_s": 0.99,
+   "heard": "Ce module est écrit en type « Script Strict »",
+   "wer": 0.286
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot07-estelle-brut",
+   "title": "npm · estelle · tel quel",
+   "text": "Lance npm install avant de compiler.",
+   "file": "mot07-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.28,
+    "speech_ratio": 0.54,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 18.06,
+    "loudness_spread_db": 5.24
+   },
+   "note": "",
+   "synth_s": 0.7,
+   "heard": "lance une pémestale avant de compiler.",
+   "wer": 0.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot07-estelle-phon",
+   "title": "npm · estelle · phonétique",
+   "text": "Lance N P M install avant de compiler.",
+   "file": "mot07-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.76,
+    "speech_ratio": 0.54,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 18.69,
+    "loudness_spread_db": 4.96
+   },
+   "note": "écrit : N P M",
+   "synth_s": 0.89,
+   "heard": "Lance NP-MEM install avant de compiler.",
+   "wer": 0.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot07-marius-brut",
+   "title": "npm · marius · tel quel",
+   "text": "Lance npm install avant de compiler.",
+   "file": "mot07-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.76,
+    "speech_ratio": 0.38,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 112.68,
+    "pitch_spread_hz": 97.99,
+    "loudness_spread_db": 6.49
+   },
+   "note": "",
+   "synth_s": 1.07,
+   "heard": "L'ancienne permestale avant de compiler.",
+   "wer": 0.5
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot07-marius-phon",
+   "title": "npm · marius · phonétique",
+   "text": "Lance N P M install avant de compiler.",
+   "file": "mot07-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.76,
+    "speech_ratio": 0.46,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 296.3,
+    "pitch_spread_hz": 20.7,
+    "loudness_spread_db": 5.23
+   },
+   "note": "écrit : N P M",
+   "synth_s": 0.87,
+   "heard": "l'enseignement et l'installe avant de compiler.",
+   "wer": 0.833
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot08-estelle-brut",
+   "title": "async/await · estelle · tel quel",
+   "text": "Le code utilise async/await pour attendre la réponse.",
+   "file": "mot08-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 3.16,
+    "speech_ratio": 0.57,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 240.0,
+    "pitch_spread_hz": 24.99,
+    "loudness_spread_db": 5.37
+   },
+   "note": "",
+   "synth_s": 1.01,
+   "heard": "Le code utilise AssetCockedAway pour attendre la réponse.",
+   "wer": 0.222
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot08-estelle-phon",
+   "title": "async/await · estelle · phonétique",
+   "text": "Le code utilise assinque, aouaite pour attendre la réponse.",
+   "file": "mot08-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 3.56,
+    "speech_ratio": 0.47,
+    "pause_count": 2,
+    "pause_total_s": 0.54,
+    "pitch_hz": 236.46,
+    "pitch_spread_hz": 24.19,
+    "loudness_spread_db": 4.79
+   },
+   "note": "écrit : assinque, aouaite",
+   "synth_s": 1.17,
+   "heard": "Le code utilise A5, A-Wet pour attendre la réponse.",
+   "wer": 0.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot08-marius-brut",
+   "title": "async/await · marius · tel quel",
+   "text": "Le code utilise async/await pour attendre la réponse.",
+   "file": "mot08-marius-brut.ogg",
+   "measures": {
+    "duration_s": 3.48,
+    "speech_ratio": 0.31,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 199.21,
+    "pitch_spread_hz": 87.43,
+    "loudness_spread_db": 4.9
+   },
+   "note": "",
+   "synth_s": 1.18,
+   "heard": "Le code utilise à 5 auto-arrives pour attendre la réponse.",
+   "wer": 0.444
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot08-marius-phon",
+   "title": "async/await · marius · phonétique",
+   "text": "Le code utilise assinque, aouaite pour attendre la réponse.",
+   "file": "mot08-marius-phon.ogg",
+   "measures": {
+    "duration_s": 3.16,
+    "speech_ratio": 0.5,
+    "pause_count": 1,
+    "pause_total_s": 0.21,
+    "pitch_hz": 258.09,
+    "pitch_spread_hz": 36.36,
+    "loudness_spread_db": 5.85
+   },
+   "note": "écrit : assinque, aouaite",
+   "synth_s": 1.04,
+   "heard": "Le code d'utilisation est Sync, à web pour atteindre les réponses.",
+   "wer": 1.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot09-estelle-brut",
+   "title": "README · estelle · tel quel",
+   "text": "Le README explique comment démarrer.",
+   "file": "mot09-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.6,
+    "speech_ratio": 0.57,
+    "pause_count": 2,
+    "pause_total_s": 0.33,
+    "pitch_hz": 244.9,
+    "pitch_spread_hz": 16.88,
+    "loudness_spread_db": 3.74
+   },
+   "note": "",
+   "synth_s": 1.14,
+   "heard": "Le README explique comment démarrer.",
+   "wer": 0.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot09-estelle-phon",
+   "title": "README · estelle · phonétique",
+   "text": "Le rid mi explique comment démarrer.",
+   "file": "mot09-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.28,
+    "speech_ratio": 0.5,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 247.42,
+    "pitch_spread_hz": 26.36,
+    "loudness_spread_db": 5.03
+   },
+   "note": "écrit : rid mi",
+   "synth_s": 0.71,
+   "heard": "Le rythme y explique comment démarrer.",
+   "wer": 0.4
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot09-marius-brut",
+   "title": "README · marius · tel quel",
+   "text": "Le README explique comment démarrer.",
+   "file": "mot09-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.68,
+    "speech_ratio": 0.52,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 291.01,
+    "pitch_spread_hz": 57.59,
+    "loudness_spread_db": 5.29
+   },
+   "note": "",
+   "synth_s": 0.9,
+   "heard": "les éradémiques, les commandes de Marie.",
+   "wer": 1.2
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot09-marius-phon",
+   "title": "README · marius · phonétique",
+   "text": "Le rid mi explique comment démarrer.",
+   "file": "mot09-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.36,
+    "speech_ratio": 0.47,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 252.63,
+    "pitch_spread_hz": 63.09,
+    "loudness_spread_db": 5.07
+   },
+   "note": "écrit : rid mi",
+   "synth_s": 0.8,
+   "heard": "le rythme explique comment démarrer.",
+   "wer": 0.2
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot10-estelle-brut",
+   "title": "OAuth · estelle · tel quel",
+   "text": "La connexion passe par OAuth et un jeton court.",
+   "file": "mot10-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.92,
+    "speech_ratio": 0.49,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 237.72,
+    "pitch_spread_hz": 30.15,
+    "loudness_spread_db": 4.95
+   },
+   "note": "",
+   "synth_s": 0.94,
+   "heard": "La connexion passe par « os » et enjeu ton cours.",
+   "wer": 0.444
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot10-estelle-phon",
+   "title": "OAuth · estelle · phonétique",
+   "text": "La connexion passe par ô auth et un jeton court.",
+   "file": "mot10-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.53,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 229.67,
+    "pitch_spread_hz": 34.2,
+    "loudness_spread_db": 5.06
+   },
+   "note": "écrit : ô auth",
+   "synth_s": 1.02,
+   "heard": "La connexion passe par haut au terrain jeton court.",
+   "wer": 0.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot10-marius-brut",
+   "title": "OAuth · marius · tel quel",
+   "text": "La connexion passe par OAuth et un jeton court.",
+   "file": "mot10-marius-brut.ogg",
+   "measures": {
+    "duration_s": 3.0,
+    "speech_ratio": 0.43,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 311.69,
+    "pitch_spread_hz": 93.78,
+    "loudness_spread_db": 6.36
+   },
+   "note": "",
+   "synth_s": 0.96,
+   "heard": "La connexion passe par Ose et ajoute un cours.",
+   "wer": 0.444
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot10-marius-phon",
+   "title": "OAuth · marius · phonétique",
+   "text": "La connexion passe par ô auth et un jeton court.",
+   "file": "mot10-marius-phon.ogg",
+   "measures": {
+    "duration_s": 3.4,
+    "speech_ratio": 0.47,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 285.71,
+    "pitch_spread_hz": 88.78,
+    "loudness_spread_db": 6.19
+   },
+   "note": "écrit : ô auth",
+   "synth_s": 1.06,
+   "heard": "La connexion passe par haut et un jeton court.",
+   "wer": 0.111
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot11-estelle-brut",
+   "title": "VS Code · estelle · tel quel",
+   "text": "Ouvre le dossier dans VS Code.",
+   "file": "mot11-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.12,
+    "speech_ratio": 0.49,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 228.57,
+    "pitch_spread_hz": 19.73,
+    "loudness_spread_db": 3.96
+   },
+   "note": "",
+   "synth_s": 0.85,
+   "heard": "Ouvre le dossier dans VS Code.",
+   "wer": 0.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot11-estelle-phon",
+   "title": "VS Code · estelle · phonétique",
+   "text": "Ouvre le dossier dans V S code.",
+   "file": "mot11-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.28,
+    "speech_ratio": 0.51,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 230.77,
+    "pitch_spread_hz": 37.88,
+    "loudness_spread_db": 5.21
+   },
+   "note": "écrit : V S code",
+   "synth_s": 1.05,
+   "heard": "Ouvre le dossier dans VS Code.",
+   "wer": 0.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot11-marius-brut",
+   "title": "VS Code · marius · tel quel",
+   "text": "Ouvre le dossier dans VS Code.",
+   "file": "mot11-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.2,
+    "speech_ratio": 0.47,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 279.07,
+    "pitch_spread_hz": 66.65,
+    "loudness_spread_db": 5.31
+   },
+   "note": "",
+   "synth_s": 0.76,
+   "heard": "Ouvrez-vous aussi dans les scottes.",
+   "wer": 0.833
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot11-marius-phon",
+   "title": "VS Code · marius · phonétique",
+   "text": "Ouvre le dossier dans V S code.",
+   "file": "mot11-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.28,
+    "speech_ratio": 0.37,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 201.68,
+    "pitch_spread_hz": 103.95,
+    "loudness_spread_db": 6.44
+   },
+   "note": "écrit : V S code",
+   "synth_s": 0.77,
+   "heard": "Au revoir.",
+   "wer": 1.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot12-estelle-brut",
+   "title": "CSP · estelle · tel quel",
+   "text": "La CSP bloque ce script dans la webview.",
+   "file": "mot12-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.54,
+    "pause_count": 2,
+    "pause_total_s": 0.3,
+    "pitch_hz": 226.42,
+    "pitch_spread_hz": 25.03,
+    "loudness_spread_db": 5.37
+   },
+   "note": "",
+   "synth_s": 0.92,
+   "heard": "la CSP bloc souscript dans la revue.",
+   "wer": 0.5
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot12-estelle-phon",
+   "title": "CSP · estelle · phonétique",
+   "text": "La C S P bloque ce script dans la webview.",
+   "file": "mot12-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.68,
+    "speech_ratio": 0.56,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 224.3,
+    "pitch_spread_hz": 28.96,
+    "loudness_spread_db": 5.57
+   },
+   "note": "écrit : C S P",
+   "synth_s": 0.89,
+   "heard": "la csp blog souscript dans la webview.",
+   "wer": 0.375
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot12-marius-brut",
+   "title": "CSP · marius · tel quel",
+   "text": "La CSP bloque ce script dans la webview.",
+   "file": "mot12-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.84,
+    "speech_ratio": 0.47,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 243.71,
+    "pitch_spread_hz": 77.24,
+    "loudness_spread_db": 5.77
+   },
+   "note": "",
+   "synth_s": 1.01,
+   "heard": "Le SES Big Books a skippé une autre review.",
+   "wer": 1.125
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot12-marius-phon",
+   "title": "CSP · marius · phonétique",
+   "text": "La C S P bloque ce script dans la webview.",
+   "file": "mot12-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.44,
+    "speech_ratio": 0.47,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 247.18,
+    "pitch_spread_hz": 86.66,
+    "loudness_spread_db": 4.97
+   },
+   "note": "écrit : C S P",
+   "synth_s": 0.78,
+   "heard": "la CCP bloc se scripte dans la webview.",
+   "wer": 0.5
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot13-estelle-brut",
+   "title": "PipeWire · estelle · tel quel",
+   "text": "Le son passe par PipeWire sous Linux.",
+   "file": "mot13-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.44,
+    "speech_ratio": 0.48,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 237.62,
+    "pitch_spread_hz": 32.14,
+    "loudness_spread_db": 5.11
+   },
+   "note": "",
+   "synth_s": 0.79,
+   "heard": "Le son passe par Pipewear sous Linux.",
+   "wer": 0.143
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot13-estelle-phon",
+   "title": "PipeWire · estelle · phonétique",
+   "text": "Le son passe par païpe ouaillère sous Linux.",
+   "file": "mot13-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.68,
+    "speech_ratio": 0.48,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 235.29,
+    "pitch_spread_hz": 27.59,
+    "loudness_spread_db": 5.36
+   },
+   "note": "écrit : païpe ouaillère",
+   "synth_s": 0.86,
+   "heard": "Le son passe par pailliproyaire sous Linux.",
+   "wer": 0.143
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot13-marius-brut",
+   "title": "PipeWire · marius · tel quel",
+   "text": "Le son passe par PipeWire sous Linux.",
+   "file": "mot13-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.52,
+    "speech_ratio": 0.38,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 309.69,
+    "pitch_spread_hz": 66.15,
+    "loudness_spread_db": 5.73
+   },
+   "note": "",
+   "synth_s": 0.88,
+   "heard": "Le son passe par pipperware. Sous-titres réalisés par la communauté d'Amara.org",
+   "wer": 1.286
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot13-marius-phon",
+   "title": "PipeWire · marius · phonétique",
+   "text": "Le son passe par païpe ouaillère sous Linux.",
+   "file": "mot13-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.76,
+    "speech_ratio": 0.48,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 322.51,
+    "pitch_spread_hz": 77.4,
+    "loudness_spread_db": 5.82
+   },
+   "note": "écrit : païpe ouaillère",
+   "synth_s": 0.89,
+   "heard": "de son passe par PayPayers Linux.",
+   "wer": 0.429
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot14-estelle-brut",
+   "title": "Rust · estelle · tel quel",
+   "text": "Le moteur audio est écrit en Rust.",
+   "file": "mot14-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.28,
+    "speech_ratio": 0.51,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 237.62,
+    "pitch_spread_hz": 23.51,
+    "loudness_spread_db": 4.88
+   },
+   "note": "",
+   "synth_s": 0.71,
+   "heard": "Le moteur audio est écrit en ruste.",
+   "wer": 0.143
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot14-estelle-phon",
+   "title": "Rust · estelle · phonétique",
+   "text": "Le moteur audio est écrit en reuste.",
+   "file": "mot14-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.28,
+    "speech_ratio": 0.5,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 235.29,
+    "pitch_spread_hz": 19.41,
+    "loudness_spread_db": 5.15
+   },
+   "note": "écrit : reuste",
+   "synth_s": 0.91,
+   "heard": "Le moteur audio est écrit en rostes.",
+   "wer": 0.143
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot14-marius-brut",
+   "title": "Rust · marius · tel quel",
+   "text": "Le moteur audio est écrit en Rust.",
+   "file": "mot14-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.52,
+    "speech_ratio": 0.46,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 247.45,
+    "pitch_spread_hz": 100.55,
+    "loudness_spread_db": 6.31
+   },
+   "note": "",
+   "synth_s": 0.79,
+   "heard": "et m'a tout le joy de ce qu'il y a.",
+   "wer": 1.571
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot14-marius-phon",
+   "title": "Rust · marius · phonétique",
+   "text": "Le moteur audio est écrit en reuste.",
+   "file": "mot14-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.68,
+    "speech_ratio": 0.39,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 183.22,
+    "pitch_spread_hz": 75.19,
+    "loudness_spread_db": 6.36
+   },
+   "note": "écrit : reuste",
+   "synth_s": 0.86,
+   "heard": "Le motel audio est écrit en riste.",
+   "wer": 0.286
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot15-estelle-brut",
+   "title": "Ollama · estelle · tel quel",
+   "text": "Le modèle local tourne avec Ollama.",
+   "file": "mot15-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.28,
+    "speech_ratio": 0.57,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 237.62,
+    "pitch_spread_hz": 20.89,
+    "loudness_spread_db": 5.05
+   },
+   "note": "",
+   "synth_s": 0.73,
+   "heard": "Le modèle local tourne avec Olamah.",
+   "wer": 0.167
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot15-estelle-phon",
+   "title": "Ollama · estelle · phonétique",
+   "text": "Le modèle local tourne avec olama.",
+   "file": "mot15-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.36,
+    "speech_ratio": 0.56,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 238.81,
+    "pitch_spread_hz": 22.07,
+    "loudness_spread_db": 4.35
+   },
+   "note": "écrit : olama",
+   "synth_s": 0.82,
+   "heard": "Le modèle local tourne avec Olamah.",
+   "wer": 0.167
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot15-marius-brut",
+   "title": "Ollama · marius · tel quel",
+   "text": "Le modèle local tourne avec Ollama.",
+   "file": "mot15-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.44,
+    "speech_ratio": 0.54,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 258.06,
+    "pitch_spread_hz": 55.12,
+    "loudness_spread_db": 5.55
+   },
+   "note": "",
+   "synth_s": 0.83,
+   "heard": "le modèle local tourne avec la main.",
+   "wer": 0.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot15-marius-phon",
+   "title": "Ollama · marius · phonétique",
+   "text": "Le modèle local tourne avec olama.",
+   "file": "mot15-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.6,
+    "speech_ratio": 0.51,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 253.98,
+    "pitch_spread_hz": 75.05,
+    "loudness_spread_db": 5.8
+   },
+   "note": "écrit : olama",
+   "synth_s": 1.14,
+   "heard": "le modèle local tournage et c'est-à-dire.",
+   "wer": 1.0
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot16-estelle-brut",
+   "title": "commit · estelle · tel quel",
+   "text": "Ce commit corrige le cache audio.",
+   "file": "mot16-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 2.12,
+    "speech_ratio": 0.5,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 242.42,
+    "pitch_spread_hz": 27.39,
+    "loudness_spread_db": 5.18
+   },
+   "note": "",
+   "synth_s": 0.95,
+   "heard": "Ce comide corage me cache audio.",
+   "wer": 0.5
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot16-estelle-phon",
+   "title": "commit · estelle · phonétique",
+   "text": "Ce comite corrige le cache audio.",
+   "file": "mot16-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.2,
+    "speech_ratio": 0.49,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 252.63,
+    "pitch_spread_hz": 28.53,
+    "loudness_spread_db": 4.81
+   },
+   "note": "écrit : comite",
+   "synth_s": 0.95,
+   "heard": "Ce comitre corrige le cache audio.",
+   "wer": 0.167
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot16-marius-brut",
+   "title": "commit · marius · tel quel",
+   "text": "Ce commit corrige le cache audio.",
+   "file": "mot16-marius-brut.ogg",
+   "measures": {
+    "duration_s": 2.36,
+    "speech_ratio": 0.49,
+    "pause_count": 1,
+    "pause_total_s": 0.15,
+    "pitch_hz": 250.03,
+    "pitch_spread_hz": 89.24,
+    "loudness_spread_db": 5.77
+   },
+   "note": "",
+   "synth_s": 0.96,
+   "heard": "S'occupe-mite, courage et cash au jour.",
+   "wer": 1.333
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot16-marius-phon",
+   "title": "commit · marius · phonétique",
+   "text": "Ce comite corrige le cache audio.",
+   "file": "mot16-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.28,
+    "speech_ratio": 0.46,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 328.77,
+    "pitch_spread_hz": 117.85,
+    "loudness_spread_db": 5.06
+   },
+   "note": "écrit : comite",
+   "synth_s": 0.74,
+   "heard": "et ça commite à corriger le cache audio.",
+   "wer": 0.833
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot17-estelle-brut",
+   "title": "p95 · estelle · tel quel",
+   "text": "La latence p95 reste sous deux cents millisecondes.",
+   "file": "mot17-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 3.24,
+    "speech_ratio": 0.6,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 240.0,
+    "pitch_spread_hz": 27.93,
+    "loudness_spread_db": 4.1
+   },
+   "note": "",
+   "synth_s": 1.06,
+   "heard": "La latence pénédéreuse reste sous 200 misibondes.",
+   "wer": 0.5
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot17-estelle-phon",
+   "title": "p95 · estelle · phonétique",
+   "text": "La latence pé quatre-vingt-quinze reste sous deux cents millisecondes.",
+   "file": "mot17-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 3.4,
+    "speech_ratio": 0.56,
+    "pause_count": 1,
+    "pause_total_s": 0.21,
+    "pitch_hz": 244.9,
+    "pitch_spread_hz": 29.37,
+    "loudness_spread_db": 5.02
+   },
+   "note": "écrit : pé quatre-vingt-quinze",
+   "synth_s": 1.36,
+   "heard": "La latence P95 reste sous 200ms.",
+   "wer": 0.375
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot17-marius-brut",
+   "title": "p95 · marius · tel quel",
+   "text": "La latence p95 reste sous deux cents millisecondes.",
+   "file": "mot17-marius-brut.ogg",
+   "measures": {
+    "duration_s": 3.72,
+    "speech_ratio": 0.43,
+    "pause_count": 2,
+    "pause_total_s": 0.33,
+    "pitch_hz": 294.49,
+    "pitch_spread_hz": 77.5,
+    "loudness_spread_db": 5.95
+   },
+   "note": "",
+   "synth_s": 1.2,
+   "heard": "La latence pénaphorie reste sous 200 ms.",
+   "wer": 0.5
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot17-marius-phon",
+   "title": "p95 · marius · phonétique",
+   "text": "La latence pé quatre-vingt-quinze reste sous deux cents millisecondes.",
+   "file": "mot17-marius-phon.ogg",
+   "measures": {
+    "duration_s": 3.72,
+    "speech_ratio": 0.55,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 300.0,
+    "pitch_spread_hz": 69.79,
+    "loudness_spread_db": 5.82
+   },
+   "note": "écrit : pé quatre-vingt-quinze",
+   "synth_s": 1.2,
+   "heard": "la date en sp 95 reste sous 200 ms.",
+   "wer": 0.875
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot18-estelle-brut",
+   "title": "v2.3.1 · estelle · tel quel",
+   "text": "Nous livrons la v2.3.1 demain matin.",
+   "file": "mot18-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 1.88,
+    "speech_ratio": 0.55,
+    "pause_count": 1,
+    "pause_total_s": 0.48,
+    "pitch_hz": 237.62,
+    "pitch_spread_hz": 19.19,
+    "loudness_spread_db": 4.14
+   },
+   "note": "",
+   "synth_s": 0.59,
+   "heard": "Nous y verrons la védat.",
+   "wer": 0.875
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot18-estelle-phon",
+   "title": "v2.3.1 · estelle · phonétique",
+   "text": "Nous livrons la version deux, trois, un demain matin.",
+   "file": "mot18-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 2.92,
+    "speech_ratio": 0.56,
+    "pause_count": 2,
+    "pause_total_s": 0.33,
+    "pitch_hz": 240.0,
+    "pitch_spread_hz": 18.12,
+    "loudness_spread_db": 4.56
+   },
+   "note": "écrit : version deux, trois, un",
+   "synth_s": 1.01,
+   "heard": "Nous livrons la version 2-3 un demain matin.",
+   "wer": 0.375
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot18-marius-brut",
+   "title": "v2.3.1 · marius · tel quel",
+   "text": "Nous livrons la v2.3.1 demain matin.",
+   "file": "mot18-marius-brut.ogg",
+   "measures": {
+    "duration_s": 4.36,
+    "speech_ratio": 0.4,
+    "pause_count": 4,
+    "pause_total_s": 1.35,
+    "pitch_hz": 303.8,
+    "pitch_spread_hz": 61.5,
+    "loudness_spread_db": 5.67
+   },
+   "note": "",
+   "synth_s": 1.64,
+   "heard": "N'oublie pas la végère, bête, faise, date, de memètre.",
+   "wer": 1.125
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot18-marius-phon",
+   "title": "v2.3.1 · marius · phonétique",
+   "text": "Nous livrons la version deux, trois, un demain matin.",
+   "file": "mot18-marius-phon.ogg",
+   "measures": {
+    "duration_s": 2.76,
+    "speech_ratio": 0.57,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 289.16,
+    "pitch_spread_hz": 72.07,
+    "loudness_spread_db": 5.8
+   },
+   "note": "écrit : version deux, trois, un",
+   "synth_s": 0.91,
+   "heard": "Nous livrons la version 2-3 un demain matin.",
+   "wer": 0.375
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot19-estelle-brut",
+   "title": "127.0.0.1:8000 · estelle · tel quel",
+   "text": "Le serveur écoute sur 127.0.0.1:8000.",
+   "file": "mot19-estelle-brut.ogg",
+   "measures": {
+    "duration_s": 4.76,
+    "speech_ratio": 0.56,
+    "pause_count": 3,
+    "pause_total_s": 1.11,
+    "pitch_hz": 224.3,
+    "pitch_spread_hz": 19.63,
+    "loudness_spread_db": 4.84
+   },
+   "note": "",
+   "synth_s": 1.53,
+   "heard": "Le serveur écoute sur APS sous, sous,",
+   "wer": 0.556
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot19-estelle-phon",
+   "title": "127.0.0.1:8000 · estelle · phonétique",
+   "text": "Le serveur écoute sur cent vingt-sept, zéro, zéro, un, port huit mille.",
+   "file": "mot19-estelle-phon.ogg",
+   "measures": {
+    "duration_s": 4.04,
+    "speech_ratio": 0.62,
+    "pause_count": 1,
+    "pause_total_s": 0.33,
+    "pitch_hz": 228.57,
+    "pitch_spread_hz": 22.69,
+    "loudness_spread_db": 4.26
+   },
+   "note": "écrit : cent vingt-sept, zéro, zéro, un, port huit mille",
+   "synth_s": 1.28,
+   "heard": "Le serveur écoute sur 127.001 par une île.",
+   "wer": 0.444
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot19-marius-brut",
+   "title": "127.0.0.1:8000 · marius · tel quel",
+   "text": "Le serveur écoute sur 127.0.0.1:8000.",
+   "file": "mot19-marius-brut.ogg",
+   "measures": {
+    "duration_s": 5.56,
+    "speech_ratio": 0.22,
+    "pause_count": 2,
+    "pause_total_s": 2.55,
+    "pitch_hz": 289.16,
+    "pitch_spread_hz": 71.27,
+    "loudness_spread_db": 6.15
+   },
+   "note": "",
+   "synth_s": 1.77,
+   "heard": "le serveur écoute sur la paix en principe. Pouc ! Pépé !",
+   "wer": 0.667
+  },
+  {
+   "section": "Mots techniques",
+   "id": "mot19-marius-phon",
+   "title": "127.0.0.1:8000 · marius · phonétique",
+   "text": "Le serveur écoute sur cent vingt-sept, zéro, zéro, un, port huit mille.",
+   "file": "mot19-marius-phon.ogg",
+   "measures": {
+    "duration_s": 3.96,
+    "speech_ratio": 0.62,
+    "pause_count": 0,
+    "pause_total_s": 0.0,
+    "pitch_hz": 282.35,
+    "pitch_spread_hz": 65.59,
+    "loudness_spread_db": 5.04
+   },
+   "note": "écrit : cent vingt-sept, zéro, zéro, un, port huit mille",
+   "synth_s": 1.6,
+   "heard": "Le serveur écoute sur 127.001 par 8000.",
+   "wer": 0.333
+  },
+  {
+   "section": "Passages longs",
+   "id": "doc-documentation",
+   "title": "documentation · estelle",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "doc-documentation.ogg",
+   "measures": {
+    "duration_s": 17.8,
+    "speech_ratio": 0.62,
+    "pause_count": 7,
+    "pause_total_s": 3.09,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 24.79,
+    "loudness_spread_db": 3.92
+   },
+   "note": "",
+   "synth_s": 6.94,
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port ProSOS Auto 2 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.053
+  },
+  {
+   "section": "Passages longs",
+   "id": "doc-recit",
+   "title": "recit · estelle",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "doc-recit.ogg",
+   "measures": {
+    "duration_s": 14.92,
+    "speech_ratio": 0.61,
+    "pause_count": 6,
+    "pause_total_s": 2.94,
+    "pitch_hz": 230.77,
+    "pitch_spread_hz": 26.35,
+    "loudness_spread_db": 4.81
+   },
+   "note": "",
+   "synth_s": 7.81,
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau à marée cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Passages longs",
+   "id": "doc-reponse",
+   "title": "reponse · estelle",
+   "text": "Le correctif est prêt. La cause était simple : la clé du cache ignorait la langue, donc deux lectures différentes partageaient le même fichier. J'ai ajouté la langue à la clé et un test qui échoue sans ce changement. Il reste une limite : le cache sera reconstruit une fois, ce qui ajoute un peu d'attente à la première relecture.",
+   "file": "doc-reponse.ogg",
+   "measures": {
+    "duration_s": 15.8,
+    "speech_ratio": 0.56,
+    "pause_count": 12,
+    "pause_total_s": 3.9,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 22.68,
+    "loudness_spread_db": 4.55
+   },
+   "note": "",
+   "synth_s": 5.65,
+   "heard": "Le correctif est prêt. La cause était simple, la clé du cache ignorait la langue donc deux lectures différentes partageaient le même fichier. J'ai ajouté la langue à la clé et un test qui échoue sans ce changement. Il reste une limite, le cache sera reconstruit une fois, ce qui ajoute un peu d'attente à la première relecture.",
+   "wer": 0.0
+  },
+  {
+   "section": "Passages longs",
+   "id": "doc-chiffres",
+   "title": "chiffres · estelle",
+   "text": "La facture numéro 2047 du 14 mars 2026 s'élève à 1 280,50 euros, soit 18 % de plus qu'en février. Le paiement est attendu avant le 30 avril, à 17 h 45 au plus tard.",
+   "file": "doc-chiffres.ogg",
+   "measures": {
+    "duration_s": 11.88,
+    "speech_ratio": 0.66,
+    "pause_count": 6,
+    "pause_total_s": 1.5,
+    "pitch_hz": 230.77,
+    "pitch_spread_hz": 19.58,
+    "loudness_spread_db": 4.09
+   },
+   "note": "",
+   "synth_s": 5.68,
+   "heard": "La facture numéro «Demso Joujouz» maintre du APR Mars à ce donçonnat soit APRMTZ plus qu'en février. Le paiement est attendu avant le paix...",
+   "wer": 0.595
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-france-estelle",
+   "title": "france · estelle",
+   "text": "Je prends le métro à huit heures, puis je passe à la boulangerie pour acheter une baguette et un pain au chocolat. Il fait un temps de chien, mais ça va, je ne suis pas en retard.",
+   "file": "region-france-estelle.ogg",
+   "measures": {
+    "duration_s": 7.24,
+    "speech_ratio": 0.59,
+    "pause_count": 2,
+    "pause_total_s": 0.87,
+    "pitch_hz": 226.42,
+    "pitch_spread_hz": 23.1,
+    "loudness_spread_db": 5.16
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 2.45,
+   "heard": "Je prends le métro à 8h, puis je passe à la boulangerie pour acheter une baguette et un pain au chocolat. Il fait un temps de chien, mais ça va, je ne suis pas en retard.",
+   "wer": 0.054
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-france-marius",
+   "title": "france · marius",
+   "text": "Je prends le métro à huit heures, puis je passe à la boulangerie pour acheter une baguette et un pain au chocolat. Il fait un temps de chien, mais ça va, je ne suis pas en retard.",
+   "file": "region-france-marius.ogg",
+   "measures": {
+    "duration_s": 7.0,
+    "speech_ratio": 0.42,
+    "pause_count": 4,
+    "pause_total_s": 1.44,
+    "pitch_hz": 292.68,
+    "pitch_spread_hz": 74.72,
+    "loudness_spread_db": 5.28
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 2.72,
+   "heard": "Je prends le métro à 8h, puis je passe à la boulangerie pour acheter une baguette et un pain au chocolat. Il fait un temps de chien, mais ça va, je ne suis pas en retard.",
+   "wer": 0.054
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-france-vera",
+   "title": "france · vera",
+   "text": "Je prends le métro à huit heures, puis je passe à la boulangerie pour acheter une baguette et un pain au chocolat. Il fait un temps de chien, mais ça va, je ne suis pas en retard.",
+   "file": "region-france-vera.ogg",
+   "measures": {
+    "duration_s": 9.08,
+    "speech_ratio": 0.67,
+    "pause_count": 2,
+    "pause_total_s": 1.11,
+    "pitch_hz": 172.66,
+    "pitch_spread_hz": 18.48,
+    "loudness_spread_db": 5.28
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 4.02,
+   "heard": "Je prends le métro à 8 heures puis je passe à la boulangerie pour acheter une baguette et un pain au chocolat. Il fait un temps de chien mais ça va, je ne suis pas en retard.",
+   "wer": 0.027
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-quebec-estelle",
+   "title": "quebec · estelle",
+   "text": "Je vais stationner mon char devant le dépanneur, puis je reviens tantôt. Il fait frette à matin, mais c'est correct, j'ai ma tuque et mes mitaines. On se voit en fin de semaine, là.",
+   "file": "region-quebec-estelle.ogg",
+   "measures": {
+    "duration_s": 8.36,
+    "speech_ratio": 0.6,
+    "pause_count": 4,
+    "pause_total_s": 1.5,
+    "pitch_hz": 228.57,
+    "pitch_spread_hz": 24.35,
+    "loudness_spread_db": 5.01
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 3.46,
+   "heard": "Je vais stationner mon char devant le dépaneur puis je reviens tantôt. Il fait fret à matin mais c'est correct, j'ai ma tue qui est mémitaine. On se voit en fin de semaine là.",
+   "wer": 0.167
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-quebec-marius",
+   "title": "quebec · marius",
+   "text": "Je vais stationner mon char devant le dépanneur, puis je reviens tantôt. Il fait frette à matin, mais c'est correct, j'ai ma tuque et mes mitaines. On se voit en fin de semaine, là.",
+   "file": "region-quebec-marius.ogg",
+   "measures": {
+    "duration_s": 8.04,
+    "speech_ratio": 0.4,
+    "pause_count": 6,
+    "pause_total_s": 2.49,
+    "pitch_hz": 289.16,
+    "pitch_spread_hz": 89.85,
+    "loudness_spread_db": 5.34
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 3.24,
+   "heard": "Je stationnerai mon chard devant le dépanner, puis je reviens tantôt. Je le ferai t'amater, mais c'est correct, c'est Mathieu qui émute. On se voit en fin de semaine.",
+   "wer": 0.472
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-quebec-vera",
+   "title": "quebec · vera",
+   "text": "Je vais stationner mon char devant le dépanneur, puis je reviens tantôt. Il fait frette à matin, mais c'est correct, j'ai ma tuque et mes mitaines. On se voit en fin de semaine, là.",
+   "file": "region-quebec-vera.ogg",
+   "measures": {
+    "duration_s": 9.16,
+    "speech_ratio": 0.63,
+    "pause_count": 2,
+    "pause_total_s": 1.5,
+    "pitch_hz": 171.43,
+    "pitch_spread_hz": 13.69,
+    "loudness_spread_db": 4.83
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 3.66,
+   "heard": "Je vais stationner mon chat devant le dépaneur puis je reviens tantôt. Il fait fret à matin mais c'est correct chez Mathieu qui est mémitaine. On se voit en fin de semaine là.",
+   "wer": 0.278
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-belgique-estelle",
+   "title": "belgique · estelle",
+   "text": "On a septante-cinq kilomètres de route, et je suis sûr à nonante pour cent qu'il va dracher. Tu sais quoi ? Je passe prendre des pistolets pour le déjeuner, puis on ira au kot une fois.",
+   "file": "region-belgique-estelle.ogg",
+   "measures": {
+    "duration_s": 8.84,
+    "speech_ratio": 0.52,
+    "pause_count": 4,
+    "pause_total_s": 1.89,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 27.01,
+    "loudness_spread_db": 4.67
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 3.41,
+   "heard": "On a 75 km de route et je suis sûre à 90% qu'il va dracher. Je sais quoi. Je passe prendre des pistolets pour le déjeuner puis on ira au côte une fois.",
+   "wer": 0.243
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-belgique-marius",
+   "title": "belgique · marius",
+   "text": "On a septante-cinq kilomètres de route, et je suis sûr à nonante pour cent qu'il va dracher. Tu sais quoi ? Je passe prendre des pistolets pour le déjeuner, puis on ira au kot une fois.",
+   "file": "region-belgique-marius.ogg",
+   "measures": {
+    "duration_s": 7.4,
+    "speech_ratio": 0.42,
+    "pause_count": 5,
+    "pause_total_s": 1.92,
+    "pitch_hz": 259.47,
+    "pitch_spread_hz": 82.1,
+    "loudness_spread_db": 4.7
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 2.9,
+   "heard": "On a 75 km de route, j'ai sûr à 90% qui va dracher. Tu sais quoi ? Je vais pas se prendre des pistolets pour le déjeuner, puis on y est à haut-côte une fois.",
+   "wer": 0.514
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-belgique-vera",
+   "title": "belgique · vera",
+   "text": "On a septante-cinq kilomètres de route, et je suis sûr à nonante pour cent qu'il va dracher. Tu sais quoi ? Je passe prendre des pistolets pour le déjeuner, puis on ira au kot une fois.",
+   "file": "region-belgique-vera.ogg",
+   "measures": {
+    "duration_s": 9.16,
+    "speech_ratio": 0.63,
+    "pause_count": 3,
+    "pause_total_s": 1.29,
+    "pitch_hz": 175.18,
+    "pitch_spread_hz": 16.6,
+    "loudness_spread_db": 5.02
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 3.29,
+   "heard": "On a 75 km de route et je suis sûre à 90% qui va dracher. Tu sais quoi ? Je passe prendre des pistolets pour le déjeuner puis on ira au Côte une fois.",
+   "wer": 0.27
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-suisse-estelle",
+   "title": "suisse · estelle",
+   "text": "J'ai septante-huit messages sur mon natel, je t'appelle juste après le service. On se retrouve à la gare pour le souper, et si tout joue pour toi, on ira boire un verre au bord du lac.",
+   "file": "region-suisse-estelle.ogg",
+   "measures": {
+    "duration_s": 8.52,
+    "speech_ratio": 0.6,
+    "pause_count": 2,
+    "pause_total_s": 1.05,
+    "pitch_hz": 228.57,
+    "pitch_spread_hz": 27.76,
+    "loudness_spread_db": 4.78
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 3.25,
+   "heard": "j'ai 78 messages sur mon atel, je t'appelle juste après le service. On se retrouve à la gare pour le souper, et si tout joue pour toi, on ira boire un verre au bord du lac.",
+   "wer": 0.077
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-suisse-marius",
+   "title": "suisse · marius",
+   "text": "J'ai septante-huit messages sur mon natel, je t'appelle juste après le service. On se retrouve à la gare pour le souper, et si tout joue pour toi, on ira boire un verre au bord du lac.",
+   "file": "region-suisse-marius.ogg",
+   "measures": {
+    "duration_s": 8.2,
+    "speech_ratio": 0.58,
+    "pause_count": 4,
+    "pause_total_s": 1.23,
+    "pitch_hz": 292.68,
+    "pitch_spread_hz": 75.34,
+    "loudness_spread_db": 5.54
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 2.84,
+   "heard": "Je sais que tant tu mets ça sur mon atel, je t'appelle juste t'appelle du service. On se retrouve à la gare pour le souper et si toujours pour toi, on ira boire un verre au bord du lac.",
+   "wer": 0.333
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-suisse-vera",
+   "title": "suisse · vera",
+   "text": "J'ai septante-huit messages sur mon natel, je t'appelle juste après le service. On se retrouve à la gare pour le souper, et si tout joue pour toi, on ira boire un verre au bord du lac.",
+   "file": "region-suisse-vera.ogg",
+   "measures": {
+    "duration_s": 8.84,
+    "speech_ratio": 0.71,
+    "pause_count": 1,
+    "pause_total_s": 0.54,
+    "pitch_hz": 170.21,
+    "pitch_spread_hz": 16.33,
+    "loudness_spread_db": 5.44
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 2.97,
+   "heard": "J'ai 73 messages sur mon athlèche, j'appelle juste après le service. On se retrouve à la gare pour le souper et si tout joue pour toi, on ira boire un verre au bord du lac.",
+   "wer": 0.128
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-afrique-estelle",
+   "title": "afrique · estelle",
+   "text": "Hier soir, on a bien mangé au maquis, et ce matin j'ai pris un taxi-brousse pour arriver avant midi. Tout va bien, on se dit à demain.",
+   "file": "region-afrique-estelle.ogg",
+   "measures": {
+    "duration_s": 6.2,
+    "speech_ratio": 0.64,
+    "pause_count": 3,
+    "pause_total_s": 0.81,
+    "pitch_hz": 228.57,
+    "pitch_spread_hz": 23.85,
+    "loudness_spread_db": 4.18
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 2.05,
+   "heard": "Ce soir on a bien mangé au maquis et ce matin j'ai pris un taxi brousse pour arriver avant midi. Tout va bien, on se dit à demain.",
+   "wer": 0.034
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-afrique-marius",
+   "title": "afrique · marius",
+   "text": "Hier soir, on a bien mangé au maquis, et ce matin j'ai pris un taxi-brousse pour arriver avant midi. Tout va bien, on se dit à demain.",
+   "file": "region-afrique-marius.ogg",
+   "measures": {
+    "duration_s": 6.44,
+    "speech_ratio": 0.63,
+    "pause_count": 1,
+    "pause_total_s": 0.48,
+    "pitch_hz": 289.2,
+    "pitch_spread_hz": 65.17,
+    "loudness_spread_db": 5.69
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 2.12,
+   "heard": "Hier soir on a bien mangé au maquille et ce matin je pris un taxi brousse pour arriver avant midi. Tout va bien, on se dit à demain.",
+   "wer": 0.103
+  },
+  {
+   "section": "Francophonies",
+   "id": "region-afrique-vera",
+   "title": "afrique · vera",
+   "text": "Hier soir, on a bien mangé au maquis, et ce matin j'ai pris un taxi-brousse pour arriver avant midi. Tout va bien, on se dit à demain.",
+   "file": "region-afrique-vera.ogg",
+   "measures": {
+    "duration_s": 7.16,
+    "speech_ratio": 0.71,
+    "pause_count": 1,
+    "pause_total_s": 0.54,
+    "pitch_hz": 170.21,
+    "pitch_spread_hz": 12.76,
+    "loudness_spread_db": 4.65
+   },
+   "note": "aucune de ces voix n'a d'accent régional documenté",
+   "synth_s": 2.38,
+   "heard": "Hier soir on a bien mangé au maquis et ce matin j'ai pris un taxi brousse pour arriver avant midi. Tout va bien, on se dit à demain.",
+   "wer": 0.0
+  },
+  {
+   "section": "Température",
+   "id": "temp-0_4",
+   "title": "température 0.4 · estelle",
+   "text": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "file": "temp-0_4.ogg",
+   "measures": {
+    "duration_s": 6.68,
+    "speech_ratio": 0.61,
+    "pause_count": 3,
+    "pause_total_s": 1.08,
+    "pitch_hz": 242.42,
+    "pitch_spread_hz": 31.06,
+    "loudness_spread_db": 4.52
+   },
+   "note": "commande generate, temps de chargement du modèle compris ; le serveur n'a pas ce réglage",
+   "synth_s": 6.6,
+   "heard": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "wer": 0.0
+  },
+  {
+   "section": "Température",
+   "id": "temp-1_0",
+   "title": "température 1.0 · estelle",
+   "text": "La mise à jour est terminée. Le serveur a redémarré et les tests sont passés. Il reste une erreur à corriger dans le cache.",
+   "file": "temp-1_0.ogg",
+   "measures": {
+    "duration_s": 6.04,
+    "speech_ratio": 0.67,
+    "pause_count": 2,
+    "pause_total_s": 0.51,
+    "pitch_hz": 242.42,
+    "pitch_spread_hz": 30.2,
+    "loudness_spread_db": 4.42
+   },
+   "note": "commande generate, temps de chargement du modèle compris ; le serveur n'a pas ce réglage",
+   "synth_s": 6.4,
+   "heard": "La mise à jour est terminée. Le serveur a redémarré et les tests ont passé. Il reste une erreur à corriger dans le cache.",
+   "wer": 0.083
+  }
+ ],
+ "summary": {
+  "Personnages": [
+   "narrateur (estelle) : hauteur 233 Hz",
+   "ines (vera) : hauteur 177 Hz",
+   "theo (marius) : hauteur 276 Hz",
+   "serveur (javert) : hauteur 83 Hz"
+  ],
+  "Ton et style": [
+   "estelle : écart entre styles de 2.56 s, 13.58 Hz de hauteur, 6.81 Hz de variation, 3 pauses",
+   "charles : écart entre styles de 3.12 s, 4.05 Hz de hauteur, 39.68 Hz de variation, 4 pauses"
+  ]
+ },
+ "errors": [],
+ "elapsed_s": 871.4,
+ "count": 121,
+ "wer_mots_brut": 0.532,
+ "wer_mots_phon": 0.447
+}

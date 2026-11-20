@@ -1,0 +1,63 @@
+{
+ "file": "/mnt/Travail/Projets/Dev/TTS-Voice/docs/essais-voix/07-theatre-noms-seuls.md",
+ "gpuYieldAtStart": false,
+ "roles": [
+  {
+   "roleId": "isaure",
+   "name": "Isaure"
+  },
+  {
+   "roleId": "le-comte",
+   "name": "Le Comte"
+  }
+ ],
+ "candidates": [
+  {
+   "id": "c1",
+   "roleId": "isaure",
+   "context": "Elle pose sa lampe sur la table."
+  },
+  {
+   "id": "c2",
+   "roleId": "le-comte",
+   "context": "Il tire son épée."
+  }
+ ],
+ "proposals": {
+  "status": "ok",
+  "check": {
+   "proposals": [
+    {
+     "roleId": "isaure",
+     "gender": {
+      "value": "woman",
+      "quote": "Madame"
+     }
+    },
+    {
+     "roleId": "le-comte",
+     "gender": {
+      "value": "man",
+      "quote": "seigneur"
+     }
+    }
+   ],
+   "rejected": []
+  },
+  "durationMs": 2723
+ },
+ "states": {
+  "status": "ok",
+  "check": {
+   "directions": [],
+   "rejected": [
+    {
+     "id": "c2",
+     "reason": "quote-absent"
+    }
+   ]
+  },
+  "candidates": 2,
+  "durationMs": 3506
+ }
+}

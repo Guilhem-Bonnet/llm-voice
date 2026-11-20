@@ -35,6 +35,32 @@ jobs:
         working-directory: .
         run: node scripts/check-traceability.mjs
 
+  rust:
+    name: rust
+    # Carte GAO-tests-rust-e-001 : fmt + clippy + tests du workspace Cargo.
+    # Le runner n'a pas de carte son : LLM_VOICE_NO_AUDIO=1 saute le seul test
+    # qui exige une vraie sortie audio (crates/llm-voice-core/tests/playback.rs),
+    # sans masquer les autres.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    env:
+      LLM_VOICE_NO_AUDIO: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
+      - name: Install ALSA headers (cpal build dependency)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - run: cargo fmt --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+
   audit:
     name: audit
     runs-on: ubuntu-latest
@@ -111,4 +137,36 @@ jobs:
         with:
           name: llm-voice-vsix
           path: vscode-extension/*.vsix
+          retention-days: 5
+
+  package-linux-x64:
+    name: package-linux-x64
+    # S1 (ADR-012 §7, decisions-log 2026-09-28) : linux-x64 (Fedora/Wayland)
+    # d'abord ; darwin en S3, win32 en S4 — un job équivalent par plateforme
+    # rejoindra cette matrice à ces étapes.
+    needs: [unit, integration, audit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: vscode-extension/.nvmrc
+          cache: npm
+          cache-dependency-path: vscode-extension/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
+      - name: Install ALSA headers (cpal build dependency)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - run: npm ci
+      - run: npm run package:linux-x64
+      - run: npm run check:vsix:linux-x64
+      - name: Smoke test (extract, run, /health, arrêt propre)
+        working-directory: .
+        run: bash scripts/smoke-core-vsix.sh vscode-extension/llm-voice-linux-x64.vsix linux-x64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: llm-voice-linux-x64-vsix
+          path: vscode-extension/llm-voice-linux-x64.vsix
           retention-days: 5

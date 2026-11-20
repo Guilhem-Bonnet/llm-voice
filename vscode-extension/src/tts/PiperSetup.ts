@@ -138,9 +138,38 @@ export interface PiperInstallOptions {
 
 export type PiperInstallOutcome =
   | { status: "installed"; binaryPath: string; voiceModelPath: string }
+  | { status: "already-installed"; binaryPath: string; voiceModelPath: string }
   | { status: "declined" }
   | { status: "unsupported-platform" }
   | { status: "failed"; message: string };
+
+/**
+ * Real-user bug (2026-11-05): `installPiperVoice` used to have no "already
+ * installed" check at all — every call to `LLM Voice: Setup Voice` → "Voix
+ * française autonome (Piper)" re-ran the full consent dialog and re-
+ * downloaded both archives from scratch, forever, even right after a
+ * successful install (the exact `bin`/`voices` layout
+ * `SystemTtsProvider.detectManagedPiper()` already checks to pick this
+ * install up automatically — mirrored here so both agree on what "already
+ * installed" means).
+ */
+export async function isPiperAlreadyInstalled(
+  installDir: string,
+  platform: NodeJS.Platform = os.platform()
+): Promise<{ binaryPath: string; voiceModelPath: string } | undefined> {
+  const binaryName = platform === "win32" ? "piper.exe" : "piper";
+  const binaryPath = path.join(installDir, "bin", binaryName);
+  const voiceModelPath = path.join(installDir, "voices", `${PIPER_ASSETS.voiceId}.onnx`);
+  // The voice's config sits next to its model: without it, an interrupted
+  // install would count as complete and never be repaired.
+  const exists = (file: string): Promise<boolean> =>
+    fsp.access(file).then(
+      () => true,
+      () => false
+    );
+  const present = await Promise.all([binaryPath, voiceModelPath, `${voiceModelPath}.json`].map(exists));
+  return present.every(Boolean) ? { binaryPath, voiceModelPath } : undefined;
+}
 
 /** `tar -xf <archive> -C <destDir> --strip-components=1` — see the file header for why `tar` and why `--strip-components`. */
 export async function extractPiperArchive(archivePath: string, destDir: string): Promise<void> {
@@ -170,6 +199,17 @@ function fileNameOf(url: string): string {
 export async function installPiperVoice(options: PiperInstallOptions): Promise<PiperInstallOutcome> {
   const platform = options.platform ?? os.platform();
   const arch = options.arch ?? os.arch();
+
+  // Real-user bug (2026-11-05, infinite re-download loop): check this
+  // before anything else — including before the "unsupported platform"
+  // check below, since a platform that used to be supported (or was
+  // installed by hand) can still have a valid managed install on disk even
+  // if `getPiperBinaryAsset` can't find a matching release for it today.
+  const already = await isPiperAlreadyInstalled(options.installDir, platform);
+  if (already !== undefined) {
+    return { status: "already-installed", ...already };
+  }
+
   const binaryAsset = getPiperBinaryAsset(platform, arch);
   if (binaryAsset === undefined) {
     return { status: "unsupported-platform" };

@@ -1,0 +1,32 @@
+{
+  "model": "qwen2.5:7b",
+  "stream": false,
+  "messages": [
+    {
+      "role": "system",
+      "content": "Tu reçois un texte découpé en blocs, chacun précédé d'une étiquette BLOCK_xxx sur sa propre ligne. Réponds uniquement avec un JSON conforme au schéma suivant, sans aucun texte hors JSON : {\"segments\":[{\"sourceIds\":[\"BLOCK_xxx\", ...],\"spokenText\":\"...\"}]}. Chaque sourceIds doit lister un ou plusieurs identifiants BLOCK_xxx parmi ceux fournis ; regrouper plusieurs blocs dans un seul sourceIds est autorisé quand cela améliore la fluidité orale. Chaque bloc source fourni doit être couvert par au moins un segment."
+    },
+    {
+      "role": "user",
+      "content": "BLOCK_001\nLe chat dort sur le canapé.\n\nBLOCK_002\nIl fait beau aujourd'hui."
+    }
+  ],
+  "format": {
+    "type": "object",
+    "properties": {
+      "segments": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "sourceIds": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "spokenText": { "type": "string", "minLength": 1 }
+          },
+          "required": ["sourceIds", "spokenText"]
+        }
+      }
+    },
+    "required": ["segments"]
+  },
+  "options": {}
+}

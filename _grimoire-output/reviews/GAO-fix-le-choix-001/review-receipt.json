@@ -1,0 +1,11 @@
+{
+  "$schema": "grimoire-review-receipt/v1",
+  "task_id": "GAO-fix-le-choix-001",
+  "verdict": "READY",
+  "findings": [],
+  "reviewer_id": "cli",
+  "model": "",
+  "tree_fingerprint": "ac29eca4856c35bcf76beb561bf938a1030e924cd1a6b2520a2ad127292a0af7",
+  "evidence_pack_sha256": null,
+  "written_at": "2026-11-05T20:00:42.908035+00:00"
+}

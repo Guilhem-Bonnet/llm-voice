@@ -1,0 +1,8 @@
+{
+  "name": "figee-image-rocm",
+  "expected": "Le serveur tourne dans son image, sans réseau, et lit cette phrase avec la voix figée.",
+  "heard": "Le serveur tourne dans son image sans réseau et lit cette phrase avec la voix figée.",
+  "wer": 0.0,
+  "duration_s": 6.24,
+  "rms": 0.0696
+}

@@ -1,0 +1,7 @@
+{
+  "protocolVersion": "1.0",
+  "token": "s3ss10n-t0k3n-abcdef",
+  "segmentId": "seg-0004",
+  "path": "/home/user/.cache/llm-voice/seg-0004.pcm",
+  "format": "pcm16le"
+}

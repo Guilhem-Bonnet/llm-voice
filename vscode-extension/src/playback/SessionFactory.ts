@@ -26,7 +26,7 @@ import type { SourceSegment } from "../core/source.js";
 import { Emitter, type Unsubscribe } from "./emitter.js";
 
 /** Default number of source segments handed to the narrator per call (CdC §33). */
-const DEFAULT_GROUP_SIZE = 4;
+export const DEFAULT_GROUP_SIZE = 4;
 
 /** Tunables of one session build. */
 export interface SessionBuildOptions {
@@ -118,6 +118,10 @@ class SessionBuildImpl implements SessionBuild {
 
   warn(warning: NarrationWarning): void {
     this.degraded = true;
+    // A cancellation is the user's own gesture (stop, new reading), not a failing narrator.
+    if (warning.reason === "cancelled") {
+      return;
+    }
     this.warnSink?.(warning);
     this.warned.emit(warning);
   }
@@ -248,7 +252,10 @@ function toFaithfulSegment(segment: SourceSegment): NarrationSegment {
     id: `faithful-${segment.id}`,
     spokenText: segment.spokenText ?? segment.rawText,
     sourceSegmentIds: [segment.id],
-    sourceRanges: segment.sourceRange ? [segment.sourceRange] : []
+    sourceRanges: segment.sourceRange ? [segment.sourceRange] : [],
+    ...(segment.speakerId !== undefined
+      ? { metadata: { speakerId: segment.speakerId, ...(segment.stage !== undefined ? { stage: segment.stage } : {}) } }
+      : {})
   };
 }
 

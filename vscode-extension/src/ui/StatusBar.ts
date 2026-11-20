@@ -65,6 +65,11 @@ export class StatusBar implements vscode.Disposable {
   }
 
   async openMenu(): Promise<void> {
+    // While waiting for the sound, one click cancels (mockup Panneau-preparation).
+    if (this.model.wait !== undefined) {
+      this.onChoice("stop");
+      return;
+    }
     const isPlaying = this.model.state === "playing";
     const items: QuickPickItemWithChoice[] = [
       isPlaying

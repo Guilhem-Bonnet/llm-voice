@@ -1,0 +1,5 @@
+$schema: grimoire-agentic-standard-decision-trace/v1
+generated_at: '2026-11-05T18:47:57.120499+00:00'
+profile: controlled
+records: []
+task_id: GAO-fix-provider-001

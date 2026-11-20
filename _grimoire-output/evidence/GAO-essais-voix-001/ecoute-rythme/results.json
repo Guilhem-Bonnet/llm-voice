@@ -1,0 +1,511 @@
+{
+ "items": [
+  {
+   "section": "Texte technique",
+   "id": "documentation-reference",
+   "title": "Réglage actuel",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-reference.ogg",
+   "measures": {
+    "duration_s": 18.56,
+    "speech_ratio": 0.72,
+    "pause_count": 5,
+    "pause_total_s": 1.44,
+    "pitch_hz": 226.42,
+    "pitch_spread_hz": 34.84,
+    "loudness_spread_db": 5.18
+   },
+   "note": "padding_bonus 0.0, padding_between 1, 3.07 mots par seconde",
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Texte technique",
+   "id": "documentation-bonus-moins-2",
+   "title": "Nettement plus vif",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-bonus-moins-2.ogg",
+   "measures": {
+    "duration_s": 16.16,
+    "speech_ratio": 0.73,
+    "pause_count": 4,
+    "pause_total_s": 1.29,
+    "pitch_hz": 233.01,
+    "pitch_spread_hz": 36.5,
+    "loudness_spread_db": 5.34
+   },
+   "note": "padding_bonus -2.0, padding_between 1, 3.53 mots par seconde",
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Texte technique",
+   "id": "documentation-bonus-moins-1",
+   "title": "Plus vif",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-bonus-moins-1.ogg",
+   "measures": {
+    "duration_s": 19.36,
+    "speech_ratio": 0.77,
+    "pause_count": 5,
+    "pause_total_s": 1.41,
+    "pitch_hz": 230.77,
+    "pitch_spread_hz": 22.34,
+    "loudness_spread_db": 5.68
+   },
+   "note": "padding_bonus -1.0, padding_between 1, 2.94 mots par seconde",
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Texte technique",
+   "id": "documentation-bonus-plus-1",
+   "title": "Plus posé",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-bonus-plus-1.ogg",
+   "measures": {
+    "duration_s": 29.04,
+    "speech_ratio": 0.68,
+    "pause_count": 12,
+    "pause_total_s": 5.28,
+    "pitch_hz": 208.7,
+    "pitch_spread_hz": 24.89,
+    "loudness_spread_db": 5.44
+   },
+   "note": "padding_bonus 1.0, padding_between 1, 1.96 mots par seconde",
+   "heard": "pour installer le service ouvré un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.018
+  },
+  {
+   "section": "Texte technique",
+   "id": "documentation-bonus-plus-2",
+   "title": "Nettement plus posé",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-bonus-plus-2.ogg",
+   "measures": {
+    "duration_s": 36.64,
+    "speech_ratio": 0.62,
+    "pause_count": 31,
+    "pause_total_s": 10.11,
+    "pitch_hz": 222.22,
+    "pitch_spread_hz": 18.8,
+    "loudness_spread_db": 5.07
+   },
+   "note": "padding_bonus 2.0, padding_between 1, 1.56 mots par seconde",
+   "heard": "pour installer le service ouvré à un terminal à la racine du projet. Lancez d'abord la compilation puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.035
+  },
+  {
+   "section": "Texte technique",
+   "id": "documentation-bonus-plus-3",
+   "title": "Très posé",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-bonus-plus-3.ogg",
+   "measures": {
+    "duration_s": 39.2,
+    "speech_ratio": 0.64,
+    "pause_count": 31,
+    "pause_total_s": 10.17,
+    "pitch_hz": 218.18,
+    "pitch_spread_hz": 32.69,
+    "loudness_spread_db": 5.42
+   },
+   "note": "padding_bonus 3.0, padding_between 1, 1.45 mots par seconde",
+   "heard": "pour installer le service ouvré un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.018
+  },
+  {
+   "section": "Texte technique",
+   "id": "documentation-mots-0",
+   "title": "Sans espacement forcé des mots",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-mots-0.ogg",
+   "measures": {
+    "duration_s": 19.6,
+    "speech_ratio": 0.73,
+    "pause_count": 6,
+    "pause_total_s": 1.47,
+    "pitch_hz": 226.42,
+    "pitch_spread_hz": 25.33,
+    "loudness_spread_db": 4.88
+   },
+   "note": "padding_bonus 0.0, padding_between 0, 2.91 mots par seconde",
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Texte technique",
+   "id": "documentation-mots-2",
+   "title": "Mots plus détachés",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-mots-2.ogg",
+   "measures": {
+    "duration_s": 22.8,
+    "speech_ratio": 0.67,
+    "pause_count": 9,
+    "pause_total_s": 2.94,
+    "pitch_hz": 226.42,
+    "pitch_spread_hz": 25.19,
+    "loudness_spread_db": 5.04
+   },
+   "note": "padding_bonus 0.0, padding_between 2, 2.50 mots par seconde",
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Texte technique",
+   "id": "documentation-mots-3",
+   "title": "Mots très détachés",
+   "text": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "file": "documentation-mots-3.ogg",
+   "measures": {
+    "duration_s": 26.64,
+    "speech_ratio": 0.68,
+    "pause_count": 14,
+    "pause_total_s": 3.3,
+    "pitch_hz": 218.18,
+    "pitch_spread_hz": 26.92,
+    "loudness_spread_db": 5.37
+   },
+   "note": "padding_bonus 0.0, padding_between 3, 2.14 mots par seconde",
+   "heard": "Pour installer le service, ouvrez un terminal à la racine du projet. Lancez d'abord la compilation, puis vérifiez que les tests passent. Si le port 8000 est déjà utilisé, arrêtez le processus concerné avant de recommencer. Le fichier de configuration se trouve dans le dossier de l'utilisateur et n'est jamais envoyé sur le réseau.",
+   "wer": 0.0
+  },
+  {
+   "section": "Récit",
+   "id": "recit-reference",
+   "title": "Réglage actuel",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-reference.ogg",
+   "measures": {
+    "duration_s": 18.96,
+    "speech_ratio": 0.66,
+    "pause_count": 7,
+    "pause_total_s": 3.57,
+    "pitch_hz": 224.3,
+    "pitch_spread_hz": 27.32,
+    "loudness_spread_db": 5.71
+   },
+   "note": "padding_bonus 0.0, padding_between 1, 3.06 mots par seconde",
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.034
+  },
+  {
+   "section": "Récit",
+   "id": "recit-bonus-moins-2",
+   "title": "Nettement plus vif",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-bonus-moins-2.ogg",
+   "measures": {
+    "duration_s": 14.32,
+    "speech_ratio": 0.71,
+    "pause_count": 4,
+    "pause_total_s": 1.92,
+    "pitch_hz": 212.39,
+    "pitch_spread_hz": 32.4,
+    "loudness_spread_db": 5.78
+   },
+   "note": "padding_bonus -2.0, padding_between 1, 4.05 mots par seconde",
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangé ses cordages sans se presser comme il le faisait depuis 40 ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Récit",
+   "id": "recit-bonus-moins-1",
+   "title": "Plus vif",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-bonus-moins-1.ogg",
+   "measures": {
+    "duration_s": 16.56,
+    "speech_ratio": 0.71,
+    "pause_count": 7,
+    "pause_total_s": 2.19,
+    "pitch_hz": 222.22,
+    "pitch_spread_hz": 31.72,
+    "loudness_spread_db": 5.8
+   },
+   "note": "padding_bonus -1.0, padding_between 1, 3.50 mots par seconde",
+   "heard": "La pluie avait cessé peu avant l'aube, sur lequel le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.052
+  },
+  {
+   "section": "Récit",
+   "id": "recit-bonus-plus-1",
+   "title": "Plus posé",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-bonus-plus-1.ogg",
+   "measures": {
+    "duration_s": 27.52,
+    "speech_ratio": 0.58,
+    "pause_count": 18,
+    "pause_total_s": 8.22,
+    "pitch_hz": 212.39,
+    "pitch_spread_hz": 31.43,
+    "loudness_spread_db": 5.46
+   },
+   "note": "padding_bonus 1.0, padding_between 1, 2.11 mots par seconde",
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.034
+  },
+  {
+   "section": "Récit",
+   "id": "recit-bonus-plus-2",
+   "title": "Nettement plus posé",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-bonus-plus-2.ogg",
+   "measures": {
+    "duration_s": 37.36,
+    "speech_ratio": 0.47,
+    "pause_count": 40,
+    "pause_total_s": 16.89,
+    "pitch_hz": 214.29,
+    "pitch_spread_hz": 23.59,
+    "loudness_spread_db": 5.39
+   },
+   "note": "padding_bonus 2.0, padding_between 1, 1.55 mots par seconde",
+   "heard": "La pluie avait cessé peu avant l'aube, sur lequel le vieux gardien rangait ses cordages sans se presser comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.069
+  },
+  {
+   "section": "Récit",
+   "id": "recit-bonus-plus-3",
+   "title": "Très posé",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-bonus-plus-3.ogg",
+   "measures": {
+    "duration_s": 39.92,
+    "speech_ratio": 0.5,
+    "pause_count": 47,
+    "pause_total_s": 16.71,
+    "pitch_hz": 220.18,
+    "pitch_spread_hz": 26.98,
+    "loudness_spread_db": 6.0
+   },
+   "note": "padding_bonus 3.0, padding_between 1, 1.45 mots par seconde",
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire puis retourna à sa cabane.",
+   "wer": 0.034
+  },
+  {
+   "section": "Récit",
+   "id": "recit-mots-0",
+   "title": "Sans espacement forcé des mots",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-mots-0.ogg",
+   "measures": {
+    "duration_s": 17.04,
+    "speech_ratio": 0.7,
+    "pause_count": 6,
+    "pause_total_s": 2.55,
+    "pitch_hz": 216.22,
+    "pitch_spread_hz": 30.14,
+    "loudness_spread_db": 5.83
+   },
+   "note": "padding_bonus 0.0, padding_between 0, 3.40 mots par seconde",
+   "heard": "La pluie avait cessé peu avant l'aube, sur lequel le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.069
+  },
+  {
+   "section": "Récit",
+   "id": "recit-mots-2",
+   "title": "Mots plus détachés",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-mots-2.ogg",
+   "measures": {
+    "duration_s": 21.28,
+    "speech_ratio": 0.61,
+    "pause_count": 15,
+    "pause_total_s": 5.04,
+    "pitch_hz": 220.18,
+    "pitch_spread_hz": 30.51,
+    "loudness_spread_db": 5.56
+   },
+   "note": "padding_bonus 0.0, padding_between 2, 2.73 mots par seconde",
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "wer": 0.034
+  },
+  {
+   "section": "Récit",
+   "id": "recit-mots-3",
+   "title": "Mots très détachés",
+   "text": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangeait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarré cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à sa cabane.",
+   "file": "recit-mots-3.ogg",
+   "measures": {
+    "duration_s": 25.36,
+    "speech_ratio": 0.66,
+    "pause_count": 16,
+    "pause_total_s": 5.31,
+    "pitch_hz": 224.3,
+    "pitch_spread_hz": 32.27,
+    "loudness_spread_db": 5.52
+   },
+   "note": "padding_bonus 0.0, padding_between 3, 2.29 mots par seconde",
+   "heard": "La pluie avait cessé peu avant l'aube. Sur le quai, le vieux gardien rangait ses cordages sans se presser, comme il le faisait depuis quarante ans. Personne ne savait d'où venait le bateau amarrer cette nuit-là, et lui se gardait bien de poser la question. Il se contenta de sourire, puis retourna à Saqabane.",
+   "wer": 0.069
+  }
+ ],
+ "rows": [
+  {
+   "id": "documentation-reference",
+   "bonus": 0.0,
+   "between": 1,
+   "wps": 3.07,
+   "wer": 0.0,
+   "pauses": 5,
+   "pause_s": 1.44
+  },
+  {
+   "id": "documentation-bonus-moins-2",
+   "bonus": -2.0,
+   "between": 1,
+   "wps": 3.53,
+   "wer": 0.0,
+   "pauses": 4,
+   "pause_s": 1.29
+  },
+  {
+   "id": "documentation-bonus-moins-1",
+   "bonus": -1.0,
+   "between": 1,
+   "wps": 2.94,
+   "wer": 0.0,
+   "pauses": 5,
+   "pause_s": 1.41
+  },
+  {
+   "id": "documentation-bonus-plus-1",
+   "bonus": 1.0,
+   "between": 1,
+   "wps": 1.96,
+   "wer": 0.018,
+   "pauses": 12,
+   "pause_s": 5.28
+  },
+  {
+   "id": "documentation-bonus-plus-2",
+   "bonus": 2.0,
+   "between": 1,
+   "wps": 1.56,
+   "wer": 0.035,
+   "pauses": 31,
+   "pause_s": 10.11
+  },
+  {
+   "id": "documentation-bonus-plus-3",
+   "bonus": 3.0,
+   "between": 1,
+   "wps": 1.45,
+   "wer": 0.018,
+   "pauses": 31,
+   "pause_s": 10.17
+  },
+  {
+   "id": "documentation-mots-0",
+   "bonus": 0.0,
+   "between": 0,
+   "wps": 2.91,
+   "wer": 0.0,
+   "pauses": 6,
+   "pause_s": 1.47
+  },
+  {
+   "id": "documentation-mots-2",
+   "bonus": 0.0,
+   "between": 2,
+   "wps": 2.5,
+   "wer": 0.0,
+   "pauses": 9,
+   "pause_s": 2.94
+  },
+  {
+   "id": "documentation-mots-3",
+   "bonus": 0.0,
+   "between": 3,
+   "wps": 2.14,
+   "wer": 0.0,
+   "pauses": 14,
+   "pause_s": 3.3
+  },
+  {
+   "id": "recit-reference",
+   "bonus": 0.0,
+   "between": 1,
+   "wps": 3.06,
+   "wer": 0.034,
+   "pauses": 7,
+   "pause_s": 3.57
+  },
+  {
+   "id": "recit-bonus-moins-2",
+   "bonus": -2.0,
+   "between": 1,
+   "wps": 4.05,
+   "wer": 0.052,
+   "pauses": 4,
+   "pause_s": 1.92
+  },
+  {
+   "id": "recit-bonus-moins-1",
+   "bonus": -1.0,
+   "between": 1,
+   "wps": 3.5,
+   "wer": 0.052,
+   "pauses": 7,
+   "pause_s": 2.19
+  },
+  {
+   "id": "recit-bonus-plus-1",
+   "bonus": 1.0,
+   "between": 1,
+   "wps": 2.11,
+   "wer": 0.034,
+   "pauses": 18,
+   "pause_s": 8.22
+  },
+  {
+   "id": "recit-bonus-plus-2",
+   "bonus": 2.0,
+   "between": 1,
+   "wps": 1.55,
+   "wer": 0.069,
+   "pauses": 40,
+   "pause_s": 16.89
+  },
+  {
+   "id": "recit-bonus-plus-3",
+   "bonus": 3.0,
+   "between": 1,
+   "wps": 1.45,
+   "wer": 0.034,
+   "pauses": 47,
+   "pause_s": 16.71
+  },
+  {
+   "id": "recit-mots-0",
+   "bonus": 0.0,
+   "between": 0,
+   "wps": 3.4,
+   "wer": 0.069,
+   "pauses": 6,
+   "pause_s": 2.55
+  },
+  {
+   "id": "recit-mots-2",
+   "bonus": 0.0,
+   "between": 2,
+   "wps": 2.73,
+   "wer": 0.034,
+   "pauses": 15,
+   "pause_s": 5.04
+  },
+  {
+   "id": "recit-mots-3",
+   "bonus": 0.0,
+   "between": 3,
+   "wps": 2.29,
+   "wer": 0.069,
+   "pauses": 16,
+   "pause_s": 5.31
+  }
+ ],
+ "errors": []
+}

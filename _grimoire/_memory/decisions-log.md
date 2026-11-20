@@ -145,3 +145,126 @@
 - **Décision** : l'ADR-011 est révisé. Le point d'entrée devient une icône dans la barre d'activité ouvrant une vue dédiée LLM Voice (lecture en cours, inbox, profils, actions), affichée par défaut. Le raccourci en accord et la disposition minimale restent disponibles mais ne sont plus le chemin principal.
 - **Alternative rejetée** : garder la disposition minimale par défaut (mon choix initial, jugé non découvrable à l'usage réel).
 - **Agent** : concierge (Marcel), sur décision de guilhem-bonnet
+
+### [2026-09-13] Phase 10 : Grimoire Kit 3.38.0 → 3.46.1, profil `controlled`, workflow adapté
+- **Contexte** : CLI locale en 3.40.0, kit du projet généré en 3.38.0, dernière version publiée 3.46.1. Demande utilisateur : « met à jour le grimoire du projet avec la dernière version et adapte le workflow pour utiliser tous les meilleurs éléments de la nouvelle version, pense à nettoyer ensuite ».
+- **Décision** : `pipx upgrade grimoire-kit` puis `grimoire up` (refresh kit, standard, host_sync sur 5 hôtes). Le profil du standard passe de `starter` à `controlled` (need `provider-neutral`), exigé par l'archétype `agentic-standard` depuis 3.46.1. Éléments adoptés : politiques temporelles par session (`policies.yaml` : approbation de `git push`/`gh pr merge`/`gh release` une fois par session, refroidissement `rm`, budget de session), registre de fournisseurs rempli avec le routage réel (Anthropic 4 paliers + Ollama local), registre d'outils avec les 9 serveurs MCP déclarés (8 Hostinger hors périmètre), matrice de risques et registre d'incidents avec owner, déclaration de conformité, hooks git Grimoire (6/6), 5 nouveaux hooks Claude Code (`UserPromptSubmit`, `PostToolUse`, `PreCompact`, `SubagentStop`, `Stop`), commandes `/grimoire-gate`, `/grimoire-proof`, `/grimoire-verify`, agent `security-auditor`.
+- **Refonte des agents (kit 3.42)** : 18 agents → 9 agents + 10 skills attachés. Dix fichiers d'agents devenus skills (art-director, creative-toolsmith, memory-keeper, project-navigator, pipeline-architect, security-hardener, backup-dr-specialist, k8s-navigator, deploy-orchestrator, reliability-engineer) et trois manifestes d'équipe fantômes (team-build/ops/vision, retirés du kit en 3.42) supprimés du kit et des surfaces hôtes, car `grimoire up` régénère mais ne retire pas. La table de correspondance ancien rôle → agent + skill est dans `shared-context.md`.
+- **Alternative rejetée** : `grimoire init --force` pour régénérer `.github/copilot-instructions.md` (écraserait `project-context.yaml`) ; le fichier est mis à jour à la main puisque le kit le considère comme appartenant au projet.
+- **Décision d'acceptation phase 0** enregistrée a posteriori (`accepté`, preuves : repo créé le 2026-09-08, v0.1.0 le 2026-09-09) pour lever l'avertissement `acceptance.decision_pending`.
+- **Agent** : concierge (Marcel)
+- **Complément (hook `Stop`)** : le hook signalait `bootstrap` sans état sur un board inexistant. La phase 10 est enregistrée comme première carte du Mission Ledger (`GAO-phase-10-gri-001`, closed · accepted), le board est projeté et vérifié ; en conséquence les gates des anciens ids (`bootstrap`, `phase-N`) répondent désormais `gate.task_not_on_board` — les phases passées gardent leurs dossiers de preuve, les prochaines phases ouvrent une carte ledger.
+
+### [2026-09-27] Mode « Auto » : SemIf sur Ollama retenu pour le spike, Laya en réserve, Jev cloud jamais par défaut
+- **Contexte** : l'utilisateur veut qu'un pseudo-profil « Auto » choisisse le profil de lecture d'une réponse Claude (3–4 options). Une session précédente avait classé Laya premier (`decision-models-jev-v1.md` §5). Vérification indépendante des sources (§10 du même document) : écosystème Jev à profil de ferme SEO, et Ollama expose bien les logprobs sur son API native (testé localement, Ollama 0.21.0, qwen2.5:3b, distribution A/B/C retournée).
+- **Décision** : le fournisseur de décision local par défaut est la technique SemIf réimplémentée en TypeScript sur `/api/generate` d'Ollama (logprobs du premier jeton parmi des options à une lettre). Laya 322M multilingue reste en réserve comme palier avancé Python si SemIf ne bat pas trois règles simples sur un jeu de 50 réponses étiquetées par l'utilisateur. Kev, Nimble, NanoJev, OpenJev écartés. Jev cloud uniquement derrière `privacy.localOnly = false`. Aucun nouveau composant à installer chez l'utilisateur ; sans Ollama, « Auto » se replie sur `profiles.bySource`.
+- **Alternatives rejetées** : Laya en premier (Python + fine-tuning, contraire à la voie « rien à installer ») ; basculer le narrateur sur llama.cpp pour obtenir les logits (inutile, Ollama natif les fournit) ; étiquetage du jeu d'évaluation par un LLM (apprendrait le goût du LLM, pas celui de l'utilisateur).
+- **Calendrier** : fonctionnalité 0.4, après ADR-012 (son). Cartographie des points d'usage et d'implémentation en cours (`_grimoire-output/planning-artifacts/decision-points-map-v1.md`).
+- **Agent** : concierge (Marcel), validé par guilhem-bonnet (« Ok, enregistre »)
+
+### [2026-09-27] Veille « briques existantes » : sherpa-onnx, mpv IPC, pdf.js/mammoth/Readability ; Piper 2025 sous GPL-3.0
+- **Contexte** : demande utilisateur de chercher des projets équivalents ou des briques à récupérer avant la maquette. Rapport : `_grimoire-output/research/reports/Briques existantes pour LLM Voice.md` (7 dossiers de notes sourcées).
+- **Constats enregistrés** : aucun projet réutilisable en bloc ; aucune source ne documente une lecture audio native gapless avec surlignage dans VS Code (développement propre à budgéter, quelle que soit l'architecture). Briques à intégrer : sherpa-onnx (Apache-2.0, TTS+STT+VAD, addon Node, charge les modèles Piper ONNX) ; mpv en sous-processus piloté par IPC JSON (seule voie documentée avec pause/position/gapless/PCM stdin, à bundler par plateforme via `vsce --target`) ; pdfjs-dist ou unpdf + mammoth + officeParser + Readability pour l'ingestion ; Docling (MIT) en palier Python optionnel. Patrons à imiter : découpage de flux en phrases avec `Intl.Segmenter`, concaténation PCM sans crossfade et position par octets écrits (RealtimeTTS, Pipecat) ; VoiceMode comme serveur MCP voix pour Claude Code.
+- **Risque de licence** : la réécriture 2025 de Piper (piper1-gpl) est en GPL-3.0 alors que Piper est notre moteur par défaut depuis la phase 8 ; sortie envisagée : garder les voix (siwis CC-BY) et charger les modèles via sherpa-onnx. Statut juridique d'un binaire GPL lancé en sous-processus à valider, pas à déduire. À écarter : MuPDF (AGPL), poids XTTS-v2 / F5-TTS / Fish Speech (non commerciaux).
+- **Point contesté** : le rapport recommande kokoro-js pour le français ; la décision du 2026-09-11 l'a rejeté sur preuves (737 Mo, aucune voix française réelle). La décision du projet prévaut.
+- **Non vérifié, à prouver par test direct avant ADR-012** : persistance du geste utilisateur dans un webview après un cycle masqué/affiché ; mpv embarqué sous PipeWire, Windows 11 et sandbox macOS ; licence de node-web-audio-api. ONNX Runtime a retiré ROCm depuis la 1.23 : chemin Node = CPU, GPU via serveurs Python.
+- **Agent** : concierge (Marcel), sous-agents de recherche Sonnet
+
+### [2026-09-27] Langage du Core : débat Rust / Go / TypeScript, verdict du juge = option E (Core Rust minimal + orchestration TS), **proposé, en attente de validation utilisateur**
+- **Contexte** : l'utilisateur a remis en cause le choix TypeScript pour le démon LLM Voice Core (« Rust est mon préféré, surtout pour les IA ») et demandé un débat en sous-agents. Trois plaidoiries sourcées (Sonnet) : `_grimoire-output/research/debate-language-core/position-{rust,go,typescript}.md`. Juge indépendant Opus (platform-architect), synthèse : `_grimoire-output/planning-artifacts/debat-langage-core-synthese-v1.md`.
+- **Verdict (scores pondérés /100)** : E Core Rust minimal (audio puis inférence) + orchestration TS 82,1 ; D TS + module Rust napi-rs audio seul 81,6 ; F TS + mpv sous-processus 72,1 ; A Rust pur 66,4 ; C TS pur 59,9 ; B Go pur 54,4. D et E sont à égalité dans la précision de l'exercice et partagent le même moteur Rust : D est le repli de E ; F sert de référence de mesure au spike.
+- **Faits décisifs** : (1) le refus d'autoplay mesuré impose une lecture native, aucune option Node sans compilation ne la couvre, donc composant natif et matrice `vsce --target` inévitables ; (2) `AudioSink` est déjà une interface séparée testée avec un faux lecteur ; `PlaybackController.ts` (593 l.) et `AudioQueue.ts` (586 l.) n'importent pas `vscode`, `Pipeline.ts` (2 329 l.) l'importe : remplacer la surface de lecture conserve les tests, sortir l'orchestration obligerait à découper `Pipeline.ts`.
+- **Réponse à « surtout pour les IA »** : Rust n'est réellement supérieur ici que pour candle et pour brancher la synthèse directement sur la sortie audio dans un même processus ; Ollama, Chatterbox, le SDK MCP et sherpa-onnx (Node, Go, Rust) ne départagent pas ; aucun langage ne rend le GPU ROCm à ONNX Runtime (retiré en 1.23).
+- **Affirmations rejetées** : chiffres génériques Node vs Rust (RSS, démarrage) issus de blogs sans méthode ; position TS : 24 fichiers importent `vscode` (pas 25), 87/111 sans import (78 %), « `src/pipeline/` prêt pour le démon » faux.
+- **Statut** : proposé. La décision appartient à guilhem-bonnet ; ADR-012 sera rédigé après sa validation (carte ouverte le même jour). Risque signalé : aucun spécialiste Rust dans l'équipe d'agents, brief Rust explicite requis pour `backend-engineer`.
+- **Agent** : concierge (Marcel) ; juge `platform-architect` (Opus) ; avocats Sonnet
+
+### [2026-09-27] Langage du Core : **option E validée par l'utilisateur** — Core Rust minimal (audio puis inférence locale) + orchestration TypeScript dans l'extension
+- **Contexte** : suite du débat Rust / Go / TypeScript (entrée précédente, verdict du juge proposé).
+- **Décision** : guilhem-bonnet valide l'option E (« Ok, je valide l'option E », 2026-09-27). ADR-012 sera rédigé sur cette base (carte `GAO-adr-012-lect-001`, passée en `ready`). Option D (TS + module Rust napi-rs audio seul) reste le repli documenté, même moteur Rust. Aucun spécialiste Rust dans l'équipe d'agents : chaque carte Rust porte un brief Rust explicite pour `backend-engineer`.
+- **Maquette** : brief validé en même temps — périmètre produit entier (vue VS Code + futur client bureau dans une même charte), haute fidélité alignée sur les thèmes VS Code sombre et clair, identité discrète native (Codicons, couleurs du thème, une seule couleur d'accent pour la lecture en cours). Carte `GAO-maquette-com-001`.
+- **Agent** : concierge (Marcel), sur décision de guilhem-bonnet
+
+### [2026-09-28] ADR-012 rédigé : lecture audio native hors webview, Core Rust minimal `llm-voice-core`
+- **Contexte** : option E validée le 2026-09-27 (entrée précédente). Carte `GAO-adr-012-lect-001`.
+- **Décision** : `docs/adr/ADR-012-native-audio-core.md`, statut Accepté (2026-09-27). Core Rust spawné par l'extension, HTTP + WebSocket sur 127.0.0.1 avec jeton et contrôle `Origin`/`Host`, instance unique par verrou 0600, aucune connexion sortante ; lecture native d'abord, sherpa-onnx ensuite derrière `CoreTtsProvider` ; jonction `NativeAudioSink` + `AudioSink` v2 (préchargement, position absolue, underrun) ; 5 cibles `vsce --target` ; `extensionKind: ["ui"]` conservé. ADR-001 remplacé (webview `<audio>` = repli sur clic), ADR-011 révisé (webview = affichage), ADR-009 inchangé. Repli : D (napi-rs, même crate) si cycle de vie ou audit échouent ; F (mpv) si le spike Rust échoue au banc.
+- **Agent** : platform-architect (Archie), vérification indépendante agent-optimizer (Sonnet)
+
+### [2026-09-28] Phasage par OS et organisation en sprints
+- **Contexte** : demande utilisateur — « on commence par Fedora avec Wayland, version principale ; Mac possible ; Windows envisagé dans le futur ».
+- **Décision** : cible principale **Fedora / Wayland / PipeWire (linux-x64)** jusqu'à la release 0.3 ; **macOS** (darwin-arm64 puis x64, CoreAudio, signature et notarisation) en S3 ; **Windows** (win32-x64, WASAPI, SmartScreen) en S4, conditionnel. Amende ADR-012 : le packaging 5 cibles devient progressif, la carte `GAO-packaging-5-001` est bloquée au profit de `GAO-s1-fedora-pa-001`. Cartes préfixées par sprint : S0 hygiène, S1 Fedora, S2 design, S3 macOS, S4 Windows ; dépendances déclarées dans le ledger.
+- **Règle de design** (utilisateur) : un bouton a une taille fixe, ne s'étire jamais et ne passe jamais à la ligne ; c'est le contenu autour qui s'adapte. Critère automatisé dans la carte `GAO-s2-design-ma-001`.
+- **Agent** : concierge, sur décision de guilhem-bonnet
+
+### [2026-09-28] Protocole Core v1 : commandes sur HTTP, événements sur WebSocket (clarification d'ADR-012 §4), **proposé, à confirmer**
+- **Contexte** : carte `GAO-protocole-co-001` — écrire les JSON Schema (draft 2020-12) et les exemples de référence du protocole Core v1, testés des deux côtés (vitest/ajv, cargo test/serde). ADR-012 §4 plaçait « les commandes et les événements » tous les deux sur la WebSocket, HTTP réservé à `GET /health`.
+- **Décision (autonome, mode non-interactif)** : `contracts/core-v1/` sépare les deux — `POST /v1/{enqueue,play,pause,resume,stop,seek}` en HTTP synchrone (jeton dans le corps de chaque requête, réponse `ack.response`), et sept événements asynchrones sur la WebSocket (`state`, `position`, `segment_started`, `segment_ended`, `underrun`, `ended`, `error`, sans jeton par message : la connexion elle-même est authentifiée à l'ouverture). Raison : requête/réponse HTTP est plus simple à tester des deux côtés qu'un multiplexage commandes+événements sur un seul canal WS, et sépare proprement le rejet synchrone d'une commande (`ack.response.ok:false`) d'une erreur asynchrone (`error` event).
+- **Statut** : implémenté dans le contrat et les deux suites de tests (vitest 37/37, `cargo test` 2/2 sur `llm-voice-protocol`) ; **pas encore confirmé par guilhem-bonnet ni répercuté sur le texte d'ADR-012 §4**, qui reste à jour avec l'ancienne esquisse (tout sur WS). À trancher avant l'implémentation du binaire `llm-voice-core` : soit amender ADR-012, soit revenir au tout-WS.
+- **Autre clarification** : `segment_ended` est explicitement soumis à la même règle que `ended` (CL-004, `GAO-spike-moteur-001`) — posté seulement après vidange complète du tampon audio, jamais dès l'écriture du dernier échantillon dans le tampon applicatif.
+- **Agent** : backend-engineer, mode non-interactif, sur brief de l'orchestrateur
+
+### [2026-09-28] Budget de session Grimoire relevé : 400 → 1 500 écritures, 2 000 → 3 000 appels
+- **Contexte** : le budget de 400 écritures (fixé en phase 10) a été atteint en cours de sprint S1, bloquant deux cartes de code déléguées ; les écritures des sous-agents comptent dans la session. Les compteurs ont ensuite été remis à zéro sans trace d'une commande `reset-session` (origine non établie, signalée à l'utilisateur).
+- **Décision** : plafond relevé dans `_grimoire/standard/policies.yaml` (`per_session`) sur accord de guilhem-bonnet (« tu peux continuer »), en réponse à la proposition explicite du concierge. Les approbations de `git push`, `gh pr merge`, `gh release` restent inchangées.
+- **Agent** : concierge
+
+### [2026-09-28] Sortie audio du Core : comportement d'application de bureau sous PipeWire
+- **Contexte** : validation Wayland (GAO-s1-fedora-va-001) — le Core ne suivait pas un changement de sortie par défaut ; cause : WirePlumber restaure la sortie mémorisée de chaque application (entrée `PipeWire ALSA [llm-voice-core]` → `sc_media`).
+- **Décision** : LLM Voice se comporte comme toute application de bureau (sortie mémorisée, déplaçable dans les réglages son). Le Core est lancé avec une identité PipeWire stable (`application.name "LLM Voice"`, `media.role "Accessibility"`) pour être visible et réglable par l'utilisateur. Pas de forçage de cible dans le produit ; le banc de preuve garde son ciblage explicite.
+- **Alternative rejetée** : forcer le suivi du défaut système (contraire au fonctionnement PipeWire, empêcherait l'utilisateur de dédier LLM Voice à une sortie).
+- **Agent** : concierge
+
+### [2026-09-29] ADR-015 « Direction de lecture » acceptée
+- **Contexte** : demande utilisateur — pas de règles de prosodie codées en dur (effet robot) ; consigne de jeu par phrase venue d'un LLM qui voit tout le contexte ; mémoire des personnages ; narrateur distinct ; valable aussi pour la documentation et les réponses d'IA. Architecture multi-agents proposée par le concierge, ADR rédigée par platform-architect (Opus), relue par un vérificateur indépendant (accepter avec corrections, appliquées).
+- **Décision** : cinq rôles (analyste, bible des personnages, metteur en scène, traducteur moteur, contrôleur) ; partition par segment indépendante du moteur ; mémoire en ajout seul, le LLM n'écrit que dans la portée du document ; garde-fous en bornes, jamais en règles de style ; repli non dirigé en cas de panne, de retard ou de mode jeu (gpu-yield) ; désactivée par défaut jusqu'à une écoute A/B ≥ 7/10. Moteur à consignes non choisi : banc d'une journée (Qwen3-TTS, Fish S2 Pro, Kyutai Pocket TTS, témoin Chatterbox).
+- **Agent** : concierge, sur validation de guilhem-bonnet (« ok je valide »)
+
+### [2026-11-05] Refonte UX : voix et mode de lecture séparés, périmètre resserré
+- **Contexte** : l'utilisateur ne comprend pas qu'il faille passer par un profil pour choisir une voix ; audit `docs/ux/audit-2026-11-05.md` et maquette https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj (mission MIS-refonte-ux-llm-voice-002).
+- **Décision** : voix globale séparée du mode de lecture ; le mot « profil » quitte l'interface (profils et identifiants conservés, commandes en alias, ADR-017 à rédiger). Une seule maquette, la nouvelle, qui reprend de celle de septembre le thème clair, la planche système et les états déjà dessinés. Mode Auto et badges de direction en emplacements réservés. Livraison par étapes : galerie et panneau testables dès qu'ils sont prêts.
+- **Hors périmètre** : Documents et Dialogue (proposition, derrière ADR-014), tri des réponses (après le mode Auto), client bureau (cartes S3 et S4).
+- **Agent** : concierge, sur validation de guilhem-bonnet (« ok je valide »)
+
+### [2026-11-05] Refonte UX : maquette validée, échantillons embarqués
+- **Décision** : maquette https://claude.ai/artifact/MKLSqQJXmNhPBc2LczJonj validée ; courts échantillons compressés des voix inclus dans le VSIX (pas de modèle) ; catalogue limité à 20 voix Kyutai ; pas d'option « nouvelle interface », chaque écran refait remplace l'ancien.
+- **Agent** : concierge, sur validation de guilhem-bonnet (« oui pour le tout »)
+
+### [2026-11-05] ADR-017 : choix validés
+- **Décision** : voix globale dans un fichier séparé ; vitesse = voix × mode ; fin de la disposition `minimal` ; mode dans une autre langue : voix globale conservée, avec avertissement et action « Donner une voix propre à ce mode ».
+- **Agent** : concierge, sur validation de guilhem-bonnet (« Ok, vas-y. Envoie pour le tout. »)
+
+### [2026-11-06] Voix : aucun service cloud
+- **Décision** : le texte lu ne sort pas de la machine. Gemini, Voxtral API et les autres services distants sont écartés pour la recherche de voix de narration ; seules des solutions locales sont étudiées.
+- **Agent** : concierge, sur décision de guilhem-bonnet (« je n'accepte pas que le texte sorte de la machine »)
+
+### [2026-11-06] Essai de Qwen3-TTS autorisé
+- **Décision** : télécharger et exécuter Qwen3-TTS dans un dossier à part (`~/.llm-voice/voices-lab/qwen3/`), texte local uniquement. Voix cherchées dans les deux registres, grave et posé, clair et neutre, avec le choix dans l'interface si elles conviennent. Aucune imitation de Jarvis ou Gemini.
+- **Agent** : concierge, sur accord de guilhem-bonnet (« oui pour qwen3 », « les deux »)
+
+### [2026-11-06] Lecture, attente, lexique, reprise et jeu d'acteurs
+- **Décision** : direction UX validée (gestes de lecture visibles, étapes d'attente sans faux pourcentage, lexique, reprise, bloc de code, fichiers texte). Qwen3-TTS non retenu pour l'instant : on reste sur les moteurs Kyutai. Nouvelle priorité : jeu d'acteurs à plusieurs voix (théâtre, livre avec narrateur et personnages). Application hors VS Code visée ensuite : garder la logique de lecture indépendante de VS Code.
+- **Agent** : concierge, sur décision de guilhem-bonnet
+
+### [2026-11-06] Moteur retenu : Kyutai TTS 1.6B, voix françaises
+- **Décision** : la technologie Moshi de Kyutai, c'est-à-dire Kyutai TTS 1.6B, avec ses voix françaises, est le moteur de lecture et du jeu d'acteurs. Pocket TTS et ses voix d'origine anglophone sortent de la galerie, la voix système reste en repli (mode jeu, sans carte graphique).
+- **Agent** : concierge, sur décision de guilhem-bonnet (« je veux juste la technologie moshi avec le TTS et des voix FR »)
+
+### [2026-11-06] Studio et jeu d'acteurs validés
+- **Décision** : plan d'intégration validé (panneau pour écouter, Studio pour régler). ADR-018 accepté avec ses choix recommandés : activation proposée et retenue par document ; étiquettes non lues, indications scéniques lues par le narrateur ; « Préparer » ou « Lire quand même » au-delà de 20 s ; mode jeu annoncé, sans bascule ; distribution automatique stable sans déduire de genre, ordre fixe ; voix changée à la lecture suivante. Rythme de Camille : réglage actuel par défaut.
+- **Agent** : concierge, sur accord de guilhem-bonnet (« ça me va bien, on peut continuer »)
+
+### [2026-11-06] Écouter les réponses de tout LLM
+- **Décision** : une seule liste « Réponses » et un raccourci « Lire la dernière réponse », sans lecture automatique. Par défaut tout est lu, adapté à l'oral (balisage retiré, code ignoré) ; « l'essentiel » déterministe est proposé avec sa durée, après écoute sur de vraies réponses ; le résumé par IA reste à la demande et étiqueté. Capture : hook pour Claude Code, `notify` avec accord pour Codex, geste Copier puis raccourci pour Copilot Chat et les chats web, CLI `llm-voice-inbox` à rendre installable. Antigravity à confirmer. Écartés : participant `@voice`, historiques privés, extension navigateur.
+- **Agent** : concierge, sur accord de guilhem-bonnet (« Oui, je valide ton plan. OK avec toutes tes propositions. »)
+
+### [2026-11-06] Jeu d'acteurs : les indications se jouent
+- **Décision** : amende ADR-018. Une indication de manière (« essoufflé », « tousse ») n'est pas lue par le narrateur : le personnage joue sa réplique dans cet état. Le jeu tient compte du contexte et de l'état de chaque personnage, déduit du texte, pour une scène vivante entre personnages réellement différents. La faisabilité avec le moteur reste à mesurer.
+- **Agent** : concierge, sur décision de guilhem-bonnet (« c'est réellement au LLM du personnage de faire un effet d'essoufflement oral »)
+
+### [2026-11-06] Attente, voix off et essais de moteurs
+- **Décision** : l'attente au premier son est acceptable tant que la lecture ne coupe pas et qu'une barre de chargement est visible. Répéter un mot (« J'ai… j'ai couru ») est admis en mode voix off ou voix dans la tête ; à défaut, les mots de l'auteur restent dits une fois, dans l'ordre (lecture du concierge, à confirmer). Essais de moteurs de jeu autorisés sans limite de nombre (« autant de tests que tu souhaite »), à part du moteur en place, texte local uniquement.
+- **Agent** : concierge, sur réponses de guilhem-bonnet
+
+### [2026-11-06] Écoute : Kyutai 1.6B ne joue pas
+- **Décision** : réécrire le texte pour Kyutai 1.6B ne donne ni souffle, ni toux, ni rire : seulement des phrases hachées, et une lecture littéraire « mot à mot ». Le jeu doit venir de codes compris par le modèle de voix (balises), donc d'un moteur qui en a. Remet en question le moteur unique décidé le 2026-11-06, selon l'écoute des essais ; Kyutai reste en place d'ici là.
+- **Agent** : concierge, sur l'écoute de guilhem-bonnet

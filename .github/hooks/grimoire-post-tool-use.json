@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "grimoire-hook --host copilot --event PostToolUse",
+        "timeout": 10
+      }
+    ]
+  }
+}

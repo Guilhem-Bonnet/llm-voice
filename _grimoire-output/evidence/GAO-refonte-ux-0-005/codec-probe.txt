@@ -1,0 +1,12 @@
+PROBE
+a.flac => canplay 3.8
+a.m4a => error PipelineStatus::DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams
+a.mp3 => canplay 3.8
+a.wav => canplay 3.8
+a16k.wav => canplay 3.8
+alaw.wav => canplay 3.8
+opus.webm => error PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed
+ulaw.wav => canplay 3.8
+vorbis.ogg => canplay 3.8
+ORIGINAL => error PipelineStatus::DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams
+PROBE-END 43.8.3 vscode 1.145.1

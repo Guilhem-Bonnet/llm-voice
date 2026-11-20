@@ -130,3 +130,9 @@
 **Impact** : bug bloquant trouvé en cinq minutes par un humain, invisible pour toute la suite de tests.
 **Leçon** : un utilisateur qui met à jour n'est pas un utilisateur neuf. Le chemin de mise à jour est un cas de test à part entière.
 **Règle instaurée** : toute évolution d'un format de configuration exige une fixture issue de la version précédente et un test de migration idempotent.
+
+### [2026-11-07] Voix d'enfant Qwen3 avec un accent anglais
+- **Symptôme** : guilhem-bonnet entend « un anglais qui parle français » sur la voix d'enfant créée (description « Child around ten years old… » + accent français ajouté en fin de consigne).
+- **Mesure** : détection de langue faster-whisper small sur l'extrait : 15 % d'anglais, contre 0,6 % au plus pour les 7 autres voix.
+- **Résolution** : mettre le français en tête de la description (« French child… native speaker from Paris… ») : 0,2 % d'anglais sur 3 variantes. Écrire « no English accent » aggrave (20 %) : nommer l'anglais le fait entrer.
+- **Règle** : toute voix créée commence par « French » ; vérifier la langue détectée de l'extrait (seuil : anglais < 1 %).

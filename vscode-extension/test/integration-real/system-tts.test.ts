@@ -15,6 +15,9 @@
  * closest this test suite gets to "a human would hear this."
  */
 import { execFileSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SystemTtsProvider } from "../../src/tts/SystemTtsProvider.js";
 
@@ -66,23 +69,29 @@ function peakAmplitude(buffer: Uint8Array, info: WavInfo): number {
   return peak;
 }
 
+// These tests exercise espeak-ng specifically. On a machine that also has
+// Piper (binary on PATH + a French voice under ~/.llm-voice/voices), the
+// provider rightly prefers Piper; an empty home directory hides those voices
+// so the espeak-ng tier is what gets tested, on any machine.
+const ESPEAK_ONLY_HOME = mkdtempSync(join(tmpdir(), "llm-voice-espeak-only-home-"));
+
 describe.skipIf(!HAS_ESPEAK)("SystemTtsProvider — real espeak-ng (S7.1, gated on binary presence)", () => {
   it("health() reports ok with espeak-ng detected", async () => {
-    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false });
+    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false, homeDir: ESPEAK_ONLY_HOME });
     const health = await provider.health();
     expect(health.status).toBe("ok");
     expect(health.endpoint).toBe("local:espeak-ng");
   });
 
   it("listVoices() returns real French espeak-ng voices", async () => {
-    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false });
+    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false, homeDir: ESPEAK_ONLY_HOME });
     const voices = await provider.listVoices();
     expect(voices.length).toBeGreaterThan(0);
     expect(voices.some((voice) => voice.language?.toLowerCase().startsWith("fr"))).toBe(true);
   });
 
   it("synthesize() produces a valid, non-silent 22050Hz mono 16-bit WAV", async () => {
-    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false });
+    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false, homeDir: ESPEAK_ONLY_HOME });
     const result = await provider.synthesize({
       text: "Bonjour. Ceci est un test réel de synthèse vocale système, sans aucune installation préalable.",
       language: "fr-FR"
@@ -107,14 +116,14 @@ describe.skipIf(!HAS_ESPEAK)("SystemTtsProvider — real espeak-ng (S7.1, gated 
   });
 
   it("respects AbortSignal: an already-aborted signal rejects without producing audio", async () => {
-    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false });
+    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false, homeDir: ESPEAK_ONLY_HOME });
     const controller = new AbortController();
     controller.abort();
     await expect(provider.synthesize({ text: "Bonjour" }, controller.signal)).rejects.toThrow();
   });
 
   it.skipIf(!HAS_PAPLAY)("plays ~2s of real synthesized speech through paplay (audible proof)", async () => {
-    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false });
+    const provider = new SystemTtsProvider({ platform: "linux", isFlatpak: false, homeDir: ESPEAK_ONLY_HOME });
     const result = await provider.synthesize({
       text:
         "Bonjour, ceci est un test audio réel de la voix système. " +

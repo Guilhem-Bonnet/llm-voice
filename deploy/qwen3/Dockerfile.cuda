@@ -1,0 +1,51 @@
+# syntax=docker/dockerfile:1
+# Serveur Qwen3-TTS de LLM Voice, variante NVIDIA CUDA 12.8.
+# NON TESTÉE : construite, jamais lancée sur une carte NVIDIA (aucune sur la machine de développement).
+# Sans modèles ni voix : ils viennent de l'image llm-voice-qwen3-models (volumes nommés).
+#   docker build -f deploy/qwen3/Dockerfile.cuda -t ghcr.io/guilhem-bonnet/llm-voice-qwen3:0.1.0-cuda deploy/qwen3
+ARG BASE_IMAGE=python:3.10.19-slim-bookworm@sha256:23f63358922e79a794f71be8f3723c84e5ccca9638af3f74456dc73d6184499e
+FROM ${BASE_IMAGE}
+
+ARG VERSION=0.1.0
+LABEL org.opencontainers.image.title="llm-voice-qwen3" \
+      org.opencontainers.image.description="Serveur local Qwen3-TTS de LLM Voice, NVIDIA CUDA 12.8 (NON TESTÉE). Modèles et voix dans llm-voice-qwen3-models." \
+      org.opencontainers.image.source="https://github.com/Guilhem-Bonnet/llm-voice" \
+      org.opencontainers.image.licenses="MIT AND Apache-2.0" \
+      org.opencontainers.image.version="${VERSION}-cuda" \
+      io.llm-voice.gpu="cuda-12.8" \
+      io.llm-voice.tested="non"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+COPY requirements-cuda.txt requirements-common.txt /tmp/req/
+RUN python3 -m pip install -r /tmp/req/requirements-cuda.txt
+RUN python3 -m pip install -r /tmp/req/requirements-common.txt \
+ && python3 -m pip install --no-deps qwen-tts==0.1.1 \
+ && { python3 -m pip check || true; }
+
+RUN useradd --uid 1000 --user-group --no-create-home --home-dir /tmp llm-voice \
+ && install -d -o 1000 -g 1000 /lab /lab/hf /lab/refs /srv/qwen3
+COPY server.py /srv/qwen3/server.py
+RUN ln -s /lab/refs/voices.json /srv/qwen3/voices.json
+
+ENV QWEN3_HOST=0.0.0.0 \
+    QWEN3_REFS_DIR=/lab/refs \
+    QWEN3_CREATED_DIR=/lab/refs/created \
+    HF_HOME=/lab/hf \
+    HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1 \
+    HF_HUB_DISABLE_TELEMETRY=1 \
+    DO_NOT_TRACK=1 \
+    HOME=/tmp \
+    NUMBA_CACHE_DIR=/tmp/numba \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+USER 1000:1000
+WORKDIR /srv/qwen3
+EXPOSE 8021
+HEALTHCHECK --interval=15s --timeout=10s --start-period=20s --retries=4 \
+  CMD ["python3", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8021/health', timeout=5)"]
+ENTRYPOINT ["python3", "/srv/qwen3/server.py"]

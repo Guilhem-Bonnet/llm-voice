@@ -37,13 +37,13 @@ export function buildProfileEditorHtml(inputs: ProfileEditorHtmlInputs): string 
   ].join("; ");
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="${styleUri}" rel="stylesheet" />
-  <title>LLM Voice — Profile Editor</title>
+  <title>LLM Voice — Éditeur de profil</title>
 </head>
 <body>
   <form id="profile-form" aria-label="Éditeur de profil">
@@ -62,41 +62,53 @@ export function buildProfileEditorHtml(inputs: ProfileEditorHtmlInputs): string 
     </fieldset>
 
     <fieldset>
-      <legend>Narration</legend>
+      <legend>Réécriture par IA avant la lecture</legend>
       <label for="field-mode">Mode</label>
       <select id="field-mode" name="mode">
-        <option value="faithful">Lecture fidèle</option>
-        <option value="narrated">Narré</option>
+        <option value="faithful">Lecture fidèle (lit le texte tel quel)</option>
+        <option value="narrated">Narré (une IA reformule avant de lire)</option>
       </select>
 
       <div id="narrator-fields">
-        <label for="field-narrator-provider">Narrateur</label>
+        <label for="field-narrator-provider">Narrateur — qui reformule le texte</label>
         <select id="field-narrator-provider" name="narratorProvider">
-          <option value="">Aucun</option>
-          <option value="ollama">Ollama (local)</option>
-          <option value="openai-compatible">Compatible OpenAI</option>
+          <option value="">Aucun (pas de reformulation)</option>
+          <option value="ollama">Ollama — IA locale, aucune donnée envoyée hors de cette machine</option>
+          <option value="kyutai-1-6b">Kyutai narration — carte graphique, nécessite le service Docker kyutai16</option>
+        <option value="openai-compatible">Compatible OpenAI — service distant</option>
         </select>
 
         <label for="field-narrator-model">Modèle</label>
         <input id="field-narrator-model" name="narratorModel" type="text" />
 
         <label for="field-style">Consigne de narration</label>
+        <p class="field-hint" id="help-style">
+          Ce texte est une instruction donnée à l'IA qui reformule le contenu avant de le lire — modifiez-le pour
+          changer le ton. Exemple : « Transforme la section en explication orale pédagogique et naturelle. »
+        </p>
         <textarea id="field-style" name="style" rows="3"></textarea>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>Voix (TTS)</legend>
+      <legend>Voix (TTS) — qui prononce le texte à voix haute</legend>
       <label for="field-tts-provider">Provider</label>
       <select id="field-tts-provider" name="ttsProvider">
-        <option value="chatterbox">Chatterbox (local)</option>
-        <option value="kokoro">Kokoro (local)</option>
-        <option value="system">Voix système</option>
-        <option value="openai-compatible">Compatible OpenAI</option>
+        <option value="global">Voix globale — la voix choisie pour tous les modes</option>
+        <option value="auto">Voix automatique — le premier moteur disponible</option>
+        <option value="system">Voix système — déjà installée, aucune configuration</option>
+        <option value="chatterbox">Chatterbox — voix clonée, qualité maximale (nécessite Docker)</option>
+        <option value="kokoro">Kokoro — voix locale rapide</option>
+        <option value="kyutai-pocket">Kyutai Pocket TTS — avancé, nécessite de lancer pocket-tts serve soi-même</option>
+        <option value="openai-compatible">Compatible OpenAI — service distant</option>
       </select>
 
-      <label for="field-tts-base-url">Base URL</label>
-      <input id="field-tts-base-url" name="ttsBaseUrl" type="text" />
+      <label for="field-tts-base-url">Base URL — adresse du serveur de voix (laisser vide pour « Voix système »)</label>
+      <div id="connection-row">
+        <input id="field-tts-base-url" name="ttsBaseUrl" type="text" />
+        <button id="btn-check-health" type="button">Vérifier la connexion</button>
+      </div>
+      <p id="connection-status" role="status" aria-live="polite"></p>
 
       <label for="field-tts-voice">Voix</label>
       <div id="voice-row">

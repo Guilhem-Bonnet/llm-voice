@@ -63,13 +63,26 @@ suite("LLM Voice: first Speak with zero local engine (S8.3, real SystemTtsProvid
     // "Installer la voix française" — the honest-fallback path (S8.3:
     // "En cas de refus... repli immédiat... aucun état intermédiaire
     // bloquant").
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await vscode.commands.executeCommand("notifications.clearAll");
+    // The prompt comes after the automatic engine probes (Qwen3, Kyutai…), whose closed ports
+    // cost about 2 s each on Windows: dismiss it whenever it shows, until `start()` settles,
+    // instead of once at a fixed instant that a slower machine misses.
+    let settled = false;
+    const dismissing = (async () => {
+      while (!settled) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        await vscode.commands.executeCommand("notifications.clearAll");
+      }
+    })();
 
     // Must resolve, never throw or hang, whichever branch it took (declined
     // install, or — on a machine where `PATH` stripping somehow still left
     // a system voice reachable — straight through to a normal session).
-    await assert.doesNotReject(started);
+    try {
+      await assert.doesNotReject(started);
+    } finally {
+      settled = true;
+      await dismissing;
+    }
 
     await waitFor(
       () => testPipeline.getPlaybackState() === "error" || testPipeline.getPlaybackState() === "playing"

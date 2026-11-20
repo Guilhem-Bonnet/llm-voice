@@ -10,6 +10,13 @@ const base = {
 };
 
 describe("computeCacheKey", () => {
+  it("separates two languages reading the same text with the same voice", () => {
+    const material = { providerId: "p", voice: "v", spokenText: "Bonjour" };
+    expect(computeCacheKey({ ...material, language: "fr-FR" })).not.toBe(
+      computeCacheKey({ ...material, language: "en-US" })
+    );
+  });
+
   it("returns a stable hex SHA-256", () => {
     const key = computeCacheKey(base);
     expect(key).toMatch(/^[0-9a-f]{64}$/);

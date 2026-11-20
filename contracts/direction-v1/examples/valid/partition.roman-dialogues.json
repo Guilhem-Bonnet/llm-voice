@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0",
+  "documentKey": "83ae7b3c1539e2ccad8c0b9d610fd876ae92b25fd2f608fcb513fb3aaf118618",
+  "bibleRevision": 3,
+  "cues": [
+    {
+      "cueId": "c-001",
+      "sourceIds": [
+        "p1-s1"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "La nuit tombait sur le port quand Marguerite poussa la porte de la taverne.",
+      "emotion": {
+        "label": "sombre",
+        "intensity": 0.3,
+        "valence": -0.2,
+        "arousal": 0.2
+      },
+      "tempo": 0.9,
+      "pauseAfterMs": 400,
+      "direction": "Voix posée, on installe le décor."
+    },
+    {
+      "cueId": "c-002",
+      "sourceIds": [
+        "p1-s2"
+      ],
+      "speakerId": "marguerite",
+      "spokenText": "Vous êtes en retard, capitaine.",
+      "emotion": {
+        "label": "agacée",
+        "intensity": 0.6,
+        "valence": -0.4,
+        "arousal": 0.6
+      },
+      "tempo": 1.1,
+      "pauseBeforeMs": 200,
+      "emphasis": [
+        "retard"
+      ],
+      "states": [
+        "épuisée"
+      ]
+    },
+    {
+      "cueId": "c-003",
+      "sourceIds": [
+        "p1-s3"
+      ],
+      "speakerId": "victor",
+      "spokenText": "Il y avait la marée, madame. Et le vent.",
+      "emotion": {
+        "label": "las",
+        "intensity": 0.4
+      },
+      "tempo": 0.85,
+      "pauseBeforeMs": 300,
+      "pauseAfterMs": 800,
+      "nonverbal": [
+        {
+          "kind": "sigh",
+          "at": "before"
+        }
+      ]
+    },
+    {
+      "cueId": "c-004",
+      "sourceIds": [
+        "p1-s3",
+        "p1-s4"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Elle ne répondit pas, et le silence s'installa entre eux.",
+      "emotion": {
+        "label": "tendu",
+        "intensity": 0.5,
+        "arousal": 0.3
+      },
+      "pauseAfterMs": 1500,
+      "nonverbal": [
+        {
+          "kind": "breath",
+          "at": "after"
+        },
+        {
+          "kind": "hesitation",
+          "at": "after"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/ws/underrun.event.schema.json",
+  "title": "Événement WS — underrun",
+  "description": "Sous-alimentation du tampon de sortie : le Core a dû écrire du silence faute de trame disponible (`TrackQueue::fill` retourne moins de trames que demandé alors que l'état est `playing`). Signal de diagnostic ; ne change pas l'état de la file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "type", "positionMs"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "type": { "const": "underrun" },
+    "positionMs": { "$ref": "../common.schema.json#/$defs/positionMs" },
+    "segmentId": { "$ref": "../common.schema.json#/$defs/segmentId" }
+  }
+}

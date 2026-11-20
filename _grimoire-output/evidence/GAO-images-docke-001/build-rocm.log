@@ -1,0 +1,105 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.rocm
+#1 transferring dockerfile: 4.20kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.3s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+#3 resolve docker.io/docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183 0.0s done
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/ubuntu:22.04@sha256:f64b2ffc2f10ab8f8505aa56b2664bd846cbb9df87c7e2532e30f7667021c0e6
+#4 DONE 0.2s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [ 1/10] FROM docker.io/library/ubuntu:22.04@sha256:f64b2ffc2f10ab8f8505aa56b2664bd846cbb9df87c7e2532e30f7667021c0e6
+#6 resolve docker.io/library/ubuntu:22.04@sha256:f64b2ffc2f10ab8f8505aa56b2664bd846cbb9df87c7e2532e30f7667021c0e6 0.0s done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 293B done
+#7 DONE 0.0s
+
+#8 [ 4/10] RUN python3 -m pip install -r /tmp/req/requirements-rocm.txt
+#8 CACHED
+
+#9 [ 2/10] RUN apt-get update  && apt-get install -y --no-install-recommends ca-certificates curl gnupg  && install -d -m 0755 /etc/apt/keyrings  && curl -fsSL https://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/apt/keyrings/rocm.gpg  && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/7.2.3 jammy main" > /etc/apt/sources.list.d/rocm.list  && printf 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600\n' > /etc/apt/preferences.d/rocm-pin-600  && apt-get update  && apt-get install -y --no-install-recommends       python3.10 python3-pip       rocm-core hip-runtime-amd comgr hsa-rocr       rocblas hipblas hipblaslt rocfft hipfft rocrand hiprand       rocsolver hipsolver rocsparse hipsparse hipsparselt       miopen-hip rccl rocm-smi-lib roctracer  && apt-get purge -y curl gnupg  && apt-get autoremove -y  && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [ 3/10] COPY requirements-rocm.txt requirements-common.txt /tmp/req/
+#10 CACHED
+
+#11 [ 5/10] RUN python3 -m pip install numpy==2.2.6  && python3 -m pip install --no-build-isolation sox==1.5.0  && python3 -m pip install -r /tmp/req/requirements-common.txt  && python3 -m pip install --no-deps qwen-tts==0.1.1  && { python3 -m pip check || true; }
+#11 CACHED
+
+#12 [ 6/10] RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
+#12 0.406 Get:1 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+#12 0.478 Get:2 http://archive.ubuntu.com/ubuntu jammy InRelease [270 kB]
+#12 0.478 Get:3 https://repo.radeon.com/rocm/apt/7.2.3 jammy InRelease [2605 B]
+#12 0.578 Get:4 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1329 kB]
+#12 0.649 Get:5 https://repo.radeon.com/rocm/apt/7.2.3 jammy/main amd64 Packages [81.1 kB]
+#12 0.666 Get:6 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [8111 kB]
+#12 0.682 Get:7 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+#12 0.786 Get:8 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [96.7 kB]
+#12 0.786 Get:9 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [4547 kB]
+#12 0.791 Get:10 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+#12 0.833 Get:11 http://archive.ubuntu.com/ubuntu jammy/multiverse amd64 Packages [266 kB]
+#12 0.844 Get:12 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages [1792 kB]
+#12 0.886 Get:13 http://archive.ubuntu.com/ubuntu jammy/restricted amd64 Packages [164 kB]
+#12 0.896 Get:14 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages [17.5 MB]
+#12 1.182 Get:15 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [8422 kB]
+#12 1.238 Get:16 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1631 kB]
+#12 1.250 Get:17 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [104 kB]
+#12 1.250 Get:18 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [4884 kB]
+#12 1.283 Get:19 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [35.6 kB]
+#12 1.283 Get:20 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [82.9 kB]
+#12 3.170 Fetched 49.7 MB in 3s (17.8 MB/s)
+#12 3.170 Reading package lists...
+#12 4.854 Reading package lists...
+#12 6.494 Building dependency tree...
+#12 6.823 Reading state information...
+#12 7.378 The following NEW packages will be installed:
+#12 7.379   libgomp1
+#12 7.493 0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+#12 7.493 Need to get 127 kB of archives.
+#12 7.493 After this operation, 328 kB of additional disk space will be used.
+#12 7.493 Get:1 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libgomp1 amd64 12.3.0-1ubuntu1~22.04.3 [127 kB]
+#12 7.715 debconf: delaying package configuration, since apt-utils is not installed
+#12 7.772 Fetched 127 kB in 0s (1062 kB/s)
+#12 7.803 Selecting previously unselected package libgomp1:amd64.
+#12 7.803 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 13898 files and directories currently installed.)
+#12 7.842 Preparing to unpack .../libgomp1_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+#12 8.038 Unpacking libgomp1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#12 8.123 Setting up libgomp1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#12 8.148 Processing triggers for libc-bin (2.35-0ubuntu3.18) ...
+#12 DONE 8.5s
+
+#13 [ 7/10] RUN useradd --uid 1000 --user-group --no-create-home --home-dir /tmp llm-voice  && install -d -o 1000 -g 1000 /lab /lab/hf /lab/refs /srv/qwen3
+#13 DONE 0.4s
+
+#14 [ 8/10] COPY server.py /srv/qwen3/server.py
+#14 DONE 0.1s
+
+#15 [ 9/10] RUN ln -s /lab/refs/voices.json /srv/qwen3/voices.json
+#15 DONE 0.4s
+
+#16 [10/10] WORKDIR /srv/qwen3
+#16 DONE 0.1s
+
+#17 exporting to image
+#17 exporting layers
+#17 exporting layers 0.4s done
+#17 exporting manifest sha256:0a37386b93ec13586fcf353865ea782ab0ac0227f1de19f01f6143669255dbbf 0.0s done
+#17 exporting config sha256:544bb14127cb30fb9817fd454279731b3e653c94588dd4bdd524f1494614f5bc 0.0s done
+#17 exporting attestation manifest sha256:0bc357b79957051285509a3d9ecc5967c0539c9c1fd490b7ab986809e7a6501d 0.0s done
+#17 exporting manifest list sha256:b753f481adab38020b88cbecb3a238d0bb72caa06ecbd0f539709a93a33b0a5d 0.0s done
+#17 naming to ghcr.io/guilhem-bonnet/llm-voice-qwen3:0.1.0-rocm done
+#17 unpacking to ghcr.io/guilhem-bonnet/llm-voice-qwen3:0.1.0-rocm 0.1s done
+#17 DONE 0.6s
+rocm rc=0

@@ -1,0 +1,51 @@
+[
+  {
+    "id": "conte",
+    "title": "Conte avec dialogues (texte original)",
+    "expect": { "minSpeakers": 2 },
+    "mustKeep": ["trois nuits", "12 coups", "ne répondit pas", "jamais"],
+    "blocks": [
+      { "type": "heading", "text": "La lanterne de Maëlys" },
+      { "type": "paragraph", "text": "Au bord du marais vivait une petite fille nommée Maëlys, qui n'avait pour tout bien qu'une lanterne de cuivre cabossée. Chaque soir, elle la posait sur le rebord de la fenêtre, et chaque soir les grenouilles se taisaient pour la regarder briller." },
+      { "type": "paragraph", "text": "Une nuit de brouillard, un renard roux frappa à la porte. Il tremblait de froid et ses moustaches étaient couvertes de givre. « Petite, dit-il d'une voix enrouée, je me suis perdu dans le marais depuis trois nuits. Peux-tu me prêter ta lumière ? »" },
+      { "type": "paragraph", "text": "Maëlys hésita. Sa lanterne était tout ce qu'elle possédait, et sans elle la maison serait plongée dans le noir. Mais le renard la regardait avec des yeux si fatigués qu'elle finit par décrocher la lanterne du clou." },
+      { "type": "paragraph", "text": "« Je te la prête, répondit-elle, mais tu dois me promettre de la rapporter avant l'aube. Sans elle, je ne pourrai jamais trouver le sommeil. » Le renard jura sur sa queue et sur ses oreilles, puis il disparut dans la brume." },
+      { "type": "paragraph", "text": "La nuit passa lentement. Maëlys s'assit près du feu, écouta le vent dans les roseaux, et compta les coups de l'horloge du village. Minuit sonna, puis une heure, puis deux heures. Le renard ne revenait pas." },
+      { "type": "paragraph", "text": "Au petit matin, quand l'horloge frappa 12 coups à l'envers de son habitude, tant le brouillard troublait les sons, la petite fille sortit sur le seuil. « Renard ! cria-t-elle, renard, où es-tu ? » Le marais ne répondit pas." },
+      { "type": "paragraph", "text": "Alors elle prit un bâton, enfila ses bottes et marcha vers l'endroit où le brouillard était le plus épais. Elle entendit d'abord un petit rire, puis un craquement de branches, et enfin une voix qui chantonnait." },
+      { "type": "paragraph", "text": "« Ah, te voilà ! s'exclama le renard en sortant d'un buisson, la lanterne serrée contre lui. J'ai guidé toute une famille de canards jusqu'à la rive. Regarde, ils sont sains et saufs ! » Derrière lui, sept canetons piaillaient en file indienne." },
+      { "type": "paragraph", "text": "Maëlys éclata de rire, si fort que ses bottes s'enfoncèrent dans la vase. Elle reprit sa lanterne, et le renard lui promit de ne jamais oublier cette nuit. Depuis ce jour, chaque fois que le brouillard monte, une petite lumière danse au bord du marais, et les renards savent que quelqu'un veille." }
+    ]
+  },
+  {
+    "id": "doc-technique",
+    "title": "Documentation technique (texte original)",
+    "expect": { "maxSpeakers": 1 },
+    "mustKeep": ["0.3.1", "22 050 Hz", "cargo build --release", "config.toml", "ne doit pas", "jamais"],
+    "blocks": [
+      { "type": "heading", "text": "Installer et configurer le moteur de synthèse" },
+      { "type": "paragraph", "text": "Ce guide décrit l'installation du moteur de synthèse vocale en version 0.3.1 sur une machine Linux. Il suppose que la chaîne de compilation Rust est déjà installée et que le dépôt a été cloné dans le dossier de votre choix." },
+      { "type": "paragraph", "text": "Pour compiler le binaire, placez-vous à la racine du dépôt et exécutez la commande suivante. La première compilation peut durer plusieurs minutes, car toutes les dépendances sont construites à partir des sources." },
+      { "type": "code", "text": "cargo build --release" },
+      { "type": "paragraph", "text": "Le binaire produit se trouve dans le dossier target/release. Copiez-le dans un répertoire présent dans votre variable PATH, par exemple ~/.local/bin, afin de pouvoir le lancer depuis n'importe quel terminal." },
+      { "type": "paragraph", "text": "La configuration se fait dans le fichier config.toml, situé dans le dossier de configuration de l'utilisateur. La clé sample_rate fixe la fréquence d'échantillonnage : la valeur par défaut est 22 050 Hz, et elle ne doit pas dépasser 48 000 Hz, sous peine d'un rejet au démarrage." },
+      { "type": "paragraph", "text": "Attention : le champ model_path ne doit pas pointer vers un fichier situé sur un disque réseau. Le chargement du modèle serait alors très lent, et le moteur risquerait d'expirer avant la fin de l'initialisation." },
+      { "type": "paragraph", "text": "Pour vérifier l'installation, lancez le moteur avec l'option --check. Le programme charge le modèle, synthétise une phrase courte, puis affiche la durée obtenue en millisecondes. Un code de retour égal à 0 indique que tout fonctionne." },
+      { "type": "paragraph", "text": "En cas d'échec, consultez d'abord le journal du moteur avant de rouvrir un ticket. N'exécutez jamais le moteur avec les droits administrateur : il n'en a pas besoin et cela fausserait les permissions du dossier de cache." }
+    ]
+  },
+  {
+    "id": "reponse-ia",
+    "title": "Réponse d'un assistant de code (texte original)",
+    "expect": { "maxSpeakers": 1 },
+    "mustKeep": ["1 775", "npm run lint", "src/direction/director", "pas lancé", "aucun"],
+    "blocks": [
+      { "type": "paragraph", "text": "J'ai terminé la tâche : le client pour le modèle local est écrit et branché sur le pipeline de direction, dans le dossier src/direction/director." },
+      { "type": "paragraph", "text": "Concrètement, j'ai ajouté une classe qui envoie les requêtes au serveur local par le garde de sortie réseau, avec un délai maximal de 60 secondes et des sorties structurées. Elle a un fichier de tests dédié qui simule le serveur." },
+      { "type": "paragraph", "text": "Les vérifications sont au vert : 1 775 tests unitaires passent, le typage ne signale aucune erreur, et la commande npm run lint ne remonte aucun problème. J'ai aussi vérifié que deux mutations volontaires du code font bien échouer les tests." },
+      { "type": "paragraph", "text": "Je n'ai pas lancé les tests d'intégration réels : ils demandent un serveur de modèle en marche et la carte graphique est réservée au jeu pour le moment. Le comportement avec le vrai modèle reste donc à mesurer." },
+      { "type": "paragraph", "text": "Il reste deux limites connues. D'abord, un appel déjà en cours n'est pas interrompu quand le mode jeu s'active. Ensuite, la valeur du délai de premier son, fixée à 10 secondes, n'est pas encore confrontée à une mesure." },
+      { "type": "paragraph", "text": "Pour la suite, je propose de brancher la direction dans le pipeline de lecture, puis de mesurer les latences sur trois textes. Dis-moi si tu préfères que je commence par la mesure : cela ne modifie rien dans le dépôt." }
+    ]
+  }
+]

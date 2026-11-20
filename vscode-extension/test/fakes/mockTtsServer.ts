@@ -38,6 +38,12 @@ export interface MockTtsServerOptions {
   healthBody?: Record<string, unknown>;
   /** If true, POST /upload_reference always responds 500 (CdC §55 upload failure path). */
   uploadReference500?: boolean;
+  /** Body of GET /voices (`deploy/kyutai16/server.py`); absent = 404. */
+  kyutaiVoices?: { voices: Array<{ id: string; name?: string; available: boolean; origin?: string; description?: string }> };
+  /** Milliseconds POST /tts takes, so that two requests at once would be seen. */
+  ttsDelayMs?: number;
+  /** POST /tts answers 503 with this `reason`, as `deploy/kyutai16/server.py` does. */
+  ttsHold?: "gpu_yield" | "gpu_memory";
 }
 
 export interface MockTtsServerRequestLog {
@@ -52,6 +58,9 @@ export class MockTtsServer {
   readonly requests: MockTtsServerRequestLog[] = [];
   /** Filenames received by POST /upload_reference, in call order (CdC §55). */
   readonly uploadedReferenceFilenames: string[] = [];
+  /** The most POST /tts ever in progress at once. */
+  maxConcurrentTts = 0;
+  private activeTts = 0;
 
   constructor(options: MockTtsServerOptions = {}) {
     this.options = {
@@ -62,7 +71,10 @@ export class MockTtsServer {
       voices404: options.voices404 ?? false,
       predefinedVoices: options.predefinedVoices ?? [],
       healthBody: options.healthBody ?? { status: "ok" },
-      uploadReference500: options.uploadReference500 ?? false
+      uploadReference500: options.uploadReference500 ?? false,
+      kyutaiVoices: options.kyutaiVoices ?? { voices: [] },
+      ttsDelayMs: options.ttsDelayMs ?? 0,
+      ttsHold: options.ttsHold as "gpu_yield" | "gpu_memory"
     };
     this.server = createServer((req, res) => {
       this.handle(req, res).catch((error: unknown) => {
@@ -72,9 +84,14 @@ export class MockTtsServer {
     });
   }
 
-  async listen(): Promise<string> {
-    await new Promise<void>((resolvePromise) => {
-      this.server.listen(0, "127.0.0.1", resolvePromise);
+  /** `port` defaults to an ephemeral one; a fixed one serves the `auto` chain (ADR-017 § Tests). */
+  async listen(port = 0): Promise<string> {
+    await new Promise<void>((resolvePromise, rejectPromise) => {
+      this.server.once("error", rejectPromise);
+      this.server.listen(port, "127.0.0.1", () => {
+        this.server.off("error", rejectPromise);
+        resolvePromise();
+      });
     });
     const address = this.server.address();
     if (address === null || typeof address === "string") {
@@ -86,6 +103,9 @@ export class MockTtsServer {
   async close(): Promise<void> {
     await new Promise<void>((resolvePromise, rejectPromise) => {
       this.server.close((error) => (error ? rejectPromise(error) : resolvePromise()));
+      // Without this a provider's keep-alive socket holds `close()` open, and a
+      // "stopped" server would keep answering on its existing connections.
+      this.server.closeAllConnections();
     });
   }
 
@@ -115,6 +135,44 @@ export class MockTtsServer {
           ]
         })
       );
+      return;
+    }
+
+    // Qwen3 (`deploy/qwen3/server.py`, GAO-studio-distr-001): voices created on this machine.
+    if (req.method === "POST" && url === "/voices/create") {
+      const form = new URLSearchParams(body);
+      const name = form.get("name") ?? "";
+      const description = form.get("description") ?? "";
+      // Like `validated_creation`: an English description, ASCII only, else 400.
+      if (name.length < 1 || name.length > 40 || description.length < 1 || description.length > 300 || !/^[\x20-\x7e]+$/.test(description)) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ detail: "mock: invalid form" }));
+        return;
+      }
+      // The server folds case and spaces: "Isaure  Jeune" is "isaure jeune".
+      const folded = (text: string): string => text.split(/\s+/).filter(Boolean).join(" ").toLowerCase();
+      if (this.options.kyutaiVoices.voices.some((voice) => voice.name !== undefined && folded(voice.name) === folded(name))) {
+        res.writeHead(409, { "content-type": "application/json" });
+        res.end(JSON.stringify({ detail: "mock: name taken" }));
+        return;
+      }
+      const id = `created-${this.options.kyutaiVoices.voices.length + 1}`;
+      this.options.kyutaiVoices.voices.push({ id, name, available: true, origin: "created", description });
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(JSON.stringify({ id, name, description, seed: 1, sample_seconds: 2 }));
+      return;
+    }
+    const sample = /^\/voices\/([^/]+)\/sample$/.exec(url);
+    if (req.method === "GET" && sample !== null) {
+      const wav = makeSilentWav(300, this.options.sampleRate);
+      res.writeHead(200, { "content-type": "audio/wav", "content-length": wav.length });
+      res.end(wav);
+      return;
+    }
+
+    if (req.method === "GET" && url === "/voices" && this.options.kyutaiVoices.voices.length > 0) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(this.options.kyutaiVoices));
       return;
     }
 
@@ -150,6 +208,17 @@ export class MockTtsServer {
     // field instead of `input`, and no `redirectExternal` case (nothing
     // exercises that egress-guard path through this route today).
     if (req.method === "POST" && url === "/tts") {
+      this.activeTts += 1;
+      this.maxConcurrentTts = Math.max(this.maxConcurrentTts, this.activeTts);
+      if (this.options.ttsDelayMs > 0) {
+        await new Promise((resolvePromise) => setTimeout(resolvePromise, this.options.ttsDelayMs));
+      }
+      this.activeTts -= 1;
+      if (this.options.ttsHold !== undefined) {
+        res.writeHead(503, { "content-type": "application/json" });
+        res.end(JSON.stringify({ detail: "mock TTS server: simulated hold", reason: this.options.ttsHold }));
+        return;
+      }
       if (this.options.fail500) {
         res.writeHead(500, { "content-type": "application/json" });
         res.end(JSON.stringify({ detail: "mock TTS server: simulated failure" }));

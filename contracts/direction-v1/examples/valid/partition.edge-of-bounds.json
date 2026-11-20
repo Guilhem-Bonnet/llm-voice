@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "documentKey": "de83a7962b8b4f8e80cceaa4abf27c49e2dda598fd7a0aec9df00e71d437ef36",
+  "bibleRevision": 0,
+  "cues": [
+    {
+      "cueId": "e-1",
+      "sourceIds": [
+        "a"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Un deux trois quatre cinq six.",
+      "tempo": 0.7,
+      "pauseBeforeMs": 0,
+      "pauseAfterMs": 3000,
+      "emphasis": [
+        "Un",
+        "deux",
+        "trois",
+        "quatre",
+        "cinq"
+      ],
+      "direction": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "states": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "emotion": {
+        "label": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "intensity": 1,
+        "valence": -1,
+        "arousal": 1
+      },
+      "nonverbal": [
+        {
+          "kind": "cough",
+          "at": "before"
+        },
+        {
+          "kind": "laugh",
+          "at": "after"
+        }
+      ]
+    },
+    {
+      "cueId": "e-2",
+      "sourceIds": [
+        "b"
+      ],
+      "speakerId": "narrator",
+      "spokenText": "Fin.",
+      "tempo": 1.4,
+      "pauseBeforeMs": 0,
+      "pauseAfterMs": 0,
+      "emotion": {
+        "label": "",
+        "intensity": 0,
+        "valence": 1,
+        "arousal": 0
+      }
+    }
+  ]
+}

@@ -29,11 +29,13 @@ interface TestPipeline {
   importProfileFromJson(json: string): Promise<VoiceProfile>;
   deleteProfileById(id: string): Promise<void>;
   getProfileById(id: string): Promise<VoiceProfile>;
-  applyVoiceToProfileById(id: string, voiceId: string): Promise<VoiceProfile>;
+  chooseVoiceById(voiceId: string): Promise<void>;
   openProfileEditorById(id: string): Promise<void>;
   getProfileEditorHtmlForTest(id: string): string | undefined;
   dispatchProfileEditorMessageForTest(id: string, message: { type: string; profile?: unknown }): Promise<void>;
   closeProfileEditorForTest(id: string): void;
+  getVoiceGalleryHtmlForTest(): string | undefined;
+  closeVoiceGalleryForTest(): void;
 }
 
 function testPipeline(api: ExtensionTestApi): TestPipeline {
@@ -53,34 +55,54 @@ function fakeProfileJson(id: string): string {
   return JSON.stringify(profile);
 }
 
-suite("LLM Voice: Browse Voices (S8.2, CdC §72)", () => {
+suite("LLM Voice: Choisir la voix, alias Browse Voices (S8.2, CdC §72, ADR-017 §3)", () => {
   test("registers the command", async () => {
     await activateExtension();
     const commands = await vscode.commands.getCommands(true);
     assert.ok(commands.includes("llmVoice.browseVoices"));
   });
 
-  test("opens a Quick Pick and does not throw when dismissed", async () => {
+  test("the voice menu opens as a Quick Pick and does not throw when dismissed", async () => {
     await activateExtension();
-    const opened = vscode.commands.executeCommand("llmVoice.browseVoices");
+    const opened = vscode.commands.executeCommand("llmVoice.chooseVoice");
     await new Promise((resolve) => setTimeout(resolve, 300));
     await vscode.commands.executeCommand("workbench.action.closeQuickOpen");
     await assert.doesNotReject(Promise.resolve(opened));
   });
 
-  test("applying a voice persists it and it is read back from profiles.json", async () => {
+  test("the alias opens the gallery, its id unchanged (ADR-017 §3)", async () => {
+    const api = await activateExtension();
+    const pipeline = testPipeline(api);
+    await vscode.commands.executeCommand("llmVoice.browseVoices");
+    try {
+      assert.ok(pipeline.getVoiceGalleryHtmlForTest()?.includes("Choisir une voix"));
+    } finally {
+      pipeline.closeVoiceGalleryForTest();
+    }
+  });
+
+  test("choosing a voice writes the global voice, never a mode (ADR-017 §1.3)", async () => {
     const api = await activateExtension();
     const pipeline = testPipeline(api);
     const id = `browse-voices-${Date.now()}`;
     const imported = await pipeline.importProfileFromJson(fakeProfileJson(id));
+    const voiceFile = vscode.Uri.joinPath(api.context.globalStorageUri, "global-voice.json");
+    const before = await vscode.workspace.fs.readFile(voiceFile);
 
-    const updated = await pipeline.applyVoiceToProfileById(imported.id, "fake-voice");
-    assert.equal(updated.tts.voice, "fake-voice");
+    try {
+      await pipeline.chooseVoiceById("fake-voice");
 
-    const reread = await pipeline.getProfileById(imported.id);
-    assert.equal(reread.tts.voice, "fake-voice", "the voice should still be there after a fresh read");
-
-    await pipeline.deleteProfileById(imported.id);
+      const written = JSON.parse(Buffer.from(await vscode.workspace.fs.readFile(voiceFile)).toString("utf8")) as {
+        voice: { voice?: string };
+      };
+      assert.equal(written.voice.voice, "fake-voice");
+      const reread = await pipeline.getProfileById(imported.id);
+      assert.equal(reread.tts.voice, undefined, "the mode is left as it was");
+    } finally {
+      // Same hygiene as the rest of this suite: other files share this storage.
+      await vscode.workspace.fs.writeFile(voiceFile, before);
+      await pipeline.deleteProfileById(imported.id);
+    }
   });
 });
 

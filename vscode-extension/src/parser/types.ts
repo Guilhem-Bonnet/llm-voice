@@ -4,7 +4,7 @@
  * plain Node.
  */
 
-import type { SourceRange } from "../core/source.js";
+import type { SourceRange, StageState } from "../core/source.js";
 
 /** Structural node kinds the parser recognises (CdC §12). */
 export type SourceBlockType =
@@ -55,6 +55,12 @@ export interface SourceBlock {
   table?: TableContent;
   /** Nested blocks: `list` → `listItem[]`, `blockquote` → its content blocks. */
   children?: SourceBlock[];
+  /** Role that speaks this block (`parseScript`, ADR-018 §1); absent = the narrator. */
+  speakerId?: string;
+  /** Indications played by that role, not said (ADR-018, note of 2026-11-06). */
+  stage?: readonly StageState[];
+  /** A line of novel dialogue, kept for the attribution of ADR-018 §2: read by the narrator. */
+  dialogue?: boolean;
 }
 
 /** Reading mode for fenced code blocks (CdC §13). */

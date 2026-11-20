@@ -13,6 +13,55 @@ Ce fichier est la seule source de vérité (voir `CONTRIBUTING.md`) ; le
 
 ## [Unreleased]
 
+### Changed
+
+- Une réponse se dit au lieu d'être dictée : plus de balisage, un chemin se réduit au nom du fichier, une URL devient « un lien », un bloc de code devient « un exemple de code », un tableau se lit « colonne : valeur » sur cinq lignes au plus, une liste élément par élément. Les documents et les sélections ne changent pas de mots.
+
+### Added
+
+- Puce « Code : ignoré / lu » dans le panneau pendant la lecture d'une réponse qui contient un bloc de code, et réglage `llmVoice.responses.readCode` pour le défaut. Le choix vaut à partir de la lecture suivante.
+
+### Ajouté
+
+- **Réponses** : « Inbox » et « Réponses de Claude » deviennent la liste « Réponses », pour tous les outils. La commande « Lire la dernière réponse » (`Ctrl+Alt+V` puis `R`, aussi depuis le terminal intégré) lit la plus récente, quel que soit l'outil ; son nouvel identifiant est `llmVoice.speakLatestResponse`, l'ancien `llmVoice.speakLatestClaudeResponse` reste exécutable. Chaque ligne donne d'abord la durée estimée (`27 s · Claude Code · TTS-Voice · il y a 12 min`, sur une hypothèse de 17 caractères par seconde), un bouton Lire toujours visible, et le reste dans un menu `…`. La vue « Réponses » devient une webview. Le panneau gagne un bloc « Dernière réponse » sous le lecteur. Rien ne se lit tout seul.
+- **Par défaut, une réponse est lue en entier** : `llmVoice.modes.bySource` envoie désormais `claude-code` au mode Fidèle et non plus à Résumé, qui reste à la demande (décision du 2026-11-06). Un réglage déjà défini est respecté.
+- Sans ouverture de la vue « Réponses » dans la fenêtre, l'icône de la barre d'activité ne porte pas encore le nombre de réponses non lues : une vue webview n'existe pour VS Code qu'une fois ouverte.
+- **Jeu d'acteurs, première tranche (ADR-018)** : une pièce de théâtre ou un texte balisé se lit avec un narrateur et une voix par personnage, sur Kyutai TTS 1.6B. Le bloc « Document ouvert » propose « Lire à plusieurs voix » quand une forme est reconnue ; ce bouton change un réglage retenu par document et ne lance jamais la lecture. `ROMÉO :` et `@nom:` ne sont pas lus, les indications scéniques vont au narrateur. La distribution est automatique, stable par document, sans genre déduit, et se change par « Distribution » ; une voix changée s'applique à la lecture suivante. Au-delà de 20 s d'attente estimée, une scène non préparée propose « Préparer » ou « Lire quand même ». Une lecture à une voix garde son cache et ses requêtes.
+
+**Attente lisible et gestes de lecture.**
+
+### Added
+
+- **Attente** : une barre qui se remplit sur une estimation calculée avant le son (chargement du modèle, préparation par l'IA, génération des deux premiers passages), avec « Lecture dans environ N s ». Plafond à 95 % puis « Encore un instant… », 100 % au premier son réel, jamais de recul. Au-delà du double de l'estimation, « Plus lent que d'habitude », sans rien annuler. Les mesures, par moteur, restent dans `globalState`, sans aucun texte.
+- **Document ouvert** : le lecteur suit l'éditeur et propose « Lire le document », « Lire la sélection », « Lire à partir d'ici », sans jamais démarrer tout seul. Rien d'ouvert : « Lire le presse-papiers ».
+- **Sélections multiples** : tous les passages, dans l'ordre du document, chevauchements fusionnés (« Lire les N passages »).
+- **Pendant la lecture** : « N passages d'avance », « Passage suivant en préparation… », « Lecture de : … ».
+- **Raccourcis** : `Ctrl+Alt+V F` (à partir d'ici), `Ctrl+Alt+V T` (section).
+- **Kyutai 1.6B** : `POST /load` charge le modèle sans synthèse ; `/health` dit `state` et `loading_since_s`. Un service déjà lancé doit être redémarré pour en profiter.
+
+### Changed
+
+- La lecture attend qu'un second passage soit prêt avant de commencer, pour éviter une coupure juste après.
+- Le moteur est préparé avant l'IA, et le délai `llmVoice.tts.timeoutMs` ne compte plus un premier chargement (`llmVoice.tts.readyTimeoutMs` passe à 180000).
+
+### Fixed
+
+- Mode jeu et mémoire insuffisante : aucune nouvelle tentative automatique, et le lecteur dit ce qui se passe, avec « Réessayer » et « Lire avec la voix système ».
+
+**ADR-017 — la voix choisie est celle qu'on entend, partout : voix globale séparée du mode de lecture.**
+
+### Changed
+
+- **Voix globale** : la voix vit dans `global-voice.json`, à côté de `profiles.json`. Un mode `tts: {}` en hérite ; tout autre `tts` est une voix propre, affichée « Voix propre : X ». Moteur et voix se remplacent ensemble.
+- **Commandes** : nouvelles `LLM Voice: Choisir la voix` et `LLM Voice: Choisir le mode`. `setupVoice`, `browseVoices` et `selectProfile` restent exécutables, comme alias masqués de la palette.
+- **Réglages** : `llmVoice.modes.bySource` remplace `llmVoice.profiles.bySource` (encore lu tant que le nouveau n'est pas défini) ; `llmVoice.defaultProfile` est retiré ; `llmVoice.tts.provider` et `llmVoice.tts.baseUrl` sont dépréciés.
+- **Vitesse** : voix × facteur du mode, appliquée par le moteur quand il déclare `speed`. La clé du cache audio identifie enfin la voix réelle : le cache existant est reconstruit une fois.
+
+### Migration et retour arrière
+
+- Au premier chargement, `profiles.json` est copié à l'identique dans `profiles.pre-adr-017.json`, jamais réécrit ensuite. `schemaVersion` reste à 2.
+- Revenir à la 0.3 : réinstaller la 0.3 fonctionne sans geste ; les modes hérités y passent par `llmVoice.tts.*`, la voix peut donc différer. Pour retrouver l'état exact, copier `profiles.pre-adr-017.json` sur `profiles.json`. `global-voice.json` peut rester : la 0.3 l'ignore, et une nouvelle montée reclasse le fichier.
+
 **S8.2 — le parcours de découverte de voix devient autonome : plus besoin d'un agent pour choisir la bonne voix (CdC §72, version 0.2).**
 
 ### Added

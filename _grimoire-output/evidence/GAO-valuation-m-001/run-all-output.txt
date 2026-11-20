@@ -1,0 +1,66 @@
+Jeu : vscode-extension/scripts/decision-spike/dataset/auto-eval-v1.jsonl — 51 cas, 16 catégories, étiquettes (claude-proposed: 51).
+AVERTISSEMENT : étiquettes PROPOSÉES par Claude, non validées — les précisions mesurent l'accord avec ces propositions, pas le goût de l'utilisateur.
+Répartition des étiquettes : faithful-local 17, llm-summary 15, quick-review 8, technical-teacher 11. Hybride (d) : règles si < 200 car. ou code ≥ 60 %.
+
+| Approche | Groupe | Précision | Pire catégorie | p50 | p95 | Note |
+|---|---|---:|---|---:|---:|---|
+| Classe constante « faithful-local » (plancher) | départ | 33 % (17/51) | architecture-plan 0/3 | 0 ms | 0 ms |  |
+| Témoin à règles du spike (A/B/C → profils, tel quel) | départ | 4 % (2/51) | apology-failure 0/3 | 0 ms | 0 ms |  |
+| Témoin à règles v2 (mêmes seuils, sémantique des profils réels) | départ | 33 % (17/51) | architecture-plan 0/3 | 0 ms | 0 ms |  |
+| Embeddings k-NN nomic-embed-text, k=3, LOO | départ | 25 % (13/51) | cheat-sheet 0/3 | 212 ms | 19265 ms | k choisis 3:51 |
+| Hybride (d) règles triviales + Embeddings k-NN nomic-embed-text, k=3, LOO | d | 51 % (26/51) | cheat-sheet 0/3 | 25 ms | 19194 ms |  |
+| Embeddings k-NN nomic « classification: », k∈{1,3,5,7} CV imbriquée | e | 51 % (26/51) | cheat-sheet 0/3 | 27 ms | 39 ms | k choisis 1:0 3:2 5:40 7:9 |
+| Hybride (d) règles triviales + Embeddings k-NN nomic « classification: », k∈{1,3,5,7} CV imbriquée | d | 65 % (33/51) | cheat-sheet 0/3 | 25 ms | 39 ms |  |
+| Embeddings k-NN qwen2.5:1.5b (LLM multilingue), k∈{1,3,5,7} CV imbriquée | e | 71 % (36/51) | architecture-plan 1/3 | 105 ms | 130 ms | k choisis 1:51 3:0 5:0 7:0 |
+| Hybride (d) règles triviales + Embeddings k-NN qwen2.5:1.5b (LLM multilingue), k∈{1,3,5,7} CV imbriquée | d | 75 % (38/51) | architecture-plan 1/3 | 102 ms | 125 ms |  |
+| SemIf qwen2.5:3b — lettres A–D (prompt du spike) | départ | 37 % (19/51) | apology-failure 0/3 | 236 ms | 289 ms |  |
+| Hybride (d) règles triviales + qwen2.5:3b — lettres A–D (prompt du spike) | d | 59 % (30/51) | cheat-sheet 0/3 | 231 ms | 288 ms |  |
+| SemIf qwen2.5:3b — lettres + calibration contextuelle | g | 24 % (12/51) | apology-failure 0/3 | 230 ms | 256 ms | réf. N/A faithful=0.00 llm=0.21 quick=0.79 technical=0.00 |
+| Hybride (d) règles triviales + qwen2.5:3b — lettres + calibration contextuelle | d | 45 % (23/51) | cheat-sheet 0/3 | 225 ms | 254 ms |  |
+| SemIf qwen2.5:3b — prompt enrichi, lettres | b | 55 % (28/51) | cheat-sheet 0/3 | 219 ms | 273 ms |  |
+| Hybride (d) règles triviales + qwen2.5:3b — prompt enrichi, lettres | d | 55 % (28/51) | cheat-sheet 0/3 | 215 ms | 273 ms |  |
+| SemIf qwen2.5:3b — prompt enrichi, noms | c | 33 % (17/51) | architecture-plan 0/3 | 225 ms | 8757 ms |  |
+| Hybride (d) règles triviales + qwen2.5:3b — prompt enrichi, noms | d | 49 % (25/51) | architecture-plan 0/3 | 217 ms | 8379 ms |  |
+| SemIf qwen2.5:3b — enrichi, noms + calibration | g | 24 % (12/51) | apology-failure 0/3 | 4263 ms | 8765 ms | réf. N/A faithful=0.99 llm=0.00 quick=0.00 technical=0.00 |
+| Hybride (d) règles triviales + qwen2.5:3b — enrichi, noms + calibration | d | 49 % (25/51) | cheat-sheet 0/3 | 3840 ms | 6333 ms |  |
+| SemIf qwen2.5:3b — enrichi, noms + consignes (circulaire) | b+ | 18 % (9/51) | architecture-plan 0/3 | 211 ms | 4294 ms |  |
+| Hybride (d) règles triviales + qwen2.5:3b — enrichi, noms + consignes (circulaire) | d | 41 % (21/51) | architecture-plan 0/3 | 205 ms | 3186 ms |  |
+| SemIf qwen2.5:7b — lettres A–D (prompt du spike) | a | 53 % (27/51) | cheat-sheet 0/3 | 257 ms | 307 ms |  |
+| Hybride (d) règles triviales + qwen2.5:7b — lettres A–D (prompt du spike) | d | 59 % (30/51) | cheat-sheet 0/3 | 257 ms | 307 ms |  |
+| SemIf qwen2.5:7b — lettres + calibration contextuelle | g | 53 % (27/51) | cheat-sheet 0/3 | 261 ms | 307 ms | réf. N/A faithful=0.00 llm=1.00 quick=0.00 technical=0.00 |
+| Hybride (d) règles triviales + qwen2.5:7b — lettres + calibration contextuelle | d | 53 % (27/51) | cheat-sheet 0/3 | 259 ms | 307 ms |  |
+| SemIf qwen2.5:7b — prompt enrichi, lettres | b | 75 % (38/51) | tutorial 0/3 | 256 ms | 378 ms |  |
+| Hybride (d) règles triviales + qwen2.5:7b — prompt enrichi, lettres | d | 75 % (38/51) | tutorial 0/3 | 253 ms | 378 ms |  |
+| SemIf qwen2.5:7b — prompt enrichi, noms | c | 59 % (30/51) | results-table 0/4 | 244 ms | 286 ms |  |
+| Hybride (d) règles triviales + qwen2.5:7b — prompt enrichi, noms | d | 59 % (30/51) | results-table 0/4 | 240 ms | 280 ms |  |
+| SemIf qwen2.5:7b — enrichi, noms + calibration | g | 69 % (35/51) | code-review 0/3 | 241 ms | 291 ms | réf. N/A faithful=1.00 llm=0.00 quick=0.00 technical=0.00 |
+| Hybride (d) règles triviales + qwen2.5:7b — enrichi, noms + calibration | d | 75 % (38/51) | code-review 0/3 | 239 ms | 291 ms |  |
+| SemIf qwen2.5:7b — enrichi, noms + consignes (circulaire) | b+ | 65 % (33/51) | tutorial 0/3 | 244 ms | 282 ms |  |
+| Hybride (d) règles triviales + qwen2.5:7b — enrichi, noms + consignes (circulaire) | d | 65 % (33/51) | tutorial 0/3 | 238 ms | 277 ms |  |
+| gpt-oss:20b — JSON contraint (think low), plafond | f | 67 % (34/51) | code-review 0/3 | 32703 ms | 62479 ms | repris de gptoss-results.json (2026-09-29T22:11:15.484Z) |
+
+GAGNANTE (p95 < 1000 ms) : Hybride (d) règles triviales + Embeddings k-NN qwen2.5:1.5b (LLM multilingue), k∈{1,3,5,7} CV imbriquée [hybrid+knn-qwen1.5b] — 75 % (38/51), p50 102 ms, p95 125 ms.
+Écart avec le témoin à règles v2 : 41 points ; McNemar exact : gagnante seule juste 22, témoin seul juste 1, p = 0.0000.
+(Témoin du spike tel quel : 71 points d'écart.)
+
+Détail par catégorie (témoin v2 → gagnante) :
+| Catégorie | Règles | Gagnante |
+|---|---:|---:|
+| apology-failure | 2/3 | 3/3 |
+| architecture-plan | 0/3 | 1/3 |
+| cheat-sheet | 0/3 | 3/3 |
+| code-diff | 1/3 | 1/3 |
+| code-review | 0/3 | 1/3 |
+| command-output | 1/3 | 3/3 |
+| concept-explanation | 0/4 | 4/4 |
+| done-short | 4/4 | 4/4 |
+| english | 1/3 | 2/3 |
+| error-report | 1/3 | 3/3 |
+| mixed-fr-en | 1/3 | 2/3 |
+| question-to-user | 3/3 | 2/3 |
+| results-table | 0/4 | 3/4 |
+| step-list | 2/3 | 2/3 |
+| test-summary | 1/3 | 2/3 |
+| tutorial | 0/3 | 2/3 |
+
+Rappel par profil (témoin v2 → gagnante) : faithful-local 17/17 → 16/17 ; llm-summary 0/15 → 10/15 ; quick-review 0/8 → 4/8 ; technical-teacher 0/11 → 8/11

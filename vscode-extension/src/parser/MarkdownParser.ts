@@ -72,6 +72,11 @@ export async function parseMarkdown(text: string, _uri?: string): Promise<Source
   return treeToBlocks(tree, text, toPlainText);
 }
 
+/** The tree itself, for a reading that decides more than `SourceBlock` keeps (`ResponseReading`). */
+export async function parseMarkdownTree(text: string): Promise<Root> {
+  return (await parseToTree(text)).tree;
+}
+
 /** Serializes the plain-text content of a node; used for link/reference labels and as a last-resort fallback. */
 type PlainTextFn = (node: unknown) => string;
 
@@ -110,7 +115,7 @@ export function treeToBlocks(tree: Root, sourceText: string, toPlainText: PlainT
   return blocks;
 }
 
-function toSourceRange(position: NonNullable<RootContent["position"]>): SourceRange {
+export function toSourceRange(position: NonNullable<RootContent["position"]>): SourceRange {
   return {
     startLine: position.start.line - 1,
     startColumn: position.start.column - 1,

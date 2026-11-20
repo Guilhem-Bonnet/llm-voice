@@ -15,6 +15,7 @@ export * from "./hookEntry.js";
 export * from "./hookInstallerIO.js";
 export * from "./GlobalStateReadStore.js";
 export * from "./InboxQuickPick.js";
-export * from "./InboxTreeProvider.js";
+export * from "./responseRow.js";
+export * from "./ResponsesFeed.js";
 export * from "./InboxContentProvider.js";
 export * from "./ClaudeHookCommand.js";

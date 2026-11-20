@@ -1,0 +1,720 @@
+{
+  "date": "2026-09-30T02:09:24.321Z",
+  "model": "qwen2.5:7b",
+  "status": "complete",
+  "decompose": [],
+  "remedies": [
+    {
+      "name": "A baseline (format = JSON Schema, ctx 8192)",
+      "runs": [
+        {
+          "wallMs": 22943,
+          "totalMs": 22940.9,
+          "loadMs": 79.2,
+          "promptTok": 1642,
+          "promptMs": 576.6,
+          "genTok": 719,
+          "genMs": 7759,
+          "tokPerS": 92.7,
+          "done": "stop",
+          "chars": 2237,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 23795,
+          "totalMs": 23792.4,
+          "loadMs": 79.6,
+          "promptTok": 1642,
+          "promptMs": 11.2,
+          "genTok": 775,
+          "genMs": 8363,
+          "tokPerS": 92.7,
+          "done": "stop",
+          "chars": 2444,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 22171,
+          "totalMs": 22169.7,
+          "loadMs": 78.5,
+          "promptTok": 1642,
+          "promptMs": 11.2,
+          "genTok": 719,
+          "genMs": 7757.2,
+          "tokPerS": 92.7,
+          "done": "stop",
+          "chars": 2237,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "B sans `format` (JSON demandé dans la consigne)",
+      "runs": [
+        {
+          "wallMs": 8180,
+          "totalMs": 8179,
+          "loadMs": 78.7,
+          "promptTok": 1642,
+          "promptMs": 576.6,
+          "genTok": 625,
+          "genMs": 6626.2,
+          "tokPerS": 94.3,
+          "done": "stop",
+          "chars": 2008,
+          "valid": {
+            "json": true,
+            "accepted": false,
+            "faithful": false,
+            "codes": [
+              "schema-invalid"
+            ]
+          }
+        },
+        {
+          "wallMs": 11842,
+          "totalMs": 11840.8,
+          "loadMs": 90.5,
+          "promptTok": 1642,
+          "promptMs": 11.2,
+          "genTok": 978,
+          "genMs": 10389.2,
+          "tokPerS": 94.1,
+          "done": "stop",
+          "chars": 3070,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 12352,
+          "totalMs": 12350.2,
+          "loadMs": 79.2,
+          "promptTok": 1642,
+          "promptMs": 11.2,
+          "genTok": 1021,
+          "genMs": 10851.8,
+          "tokPerS": 94.1,
+          "done": "stop",
+          "chars": 3190,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "B2 `format: \"json\"` (JSON libre, sans grammaire du schéma)",
+      "runs": [
+        {
+          "wallMs": 30648,
+          "totalMs": 30646.8,
+          "loadMs": 79.7,
+          "promptTok": 1642,
+          "promptMs": 576.6,
+          "genTok": 927,
+          "genMs": 10016.7,
+          "tokPerS": 92.5,
+          "done": "stop",
+          "chars": 2818,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 25221,
+          "totalMs": 25219.3,
+          "loadMs": 77.6,
+          "promptTok": 1642,
+          "promptMs": 11,
+          "genTok": 775,
+          "genMs": 8366.5,
+          "tokPerS": 92.6,
+          "done": "stop",
+          "chars": 2150,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 21094,
+          "totalMs": 21092.8,
+          "loadMs": 78.5,
+          "promptTok": 1642,
+          "promptMs": 11.2,
+          "genTok": 646,
+          "genMs": 6967.5,
+          "tokPerS": 92.7,
+          "done": "stop",
+          "chars": 1854,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "C prompt allégé (consigne + bible compactes, schéma réduit)",
+      "runs": [
+        {
+          "wallMs": 12104,
+          "totalMs": 12102.9,
+          "loadMs": 76.6,
+          "promptTok": 452,
+          "promptMs": 156.6,
+          "genTok": 394,
+          "genMs": 4119.3,
+          "tokPerS": 95.6,
+          "done": "stop",
+          "chars": 1230,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 12017,
+          "totalMs": 12015.8,
+          "loadMs": 77.3,
+          "promptTok": 452,
+          "promptMs": 10.9,
+          "genTok": 394,
+          "genMs": 4121.6,
+          "tokPerS": 95.6,
+          "done": "stop",
+          "chars": 1230,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 11979,
+          "totalMs": 11977.9,
+          "loadMs": 77.6,
+          "promptTok": 452,
+          "promptMs": 10.9,
+          "genTok": 394,
+          "genMs": 4120.9,
+          "tokPerS": 95.6,
+          "done": "stop",
+          "chars": 1230,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "C2 prompt allégé sans `format`",
+      "runs": [
+        {
+          "wallMs": 4846,
+          "totalMs": 4845.3,
+          "loadMs": 74.5,
+          "promptTok": 452,
+          "promptMs": 156.3,
+          "genTok": 394,
+          "genMs": 4051.2,
+          "tokPerS": 97.3,
+          "done": "stop",
+          "chars": 1230,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 4697,
+          "totalMs": 4695.5,
+          "loadMs": 80.1,
+          "promptTok": 452,
+          "promptMs": 10.9,
+          "genTok": 394,
+          "genMs": 4049.5,
+          "tokPerS": 97.3,
+          "done": "stop",
+          "chars": 1230,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 4708,
+          "totalMs": 4706.4,
+          "loadMs": 82.4,
+          "promptTok": 452,
+          "promptMs": 11,
+          "genTok": 394,
+          "genMs": 4051.5,
+          "tokPerS": 97.2,
+          "done": "stop",
+          "chars": 1230,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "D num_ctx 4096",
+      "runs": [
+        {
+          "wallMs": 35752,
+          "totalMs": 35750.4,
+          "loadMs": 78.7,
+          "promptTok": 1642,
+          "promptMs": 576.2,
+          "genTok": 1137,
+          "genMs": 12339.3,
+          "tokPerS": 92.1,
+          "done": "stop",
+          "chars": 3559,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 29060,
+          "totalMs": 29058.1,
+          "loadMs": 80.4,
+          "promptTok": 1642,
+          "promptMs": 12.2,
+          "genTok": 933,
+          "genMs": 10081.3,
+          "tokPerS": 92.5,
+          "done": "stop",
+          "chars": 3003,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 3137,
+          "totalMs": 3135.4,
+          "loadMs": 80.5,
+          "promptTok": 1642,
+          "promptMs": 12.2,
+          "genTok": 104,
+          "genMs": 1107.7,
+          "tokPerS": 93.9,
+          "done": "stop",
+          "chars": 262,
+          "valid": {
+            "json": true,
+            "accepted": false,
+            "faithful": false,
+            "codes": [
+              "uncovered-source"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "D2 num_ctx 3072",
+      "runs": [
+        {
+          "wallMs": 32623,
+          "totalMs": 32622.3,
+          "loadMs": 78.6,
+          "promptTok": 1642,
+          "promptMs": 577.4,
+          "genTok": 1037,
+          "genMs": 11222.7,
+          "tokPerS": 92.4,
+          "done": "stop",
+          "chars": 3192,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 23710,
+          "totalMs": 23708.4,
+          "loadMs": 78.6,
+          "promptTok": 1642,
+          "promptMs": 11.2,
+          "genTok": 770,
+          "genMs": 8303.4,
+          "tokPerS": 92.7,
+          "done": "stop",
+          "chars": 2363,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 36163,
+          "totalMs": 36162.2,
+          "loadMs": 90.5,
+          "promptTok": 1642,
+          "promptMs": 11.2,
+          "genTok": 1176,
+          "genMs": 12729.6,
+          "tokPerS": 92.4,
+          "done": "stop",
+          "chars": 3681,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "E première fenêtre de 2 segments",
+      "runs": [
+        {
+          "wallMs": 7990,
+          "totalMs": 7988.8,
+          "loadMs": 87.2,
+          "promptTok": 1485,
+          "promptMs": 515.8,
+          "genTok": 241,
+          "genMs": 2580.4,
+          "tokPerS": 93.4,
+          "done": "stop",
+          "chars": 734,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 7441,
+          "totalMs": 7439.9,
+          "loadMs": 78.6,
+          "promptTok": 1485,
+          "promptMs": 12.1,
+          "genTok": 241,
+          "genMs": 2581.7,
+          "tokPerS": 93.3,
+          "done": "stop",
+          "chars": 734,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 7364,
+          "totalMs": 7362.6,
+          "loadMs": 77.9,
+          "promptTok": 1485,
+          "promptMs": 11.1,
+          "genTok": 241,
+          "genMs": 2578.7,
+          "tokPerS": 93.5,
+          "done": "stop",
+          "chars": 734,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "E2 fenêtre de 2 segments, sans `format`",
+      "runs": [
+        {
+          "wallMs": 3479,
+          "totalMs": 3477.6,
+          "loadMs": 79.5,
+          "promptTok": 1485,
+          "promptMs": 515,
+          "genTok": 241,
+          "genMs": 2537.1,
+          "tokPerS": 95,
+          "done": "stop",
+          "chars": 734,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 2961,
+          "totalMs": 2960.4,
+          "loadMs": 79.8,
+          "promptTok": 1485,
+          "promptMs": 10.9,
+          "genTok": 241,
+          "genMs": 2533.4,
+          "tokPerS": 95.1,
+          "done": "stop",
+          "chars": 734,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 3173,
+          "totalMs": 3172.2,
+          "loadMs": 82.8,
+          "promptTok": 1485,
+          "promptMs": 10.9,
+          "genTok": 241,
+          "genMs": 2737.2,
+          "tokPerS": 88,
+          "done": "stop",
+          "chars": 734,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "F qwen2.5:3b, première fenêtre (4 segments)",
+      "runs": [
+        {
+          "wallMs": 12955,
+          "totalMs": 12953.9,
+          "loadMs": 82.7,
+          "promptTok": 1642,
+          "promptMs": 358.1,
+          "genTok": 449,
+          "genMs": 3496.3,
+          "tokPerS": 128.4,
+          "done": "stop",
+          "chars": 1372,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 13220,
+          "totalMs": 13218.9,
+          "loadMs": 80.4,
+          "promptTok": 1642,
+          "promptMs": 8.3,
+          "genTok": 475,
+          "genMs": 3677.5,
+          "tokPerS": 129.2,
+          "done": "stop",
+          "chars": 1386,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 12542,
+          "totalMs": 12540.8,
+          "loadMs": 80,
+          "promptTok": 1642,
+          "promptMs": 8.4,
+          "genTok": 449,
+          "genMs": 3478.1,
+          "tokPerS": 129.1,
+          "done": "stop",
+          "chars": 1372,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "F2 qwen2.5:3b, fenêtre de 2 segments",
+      "runs": [
+        {
+          "wallMs": 6508,
+          "totalMs": 6506.6,
+          "loadMs": 77.5,
+          "promptTok": 1485,
+          "promptMs": 277.6,
+          "genTok": 227,
+          "genMs": 1750.1,
+          "tokPerS": 129.7,
+          "done": "stop",
+          "chars": 677,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 6121,
+          "totalMs": 6119.9,
+          "loadMs": 95.6,
+          "promptTok": 1485,
+          "promptMs": 8.2,
+          "genTok": 223,
+          "genMs": 1718.8,
+          "tokPerS": 129.7,
+          "done": "stop",
+          "chars": 637,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 6319,
+          "totalMs": 6317.5,
+          "loadMs": 77.6,
+          "promptTok": 1485,
+          "promptMs": 8.2,
+          "genTok": 227,
+          "genMs": 1762.8,
+          "tokPerS": 128.8,
+          "done": "stop",
+          "chars": 677,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "G fusion analyste + 1re fenêtre (un seul appel)",
+      "runs": [
+        {
+          "wallMs": 15268,
+          "totalMs": 15267.1,
+          "loadMs": 79,
+          "promptTok": 1581,
+          "promptMs": 556.4,
+          "genTok": 478,
+          "genMs": 5185.6,
+          "tokPerS": 92.2,
+          "done": "stop",
+          "chars": 1448,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 19734,
+          "totalMs": 19732.7,
+          "loadMs": 79.9,
+          "promptTok": 1581,
+          "promptMs": 11.2,
+          "genTok": 642,
+          "genMs": 6925.4,
+          "tokPerS": 92.7,
+          "done": "stop",
+          "chars": 1975,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        },
+        {
+          "wallMs": 14655,
+          "totalMs": 14653.4,
+          "loadMs": 74.6,
+          "promptTok": 1581,
+          "promptMs": 11.1,
+          "genTok": 478,
+          "genMs": 5138.1,
+          "tokPerS": 93,
+          "done": "stop",
+          "chars": 1448,
+          "valid": {
+            "json": true,
+            "accepted": true,
+            "faithful": true,
+            "codes": []
+          }
+        }
+      ]
+    }
+  ]
+}

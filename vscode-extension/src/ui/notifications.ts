@@ -90,7 +90,8 @@ export function chooseTtsUnavailableMessage(
   return TTS_UNAVAILABLE_MESSAGE;
 }
 
-export const NARRATOR_UNAVAILABLE_MESSAGE = "LLM Voice: Narrator unavailable";
+export const NARRATOR_UNAVAILABLE_MESSAGE =
+  "LLM Voice : l'IA de ce mode n'a pas répondu. Ce passage est lu tel quel, sans réécriture.";
 
 export const CHOOSE_VOICE_LABEL = "Choisir une voix";
 export const OPEN_TTS_SETTINGS_LABEL = "Voir les réglages";
@@ -180,7 +181,12 @@ export async function notifyChunkInvalid(
 }
 
 /** One failure family CdC §52 describes; see `NotificationGate`. */
-export type NotificationType = "ttsUnavailable" | "narratorUnavailable" | "chunkInvalid";
+export type NotificationType = "ttsUnavailable" | "narratorUnavailable" | "chunkInvalid" | "playbackFailed";
+
+/** The voice answered but its audio could not be played: never a silent skip. */
+export function formatPlaybackFailedMessage(detail: string): string {
+  return `LLM Voice : l'audio reçu n'a pas pu être lu — ${detail}`;
+}
 
 /**
  * Anti-spam guard: each `NotificationType` may notify once until `reset()`

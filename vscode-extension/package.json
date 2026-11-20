@@ -2,7 +2,7 @@
   "name": "llm-voice",
   "displayName": "LLM Voice",
   "description": "Local-first voice narration for Markdown documents and LLM agent output (Claude Code, and more).",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "guilhem-bonnet",
   "license": "MIT",
   "private": true,
@@ -51,14 +51,49 @@
       {
         "fileMatch": "profiles.json",
         "url": "./schemas/profile-collection.schema.json"
+      },
+      {
+        "fileMatch": "global-voice.json",
+        "url": "./schemas/global-voice.schema.json"
       }
     ],
     "commands": [
       {
         "command": "llmVoice.speakDocument",
-        "title": "LLM Voice: Speak Document",
+        "title": "LLM Voice: Lire le document",
         "category": "LLM Voice",
-        "icon": "$(unmute)"
+        "icon": "$(play)"
+      },
+      {
+        "command": "llmVoice.chooseVoice",
+        "title": "LLM Voice: Choisir la voix",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.toggleCast",
+        "title": "LLM Voice: Lire ce document à plusieurs voix (activer ou désactiver)",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.chooseCastVoices",
+        "title": "LLM Voice: Distribution, changer la voix d'un personnage",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.openCastPanel",
+        "title": "LLM Voice: Distribution, voir les personnages et leur voix",
+        "category": "LLM Voice"
+      },
+      {
+        "command": "llmVoice.openVoiceGallery",
+        "title": "LLM Voice: Ouvrir la galerie de voix",
+        "category": "LLM Voice",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "llmVoice.chooseMode",
+        "title": "LLM Voice: Choisir le mode",
+        "category": "LLM Voice"
       },
       {
         "command": "llmVoice.setupVoice",
@@ -72,17 +107,17 @@
       },
       {
         "command": "llmVoice.speakSelection",
-        "title": "LLM Voice: Speak Selection",
+        "title": "LLM Voice: Lire la sélection",
         "category": "LLM Voice"
       },
       {
         "command": "llmVoice.speakFromCursor",
-        "title": "LLM Voice: Speak From Cursor",
+        "title": "LLM Voice: Lire à partir d'ici",
         "category": "LLM Voice"
       },
       {
         "command": "llmVoice.speakSection",
-        "title": "LLM Voice: Speak Section",
+        "title": "LLM Voice: Lire la section",
         "category": "LLM Voice"
       },
       {
@@ -186,12 +221,18 @@
       },
       {
         "command": "llmVoice.openInbox",
-        "title": "LLM Voice: Open Inbox",
+        "title": "LLM Voice: Ouvrir les réponses",
         "category": "LLM Voice"
       },
       {
+        "command": "llmVoice.speakLatestResponse",
+        "title": "LLM Voice: Lire la dernière réponse",
+        "category": "LLM Voice",
+        "icon": "$(play)"
+      },
+      {
         "command": "llmVoice.speakLatestClaudeResponse",
-        "title": "LLM Voice: Speak Latest Claude Response",
+        "title": "LLM Voice: Lire la dernière réponse",
         "category": "LLM Voice"
       },
       {
@@ -226,7 +267,7 @@
       },
       {
         "command": "llmVoice.browseVoices",
-        "title": "LLM Voice: Browse Voices",
+        "title": "LLM Voice: Ouvrir la galerie de voix",
         "category": "LLM Voice",
         "icon": "$(list-selection)"
       },
@@ -253,31 +294,31 @@
       },
       {
         "command": "llmVoice.inbox.refresh",
-        "title": "LLM Voice: Refresh Inbox",
+        "title": "LLM Voice: Actualiser les réponses",
         "category": "LLM Voice",
         "icon": "$(refresh)"
       },
       {
         "command": "llmVoice.inbox.speak",
-        "title": "LLM Voice: Speak Inbox Message",
+        "title": "LLM Voice: Lire cette réponse",
         "category": "LLM Voice",
         "icon": "$(play)"
       },
       {
         "command": "llmVoice.inbox.openFull",
-        "title": "LLM Voice: Open Full Response",
+        "title": "LLM Voice: Ouvrir le texte de cette réponse",
         "category": "LLM Voice",
         "icon": "$(eye)"
       },
       {
         "command": "llmVoice.inbox.delete",
-        "title": "LLM Voice: Delete Inbox Message",
+        "title": "LLM Voice: Supprimer cette réponse",
         "category": "LLM Voice",
         "icon": "$(trash)"
       },
       {
         "command": "llmVoice.inbox.markRead",
-        "title": "LLM Voice: Toggle Inbox Message Read",
+        "title": "LLM Voice: Marquer cette réponse comme lue ou non lue",
         "category": "LLM Voice",
         "icon": "$(check)"
       },
@@ -344,13 +385,14 @@
           "when": "config.llmVoice.ui.layout == full"
         },
         {
+          "type": "webview",
           "id": "llmVoice.inboxView",
-          "name": "Inbox",
+          "name": "Réponses",
           "when": "config.llmVoice.ui.layout == full"
         },
         {
           "id": "llmVoice.profilesView",
-          "name": "Profils",
+          "name": "Modes",
           "when": "config.llmVoice.ui.layout == full"
         }
       ]
@@ -363,26 +405,38 @@
       {
         "view": "llmVoice.playerView",
         "contents": "Aucune lecture en cours.\n[Lire le document actuel](command:llmVoice.speakDocument)\n[Choisir une voix](command:llmVoice.setupVoice)"
-      },
-      {
-        "view": "llmVoice.inboxView",
-        "contents": "Aucune réponse capturée.\n[Connecter Claude Code](command:llmVoice.installClaudeHook)"
       }
     ],
     "submenus": [
       {
         "id": "llmVoice.markdownContextMenu",
-        "label": "LLM Voice"
+        "label": "Lire à voix haute"
       }
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "llmVoice.setupVoice",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.browseVoices",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.selectProfile",
+          "when": "false"
+        },
         {
           "command": "llmVoice.statusBar.openMenu",
           "when": "false"
         },
         {
           "command": "llmVoice.walkthroughOpenExample",
+          "when": "false"
+        },
+        {
+          "command": "llmVoice.speakLatestClaudeResponse",
           "when": "false"
         },
         {
@@ -421,19 +475,18 @@
       "editor/context": [
         {
           "submenu": "llmVoice.markdownContextMenu",
-          "when": "resourceLangId == markdown",
+          "when": "editorTextFocus",
           "group": "llmVoice"
         }
       ],
       "llmVoice.markdownContextMenu": [
         {
           "command": "llmVoice.speakSelection",
-          "when": "resourceLangId == markdown && editorHasSelection",
+          "when": "editorHasSelection",
           "group": "1_speak@1"
         },
         {
           "command": "llmVoice.speakFromCursor",
-          "when": "resourceLangId == markdown",
           "group": "1_speak@2"
         },
         {
@@ -443,14 +496,20 @@
         },
         {
           "command": "llmVoice.speakDocument",
-          "when": "resourceLangId == markdown",
           "group": "1_speak@4"
         }
       ],
       "editor/title": [
         {
           "command": "llmVoice.speakDocument",
-          "when": "resourceLangId == markdown",
+          "when": "resourceLangId || activeWebviewPanelId == 'markdown.preview'",
+          "group": "navigation"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "llmVoice.speakDocument",
+          "when": "webviewId == 'markdown.preview'",
           "group": "navigation"
         }
       ],
@@ -482,26 +541,6 @@
         }
       ],
       "view/item/context": [
-        {
-          "command": "llmVoice.inbox.speak",
-          "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry",
-          "group": "inline@1"
-        },
-        {
-          "command": "llmVoice.inbox.openFull",
-          "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry",
-          "group": "inline@2"
-        },
-        {
-          "command": "llmVoice.inbox.markRead",
-          "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry",
-          "group": "inline@3"
-        },
-        {
-          "command": "llmVoice.inbox.delete",
-          "when": "view == llmVoice.inboxView && viewItem == llmVoiceInboxEntry",
-          "group": "inline@4"
-        },
         {
           "command": "llmVoice.profilesView.activate",
           "when": "view == llmVoice.profilesView && viewItem == llmVoiceProfileEntry",
@@ -536,9 +575,23 @@
         "when": "editorTextFocus && editorHasSelection && !terminalFocus"
       },
       {
+        "key": "ctrl+alt+v f",
+        "command": "llmVoice.speakFromCursor",
+        "when": "editorTextFocus && !terminalFocus"
+      },
+      {
+        "key": "ctrl+alt+v t",
+        "command": "llmVoice.speakSection",
+        "when": "editorTextFocus && editorLangId == markdown && !terminalFocus"
+      },
+      {
         "key": "ctrl+alt+v c",
         "command": "llmVoice.speakClipboard",
         "when": "!terminalFocus"
+      },
+      {
+        "key": "ctrl+alt+v r",
+        "command": "llmVoice.speakLatestResponse"
       },
       {
         "key": "ctrl+alt+v space",
@@ -564,17 +617,39 @@
     "configuration": {
       "title": "LLM Voice",
       "properties": {
-        "llmVoice.defaultProfile": {
-          "type": "string",
-          "default": "",
-          "description": "Identifiant du profil utilisé par défaut pour une nouvelle session de lecture."
+        "llmVoice.modes.bySource": {
+          "type": "object",
+          "default": {
+            "claude-code": "faithful-local"
+          },
+          "description": "Mode de lecture selon la source : markdown, text (sélection), clipboard, claude-code. Une source non renseignée utilise le dernier mode choisi. Une source choisit un mode, jamais une voix.",
+          "properties": {
+            "markdown": {
+              "type": "string",
+              "description": "Mode pour un document Markdown."
+            },
+            "text": {
+              "type": "string",
+              "description": "Mode pour une sélection de texte."
+            },
+            "clipboard": {
+              "type": "string",
+              "description": "Mode pour le presse-papiers."
+            },
+            "claude-code": {
+              "type": "string",
+              "description": "Mode pour les réponses, quel que soit l'outil."
+            }
+          },
+          "additionalProperties": false
         },
         "llmVoice.profiles.bySource": {
           "type": "object",
+          "deprecationMessage": "Remplacé par llmVoice.modes.bySource. Ce réglage reste lu tant que le nouveau n'est pas défini.",
           "default": {
-            "claude-code": "llm-summary"
+            "claude-code": "faithful-local"
           },
-          "description": "Profil par défaut selon la source de capture (CdC §47) : markdown, text (sélection), clipboard, claude-code. Une source non renseignée utilise le dernier profil sélectionné. Ex. par défaut : Claude Inbox → Résumé LLM.",
+          "description": "Profil par défaut selon la source de capture (CdC §47) : markdown, text (sélection), clipboard, claude-code. Une source non renseignée utilise le dernier profil sélectionné.",
           "properties": {
             "markdown": {
               "type": "string",
@@ -590,7 +665,7 @@
             },
             "claude-code": {
               "type": "string",
-              "description": "Profil par défaut pour l'inbox Claude Code."
+              "description": "Profil par défaut pour les réponses."
             }
           },
           "additionalProperties": false
@@ -602,11 +677,13 @@
         },
         "llmVoice.tts.baseUrl": {
           "type": "string",
+          "deprecationMessage": "L'adresse appartient à la voix : « Choisir la voix ». Ce réglage ne sert plus qu'à une voix propre sans adresse.",
           "default": "http://127.0.0.1:8004",
-          "description": "URL de base du service de synthèse vocale (TTS), doit rester locale par défaut (D2, D10). Port 8004 = Chatterbox (ADR-009 niveau 1)."
+          "description": "URL de base du service de synthèse vocale (TTS), doit rester locale par défaut (D2, D10). Port 8004 = Chatterbox (ADR-009 niveau 1). Kokoro utilise le port 8880 tant que ce réglage reste vide ou sur le port de Chatterbox."
         },
         "llmVoice.tts.provider": {
           "type": "string",
+          "deprecationMessage": "Le moteur appartient à la voix : « Choisir la voix ». Ce réglage ne sert plus qu'à une voix propre sans moteur.",
           "default": "auto",
           "enum": [
             "auto",
@@ -619,7 +696,7 @@
           "enumDescriptions": [
             "Sélection automatique (S7.1, ADR-009) : Chatterbox si disponible, sinon Piper local, sinon la voix système — zéro configuration.",
             "Chatterbox (niveau 1, GPU, port 8004 par défaut).",
-            "Kokoro (niveau 1, repli léger).",
+            "Kokoro (niveau 1, repli léger, port 8880 par défaut).",
             "Piper derrière un serveur compatible OpenAI (niveau 1b, port 5000 par défaut).",
             "Voix système sans installation ni serveur — espeak-ng/Piper local/say/SAPI selon la plateforme (niveau 1b, ADR-009).",
             "Point de terminaison compatible OpenAI générique (entreprise/cloud, niveaux 2-3)."
@@ -655,9 +732,23 @@
         },
         "llmVoice.tts.readyTimeoutMs": {
           "type": "number",
-          "default": 30000,
+          "default": 180000,
           "minimum": 0,
           "description": "Délai maximal (ms) d'attente d'un provider TTS en statut « Loading » (CdC §51) avant la première synthèse, plutôt que d'échouer immédiatement. 0 = aucune attente."
+        },
+        "llmVoice.audio.engine": {
+          "type": "string",
+          "enum": [
+            "webview",
+            "native"
+          ],
+          "default": "webview",
+          "description": "Moteur de lecture audio (ADR-012). « webview » (défaut à ce stade) joue via l'élément <audio> du mini-lecteur, sur clic (repli explicite, ADR-001). « native » joue via le démon local `llm-voice-core` (Rust), sans geste utilisateur requis ; bascule du défaut prévue par une carte ultérieure une fois le moteur natif validé en conditions réelles."
+        },
+        "llmVoice.audio.corePath": {
+          "type": "string",
+          "default": "",
+          "description": "Chemin absolu vers le binaire `llm-voice-core` (ADR-012 §5), pour remplacer la résolution par défaut (`<extension>/bin/<plateforme>/llm-voice-core`, puis `target/release/llm-voice-core` en développement). Vide = résolution automatique. Sans effet si `llmVoice.audio.engine` n'est pas « native »."
         },
         "llmVoice.audio.maxRetries": {
           "type": "number",
@@ -714,10 +805,15 @@
           "minimum": 0,
           "description": "Taille maximale du cache audio en mégaoctets."
         },
+        "llmVoice.responses.readCode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Lit les blocs de code d'une réponse, langage annoncé, au lieu de dire « un exemple de code ». La puce du panneau change ce choix pour la session, à partir de la lecture suivante."
+        },
         "llmVoice.claude.inboxPath": {
           "type": "string",
           "default": "",
-          "description": "Chemin de l'inbox recevant les réponses de Claude Code capturées par le hook Stop."
+          "description": "Dossier des réponses capturées, quel que soit l'outil qui les dépose."
         },
         "llmVoice.claude.captureEnabled": {
           "type": "boolean",
@@ -744,7 +840,7 @@
             "full"
           ],
           "default": "full",
-          "description": "`full` (défaut depuis la révision du 2026-09-12) : icône dédiée dans la barre d'activité + View Container complet (Lecture en cours, Inbox, Profils), point d'entrée principal. `minimal` : status bar + Panel + CodeLens uniquement, pour qui préfère le lecteur dans le panneau (ADR-011)."
+          "description": "`full` (défaut depuis la révision du 2026-09-12) : icône dédiée dans la barre d'activité + View Container complet (Lecture en cours, Réponses, Modes), point d'entrée principal. `minimal` : status bar + Panel + CodeLens uniquement, pour qui préfère le lecteur dans le panneau (ADR-011)."
         },
         "llmVoice.privacy.telemetryEnabled": {
           "type": "boolean",
@@ -796,23 +892,23 @@
           },
           {
             "id": "chooseProfile",
-            "title": "Choisir un profil",
-            "description": "Un profil fixe la voix, le provider TTS et le narrateur. Quatre profils sont fournis par défaut : Lecture fidèle, Professeur technique, Résumé LLM, Révision rapide.\n[Choisir un profil](command:llmVoice.selectProfile)",
+            "title": "Choisir un mode",
+            "description": "Un mode fixe la façon de lire le texte, la voix reste celle que vous avez choisie. Quatre modes sont fournis : Fidèle, Professeur, Résumé, Révision.\n[Choisir un mode](command:llmVoice.chooseMode)",
             "media": {
               "image": "media/walkthrough/choose-profile.svg",
-              "altText": "Quatre profils de lecture au choix"
+              "altText": "Quatre modes de lecture au choix"
             },
             "completionEvents": [
-              "onCommand:llmVoice.selectProfile"
+              "onCommand:llmVoice.chooseMode"
             ]
           },
           {
             "id": "connectClaude",
-            "title": "Optionnel : connecter Claude Code",
-            "description": "Capturez automatiquement les réponses de Claude Code dans une inbox dédiée, et écoutez-les au lieu de les lire.\n[Connecter Claude Code](command:llmVoice.installClaudeHook)",
+            "title": "Optionnel : connecter un outil",
+            "description": "Capturez automatiquement les réponses d'un outil dans la liste Réponses, et écoutez-les au lieu de les lire. Aujourd'hui : Claude Code.\n[Connecter un outil](command:llmVoice.installClaudeHook)",
             "media": {
               "image": "media/walkthrough/connect-claude.svg",
-              "altText": "Réponses de Claude Code capturées dans une inbox"
+              "altText": "Réponses capturées dans la liste Réponses"
             },
             "completionEvents": [
               "onCommand:llmVoice.installClaudeHook"
@@ -830,6 +926,7 @@
     "test:unit": "vitest run --config vitest.config.ts",
     "test:integration-real": "vitest run --config vitest.integration-real.config.ts",
     "test:integration-security": "npm run build && vscode-test --label integration-security",
+    "test:integration-voice": "npm run build && xvfb-run -a vscode-test --label voice-chain",
     "bundle": "node scripts/esbuild.mjs",
     "generate:icon": "node scripts/generate-icon.mjs",
     "generate:profile-schema": "node scripts/generate-profile-schema.mjs",
@@ -838,11 +935,16 @@
     "sync:changelog": "node scripts/sync-changelog.mjs",
     "build": "npm run compile && npm run generate:profile-schema && npm run copy:claude-integration && npm run bundle",
     "test:integration": "npm run build && vscode-test",
+    "e2e:local": "bash ../scripts/e2e-local-suite.sh",
     "package": "npm run generate:icon && npm run sync:changelog && npm run build && vsce package --no-dependencies -o llm-voice.vsix && node scripts/check-vsix.mjs",
+    "build:core:linux-x64": "cargo build --release -p llm-voice-core --manifest-path ../Cargo.toml",
+    "stage:core:linux-x64": "node scripts/stage-core.mjs linux-x64",
+    "package:linux-x64": "npm run generate:icon && npm run sync:changelog && npm run build && npm run build:core:linux-x64 && npm run stage:core:linux-x64 && vsce package --no-dependencies --target linux-x64 -o llm-voice-linux-x64.vsix && npm run check:vsix:linux-x64",
     "vscode:prepublish": "npm run build",
     "check:audit": "npm audit --omit=dev --audit-level=high",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:vsix": "npm run build && node scripts/check-vsix.mjs",
+    "check:vsix:linux-x64": "node scripts/check-vsix.mjs --target linux-x64",
     "check:security": "npm run check:audit && npm run check:licenses && npm run check:vsix"
   },
   "dependencies": {
@@ -851,7 +953,7 @@
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.5",
-    "zod": "^4.5.4"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/mdast": "^4.0.4",
@@ -865,6 +967,7 @@
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.1",
+    "ajv": "^8.17.1",
     "esbuild": "^0.28.2",
     "eslint": "^10.10.0",
     "typescript": "^5.7.2",

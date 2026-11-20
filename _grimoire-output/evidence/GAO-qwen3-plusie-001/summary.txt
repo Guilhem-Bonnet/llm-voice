@@ -1,0 +1,9 @@
+whisper small
+fige-homme-mur-grave.wav WER 0.0 | Le train s'est arrêté au milieu de la campagne, sans la moindre annonce.
+fige-jeune-femme-claire.wav WER 0.0 | Le train s'est arrêté au milieu de la campagne sans la moindre annonce.
+joue-femme-agee.wav WER 0.0 | Le train s'est arrêté au milieu de la campagne sans la moindre annonce.
+cos entre les 8 voix : min 0.9150000214576721 max 0.9900000095367432 moyenne 0.958
+paire la plus proche (0.9900000095367432, "Voix d'enfant", 'Jeune femme claire')
+lecture:fige-homme-mur-grave -> plus proche (0.9909999966621399, 'Homme mûr grave')
+lecture:fige-jeune-femme-claire -> plus proche (0.9919999837875366, 'Jeune femme claire')
+lecture:joue-femme-agee -> plus proche (0.9789999723434448, 'Femme âgée chaleureuse')

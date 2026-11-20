@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "scope": "document",
+  "scopeKey": "file:///home/guilhem/projets/api/README.md",
+  "revision": 1,
+  "analysis": {
+    "genre": "documentation technique",
+    "intent": "expliquer",
+    "audience": "développeurs",
+    "baseTone": "didactique",
+    "narratorPersona": "enseignant technique"
+  },
+  "narrator": {
+    "id": "narrator",
+    "names": [],
+    "traits": {},
+    "voice": {}
+  },
+  "characters": []
+}

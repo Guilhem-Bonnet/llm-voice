@@ -1,0 +1,7 @@
+{
+  "active": true,
+  "roles": ["isaure", "le-comte"],
+  "absent": ["ISAURE", "LE COMTE"],
+  "narrateur": ["Elle pose sa lampe", "Il tire son épée", "La cloche sonne au loin"],
+  "repliques": { "isaure": ["Parlez. Je vous écoute", "Et cependant, seigneur"], "le-comte": ["Le messager dormait", "Non. Je reste"] }
+}

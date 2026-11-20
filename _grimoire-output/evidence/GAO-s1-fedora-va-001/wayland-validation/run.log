@@ -1,0 +1,25 @@
+EXIT=1
+[14:41:01] sink par défaut original (sera restauré) : alsa_output.usb-Razer_Inc_BlackShark_V3_Pro_0000000000000000-00.pro-output-0
+[14:41:01] sinks nuls créés : llmvoice_va_a_4177937 llmvoice_va_b_4177937 llmvoice_va_c_4177937 llmvoice_va_d_4177937
+[14:41:43] CAS 1-defaut : FAIL — ended=1 vivant=1 analyse={"wer":0.9697,"transcription":"Sous-titres réalisés par la communauté d'Amara.org","duration_s":15.019,"silence_max_ms":15000.0,"rms":0.0,"silent":true,"wer_ok":false,"pass":false}
+[14:42:22] bascule du défaut llmvoice_va_a_4177937 -> llmvoice_va_b_4177937 à t≈5s (lecture de 12.58s)
+[14:42:52] CAS 2-bascule : PASS — trajet=coupure, err_ws=0, ended=1, Core vivant (silentA=true silentB=true)
+[14:43:03] sink llmvoice_va_c_4177937 déchargé à t≈3s pendant la lecture (module 536870927)
+[14:43:13] CAS 3-disparition : PASS — Core survit, /health répond après disparition (ended=1 erreur_ws=0)
+[14:43:37] sink llmvoice_va_d_4177937 suspendu à t≈3s
+[14:43:39] sink llmvoice_va_d_4177937 repris à t≈5s
+[14:43:56] CAS 4-suspension : PASS — Core survit à suspend/resume, ended reçu (analyse={"wer":1.0,"silent":true})
+
+=== Tableau des résultats (GAO-s1-fedora-va-001) ===
+CAS              | VERDICT | MESURE
+1-defaut         | FAIL   | ended=1 vivant=1 analyse={"wer":0.9697,"transcription":"Sous-titres réalisés par la communauté d'Amara.org","duration_s":15.019,"silence_max_ms":15000.0,"rms":0.0,"silent":true,"wer_ok":false,"pass":false}
+2-bascule        | PASS   | trajet=coupure, err_ws=0, ended=1, Core vivant (silentA=true silentB=true)
+3-disparition    | PASS   | Core survit, /health répond après disparition (ended=1 erreur_ws=0)
+4-suspension     | PASS   | Core survit à suspend/resume, ended reçu (analyse={"wer":1.0,"silent":true})
+
+Cas 5 (casque USB réel) : NON EXÉCUTÉ — revue humaine (touche un périphérique réel de l'utilisateur)
+Veille système : NON AUTOMATISABLE — revue humaine (affecterait la machine)
+[14:43:56] cleanup : arrêt des captures/Core, déchargement des sinks nuls, restauration du sink par défaut
+[14:43:57] sink par défaut restauré : alsa_output.usb-Razer_Inc_BlackShark_V3_Pro_0000000000000000-00.pro-output-0
+
+[exited with code 0]

@@ -1,0 +1,8 @@
+{
+  "active": true,
+  "roles": ["ines", "theo", "serveur"],
+  "absent": ["@ines", "@narrateur", "% ines", "Theo :"],
+  "narrateur": ["Il était deux heures", "Un long silence"],
+  "repliques": { "theo": ["Quelle consigne"], "serveur": ["Justement"] },
+  "declarations": { "ines": "estelle", "theo": "Maxime", "serveur": "Sacha" }
+}

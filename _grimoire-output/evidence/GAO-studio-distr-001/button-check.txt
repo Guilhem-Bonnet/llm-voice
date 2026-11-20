@@ -1,0 +1,4 @@
+distribution-500px {'viewport': 500, 'buttons': 7, 'bad': [], 'widths': [('Changer', 78), ('Créer la voix', 101), ('Lire', 49), ('Refaire la distribution', 157), ('Écouter', 73)]}
+distribution-500px-change {'viewport': 500, 'buttons': 34, 'bad': [], 'widths': [('Attribuer', 81), ('Changer', 78), ('Créer la voix', 101), ('Essayer sur la réplique', 163), ('Lire', 49), ('Refaire la distribution', 157), ('Écouter', 73), ('Écouter la voix', 115)]}
+distribution-900px {'viewport': 900, 'buttons': 7, 'bad': [], 'widths': [('Changer', 78), ('Créer la voix', 101), ('Lire', 49), ('Refaire la distribution', 157), ('Écouter', 73)]}
+distribution-900px-change {'viewport': 900, 'buttons': 34, 'bad': [], 'widths': [('Attribuer', 81), ('Changer', 78), ('Créer la voix', 101), ('Essayer sur la réplique', 163), ('Lire', 49), ('Refaire la distribution', 157), ('Écouter', 73), ('Écouter la voix', 115)]}

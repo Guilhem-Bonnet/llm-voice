@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-markup-0001",
+  "cwd": "/home/user/projects/exemple",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "# Bilan\n\nLa **file d'attente** est *corrigée* et ~~plus~~ __jamais__ bloquée. Voir [le guide](https://example.test/guide) pour la suite.\n\n> Une remarque citée.\n\n---\n\nFin du `bilan`."
+}

@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/direction-v1/bible.schema.json",
+  "title": "Projection de la bible (ADR-015 §4)",
+  "description": "Projection d'une bible (distribution + mémoire) pour UNE portée. Règle d'écriture (anti-empoisonnement) : les faits proposés par un LLM (`by` = analyst, director, ou attribution `casting`) ne s'écrivent que dans la portée `document` ; les portées `series` et `user` n'acceptent que `by: user` et n'ont pas d'analyse. Règles que JSON Schema ne sait pas exprimer et que le code vérifie (`checkBible`) : unicité des `id` de rôle, voix du narrateur jamais attribuée à un personnage.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "scope", "scopeKey", "revision", "narrator", "characters"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "scope": { "enum": ["document", "series", "user"] },
+    "scopeKey": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 0 },
+    "analysis": { "$ref": "#/$defs/analysis" },
+    "narrator": { "$ref": "#/$defs/role", "type": "object", "properties": { "id": { "const": "narrator" } } },
+    "characters": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/role", "type": "object", "properties": { "id": { "not": { "const": "narrator" } } } }
+    }
+  },
+  "if": { "type": "object", "properties": { "scope": { "const": "document" } }, "required": ["scope"] },
+  "else": {
+    "type": "object",
+    "properties": {
+      "analysis": false,
+      "narrator": { "$ref": "#/$defs/userRole" },
+      "characters": { "type": "array", "items": { "$ref": "#/$defs/userRole" } }
+    }
+  },
+  "$defs": {
+    "dateTime": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$",
+      "description": "Date-heure RFC 3339 (motif plutôt que `format`, qui exigerait ajv-formats)."
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "by", "at"],
+      "properties": {
+        "value": { "type": "string", "maxLength": 200 },
+        "by": { "enum": ["analyst", "director", "user"] },
+        "at": { "$ref": "#/$defs/dateTime" },
+        "sourceIds": { "type": "array", "items": { "type": "string" } },
+        "locked": { "type": "boolean" }
+      }
+    },
+    "userFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "by", "at"],
+      "properties": {
+        "value": { "type": "string", "maxLength": 200 },
+        "by": { "const": "user" },
+        "at": { "$ref": "#/$defs/dateTime" },
+        "sourceIds": { "type": "array", "items": { "type": "string" } },
+        "locked": { "type": "boolean" }
+      }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "fromSourceId", "by"],
+      "properties": {
+        "label": { "type": "string" },
+        "fromSourceId": { "type": "string" },
+        "untilSourceId": { "type": "string" },
+        "by": { "enum": ["analyst", "director", "user"] }
+      }
+    },
+    "userState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "fromSourceId", "by"],
+      "properties": {
+        "label": { "type": "string" },
+        "fromSourceId": { "type": "string" },
+        "untilSourceId": { "type": "string" },
+        "by": { "const": "user" }
+      }
+    },
+    "assignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["voiceRef", "by"],
+      "properties": {
+        "voiceRef": { "type": "string" },
+        "by": { "enum": ["casting", "user"] },
+        "locked": { "type": "boolean" }
+      }
+    },
+    "userAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["voiceRef", "by"],
+      "properties": {
+        "voiceRef": { "type": "string" },
+        "by": { "const": "user" },
+        "locked": { "type": "boolean" }
+      }
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "names", "traits", "voice"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "names": { "type": "array", "items": { "type": "string" } },
+        "traits": { "type": "object", "additionalProperties": { "$ref": "#/$defs/fact" } },
+        "states": { "type": "array", "items": { "$ref": "#/$defs/state" } },
+        "voice": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "descriptor": { "$ref": "#/$defs/fact" },
+            "assignments": { "type": "object", "additionalProperties": { "$ref": "#/$defs/assignment" }, "description": "Clé = `providerId` : une voix Chatterbox clonée et une voix Piper ne sont pas interchangeables." }
+          }
+        }
+      }
+    },
+    "userRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "names", "traits", "voice"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "names": { "type": "array", "items": { "type": "string" } },
+        "traits": { "type": "object", "additionalProperties": { "$ref": "#/$defs/userFact" } },
+        "states": { "type": "array", "items": { "$ref": "#/$defs/userState" } },
+        "voice": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "descriptor": { "$ref": "#/$defs/userFact" },
+            "assignments": { "type": "object", "additionalProperties": { "$ref": "#/$defs/userAssignment" } }
+          }
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "genre": { "type": "string" },
+        "intent": { "type": "string" },
+        "audience": { "type": "string" },
+        "baseTone": { "type": "string" },
+        "narratorPersona": { "type": "string" },
+        "readingProfileId": { "type": "string" }
+      }
+    }
+  }
+}

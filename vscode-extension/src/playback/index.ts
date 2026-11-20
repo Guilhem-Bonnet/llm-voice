@@ -8,6 +8,7 @@
 
 export * from "./emitter.js";
 export * from "./AudioSink.js";
+export * from "./SequencedAudioSink.js";
 export * from "./AudioCache.js";
 export * from "./DiskAudioCache.js";
 export * from "./AudioQueue.js";

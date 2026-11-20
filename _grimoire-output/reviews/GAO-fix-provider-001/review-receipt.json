@@ -1,0 +1,11 @@
+{
+  "$schema": "grimoire-review-receipt/v1",
+  "task_id": "GAO-fix-provider-001",
+  "verdict": "READY",
+  "findings": [],
+  "reviewer_id": "cli",
+  "model": "",
+  "tree_fingerprint": "7b0f5c2e38ba5068f6a9a0e8ed23a7e3a4175aa9b52ff5f12c33a695e9ebb3dd",
+  "evidence_pack_sha256": null,
+  "written_at": "2026-11-05T18:57:44.066434+00:00"
+}

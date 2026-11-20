@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "grimoire-hook --host copilot --event Stop",
+        "timeout": 60
+      }
+    ]
+  }
+}

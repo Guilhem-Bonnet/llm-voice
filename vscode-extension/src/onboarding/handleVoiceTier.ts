@@ -1,6 +1,6 @@
 /**
- * The decision logic behind `LLM Voice: Setup Voice`'s three tiers (S7.2),
- * factored out of `SetupVoice.ts` so it is unit-testable in plain Node —
+ * The decision logic behind the three tiers of `chooseVoice` (S7.2, ADR-017 §3),
+ * kept apart from `Pipeline.ts` so it is unit-testable in plain Node —
  * same idea as `src/ui/notifications.ts` (see that file's header): every
  * `vscode` call this needs comes in as an explicit `VoiceTierActions`
  * parameter instead of an `import * as vscode`, so a test can pass a stub
@@ -38,8 +38,8 @@ export interface VoiceTierActions {
   writeClipboardText: (text: string) => PromiseLike<void>;
   /**
    * Bug fix (voice-selection-not-applied / infinite loop): persists
-   * `ttsBindingForTier(tier)` onto the active profile (`Pipeline.
-   * applyVoiceTierChoice`). Called unconditionally, before any
+   * `ttsBindingForTier(tier)` as the global voice (`Pipeline.
+   * applyVoiceTierChoice`, ADR-017). Called unconditionally, before any
    * tier-specific dialog — the choice is made the moment the user picks a
    * row in `Setup Voice`'s Quick Pick, not once a background install or a
    * Docker container happens to finish, so it survives even a dismissed
@@ -47,12 +47,26 @@ export interface VoiceTierActions {
    * the choice itself).
    */
   applyProviderChoice: (tier: VoiceTier) => PromiseLike<void>;
+  /**
+   * Real-user bug (2026-11-05): "je n'ai aucun moyen de réellement choisir
+   * une voix via l'interface" — `handleVoiceTier` used to stop at applying
+   * a *tier* (system/piper/chatterbox), never actually opening a voice
+   * picker. `Pipeline.chooseEngineVoice()` (ADR-017) is that picker — called here right after "system"
+   * and "piper" settle (both reach a locally-reachable `SystemTtsProvider`
+   * synchronously, no server to wait for), never after "chatterbox" (its
+   * server may not even be running yet — `showChatterboxInstructions`'s dialog is
+   * instructions, not a ready signal).
+   */
+  browseVoices: () => PromiseLike<void>;
 }
 
 const COPY_COMMAND_LABEL = "Copier la commande";
 const OPEN_DOCS_LABEL = "Ouvrir la documentation";
 
-async function handleChatterbox(actions: VoiceTierActions): Promise<void> {
+/** The instructions alone, writing nothing: "Préparer" in the gallery (card 0-005). */
+export async function showChatterboxInstructions(
+  actions: Pick<VoiceTierActions, "showMessage" | "openExternal" | "writeClipboardText">
+): Promise<void> {
   const choice = await actions.showMessage(
     "Chatterbox offre la meilleure qualité de voix (clonage inclus) mais nécessite Docker. " +
       `Démarrez le service localement :\n\n${CHATTERBOX_COMPOSE_COMMAND}`,
@@ -68,7 +82,7 @@ async function handleChatterbox(actions: VoiceTierActions): Promise<void> {
   }
 }
 
-/** `handleTier` (`SetupVoice.ts`'s exported name for this): dispatches on the Quick Pick's chosen tier. */
+/** Dispatches on the tier chosen in `chooseVoice` (ADR-017 §3). */
 export async function handleVoiceTier(tier: VoiceTier, actions: VoiceTierActions): Promise<void> {
   // Bug fix (voice-selection-not-applied / infinite loop): persist the
   // choice first, unconditionally — see `VoiceTierActions.applyProviderChoice`'s
@@ -78,12 +92,14 @@ export async function handleVoiceTier(tier: VoiceTier, actions: VoiceTierActions
     case "system":
       // Nothing to install — `SystemTtsProvider` (S7.1) already works.
       await actions.showMessage(SYSTEM_VOICE_READY_MESSAGE, {});
+      await actions.browseVoices();
       return;
     case "piper":
       await actions.executeCommand(INSTALL_PIPER_VOICE_COMMAND);
+      await actions.browseVoices();
       return;
     case "chatterbox":
-      await handleChatterbox(actions);
+      await showChatterboxInstructions(actions);
       return;
   }
 }

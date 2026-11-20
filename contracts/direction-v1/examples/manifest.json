@@ -1,0 +1,356 @@
+{
+  "description": "Table exemple -> schéma -> verdict attendu, rejouée par vitest (Zod ET ajv). `layer: schema` = rejeté par le JSON Schema et par Zod ; `layer: semantic` = accepté par les deux schémas, rejeté par checkPartition/checkBible. `pair` = { bible, partition } validés chacun puis recoupés (locuteurs).",
+  "examples": [
+    {
+      "file": "valid/partition.neutral.json",
+      "kind": "partition",
+      "valid": true
+    },
+    {
+      "file": "valid/partition.roman-dialogues.json",
+      "kind": "partition",
+      "valid": true
+    },
+    {
+      "file": "valid/partition.technical-doc.json",
+      "kind": "partition",
+      "valid": true
+    },
+    {
+      "file": "valid/partition.ai-reply.json",
+      "kind": "partition",
+      "valid": true
+    },
+    {
+      "file": "valid/partition.edge-of-bounds.json",
+      "kind": "partition",
+      "valid": true,
+      "note": "toutes les bornes de l'ADR-015 §7 atteintes exactement"
+    },
+    {
+      "file": "valid/bible.document-roman.json",
+      "kind": "bible",
+      "valid": true
+    },
+    {
+      "file": "valid/bible.document-technical.json",
+      "kind": "bible",
+      "valid": true
+    },
+    {
+      "file": "valid/bible.document-ai-reply.json",
+      "kind": "bible",
+      "valid": true
+    },
+    {
+      "file": "valid/bible.series-user-written.json",
+      "kind": "bible",
+      "valid": true
+    },
+    {
+      "file": "valid/bible.user-preferences.json",
+      "kind": "bible",
+      "valid": true
+    },
+    {
+      "file": "valid/pair.roman-dialogues.json",
+      "kind": "pair",
+      "valid": true
+    },
+    {
+      "file": "valid/pair.technical-doc.json",
+      "kind": "pair",
+      "valid": true
+    },
+    {
+      "file": "valid/pair.ai-reply.json",
+      "kind": "pair",
+      "valid": true
+    },
+    {
+      "file": "valid/pair.neutral.json",
+      "kind": "pair",
+      "valid": true
+    },
+    {
+      "file": "invalid/partition.tempo-too-high.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "tempo 1,5 > 1,4 (ADR-015 §7)"
+    },
+    {
+      "file": "invalid/partition.tempo-too-low.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "tempo 0,5 < 0,7"
+    },
+    {
+      "file": "invalid/partition.pause-before-over-bound.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "pauseBeforeMs 3001 > 3000"
+    },
+    {
+      "file": "invalid/partition.pause-after-negative.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "pauseAfterMs négatif"
+    },
+    {
+      "file": "invalid/partition.pause-not-integer.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "pauseAfterMs non entier"
+    },
+    {
+      "file": "invalid/partition.intensity-over-one.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "emotion.intensity 1,2 > 1"
+    },
+    {
+      "file": "invalid/partition.valence-under-minus-one.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "emotion.valence < -1"
+    },
+    {
+      "file": "invalid/partition.emphasis-six-items.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "6 mots appuyés > 5"
+    },
+    {
+      "file": "invalid/partition.direction-281-chars.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "direction de 281 caractères > 280"
+    },
+    {
+      "file": "invalid/partition.states-five-items.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "5 états transitoires > 4"
+    },
+    {
+      "file": "invalid/partition.nonverbal-three-items.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "3 marqueurs non verbaux > 2"
+    },
+    {
+      "file": "invalid/partition.nonverbal-unknown-kind.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "kind hors vocabulaire fermé"
+    },
+    {
+      "file": "invalid/partition.missing-speaker-id.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "champ requis speakerId absent"
+    },
+    {
+      "file": "invalid/partition.missing-spoken-text.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "champ requis spokenText absent"
+    },
+    {
+      "file": "invalid/partition.empty-spoken-text.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "spokenText vide"
+    },
+    {
+      "file": "invalid/partition.empty-source-ids.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "sourceIds vide (minItems 1)"
+    },
+    {
+      "file": "invalid/partition.bad-cue-id.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "cueId hors du motif segmentId du Core"
+    },
+    {
+      "file": "invalid/partition.speaker-id-uppercase.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "speakerId hors du motif ^[a-z0-9-]+$"
+    },
+    {
+      "file": "invalid/partition.unknown-cue-field.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "champ moteur inconnu (le LLM n'émet jamais de paramètre moteur, ADR-015 §5.1)"
+    },
+    {
+      "file": "invalid/partition.bad-document-key.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "documentKey n'est pas un sha256 hexadécimal"
+    },
+    {
+      "file": "invalid/partition.wrong-schema-version.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "schemaVersion différente de 1.0"
+    },
+    {
+      "file": "invalid/partition.missing-cues.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "schema",
+      "reason": "champ requis cues absent"
+    },
+    {
+      "file": "invalid/bible.series-with-llm-fact.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "portée series : fait proposé par un LLM (by: analyst) — écriture interdite"
+    },
+    {
+      "file": "invalid/bible.user-with-director-state.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "portée user : état proposé par le metteur en scène"
+    },
+    {
+      "file": "invalid/bible.series-with-casting-assignment.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "portée series : attribution de voix par casting (LLM) — écriture interdite"
+    },
+    {
+      "file": "invalid/bible.series-with-analysis.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "portée series : l'analyse du document n'a pas sa place hors portée document"
+    },
+    {
+      "file": "invalid/bible.user-with-llm-descriptor.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "portée user : descripteur de voix proposé par l'analyste"
+    },
+    {
+      "file": "invalid/bible.character-named-narrator.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "un personnage ne peut pas prendre l'id réservé narrator"
+    },
+    {
+      "file": "invalid/bible.narrator-wrong-id.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "l'id du rôle narrateur doit être narrator"
+    },
+    {
+      "file": "invalid/bible.missing-narrator.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "champ requis narrator absent"
+    },
+    {
+      "file": "invalid/bible.unknown-scope.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "scope hors de document/series/user"
+    },
+    {
+      "file": "invalid/bible.fact-value-201-chars.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "valeur de fait de 201 caractères > 200"
+    },
+    {
+      "file": "invalid/bible.fact-missing-date.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "fait sans date `at`"
+    },
+    {
+      "file": "invalid/bible.fact-bad-date.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "`at` n'est pas une date-heure RFC 3339"
+    },
+    {
+      "file": "invalid/bible.unknown-fact-author.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "schema",
+      "reason": "auteur de fait hors de analyst/director/user"
+    },
+    {
+      "file": "invalid/pair.unknown-speaker.json",
+      "kind": "pair",
+      "valid": false,
+      "layer": "semantic",
+      "reason": "locuteur gaston absent de la bible"
+    },
+    {
+      "file": "invalid/pair.unknown-speaker-technical.json",
+      "kind": "pair",
+      "valid": false,
+      "layer": "semantic",
+      "reason": "documentation à distribution réduite au narrateur : locuteur marguerite absent"
+    },
+    {
+      "file": "invalid/partition.duplicate-cue-id.json",
+      "kind": "partition",
+      "valid": false,
+      "layer": "semantic",
+      "reason": "deux consignes de même cueId (les identifiants de silence dériveraient en double)"
+    },
+    {
+      "file": "invalid/bible.duplicate-role-id.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "semantic",
+      "reason": "deux rôles de même id"
+    },
+    {
+      "file": "invalid/bible.narrator-voice-on-character.json",
+      "kind": "bible",
+      "valid": false,
+      "layer": "semantic",
+      "reason": "la voix du narrateur est attribuée à un personnage (ADR-015 §7)"
+    }
+  ]
+}

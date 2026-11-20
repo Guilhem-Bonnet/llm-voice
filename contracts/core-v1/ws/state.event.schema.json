@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/core-v1/ws/state.event.schema.json",
+  "title": "Événement WS — state",
+  "description": "Changement d'état de la file (`PlaybackState` de `llm-voice-audio`), émis à chaque transition, jamais en battement de cœur.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "type", "state", "positionMs"],
+  "properties": {
+    "protocolVersion": { "$ref": "../common.schema.json#/$defs/protocolVersion" },
+    "type": { "const": "state" },
+    "state": { "type": "string", "enum": ["stopped", "playing", "paused", "ended"] },
+    "positionMs": { "$ref": "../common.schema.json#/$defs/positionMs" }
+  }
+}

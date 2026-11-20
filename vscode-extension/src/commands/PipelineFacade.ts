@@ -30,7 +30,8 @@ export interface PipelineFacade {
   stop(): Promise<void>;
   previousSegment(): Promise<void>;
   nextSegment(): Promise<void>;
-  selectProfile(): Promise<void>;
+  /** `LLM Voice: Choisir le mode` (ADR-017 §3): never touches the voice. */
+  chooseMode(): Promise<void>;
   /** Non-interactive: selects a profile by id without a Quick Pick (CdC §47). */
   selectProfileById(id: string): Promise<void>;
   openProfiles(): Promise<void>;
@@ -50,27 +51,22 @@ export interface PipelineFacade {
   /** `LLM Voice: Clear Provider API Key` (AC-17). */
   clearProviderApiKey(): Promise<void>;
   openInbox(): Promise<void>;
-  speakLatestClaudeResponse(): Promise<void>;
+  speakLatestResponse(): Promise<void>;
   clearAudioCache(): Promise<void>;
   verifyLocalMode(): Promise<void>;
   installClaudeHook(): Promise<void>;
   uninstallClaudeHook(): Promise<void>;
   /** `LLM Voice: Install Local Voice (Piper)` (S7.1, ADR-009 §3). */
   installPiperVoice(): Promise<void>;
-  /** `LLM Voice: Browse Voices` (S8.2, CdC §72). */
-  browseVoices(): Promise<void>;
+  /** `LLM Voice: Choisir la voix` (ADR-017 §3): writes the global voice. */
+  chooseVoice(): Promise<void>;
+  /** `LLM Voice: Ouvrir la galerie de voix` (card 0-005): one tab, plays nothing by itself. */
+  openVoiceGallery(): Promise<void>;
   /** `LLM Voice: Use My Own Voice` (S8.2, CdC §55). */
   useOwnVoice(): Promise<void>;
   /** `LLM Voice: Edit Profile` (S8.2, CdC §49). */
   editProfile(): Promise<void>;
-  /**
-   * `LLM Voice: Setup Voice` (S7.2), bug fix (voice-selection-not-applied /
-   * infinite loop, 2026-09-12): applies the tier the Quick Pick just chose
-   * to the active profile's `tts` binding (`Pipeline.applyVoiceTierChoice`).
-   * `extension.ts` wires the real implementation lazily through
-   * `pipelineRef` — `llmVoice.setupVoice` registers before `Pipeline` itself
-   * exists.
-   */
+  /** A quality tier of `chooseVoice`, applied to the global voice (`Pipeline.applyVoiceTierChoice`). */
   applyVoiceTierChoice(tier: VoiceTier): Promise<void>;
 }
 
@@ -108,7 +104,7 @@ export class NotWiredPipeline implements PipelineFacade {
     return this.notWired();
   }
 
-  selectProfile(): Promise<void> {
+  chooseMode(): Promise<void> {
     return this.notWired();
   }
 
@@ -164,7 +160,7 @@ export class NotWiredPipeline implements PipelineFacade {
     return this.notWired();
   }
 
-  speakLatestClaudeResponse(): Promise<void> {
+  speakLatestResponse(): Promise<void> {
     return this.notWired();
   }
 
@@ -188,7 +184,11 @@ export class NotWiredPipeline implements PipelineFacade {
     return this.notWired();
   }
 
-  browseVoices(): Promise<void> {
+  chooseVoice(): Promise<void> {
+    return this.notWired();
+  }
+
+  openVoiceGallery(): Promise<void> {
     return this.notWired();
   }
 

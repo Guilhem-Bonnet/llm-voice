@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-voice.dev/contracts/direction-v1/partition.schema.json",
+  "title": "Partition de lecture (ADR-015 §3)",
+  "description": "Partition VALIDÉE, indépendante du moteur : une consigne par groupe de segments source. Les bornes numériques sont celles des garde-fous de l'ADR-015 §7 ; la sortie brute du LLM est validée par un schéma sans bornes (côté Zod, `RawDirectionOutputSchema`) puis ramenée dans ces bornes par le contrôleur. Règles que JSON Schema ne sait pas exprimer et que le code vérifie (`checkPartition`) : unicité des `cueId`, `speakerId` présent dans la bible, `emphasis` sous-chaînes exactes de `spokenText` (sinon ignoré au ramenage).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "documentKey", "bibleRevision", "cues"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "documentKey": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "sha256 hexadécimal de la clé de portée `document`." },
+    "bibleRevision": { "type": "integer", "minimum": 0, "description": "Révision de la bible effective avec laquelle la partition a été produite." },
+    "cues": { "type": "array", "items": { "$ref": "#/$defs/cue" } }
+  },
+  "$defs": {
+    "cue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cueId", "sourceIds", "speakerId", "spokenText"],
+      "properties": {
+        "cueId": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$", "description": "Même motif que le `segmentId` du Core v1 (`contracts/core-v1/common.schema.json`) : sert de base aux identifiants `<cueId>-pre` et `<cueId>-post` des silences." },
+        "sourceIds": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "speakerId": { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "Identifiant d'un rôle de la bible ; `narrator` est réservé au narrateur." },
+        "spokenText": { "type": "string", "minLength": 1, "description": "Texte sonore : forme orale à prononcer, sans paraphrase (ADR-015 §6)." },
+        "emotion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["label", "intensity"],
+          "properties": {
+            "label": { "type": "string", "maxLength": 40 },
+            "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+            "valence": { "type": "number", "minimum": -1, "maximum": 1 },
+            "arousal": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "tempo": { "type": "number", "minimum": 0.7, "maximum": 1.4, "description": "Multiplicateur de la vitesse du profil." },
+        "pauseBeforeMs": { "type": "integer", "minimum": 0, "maximum": 3000 },
+        "pauseAfterMs": { "type": "integer", "minimum": 0, "maximum": 3000 },
+        "emphasis": { "type": "array", "items": { "type": "string", "minLength": 1 }, "maxItems": 5 },
+        "direction": { "type": "string", "maxLength": 280, "description": "Note de jeu en langage naturel, jamais synthétisée." },
+        "states": { "type": "array", "items": { "type": "string", "maxLength": 40 }, "maxItems": 4 },
+        "nonverbal": {
+          "type": "array",
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "at"],
+            "properties": {
+              "kind": { "enum": ["breath", "sigh", "laugh", "cough", "hesitation"] },
+              "at": { "enum": ["before", "after"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

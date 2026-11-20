@@ -40,6 +40,19 @@ export function isEnglishVoice(voice: Voice, profileLanguage: string): boolean {
   return /\ben(glish)?\b/i.test(voice.label) || /\ben(glish)?\b/i.test(voice.id);
 }
 
+/**
+ * ADR-017 §1.3 "Langue": `isEnglishVoice`, generalised. True only when a language
+ * is declared and differs from the mode's, or when the English name heuristic
+ * above fires. A voice whose language is unknown never raises anything, and this
+ * only ever informs: inheritance does not depend on it (choice 4 of the ADR).
+ */
+export function voiceLanguageDiffers(voice: Pick<Voice, "id" | "label" | "language">, modeLanguage: string): boolean {
+  if (voice.language !== undefined) {
+    return primaryLanguageSubtag(voice.language) !== primaryLanguageSubtag(modeLanguage);
+  }
+  return isEnglishVoice({ ...voice }, modeLanguage);
+}
+
 /** One row of the `Browse Voices` Quick Pick, buttons included. */
 export interface VoiceQuickPickItem {
   voiceId: string;

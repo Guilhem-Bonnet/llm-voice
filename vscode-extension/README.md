@@ -41,7 +41,7 @@ Réglage `llmVoice.ui.layout: "minimal"` (voir `docs/adr/ADR-011-ui-layout.md`).
 | **Voix française autonome (Piper, recommandé)** | Meilleure, 100 % locale | Téléchargement automatique au premier `Speak` (~60 Mo, une fois) — aucun Docker, aucun serveur |
 | **Qualité maximale (avancé)** | Meilleure, clonage de voix | Nécessite Docker (`deploy/docker-compose.tts.yml`) — pour qui le veut, jamais par défaut |
 
-**LLM Voice: Setup Voice** détecte ce qui est disponible et vous guide — jamais
+**LLM Voice: Choisir la voix** détecte ce qui est disponible et vous guide — jamais
 besoin de deviner un port ou une variable d'environnement.
 
 ## 4 profils
@@ -56,12 +56,25 @@ besoin de deviner un port ou une variable d'environnement.
 **LLM Voice: Select Profile** change de profil ; **LLM Voice: Open Profiles**
 édite `profiles.json` (validé par schéma JSON).
 
-## Inbox Claude Code
+## Jeu d'acteurs
 
-Les réponses de Claude Code peuvent être capturées automatiquement dans une
-inbox dédiée (**LLM Voice: Open Inbox**, **LLM Voice: Speak Latest Claude
-Response**). En attendant, **LLM Voice: Speak Clipboard** lit n'importe quel
-texte copié.
+Une pièce de théâtre (`ROMÉO : réplique`, `NOM` seul sur sa ligne) ou un texte
+balisé (`@nom: réplique`, `% nom = voix`) se lit avec un narrateur et une voix
+par personnage, sur Kyutai TTS 1.6B et en mode Fidèle. Le bloc « Document
+ouvert » propose **Lire à plusieurs voix** : ce bouton change un réglage retenu
+pour ce document et ne lance jamais la lecture. **Distribution** change la voix
+d'un personnage pour la lecture suivante. Pour essayer :
+`docs/essais-voix/theatre-demo.md`.
+
+## Réponses
+
+La liste **Réponses** réunit les réponses déposées par vos outils, avec la durée
+estimée de chacune. **LLM Voice: Lire la dernière réponse** (`Ctrl+Alt+V` puis
+`R`, aussi depuis le terminal intégré) lit la plus récente, quel que soit
+l'outil. Rien ne se lit tout seul : une réponse qui arrive attend votre geste.
+Aujourd'hui, Claude Code dépose ses réponses via **LLM Voice: Install Claude
+Hook** ; pour tout autre outil, copiez la réponse puis **Lire le presse-papiers**
+(`Ctrl+Alt+V` puis `C`).
 
 ## La promesse locale
 

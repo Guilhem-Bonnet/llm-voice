@@ -19,10 +19,36 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+/**
+ * `--target <target>` (S1, GAO-s1-fedora-pa-001): a target-specific VSIX
+ * carries `bin/<target>/llm-voice-core` (ADR-012 §7). Without `--target`,
+ * the default universal VSIX (webview engine only, no Core) is checked as
+ * before — `bin/` must not exist in that build at all.
+ */
+const targetFlagIndex = process.argv.indexOf("--target");
+const target = targetFlagIndex >= 0 ? process.argv[targetFlagIndex + 1] : undefined;
+const KNOWN_TARGETS = ["linux-x64", "linux-arm64", "darwin-x64", "darwin-arm64", "win32-x64"];
+if (target !== undefined && !KNOWN_TARGETS.includes(target)) {
+  console.error(`check-vsix: cible inconnue "${target}". Cibles valides : ${KNOWN_TARGETS.join(", ")}`);
+  process.exit(1);
+}
+function coreBinaryNameFor(t) {
+  return t.startsWith("win32") ? "llm-voice-core.exe" : "llm-voice-core";
+}
+/**
+ * S1 (Fedora/Wayland first, decisions-log 2026-09-28): only `linux-x64`
+ * actually ships a binary today. `darwin`/`win32` targets are accepted by
+ * `stage-core.mjs`'s target list but not yet wired to a CI job — checking
+ * them here would require a Core release binary this repo does not build
+ * yet, so they are out of this gate's scope until S3/S4.
+ */
+const TOTAL_SIZE_CAP_BYTES = 20 * 1024 * 1024; // dist/ ~4.5 MB + Core release binary ~3 MB + media/docs, generous margin
 
 /** [label, predicate] — a shipped file matching any of these fails the gate. */
 const FORBIDDEN = [
@@ -62,6 +88,16 @@ const FORBIDDEN = [
 const ALLOWED_PREFIXES = ["media/", "resources/", "schemas/", "dist/"];
 const ALLOWED_EXACT_FILES = ["package.json", "README.md", "LICENSE", "CHANGELOG.md"];
 
+if (target !== undefined) {
+  ALLOWED_PREFIXES.push(`bin/${target}/`);
+  FORBIDDEN.push([
+    "binaire d'une autre cible que celle packagée",
+    (file) => file.startsWith("bin/") && !file.startsWith(`bin/${target}/`)
+  ]);
+} else {
+  FORBIDDEN.push(["binaire du Core dans le VSIX universel", (file) => file.startsWith("bin/")]);
+}
+
 function isWhitelisted(file) {
   return ALLOWED_EXACT_FILES.includes(file) || ALLOWED_PREFIXES.some((prefix) => file.startsWith(prefix));
 }
@@ -72,7 +108,15 @@ const REQUIRED = [
   "dist/extension.js",
   "media/player/player.js",
   "media/player/player.css",
+  "media/voiceGallery/voiceGallery.js",
+  "media/voiceGallery/voiceGallery.css",
+  "media/voices/CREDITS.md",
+  // Every sample the catalogue names: `Écouter` plays them with no server at all.
+  ...[...readFileSync(resolve(root, "src/tts/kyutaiVoiceCatalog.ts"), "utf8").matchAll(/^ {2}(?:vctk|voiceZero|voice)\("([a-z_]+)"/gm)].map(
+    (match) => `media/voices/${match[1]}.ogg`
+  ),
   "schemas/profile-collection.schema.json",
+  "schemas/global-voice.schema.json",
   // S7.2: the extension's Marketplace page (README) and the two other
   // files VS Code surfaces in the extension details view — a `.vscodeignore`
   // that swallows any of these silently ships a blank "no README" page
@@ -87,6 +131,15 @@ const REQUIRED = [
   "media/walkthrough/connect-claude.svg"
 ];
 
+if (target !== undefined) {
+  REQUIRED.push(`bin/${target}/${coreBinaryNameFor(target)}`);
+}
+
+// `vsce ls` has no `--target` flag (it just lists whatever `.vscodeignore`
+// allows on disk, same file set `vsce package --target <t>` would zip since
+// packaging never adds files beyond what is already present under
+// `vscode-extension/` — `bin/<target>/` included, once `stage-core.mjs` put
+// a binary there).
 const listed = execFileSync("npx", ["vsce", "ls", "--no-dependencies"], {
   cwd: root,
   encoding: "utf8",
@@ -110,7 +163,41 @@ for (const file of listed) {
 
 const missing = REQUIRED.filter((required) => !listed.includes(required));
 
-console.log(`check-vsix: ${listed.length} files would be packaged.`);
+/**
+ * `vsce ls` only lists paths, not permission bits or sizes — it reads the
+ * `.vscodeignore`-filtered file list, not the zip. Both extra checks below
+ * therefore stat the files on disk at the same project-relative paths
+ * `vsce` would package (true for everything here: nothing is generated
+ * inside the zip itself).
+ */
+if (target !== undefined) {
+  const binaryPath = `bin/${target}/${coreBinaryNameFor(target)}`;
+  if (listed.includes(binaryPath)) {
+    const mode = statSync(resolve(root, binaryPath)).mode;
+    if (!target.startsWith("win32") && (mode & 0o111) === 0) {
+      violations.push(`binaire non exécutable : ${binaryPath} (mode ${(mode & 0o777).toString(8)})`);
+    }
+  }
+}
+
+let totalSize = 0;
+for (const file of listed) {
+  try {
+    totalSize += statSync(resolve(root, file)).size;
+  } catch {
+    // A handful of `vsce ls` entries do not resolve to a real file on disk
+    // (none currently do for this extension); skip rather than crash the
+    // gate on an unrelated `vsce` quirk.
+  }
+}
+if (totalSize > TOTAL_SIZE_CAP_BYTES) {
+  violations.push(
+    `taille totale ${(totalSize / (1024 * 1024)).toFixed(2)} Mio dépasse le plafond ` +
+      `${(TOTAL_SIZE_CAP_BYTES / (1024 * 1024)).toFixed(0)} Mio (dist/ + Core release + media/docs)`
+  );
+}
+
+console.log(`check-vsix: ${listed.length} files would be packaged (~${(totalSize / (1024 * 1024)).toFixed(2)} Mio non compressés).`);
 
 if (violations.length > 0 || missing.length > 0) {
   for (const violation of violations) {

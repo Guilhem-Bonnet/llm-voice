@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "scope": "user",
+  "scopeKey": "user",
+  "revision": 2,
+  "narrator": {
+    "id": "narrator",
+    "names": [],
+    "traits": {
+      "tempoBase": {
+        "value": "0.95",
+        "by": "user",
+        "at": "2026-09-29T10:15:00Z"
+      },
+      "voixInterdites": {
+        "value": "voix-robot-1",
+        "by": "user",
+        "at": "2026-09-29T10:15:00Z",
+        "locked": true
+      }
+    },
+    "voice": {
+      "descriptor": {
+        "value": "voix chaude",
+        "by": "user",
+        "at": "2026-09-29T12:00:00+02:00"
+      }
+    }
+  },
+  "characters": []
+}

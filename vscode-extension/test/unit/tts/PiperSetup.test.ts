@@ -11,7 +11,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AssetDownloadDeniedError } from "../../../src/net/AssetDownloader.js";
-import { getPiperBinaryAsset, installPiperVoice, resolvePlatformKey } from "../../../src/tts/PiperSetup.js";
+import {
+  getPiperBinaryAsset,
+  installPiperVoice,
+  isPiperAlreadyInstalled,
+  resolvePlatformKey
+} from "../../../src/tts/PiperSetup.js";
 
 describe("resolvePlatformKey / getPiperBinaryAsset", () => {
   it("resolves every supported platform/arch pair from piperAssets.json", () => {
@@ -37,6 +42,47 @@ describe("resolvePlatformKey / getPiperBinaryAsset", () => {
       expect(asset?.url.startsWith("https://github.com/")).toBe(true);
       expect(asset?.sizeBytes).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("isPiperAlreadyInstalled", () => {
+  let installDir: string | undefined;
+
+  afterEach(async () => {
+    if (installDir !== undefined) {
+      await rm(installDir, { recursive: true, force: true });
+      installDir = undefined;
+    }
+  });
+
+  it("treats a voice model without its config as not installed: an interrupted install stays repairable", async () => {
+    installDir = await mkdtemp(join(tmpdir(), "piper-already-test-"));
+    await mkdir(join(installDir, "bin"), { recursive: true });
+    await mkdir(join(installDir, "voices"), { recursive: true });
+    await writeFile(join(installDir, "bin", "piper"), "x");
+    await writeFile(join(installDir, "voices", "fr_FR-siwis-medium.onnx"), "x");
+    expect(await isPiperAlreadyInstalled(installDir, "linux")).toBeUndefined();
+  });
+
+  it("returns undefined on a fresh/empty directory", async () => {
+    installDir = await mkdtemp(join(tmpdir(), "piper-already-test-"));
+    expect(await isPiperAlreadyInstalled(installDir, "linux")).toBeUndefined();
+  });
+
+  it("returns the binary/voice paths once both files exist", async () => {
+    installDir = await mkdtemp(join(tmpdir(), "piper-already-test-"));
+    await mkdir(join(installDir, "bin"), { recursive: true });
+    await mkdir(join(installDir, "voices"), { recursive: true });
+    await writeFile(join(installDir, "bin", "piper"), "x");
+    await writeFile(join(installDir, "voices", "fr_FR-siwis-medium.onnx"), "x");
+    await writeFile(join(installDir, "voices", "fr_FR-siwis-medium.onnx.json"), "{}");
+
+    const result = await isPiperAlreadyInstalled(installDir, "linux");
+
+    expect(result).toEqual({
+      binaryPath: join(installDir, "bin", "piper"),
+      voiceModelPath: join(installDir, "voices", "fr_FR-siwis-medium.onnx")
+    });
   });
 });
 
@@ -76,6 +122,69 @@ describe("installPiperVoice", () => {
     expect(details.totalBytes).toBeGreaterThan(0);
     expect(details.piperLicense).toBeTruthy();
     expect(details.voiceLicense).toBeTruthy();
+  });
+
+  it("reports already-installed without prompting or downloading — real-user infinite-reinstall-loop bug fix (2026-11-05)", async () => {
+    const dir = await freshInstallDir();
+    await mkdir(join(dir, "bin"), { recursive: true });
+    await mkdir(join(dir, "voices"), { recursive: true });
+    await writeFile(join(dir, "bin", "piper"), "fake binary");
+    await writeFile(join(dir, "voices", "fr_FR-siwis-medium.onnx"), "fake model");
+    await writeFile(join(dir, "voices", "fr_FR-siwis-medium.onnx.json"), "{}");
+    const confirm = vi.fn();
+    const download = vi.fn();
+
+    const outcome = await installPiperVoice({
+      installDir: dir,
+      platform: "linux",
+      arch: "x64",
+      prompt: { confirm },
+      download
+    });
+
+    expect(outcome).toEqual({
+      status: "already-installed",
+      binaryPath: join(dir, "bin", "piper"),
+      voiceModelPath: join(dir, "voices", "fr_FR-siwis-medium.onnx")
+    });
+    expect(confirm).not.toHaveBeenCalled();
+    expect(download).not.toHaveBeenCalled();
+  });
+
+  it("reports already-installed on win32 with the .exe binary name", async () => {
+    const dir = await freshInstallDir();
+    await mkdir(join(dir, "bin"), { recursive: true });
+    await mkdir(join(dir, "voices"), { recursive: true });
+    await writeFile(join(dir, "bin", "piper.exe"), "fake binary");
+    await writeFile(join(dir, "voices", "fr_FR-siwis-medium.onnx"), "fake model");
+    await writeFile(join(dir, "voices", "fr_FR-siwis-medium.onnx.json"), "{}");
+
+    const outcome = await installPiperVoice({
+      installDir: dir,
+      platform: "win32",
+      arch: "x64",
+      prompt: { confirm: vi.fn() }
+    });
+
+    expect(outcome.status).toBe("already-installed");
+  });
+
+  it("still prompts and installs when only one of the two expected files is present (a partial/corrupt install)", async () => {
+    const dir = await freshInstallDir();
+    await mkdir(join(dir, "bin"), { recursive: true });
+    await writeFile(join(dir, "bin", "piper"), "fake binary");
+    // No `voices/fr_FR-siwis-medium.onnx` — incomplete.
+    const confirm = vi.fn().mockResolvedValue(false);
+
+    const outcome = await installPiperVoice({
+      installDir: dir,
+      platform: "linux",
+      arch: "x64",
+      prompt: { confirm }
+    });
+
+    expect(outcome).toEqual({ status: "declined" });
+    expect(confirm).toHaveBeenCalledTimes(1);
   });
 
   it("reports unsupported-platform without prompting", async () => {
@@ -148,13 +257,13 @@ describe("installPiperVoice", () => {
     expect(progressEvents.at(-1)?.fraction).toBeCloseTo(1, 1);
   });
 
-  it("leaves a previously-working install untouched when a retry fails", async () => {
+  it("leaves a partial prior attempt's files untouched when a retry fails (a complete prior install now short-circuits to already-installed instead, see above)", async () => {
     const dir = await freshInstallDir();
-    // Simulate a working prior install.
+    // Deliberately a *partial* prior attempt — the binary landed, the voice
+    // model didn't — not a complete install (`isPiperAlreadyInstalled`
+    // requires both), so this still reaches the download/swap path below.
     await mkdir(join(dir, "bin"), { recursive: true });
     await writeFile(join(dir, "bin", "piper"), "previous-good-binary");
-    await mkdir(join(dir, "voices"), { recursive: true });
-    await writeFile(join(dir, "voices", "fr_FR-siwis-medium.onnx"), "previous-good-voice");
 
     const download = vi.fn(async () => {
       throw new AssetDownloadDeniedError("untrusted-host", "evil.example");
@@ -169,8 +278,10 @@ describe("installPiperVoice", () => {
     });
 
     expect(outcome.status).toBe("failed");
+    // The atomic swap (`fsp.rename(stagingBin, binDir)`) only runs once
+    // every download succeeds — a failed attempt never touches `binDir` at
+    // all, so the leftover file from the partial prior attempt survives.
     expect(await readFile(join(dir, "bin", "piper"), "utf8")).toBe("previous-good-binary");
-    expect(await readFile(join(dir, "voices", "fr_FR-siwis-medium.onnx"), "utf8")).toBe("previous-good-voice");
   });
 
   it("leaves no staging directory behind after a failed attempt", async () => {

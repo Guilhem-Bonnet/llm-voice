@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-30T02:24:11.108Z",
+  "model": "qwen2.5:7b",
+  "status": "complete",
+  "decompose": [],
+  "remedies": [
+    {
+      "name": "conte / richesse C2",
+      "cues": 4,
+      "withEmotion": 0,
+      "withTempo": 0,
+      "withPause": 0,
+      "speakers": {
+        "narrator": 4
+      },
+      "emotions": [],
+      "runs": [
+        {
+          "wallMs": 4836,
+          "totalMs": 4834.3,
+          "loadMs": 77.7,
+          "promptTok": 453,
+          "promptMs": 156,
+          "genTok": 394,
+          "genMs": 4049.6,
+          "tokPerS": 97.3,
+          "done": "stop",
+          "chars": 1230
+        }
+      ]
+    },
+    {
+      "name": "doc-technique / richesse C2",
+      "cues": 4,
+      "withEmotion": 0,
+      "withTempo": 0,
+      "withPause": 0,
+      "speakers": {
+        "narrator": 4
+      },
+      "emotions": [],
+      "runs": [
+        {
+          "wallMs": 3694,
+          "totalMs": 3692.9,
+          "loadMs": 80.6,
+          "promptTok": 341,
+          "promptMs": 121.3,
+          "genTok": 298,
+          "genMs": 3060.2,
+          "tokPerS": 97.4,
+          "done": "stop",
+          "chars": 1003
+        }
+      ]
+    }
+  ]
+}

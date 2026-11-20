@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SubagentStop": [
+      {
+        "type": "command",
+        "command": "grimoire-hook --host copilot --event SubagentStop",
+        "timeout": 30
+      }
+    ]
+  }
+}

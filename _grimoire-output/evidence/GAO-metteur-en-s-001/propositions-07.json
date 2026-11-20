@@ -1,0 +1,23 @@
+{
+ "status": "ok",
+ "check": {
+  "proposals": [
+   {
+    "roleId": "isaure",
+    "gender": {
+     "value": "woman",
+     "quote": "Madame"
+    }
+   },
+   {
+    "roleId": "le-comte",
+    "gender": {
+     "value": "man",
+     "quote": "seigneur"
+    }
+   }
+  ],
+  "rejected": []
+ },
+ "durationMs": 6888
+}

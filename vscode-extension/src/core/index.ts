@@ -16,3 +16,4 @@ export * from "./health.js";
 export * from "./inbox.js";
 export * from "./inbox.schema.js";
 export * from "./redact.js";
+export * from "./direction.js";

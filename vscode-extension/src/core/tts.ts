@@ -14,7 +14,17 @@ export interface Voice {
   label: string;
   language?: string;
   gender?: string;
+  /** Path of a short sample, relative to the extension's `media/` folder. */
   preview?: string;
+  /** Where the voice comes from, when a catalogue has read its licence. */
+  licence?: VoiceLicence;
+}
+
+export interface VoiceLicence {
+  dataset: string;
+  spdx: string;
+  sourceUrl: string;
+  attributionRequired: boolean;
 }
 
 /** Declared shape of a provider-specific tuning parameter, used to build UI. */
@@ -30,6 +40,29 @@ export interface TtsParameterDescriptor {
   description?: string;
 }
 
+/**
+ * What an engine can carry of a reading direction (ADR-015 §5.2). Read by the
+ * translator (`src/direction/translator`), never by an id or `instanceof`:
+ * a parameter that is not declared here is ignored and traced.
+ *
+ * `parameter` names a key of `TtsRequest.parameters`, except `"speed"` which
+ * is the top-level `TtsRequest.speed` field.
+ */
+export interface DirectionCapabilities {
+  /** Carries the intensity: parameter name and engine calibration (measured on the bench). */
+  readonly intensity?: { parameter: string; neutral: number; safeMax: number };
+  /** Carries the stability of the performance (e.g. `cfg_weight`), same principle. */
+  readonly stability?: { parameter: string; neutral: number; min: number; max: number };
+  /** Carries the tempo; absent = tempo ignored and traced. */
+  readonly tempo?: { parameter: string; min: number; max: number };
+  /** Accepts a natural-language playing note (instruction-following engine, ADR-015 annex A). */
+  readonly instructions: boolean;
+  /** Non-verbal tags the engine renders; `[]` = ignored. */
+  readonly nonverbal: readonly string[];
+  /** Runs on the GPU (drives the game-mode fallback, ADR-015 §8). */
+  readonly usesGpu: boolean;
+}
+
 /** Everything the player needs to know about a provider without guessing (ADR-005). */
 export interface TtsCapabilities {
   /** True only if `synthesizeStream` is implemented and usable. */
@@ -39,6 +72,16 @@ export interface TtsCapabilities {
   formats: readonly AudioFormat[];
   languages: readonly string[];
   maxTextLength?: number;
+  /** ADR-015: optional and additive; absent = "voice and pauses only". */
+  direction?: DirectionCapabilities;
+  /** ADR-018 §3: one loaded model speaks every voice of `voices`, request by request. */
+  multiVoice?: boolean;
+  /**
+   * The engine generates slower than its audio plays (Qwen3: about 2 s of work per second
+   * heard): the whole reading is generated before its first sound, so that nothing cuts once
+   * it has started. Absent = the usual rolling window.
+   */
+  wholeReadingFirst?: boolean;
 }
 
 /** One synthesis request for a single chunk of spoken text (CdC §23). */
@@ -51,6 +94,11 @@ export interface TtsRequest {
   speed?: number;
   format?: AudioFormat;
   parameters?: Readonly<Record<string, unknown>>;
+  /**
+   * How to play this one segment, in free words (Qwen3's `direction` field). Sent only by an
+   * engine that declares it reads it; nothing sets it yet (step 2 of GAO-qwen3-dans-l-001).
+   */
+  direction?: string;
 }
 
 /** Completed synthesis: an audio payload plus what is known about it. */
@@ -77,10 +125,16 @@ export interface AudioFrame {
 
 /** Exact material hashed into the audio cache key (CdC §37). */
 export interface AudioCacheKeyMaterial {
+  /** Language sent to the engine: it changes the audio for a same text and voice. */
+  language?: string;
   providerId: string;
   model?: string;
   voice?: string;
   parameters?: Readonly<Record<string, unknown>>;
+  /** Only when the engine applies the speed: the audio differs (ADR-017 §1.5). */
+  speed?: number;
+  /** A played line (Qwen3 `direction`): the same text played otherwise is other audio. */
+  direction?: string;
   spokenText: string;
 }
 
@@ -95,9 +149,41 @@ export interface AudioCacheEntry {
   lastAccessAt: number;
 }
 
+/** The engine refuses for now, and repeating the request would change nothing until the user acts. */
+export type TtsHoldReason = "gpu-yield" | "gpu-memory";
+
+/** Never retried by `AudioQueue`: the mode jeu in particular is never insisted upon. */
+export class TtsHoldError extends Error {
+  constructor(
+    readonly reason: TtsHoldReason,
+    message: string
+  ) {
+    super(message);
+    this.name = "TtsHoldError";
+  }
+}
+
+/** By name, not `instanceof`: an error may cross a bundle boundary (the extension and its tests have two copies). */
+export function isTtsHoldError(error: unknown): error is TtsHoldError {
+  return error instanceof Error && error.name === "TtsHoldError";
+}
+
 /** Replaceable speech engine: local, enterprise or cloud behind one contract (D9). */
 export interface TtsProvider {
   readonly id: string;
+  /**
+   * Asks an engine whose model loads on demand to load it now, without synthesising.
+   * `health()` then says `degraded`/`"loading"` until it is done, so the time of a load
+   * is never counted against a synthesis request's timeout. Never rejects for a server
+   * that cannot do it: the first synthesis then pays for the load, as before.
+   */
+  prepare?(signal?: AbortSignal): Promise<void>;
+  /**
+   * What the audio cache should identify this engine by when `id` is not enough:
+   * one instance that may speak through different engines over time
+   * (`SystemTtsProvider`, ADR-017 "Ce qui reste ouvert" 1). Defaults to `id`.
+   */
+  cacheIdentity?(signal?: AbortSignal): Promise<string>;
   health(signal?: AbortSignal): Promise<ProviderHealth>;
   getCapabilities(signal?: AbortSignal): Promise<TtsCapabilities>;
   listVoices?(signal?: AbortSignal): Promise<Voice[]>;

@@ -1,5 +1,5 @@
 import { defineConfig } from "@vscode/test-cli";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,8 +24,28 @@ const common = {
 // wrote). An absolute path anchored to this file's own directory removes
 // the ambiguity — same fix `prefetchChunksUserDataDir` below already used.
 const testRootDir = dirname(fileURLToPath(import.meta.url));
-function userDataDir(profileName) {
-  return join(testRootDir, ".vscode-test", profileName);
+// Every run starts from an empty profile: state kept from an earlier run (modes
+// duplicated by a test, a selection left behind) made tests fail one run out of
+// two, depending on what the previous run had left.
+//
+// Loading this file runs all of this for every profile, whichever label was asked for.
+// It used to wipe and re-seed them all: a second `vscode-test`, even on another label,
+// emptied the profile of the one already running, its voices, bible and audio cache, and
+// made it fail at random. Only the profile being launched is now touched; the others get
+// a throwaway folder, since the configuration still has to describe them.
+const requestedLabels = process.argv.flatMap((arg, index, all) => {
+  if (arg === "--label" || arg === "-l") {
+    return all[index + 1] !== undefined ? [all[index + 1]] : [];
+  }
+  return arg.startsWith("--label=") ? [arg.slice("--label=".length)] : [];
+});
+function userDataDir(profileName, label = profileName) {
+  if (requestedLabels.length > 0 && !requestedLabels.includes(label)) {
+    return mkdtempSync(join(tmpdir(), `llm-voice-test-unused-${profileName}-`));
+  }
+  const dir = join(testRootDir, ".vscode-test", profileName);
+  rmSync(dir, { recursive: true, force: true });
+  return dir;
 }
 
 // S5.1: `Pipeline`'s `InboxRepository` resolves its directory once, at
@@ -89,6 +109,11 @@ writeFileSync(
 //    `"auto"`.
 const AUTO_CHATTERBOX_CLOSED_PORT = 47601;
 const AUTO_PIPER_LOCAL_CLOSED_PORT = 47602;
+// GAO-qwen3-dans-l-001: the automatic choice probes Qwen3 (8021) and Kyutai 1.6B (8020) first.
+// Every label points those probes at closed ports, unless the caller (native-real.sh) names
+// them itself: no suite may reach the real engines of the machine running it.
+process.env.LLM_VOICE_TEST_AUTO_QWEN3_BASE_URL ??= "http://127.0.0.1:47616";
+process.env.LLM_VOICE_TEST_AUTO_KYUTAI16_BASE_URL ??= "http://127.0.0.1:47617";
 
 /** One profile, `tts: {}` — no explicit `providerId`/`baseUrl`, resolves to `llmVoice.tts.provider`'s default (`"auto"`). */
 function seedAutoProfile(profileUserDataDir) {
@@ -126,12 +151,182 @@ function seedAutoProfile(profileUserDataDir) {
 // the exact issue the short `userDataDir()` helper above already exists to
 // avoid for `fake-tts`. Reusing it here removes the random `mkdtemp` suffix
 // entirely, which is fine: nothing else shares these two profiles.
-const autoFallbackSucceedsUserDataDir = userDataDir("auto-succeeds");
+const autoFallbackSucceedsUserDataDir = userDataDir("auto-succeeds", "tts-auto-fallback-succeeds");
 seedAutoProfile(autoFallbackSucceedsUserDataDir);
-const autoFallbackFailsUserDataDir = userDataDir("auto-fails");
+const autoFallbackFailsUserDataDir = userDataDir("auto-fails", "tts-auto-fallback-fails");
 seedAutoProfile(autoFallbackFailsUserDataDir);
 const inboxDirAutoFallbackSucceeds = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-succeeds-"));
 const inboxDirAutoFallbackFails = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-auto-fails-"));
+
+// GAO-tests-int-gr-001: `native-real` — the whole extension in a real,
+// headless VS Code with the *native* engine (`llmVoice.audio.engine=native`),
+// the real Rust Core (`target/release/llm-voice-core`) and the real Piper
+// voice (`system` provider, found via `~/.llm-voice/voices` or PATH), sound
+// captured by `scripts/audio-proof/native-real.sh`. This is the test that
+// would have caught the field bug `segmentId "session-4:0"` (Core refused
+// every enqueue with `invalid_request`): no fake sink, no fake TTS.
+// Opt-in: the suite skips itself unless `LLM_VOICE_NATIVE_REAL=1`, so a CI
+// without audio stays green. Own user-data-dir and extensions-dir (under
+// `.vscode-test/`, absolute, short — see `userDataDir()` above), settings
+// and profile pre-seeded *before* activation (settings are read once, at
+// `activate()`).
+const requestedScenario = process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "";
+const nativeRealUserDataDir = userDataDir("native-real");
+const nativeRealExtensionsDir = userDataDir("native-real-extensions", "native-real");
+mkdirSync(join(nativeRealUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice"), { recursive: true });
+mkdirSync(nativeRealExtensionsDir, { recursive: true });
+writeFileSync(
+  join(nativeRealUserDataDir, "User", "settings.json"),
+  JSON.stringify(
+    {
+      "llmVoice.audio.engine": requestedScenario === "player-webview" ? "webview" : "native",
+      "llmVoice.audio.corePath": join(testRootDir, "..", "target", "release", "llm-voice-core"),
+      "llmVoice.tts.provider": "system",
+      "llmVoice.testVoice.text": "Bonjour. Voici un exemple de ma voix. Nous allons maintenant examiner un concept technique et voir comment l'expliquer clairement.",
+      "llmVoice.cache.enabled": false,
+      "llmVoice.log.level": "debug",
+      "security.workspace.trust.enabled": false
+    },
+    null,
+    2
+  )
+);
+// ADR-017 V15: both modes inherit, so these proofs go through the global voice,
+// which a mode naming its own voice would not. The voice follows the scenario of
+// `native-real.sh` and is written at every load, like the modes.
+writeFileSync(
+  join(nativeRealUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice", "global-voice.json"),
+  JSON.stringify(
+    {
+      schemaVersion: 1,
+      voice:
+        ["qwen3", "qwen3-stop", "qwen3-cast"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "")
+          ? // GAO-qwen3-dans-l-001: the voice chosen in the gallery, no baseUrl (its own port).
+            { providerId: "qwen3", voice: "fr-essais-21-22", speed: 1 }
+          : ["kyutai", "cast", "response", "gallery", "player-webview"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "")
+          ? // No baseUrl on purpose: the provider must find its own port.
+            process.env.LLM_VOICE_NATIVE_REAL_ENGINE === "kyutai16"
+            ? { providerId: "kyutai-1-6b", voice: "cml-577_394", speed: 1 }
+            : { providerId: "kyutai-pocket", voice: "estelle", speed: 1 }
+          : { providerId: "system", speed: 1 }
+    },
+    null,
+    2
+  )
+);
+writeFileSync(
+  join(nativeRealUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice", "profiles.json"),
+  JSON.stringify(
+    {
+      schemaVersion: 2,
+      voiceMigration: 1,
+      defaultProfileId: "native-real-piper",
+      profiles: [
+        {
+          id: "native-real-piper",
+          label: "Native real (Piper)",
+          mode: "faithful",
+          language: "fr-FR",
+          tts: {},
+          // One sentence per chunk: three sentences => three segments, so the
+          // Core's per-segment ids are exercised more than once.
+          chunking: { unit: "sentence", maxSentences: ["cast", "response", "qwen3", "qwen3-stop", "qwen3-cast"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "") ? 3 : 1, prefetchChunks: 1 },
+          playback: { rate: 1, volume: 1 },
+          description: "Test-only mode: real Piper through the global system voice."
+        },
+        {
+          id: "native-real-kyutai",
+          label: "Native real (Kyutai Estelle)",
+          mode: "faithful",
+          language: "fr-FR",
+          tts: {},
+          // Cast and reply proofs read as a user does: the 3 sentences of the default "Fidèle".
+          chunking: { unit: "sentence", maxSentences: ["cast", "response", "qwen3", "qwen3-stop", "qwen3-cast"].includes(process.env.LLM_VOICE_NATIVE_REAL_SCENARIO ?? "") ? 3 : 1, prefetchChunks: 1 },
+          playback: { rate: 1, volume: 1 },
+          description: "Test-only mode: real Estelle voice through pocket-tts serve, as the global voice."
+        }
+      ]
+    },
+    null,
+    2
+  )
+);
+
+// The security suite must not depend on a real local LLM: its inbox entries
+// are read with the `claude-code` default profile (Résumé LLM, narrated),
+// and a busy or cold Ollama pushed `speakLatestResponse` past mocha's
+// 20 s timeout (2026-09-29, while two evaluations were using Ollama). A
+// faithful `claude-code` profile (plus a closed narrator port as a second
+// guard) keeps every read local and deterministic.
+const securityUserDataDir = userDataDir("security", "integration-security");
+mkdirSync(join(securityUserDataDir, "User"), { recursive: true });
+writeFileSync(
+  join(securityUserDataDir, "User", "settings.json"),
+  JSON.stringify(
+    {
+      // Faithful profile for inbox reads: this suite tests HTML injection,
+      // not narration (the narrated default would call the real Ollama).
+      "llmVoice.modes.bySource": { "claude-code": "faithful-local" },
+      "llmVoice.narrator.baseUrl": "http://127.0.0.1:9"
+    },
+    null,
+    2
+  )
+);
+
+// ADR-017 § Tests, `voice-chain`: `ttsFor`, `createTtsProvider` and
+// `ChatterboxProvider` are the real ones against `MockTtsServer`; only the sink
+// is fake (`LLM_VOICE_TEST_FAKE_SINK`), because a webview decodes nothing under
+// xvfb. `--user-data-dir` is fixed and never cleaned: the cache is dropped at
+// every load, otherwise V3's first read would be a hit from the previous run.
+// The tests write `profiles.json` and `global-voice.json` themselves, before
+// each case. The narrator port stays closed and the warmup off: no Ollama, and
+// no `POST /tts` this suite did not ask for.
+const voiceChainUserDataDir = userDataDir("voice-chain");
+const voiceChainStorageDir = join(voiceChainUserDataDir, "User", "globalStorage", "guilhem-bonnet.llm-voice");
+const VOICE_CHAIN_AUTO_PORT = 47613;
+rmSync(voiceChainStorageDir, { recursive: true, force: true });
+mkdirSync(voiceChainStorageDir, { recursive: true });
+// Present before activation: otherwise the first `load()` of the host creates the
+// defaults, possibly after a test has already written its own file.
+writeFileSync(
+  join(voiceChainStorageDir, "global-voice.json"),
+  JSON.stringify({ schemaVersion: 1, voice: { providerId: "system", speed: 1 } })
+);
+writeFileSync(
+  join(voiceChainStorageDir, "profiles.json"),
+  JSON.stringify({
+    schemaVersion: 2,
+    voiceMigration: 1,
+    defaultProfileId: "chain-last",
+    profiles: [
+      {
+        id: "chain-last",
+        label: "chain-last",
+        mode: "faithful",
+        language: "fr-FR",
+        tts: {},
+        chunking: { unit: "sentence", maxSentences: 3, prefetchChunks: 0 },
+        playback: { rate: 1, volume: 1 }
+      }
+    ]
+  })
+);
+writeFileSync(
+  join(voiceChainUserDataDir, "User", "settings.json"),
+  JSON.stringify(
+    {
+      "llmVoice.modes.bySource": { markdown: "chain-document", "claude-code": "chain-reply" },
+      "llmVoice.narrator.baseUrl": "http://127.0.0.1:9",
+      "llmVoice.tts.warmup": false,
+      "llmVoice.tts.readyTimeoutMs": 0,
+      "security.workspace.trust.enabled": false
+    },
+    null,
+    2
+  )
+);
+const inboxDirVoiceChain = mkdtempSync(join(tmpdir(), "llm-voice-test-inbox-voice-chain-"));
 
 export default defineConfig([
   {
@@ -143,14 +338,10 @@ export default defineConfig([
     files: "out/test/integration/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirFakeTts },
     // Own `--user-data-dir` (own `globalStorageUri`, own `DiskAudioCache`
-    // root): the audio cache key only depends on the *profile's declared*
-    // `tts.providerId` ("openai-compatible"), not on which `TtsProvider`
-    // instance actually served it (ADR-005's `AudioQueueBinding`, by
-    // design — a profile never names a class). Sharing one `.vscode-test`
-    // user-data dir with the `tts-auto-fallback-*` profiles below would let
-    // audio synthesised by `FakeTtsProvider` here satisfy a cache *hit*
-    // there, silently skipping the real network/engine calls they exist to
-    // exercise.
+    // root): nothing here should ever be a cache *hit* for the
+    // `tts-auto-fallback-*` profiles below, nor land in their `profiles.json`.
+    // The audio cache key now names the real engine (ADR-017 §1.5), so this
+    // isolation is no longer what protects them from `FakeTtsProvider`'s audio.
     // fix(review): kept short — on the macOS GH Actions runner the checkout
     // path (`/Users/runner/work/<repo>/<repo>/vscode-extension/...`) is long
     // enough that `user-data-fake-tts`/`user-data-real-provider` pushed the
@@ -220,7 +411,7 @@ export default defineConfig([
     files: "out/test/integration-chunk-invalid/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_TEST_FAKE_TTS_FAIL_FROM: "2" },
     // See the comment on the `fake-tts` profile above re: separate cache/socket path.
-    launchArgs: [`--user-data-dir=${userDataDir("chunk-invalid")}`]
+    launchArgs: [`--user-data-dir=${userDataDir("chunk-invalid", "chunk-invalid-fake-tts")}`]
   },
   {
     ...common,
@@ -262,6 +453,42 @@ export default defineConfig([
     // attempt against an absent loopback server would only add noise.
     files: "out/test/integration-security/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirSecurity },
-    launchArgs: [`--user-data-dir=${userDataDir("security")}`]
+    launchArgs: [`--user-data-dir=${securityUserDataDir}`]
+  },
+  {
+    ...common,
+    label: "voice-chain",
+    // Own folder: `fake-tts` globs all of `out/test/integration/**` and would
+    // run these without a server (ADR-017 § Tests).
+    files: "out/test/integration-voice/**/*.test.js",
+    env: {
+      LLM_VOICE_TEST_FAKE_TTS: undefined,
+      LLM_VOICE_TEST_FAKE_SINK: "1",
+      LLM_VOICE_TEST_SYSTEM_RUNNER: "espeak-only",
+      LLM_VOICE_TEST_AUTO_CHATTERBOX_BASE_URL: `http://127.0.0.1:${VOICE_CHAIN_AUTO_PORT}`,
+      LLM_VOICE_TEST_AUTO_PIPER_BASE_URL: `http://127.0.0.1:${AUTO_PIPER_LOCAL_CLOSED_PORT}`,
+      LLM_VOICE_TEST_STORAGE_DIR: voiceChainStorageDir,
+      LLM_VOICE_INBOX: inboxDirVoiceChain
+    },
+    // GAO-studio-distr-001: the Distribution panel plays its trials in VS Code itself. `--mute-audio`
+    // first: last, VS Code read the workspace folder after it as its value, and the run had no folder.
+    launchArgs: ["--mute-audio", `--user-data-dir=${voiceChainUserDataDir}`]
+  },
+  {
+    ...common,
+    label: "native-real",
+    // See the block above. `LLM_VOICE_CORE_STATE_DIR` / `PULSE_SINK` /
+    // `PIPEWIRE_PROPS` come from `native-real.sh`'s environment (inherited by
+    // the extension host, then by the Core `CoreProcess` spawns).
+    files: "out/test/integration-native-real/**/*.test.js",
+    env: { LLM_VOICE_TEST_FAKE_TTS: undefined },
+    launchArgs: [
+      `--user-data-dir=${nativeRealUserDataDir}`,
+      `--extensions-dir=${nativeRealExtensionsDir}`,
+      // `--response` presses the real shortcut through the browser's debugging protocol.
+      ...(process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT ? [`--remote-debugging-port=${process.env.LLM_VOICE_NATIVE_REAL_CDP_PORT}`] : []),
+      // The gallery and the webview engine play in VS Code itself: their sound would reach the speakers of whoever runs this.
+      ...(["gallery", "player-webview", "qwen3", "qwen3-stop", "qwen3-cast"].includes(requestedScenario) ? ["--mute-audio"] : [])
+    ]
   }
 ]);

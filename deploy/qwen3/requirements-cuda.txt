@@ -1,0 +1,8 @@
+# PyTorch 2.9.1 pour NVIDIA : les roues Linux x86_64 de PyPI sont la construction CUDA 12.8 et
+# embarquent leurs bibliothèques CUDA (paquets nvidia-*, versions exactes imposées par torch).
+# Vérifié dans l'image construite : torch.version.cuda. (L'index download.pytorch.org a été
+# écarté : ses copies de typing_extensions échouaient au contrôle d'empreinte de pip.)
+# Variante NON TESTÉE : aucune carte NVIDIA sur la machine de développement.
+--only-binary=:all:
+torch==2.9.1
+torchaudio==2.9.1
