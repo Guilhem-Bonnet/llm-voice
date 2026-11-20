@@ -1,0 +1,203 @@
+$schema: grimoire-agentic-standard-context-bundle/v1
+agent_role_constraints: []
+decision_inputs:
+  memory_policy_ref: _grimoire/standard/memory-policy.yaml
+  memory_store_ref: _grimoire/_memory/grimoire_lexical.sqlite3
+  provider_registry_ref: _grimoire/standard/llm-provider-registry.yaml
+  task_ref: _grimoire/standard/task-board.yaml
+evidence_requirements:
+- 'test: image ROCm démarrée en local, /health et /tts réels verts'
+- 'gate: grimoire standard gate check --strict vert'
+fingerprints:
+  board: _grimoire/standard/task-board.yaml
+  contract: _grimoire/standard/context-contract.yaml
+generated_at: '2026-11-20T20:19:09.772119+00:00'
+knowledge_graph_ref: _grimoire-output/knowledge/GAO-images-docke-001/knowledge-graph.yaml
+knowledge_nodes: []
+memory_exclusions: []
+memory_inclusions:
+- id: 3b9e81d3-0571-5b80-a4e0-6ea9d3d4a913
+  matched_files: []
+  ref: _grimoire/_memory/grimoire_lexical.sqlite3#3b9e81d3-0571-5b80-a4e0-6ea9d3d4a913
+  tags:
+  - GAO-moteur-kyuta-001
+  - MIS-refonte-ux-llm-voice-002
+  - task-recall
+  text: "Tâche GAO-moteur-kyuta-001 clôturée : Moteur Kyutai TTS 1.6B dans l'extension : serveur local sur carte AMD, voix françaises prénommées, galerie. Critères : test: npm --prefix vscode-extension run test:unit et test:integration-voice verts; test: scripts/audio-proof/native-real.sh avec Kyutai 1.6B, WER sous 10 %; revue: écoute par guilhem-bonnet consignée dans acceptance-record; gate: grimoire stan"
+  token_estimate: 100
+  trust_level: ''
+  type: decisions
+- id: 9a717371-4031-53fd-8849-f40d34063064
+  matched_files: []
+  ref: _grimoire/_memory/grimoire_lexical.sqlite3#9a717371-4031-53fd-8849-f40d34063064
+  tags:
+  - GAO-veille-moteu-001
+  - MIS-travaux-courants-001
+  - task-recall
+  text: 'Tâche GAO-veille-moteu-001 clôturée : Veille — moteurs TTS expressifs à consignes en français (local) et voix de référence françaises libres de droits. Critères : gate : rapport sourcé dans _grimoire-output/research/reports avec shortlist testable; gate : grimoire standard gate check --strict vert.'
+  token_estimate: 75
+  trust_level: ''
+  type: decisions
+- id: bd634d66-46d4-5ba6-ba0b-aa26b4211c9c
+  matched_files: []
+  ref: _grimoire/_memory/grimoire_lexical.sqlite3#bd634d66-46d4-5ba6-ba0b-aa26b4211c9c
+  tags:
+  - GAO-fix-l-url-du-001
+  - MIS-travaux-courants-001
+  - task-recall
+  text: "Tâche GAO-fix-l-url-du-001 clôturée : fix: l'URL du serveur TTS ne suit pas le changement de provider dans l'éditeur de profil. Critères : gate: grimoire standard gate check --strict vert; test: npm --prefix vscode-extension run test:unit vert."
+  token_estimate: 61
+  trust_level: ''
+  type: decisions
+- id: b0cea448-99de-5775-a909-c13cdbe67a41
+  matched_files: []
+  ref: _grimoire/_memory/grimoire_lexical.sqlite3#b0cea448-99de-5775-a909-c13cdbe67a41
+  tags:
+  - GAO-fix-voix-fra-001
+  - MIS-travaux-courants-001
+  - task-recall
+  text: 'Tâche GAO-fix-voix-fra-001 clôturée : fix: voix française par défaut de Kyutai Pocket TTS (alba->estelle) + preuve E2E réelle. Critères : gate: grimoire standard gate check --strict vert; test: npm --prefix vscode-extension run test:unit vert.'
+  token_estimate: 61
+  trust_level: ''
+  type: decisions
+- id: 7e2eef5d-f1db-549b-b41c-a2bc77103cc2
+  matched_files: []
+  ref: _grimoire/_memory/grimoire_lexical.sqlite3#7e2eef5d-f1db-549b-b41c-a2bc77103cc2
+  tags:
+  - GAO-audit-s-curi-001
+  - MIS-travaux-courants-001
+  - task-recall
+  text: "Tâche GAO-audit-s-curi-001 clôturée : Audit sécurité du Core local (WebSocket loopback, jeton, Origin, rebinding DNS, zéro autoplay, aucune socket sortante). Critères : test : suite d'attaque automatisée verte (tout refusé); test : aucune connexion non-loopback ouverte par le Core; gate : grimoire standard gate check --strict vert."
+  token_estimate: 84
+  trust_level: ''
+  type: decisions
+- id: 649a04ab-cbeb-59fa-a8a9-9baad8c97af4
+  matched_files: []
+  ref: _grimoire/_memory/grimoire_lexical.sqlite3#649a04ab-cbeb-59fa-a8a9-9baad8c97af4
+  tags:
+  - GAO-kyutai-tts-c-001
+  - MIS-travaux-courants-001
+  - task-recall
+  text: 'Tâche GAO-kyutai-tts-c-001 clôturée : Kyutai TTS comme palier TTS additionnel (ADR-016) : vérification + rédaction. Critères : gate: grimoire standard gate check --strict vert; gate: ADR-016 versé dans docs/adr, relu par un vérificateur indépendant.'
+  token_estimate: 63
+  trust_level: ''
+  type: decisions
+- id: 879b2801-147e-594f-b4c3-b804d1f36f88
+  matched_files: []
+  ref: _grimoire/_memory/grimoire_lexical.sqlite3#879b2801-147e-594f-b4c3-b804d1f36f88
+  tags:
+  - GAO-fix-provider-001
+  - MIS-travaux-courants-001
+  - task-recall
+  text: 'Tâche GAO-fix-provider-001 clôturée : fix: provider Kyutai Pocket TTS absent du sélecteur UI et de la liste de voix parcourable. Critères : gate: grimoire standard gate check --strict vert; test: npm --prefix vscode-extension run test:unit vert; test: kyutai-pocket apparaît dans le <select> du profil et « Parcourir les voix » retourne estelle/alba sans appel réseau.'
+  token_estimate: 92
+  trust_level: ''
+  type: decisions
+- id: 98b7b584-30c0-5d7c-a027-50fbdc1950f5
+  matched_files: []
+  ref: _grimoire/_memory/grimoire_lexical.sqlite3#98b7b584-30c0-5d7c-a027-50fbdc1950f5
+  tags:
+  - GAO-core-rust-mi-001
+  - MIS-travaux-courants-001
+  - task-recall
+  text: 'Tâche GAO-core-rust-mi-001 clôturée : Core Rust minimal llm-voice-core + NativeAudioSink (instance unique, jeton, loopback, cycle de vie, réglage llmVoice.audio.engine, verrou inter-fenêtres). Critères : test : cargo test et vitest verts; test : intégration Linux, lecture via le Core capturée et transcrite par le banc; test : deux clients, une seule lecture; lint : eslint et tsc verts; gate : grim'
+  token_estimate: 100
+  trust_level: ''
+  type: decisions
+memory_os:
+  contract_declared: false
+  legacy_vector_sources:
+  - qdrant-local
+  - qdrant-server
+  policy_ref: _grimoire/standard/memory-policy.yaml
+  promotion_gates:
+  - graph_projection_has_source_refs
+  - hot_memory_ttl_declared
+  - qdrant_migration_bundle_verified
+  - semantic_write_has_evidence
+  target:
+    graph_projection: neo4j
+    hot_memory: redis
+    semantic_memory: weaviate-server
+    sidecar: sqlite
+profile: controlled
+provider_constraints:
+  enabled_providers:
+  - anthropic
+  - local
+  matched_provider: anthropic
+  required_capabilities:
+  - chat
+  routes:
+  - allowed_data_classes:
+    - code-du-projet
+    - cahier-des-charges
+    - fixtures-synthetiques
+    - documentation-publique
+    capabilities:
+    - chat
+    - code
+    - reasoning
+    - review
+    capability_match: true
+    fallback_order:
+    - local
+    forbidden_data_classes:
+    - secrets
+    - cles-api
+    - contenu-env
+    - documents-personnels-hors-repo
+    - audio-utilisateur
+    missing_capabilities: []
+    provider: anthropic
+    provider_type: hosted
+    required_capabilities:
+    - chat
+  - allowed_data_classes:
+    - code-du-projet
+    - cahier-des-charges
+    - fixtures-synthetiques
+    - documentation-publique
+    - texte-lu-par-l-extension
+    capabilities:
+    - chat
+    - code
+    - embeddings
+    capability_match: true
+    fallback_order: []
+    forbidden_data_classes:
+    - secrets
+    - cles-api
+    - contenu-env
+    missing_capabilities: []
+    provider: local
+    provider_type: local
+    required_capabilities:
+    - chat
+  routing:
+    default_fallback_chain:
+    - anthropic
+    - local
+    default_provider: anthropic
+    require_capability_match: true
+    require_data_policy_match: true
+  unmatched_capabilities: []
+redactions:
+  forbidden_data_classes: []
+  required: true
+selected_sources:
+- path: _grimoire/standard/mission-brief.md
+  source: mission_brief
+- path: _grimoire/standard/task-board.yaml
+  source: task_board
+- path: _grimoire-output/evidence/GAO-images-docke-001/task-envelope.md
+  source: task_envelope
+source_priority: []
+task_id: GAO-images-docke-001
+task_summary:
+  acceptance_criteria:
+  - 'test: image ROCm démarrée en local, /health et /tts réels verts'
+  - 'gate: grimoire standard gate check --strict vert'
+  description: ''
+  status: in_progress
+  title: 'Images Docker Qwen3 : serveur ROCm et CUDA, modèles et voix en image séparée'
