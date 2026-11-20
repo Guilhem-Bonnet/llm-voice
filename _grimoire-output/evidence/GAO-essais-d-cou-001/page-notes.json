@@ -1,0 +1,19 @@
+{
+ "intro": "Douze textes identiques pour tous les moteurs : narration, trois répliques naturelles, six répliques à état (essoufflé, toux puis voix gênée, rire, chuchoté, voix intérieure, colère) et deux phrases difficiles. Tout est généré en local, rien n'a été joué sur les enceintes. Sous chaque extrait : WER (faster-whisper small, français), probabilités de langue détectée fr/en, durée et facteur temps réel (RTF : temps de calcul / durée audio). Un p(en) élevé sur un extrait plein de rires ou de halètements peut venir des bruits non vocaux, pas forcément d'un accent : c'est à l'oreille de trancher.",
+ "recommendation": "<b>Page provisoire</b> : seule la référence Qwen3 est mesurée pour l'instant. CustomVoice, Fish S2 Pro et Ming viendront ensuite ; Higgs 3 sera documenté sans essai.<br><b>Ce que disent les mesures</b> : la voix figée Qwen3 est très propre (WER de 0 à 0,095, p(en) max 0,005, voix stable avec un cosinus de 0,99) mais elle n'a aucun moyen de jouer un état. La voix jouée suit les consignes. Ses extraits essoufflé et rire montrent p(en) 0,27 et 0,24 avec un WER de 0,29 pour le rire : ce sont les extraits où elle joue le plus. Ce p(en) peut venir des halètements et des rires plutôt que d'un accent anglais.<br><b>Ce que seule l'oreille tranchera</b> : l'accent sur ces deux extraits, le naturel de la narration (lecture coulée ou mot à mot), et si les états joués sont crédibles.",
+ "table_note": "VRAM : pointe réservée par torch pour les moteurs en conteneur ; pour le service Qwen3, pointe de la carte entière (sysfs, autres processus compris). Stabilité : cosinus moyen entre extraits hors états avec l'encodeur de locuteur Qwen3 Base, qui resserre les écarts (les voix distinctes du catalogue sont déjà entre 0,915 et 0,99) : un écart de 0,01 compte.",
+ "engines": [
+  {
+   "id": "qwen3-fige",
+   "label": "Qwen3 1.7B, voix figée (en service, narratrice)",
+   "licence": "Apache-2.0"
+  },
+  {
+   "id": "qwen3-joue",
+   "label": "Qwen3 1.7B, voix jouée VoiceDesign (en service)",
+   "licence": "Apache-2.0"
+  }
+ ],
+ "not_run": [],
+ "voices_intro": "Douze voix candidates créées par POST /voices/create, chaque description commençant par « French … native speaker from France ». Chacune a lu deux textes du banc en voix figée, puis un filtre automatique les a triées : p(en) &lt; 0,01, WER moyen ≤ 0,10, aucun mot de balise, et voix distincte. Pour la distinction, le cosinus brut de l'encodeur Qwen3 Base est trop resserré : il va de 0,915 à 0,988 entre les voix déjà au catalogue, Homme mûr grave contre Jeune femme claire donne 0,924, et toutes les candidates dépassent 0,977. J'utilise donc le cosinus centré, calculé sur les 22 voix. Le seuil retenu est 0,66, soit la plus forte similarité centrée entre deux voix déjà au catalogue (Homme âgé rauque et Homme mûr grave, 0,658) : une candidate plus proche que cela d'une voix existante ou d'une candidate mieux classée est rejetée. Résultat : 8 voix gardées, 4 rejetées et déplacées dans created-archive, jamais supprimées."
+}

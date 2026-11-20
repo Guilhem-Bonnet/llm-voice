@@ -1,0 +1,185 @@
+{
+ "similarity": "cosinus centré",
+ "threshold_cos": 0.66,
+ "calibration": {
+  "existing_pairs_min": -0.577,
+  "existing_pairs_max": 0.658,
+  "existing_pair_max_ids": [
+   "v-38985c7f63",
+   "v-b0d22ecbc1"
+  ]
+ },
+ "max_kept": 8,
+ "tests": [
+  "01-narration",
+  "03-naturel-2"
+ ],
+ "kept": [
+  {
+   "id": "v-bd840fcf0e",
+   "name": "Jeune femme vive",
+   "description": "French young woman, native speaker from France, about twenty-five, bright lively voice, quick and expressive.",
+   "wer_mean": 0.013,
+   "wer_max": 0.027,
+   "p_en_max": 0.0018,
+   "tags": 0,
+   "cos_max_existing": 0.657,
+   "nearest_existing": "v-2076a718bf",
+   "reasons": [],
+   "reason": "gardée : WER moyen 0.013, p(en) max 0.0018, cos max avec l'existant 0.657"
+  },
+  {
+   "id": "v-cdaeb069dc",
+   "name": "Narrateur documentaire",
+   "description": "French male documentary narrator, native speaker from France, in his thirties, clear resonant tenor, calm and precise.",
+   "wer_mean": 0.027,
+   "wer_max": 0.054,
+   "p_en_max": 0.0013,
+   "tags": 0,
+   "cos_max_existing": 0.641,
+   "nearest_existing": "v-38985c7f63",
+   "reasons": [],
+   "reason": "gardée : WER moyen 0.027, p(en) max 0.0013, cos max avec l'existant 0.641"
+  },
+  {
+   "id": "v-548b9486d3",
+   "name": "Adolescent",
+   "description": "French teenage boy, native speaker from France, about fifteen, slightly breaking voice, casual and a bit sulky.",
+   "wer_mean": 0.034,
+   "wer_max": 0.068,
+   "p_en_max": 0.0015,
+   "tags": 0,
+   "cos_max_existing": 0.419,
+   "nearest_existing": "v-b0d22ecbc1",
+   "reasons": [],
+   "reason": "gardée : WER moyen 0.034, p(en) max 0.0015, cos max avec l'existant 0.419"
+  },
+  {
+   "id": "v-c2190de959",
+   "name": "Vieille femme sèche",
+   "description": "French elderly woman in her eighties, native speaker from France, thin dry voice, sharp and curt.",
+   "wer_mean": 0.034,
+   "wer_max": 0.068,
+   "p_en_max": 0.003,
+   "tags": 0,
+   "cos_max_existing": 0.456,
+   "nearest_existing": "fr-essais-21-22",
+   "reasons": [],
+   "reason": "gardée : WER moyen 0.034, p(en) max 0.003, cos max avec l'existant 0.456"
+  },
+  {
+   "id": "v-841f4bcf07",
+   "name": "Parisien gouailleur",
+   "description": "French man in his forties, native speaker from France, Parisian working-class voice, husky, quick and cheeky.",
+   "wer_mean": 0.048,
+   "wer_max": 0.095,
+   "p_en_max": 0.0004,
+   "tags": 0,
+   "cos_max_existing": 0.503,
+   "nearest_existing": "v-b0d22ecbc1",
+   "reasons": [],
+   "reason": "gardée : WER moyen 0.048, p(en) max 0.0004, cos max avec l'existant 0.503"
+  },
+  {
+   "id": "v-640b7da2b8",
+   "name": "Narratrice douce",
+   "description": "French female narrator, native speaker from France, in her thirties, soft velvety voice, gentle and intimate.",
+   "wer_mean": 0.068,
+   "wer_max": 0.135,
+   "p_en_max": 0.0082,
+   "tags": 0,
+   "cos_max_existing": 0.407,
+   "nearest_existing": "v-6be443c3cf",
+   "reasons": [],
+   "reason": "gardée : WER moyen 0.068, p(en) max 0.0082, cos max avec l'existant 0.407"
+  },
+  {
+   "id": "v-78ed2ad6c3",
+   "name": "Femme autoritaire",
+   "description": "French woman in her fifties, native speaker from France, firm low voice, authoritative and crisp.",
+   "wer_mean": 0.074,
+   "wer_max": 0.149,
+   "p_en_max": 0.0044,
+   "tags": 0,
+   "cos_max_existing": 0.386,
+   "nearest_existing": "v-6be443c3cf",
+   "reasons": [],
+   "reason": "gardée : WER moyen 0.074, p(en) max 0.0044, cos max avec l'existant 0.386"
+  },
+  {
+   "id": "v-419a69dcf2",
+   "name": "Vieil homme malicieux",
+   "description": "French old man, native speaker from France, in his seventies, gravelly but lively voice, mischievous and warm.",
+   "wer_mean": 0.079,
+   "wer_max": 0.108,
+   "p_en_max": 0.0017,
+   "tags": 0,
+   "cos_max_existing": 0.488,
+   "nearest_existing": "v-b0d22ecbc1",
+   "reasons": [],
+   "reason": "gardée : WER moyen 0.079, p(en) max 0.0017, cos max avec l'existant 0.488"
+  }
+ ],
+ "rejected": [
+  {
+   "id": "v-309a5a52e4",
+   "name": "Conteur grave",
+   "description": "French male storyteller, native speaker from France, in his sixties, deep warm bass voice, slow, rich and captivating.",
+   "wer_mean": 0.034,
+   "wer_max": 0.068,
+   "p_en_max": 0.0008,
+   "tags": 0,
+   "cos_max_existing": 0.656,
+   "nearest_existing": "v-b0d22ecbc1",
+   "reasons": [
+    "trop proche de la candidate gardée Narrateur documentaire (cos 0.672)"
+   ],
+   "reason": "rejetée : trop proche de la candidate gardée Narrateur documentaire (cos 0.672)"
+  },
+  {
+   "id": "v-20dd585675",
+   "name": "Adolescente bavarde",
+   "description": "French teenage girl, native speaker from France, about sixteen, light quick voice, chatty and spontaneous.",
+   "wer_mean": 0.048,
+   "wer_max": 0.095,
+   "p_en_max": 0.0005,
+   "tags": 0,
+   "cos_max_existing": 0.646,
+   "nearest_existing": "v-ff6f77df89",
+   "reasons": [
+    "trop proche de la candidate gardée Jeune femme vive (cos 0.794)"
+   ],
+   "reason": "rejetée : trop proche de la candidate gardée Jeune femme vive (cos 0.794)"
+  },
+  {
+   "id": "v-92f61f6fab",
+   "name": "Voix radio posée",
+   "description": "French female radio host, native speaker from France, in her forties, smooth composed mid-range voice, articulate and steady.",
+   "wer_mean": 0.054,
+   "wer_max": 0.108,
+   "p_en_max": 0.0108,
+   "tags": 0,
+   "cos_max_existing": 0.469,
+   "nearest_existing": "fr-essais-21-22",
+   "reasons": [
+    "p(en) 0.0108 >= 0,01"
+   ],
+   "reason": "rejetée : p(en) 0.0108 >= 0,01"
+  },
+  {
+   "id": "v-7f14780560",
+   "name": "Homme mûr chaleureux",
+   "description": "French man in his fifties, native speaker from France, warm friendly baritone voice, relaxed and reassuring.",
+   "wer_mean": 0.066,
+   "wer_max": 0.081,
+   "p_en_max": 0.0008,
+   "tags": 0,
+   "cos_max_existing": 0.401,
+   "nearest_existing": "v-b0d22ecbc1",
+   "reasons": [
+    "trop proche de la candidate gardée Parisien gouailleur (cos 0.681)"
+   ],
+   "reason": "rejetée : trop proche de la candidate gardée Parisien gouailleur (cos 0.681)"
+  }
+ ]
+}

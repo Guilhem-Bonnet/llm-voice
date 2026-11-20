@@ -1,0 +1,343 @@
+{
+ "page": "/home/guilhem/.llm-voice/voices-lab/banc/ecoute-banc-moteurs.html",
+ "clips": 48,
+ "all_ok": true,
+ "checks": [
+  {
+   "wav": "qwen3-fige/01-narration.wav",
+   "wav_s": 22.56,
+   "mp3_s": 22.56,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/01-narration.wav",
+   "wav_s": 31.12,
+   "mp3_s": 31.12,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/02-naturel-1.wav",
+   "wav_s": 6.16,
+   "mp3_s": 6.16,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/02-naturel-1.wav",
+   "wav_s": 5.52,
+   "mp3_s": 5.52,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/03-naturel-2.wav",
+   "wav_s": 5.28,
+   "mp3_s": 5.28,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/03-naturel-2.wav",
+   "wav_s": 4.32,
+   "mp3_s": 4.32,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/04-naturel-3.wav",
+   "wav_s": 5.04,
+   "mp3_s": 5.04,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/04-naturel-3.wav",
+   "wav_s": 4.88,
+   "mp3_s": 4.88,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/05-essouffle.wav",
+   "wav_s": 6.0,
+   "mp3_s": 6.0,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/05-essouffle.wav",
+   "wav_s": 7.36,
+   "mp3_s": 7.36,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/06-toux-gene.wav",
+   "wav_s": 7.44,
+   "mp3_s": 7.44,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/06-toux-gene.wav",
+   "wav_s": 6.72,
+   "mp3_s": 6.72,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/07-rire.wav",
+   "wav_s": 6.32,
+   "mp3_s": 6.32,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/07-rire.wav",
+   "wav_s": 6.88,
+   "mp3_s": 6.88,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/08-chuchote.wav",
+   "wav_s": 5.6,
+   "mp3_s": 5.6,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/08-chuchote.wav",
+   "wav_s": 5.28,
+   "mp3_s": 5.28,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/09-voix-interieure.wav",
+   "wav_s": 6.0,
+   "mp3_s": 6.0,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/09-voix-interieure.wav",
+   "wav_s": 6.64,
+   "mp3_s": 6.64,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/10-colere.wav",
+   "wav_s": 5.04,
+   "mp3_s": 5.04,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/10-colere.wav",
+   "wav_s": 5.04,
+   "mp3_s": 5.04,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/11-difficile-chevalier.wav",
+   "wav_s": 6.64,
+   "mp3_s": 6.64,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/11-difficile-chevalier.wav",
+   "wav_s": 6.48,
+   "mp3_s": 6.48,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-fige/12-difficile-ecureuil.wav",
+   "wav_s": 6.64,
+   "mp3_s": 6.64,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "qwen3-joue/12-difficile-ecureuil.wav",
+   "wav_s": 5.28,
+   "mp3_s": 5.28,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-bd840fcf0e-01-narration.wav",
+   "wav_s": 19.68,
+   "mp3_s": 19.68,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-bd840fcf0e-03-naturel-2.wav",
+   "wav_s": 4.48,
+   "mp3_s": 4.48,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-cdaeb069dc-01-narration.wav",
+   "wav_s": 20.72,
+   "mp3_s": 20.72,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-cdaeb069dc-03-naturel-2.wav",
+   "wav_s": 4.4,
+   "mp3_s": 4.4,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-548b9486d3-01-narration.wav",
+   "wav_s": 20.56,
+   "mp3_s": 20.56,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-548b9486d3-03-naturel-2.wav",
+   "wav_s": 4.32,
+   "mp3_s": 4.32,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-c2190de959-01-narration.wav",
+   "wav_s": 19.52,
+   "mp3_s": 19.52,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-c2190de959-03-naturel-2.wav",
+   "wav_s": 4.88,
+   "mp3_s": 4.88,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-841f4bcf07-01-narration.wav",
+   "wav_s": 19.52,
+   "mp3_s": 19.52,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-841f4bcf07-03-naturel-2.wav",
+   "wav_s": 4.48,
+   "mp3_s": 4.48,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-640b7da2b8-01-narration.wav",
+   "wav_s": 21.52,
+   "mp3_s": 21.52,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-640b7da2b8-03-naturel-2.wav",
+   "wav_s": 4.88,
+   "mp3_s": 4.88,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-78ed2ad6c3-01-narration.wav",
+   "wav_s": 19.36,
+   "mp3_s": 19.36,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-78ed2ad6c3-03-naturel-2.wav",
+   "wav_s": 4.4,
+   "mp3_s": 4.4,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-419a69dcf2-01-narration.wav",
+   "wav_s": 20.16,
+   "mp3_s": 20.16,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-419a69dcf2-03-naturel-2.wav",
+   "wav_s": 5.28,
+   "mp3_s": 5.28,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-309a5a52e4-01-narration.wav",
+   "wav_s": 21.6,
+   "mp3_s": 21.6,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-309a5a52e4-03-naturel-2.wav",
+   "wav_s": 5.44,
+   "mp3_s": 5.44,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-20dd585675-01-narration.wav",
+   "wav_s": 18.8,
+   "mp3_s": 18.8,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-20dd585675-03-naturel-2.wav",
+   "wav_s": 3.84,
+   "mp3_s": 3.84,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-92f61f6fab-01-narration.wav",
+   "wav_s": 20.96,
+   "mp3_s": 20.96,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-92f61f6fab-03-naturel-2.wav",
+   "wav_s": 5.52,
+   "mp3_s": 5.52,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-7f14780560-01-narration.wav",
+   "wav_s": 20.56,
+   "mp3_s": 20.56,
+   "decode_ok": true,
+   "ok": true
+  },
+  {
+   "wav": "voix-candidates/v-7f14780560-03-naturel-2.wav",
+   "wav_s": 4.56,
+   "mp3_s": 4.56,
+   "decode_ok": true,
+   "ok": true
+  }
+ ]
+}

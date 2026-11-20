@@ -1,0 +1,16 @@
+{"sample_text": "Tu sais, je ne m'attendais pas à te revoir ici. Assieds-toi, je vais te raconter ce qui s'est passé cet hiver, depuis le début.",
+ "tests": ["01-narration", "03-naturel-2"],
+ "candidates": [
+  {"name": "Conteur grave", "description": "French male storyteller, native speaker from France, in his sixties, deep warm bass voice, slow, rich and captivating."},
+  {"name": "Voix radio posée", "description": "French female radio host, native speaker from France, in her forties, smooth composed mid-range voice, articulate and steady."},
+  {"name": "Jeune femme vive", "description": "French young woman, native speaker from France, about twenty-five, bright lively voice, quick and expressive."},
+  {"name": "Homme mûr chaleureux", "description": "French man in his fifties, native speaker from France, warm friendly baritone voice, relaxed and reassuring."},
+  {"name": "Vieille femme sèche", "description": "French elderly woman in her eighties, native speaker from France, thin dry voice, sharp and curt."},
+  {"name": "Adolescent", "description": "French teenage boy, native speaker from France, about fifteen, slightly breaking voice, casual and a bit sulky."},
+  {"name": "Narratrice douce", "description": "French female narrator, native speaker from France, in her thirties, soft velvety voice, gentle and intimate."},
+  {"name": "Narrateur documentaire", "description": "French male documentary narrator, native speaker from France, in his thirties, clear resonant tenor, calm and precise."},
+  {"name": "Femme autoritaire", "description": "French woman in her fifties, native speaker from France, firm low voice, authoritative and crisp."},
+  {"name": "Vieil homme malicieux", "description": "French old man, native speaker from France, in his seventies, gravelly but lively voice, mischievous and warm."},
+  {"name": "Adolescente bavarde", "description": "French teenage girl, native speaker from France, about sixteen, light quick voice, chatty and spontaneous."},
+  {"name": "Parisien gouailleur", "description": "French man in his forties, native speaker from France, Parisian working-class voice, husky, quick and cheeky."}
+ ]}
