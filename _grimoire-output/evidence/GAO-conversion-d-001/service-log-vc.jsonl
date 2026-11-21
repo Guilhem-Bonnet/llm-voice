@@ -1,0 +1,17 @@
+There was a problem when trying to write in your cache folder (/app/hf_cache/hub). You should set the environment variable TRANSFORMERS_CACHE to a writable directory.
+There was a problem when trying to write in your cache folder (/app/hf_cache/hub). Please, ensure the directory exists and can be written to.
+/usr/local/lib/python3.10/dist-packages/diffusers/models/lora.py:393: FutureWarning: `LoRACompatibleLinear` is deprecated and will be removed in version 1.0.0. Use of `LoRACompatibleLinear` is deprecated. Please switch to PEFT backend by installing PEFT: `pip install peft`.
+  deprecate("LoRACompatibleLinear", "1.0.0", deprecation_message)
+loaded PerthNet (Implicit) at step 250,000
+{"timestamp": "2026-11-21T00:58:24Z", "service": "vc", "event": "model_loaded", "duration_s": 9.7}
+MIOpen(HIP): Warning [IsEnoughWorkspace] [GetSolutionsFallback WTI] Solver <GemmFwdRest>, workspace required: 2887680, provided ptr: 0 size: 0
+MIOpen(HIP): Warning [IsEnoughWorkspace] [GetSolutionsFallback WTI] Solver <GemmFwdRest>, workspace required: 2310144, provided ptr: 0 size: 0
+/usr/local/lib/python3.10/dist-packages/diffusers/models/attention_processor.py:1584: UserWarning: Using AOTriton backend for Efficient Attention forward... (Triggered internally at /pytorch/aten/src/ATen/native/transformers/hip/attention.hip:1452.)
+  hidden_states = F.scaled_dot_product_attention(
+MIOpen(HIP): Warning [IsEnoughWorkspace] [GetSolutionsFallback WTI] Solver <GemmFwdRest>, workspace required: 4620288, provided ptr: 0 size: 0
+{"timestamp": "2026-11-21T00:58:46Z", "service": "vc", "event": "request", "status": 200, "duration_s": 32.35, "route": "/convert", "source_s": 5.04, "target_s": 13.12}
+MIOpen(HIP): Warning [IsEnoughWorkspace] [GetSolutionsFallback WTI] Solver <GemmFwdRest>, workspace required: 2872320, provided ptr: 0 size: 0
+MIOpen(HIP): Warning [IsEnoughWorkspace] [GetSolutionsFallback WTI] Solver <GemmFwdRest>, workspace required: 2297856, provided ptr: 0 size: 0
+MIOpen(HIP): Warning [IsEnoughWorkspace] [GetSolutionsFallback WTI] Solver <GemmFwdRest>, workspace required: 4595712, provided ptr: 0 size: 0
+{"timestamp": "2026-11-21T00:58:59Z", "service": "vc", "event": "request", "status": 200, "duration_s": 2.45, "route": "/convert", "source_s": 4.96, "target_s": 14.16}
+{"timestamp": "2026-11-21T00:59:11Z", "service": "vc", "event": "request", "status": 200, "duration_s": 1.83, "route": "/convert", "source_s": 5.04, "target_s": 13.12}

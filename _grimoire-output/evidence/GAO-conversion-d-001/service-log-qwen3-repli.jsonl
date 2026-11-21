@@ -1,0 +1,4 @@
+{"timestamp": "2026-11-21T00:59:46Z", "service": "qwen3", "event": "conversion_skipped", "voice": "kyu-yael", "reason": "unreachable", "duration_s": 7.84}
+{"timestamp": "2026-11-21T00:59:46Z", "service": "qwen3", "event": "request", "status": 200, "duration_s": 18.76, "route": "/tts", "voice": "kyu-yael", "mode": "played", "text_chars": 80, "direction_chars": 56, "converted": false}
+{"timestamp": "2026-11-21T01:00:04Z", "service": "qwen3", "event": "conversion_skipped", "voice": "kyu-loan", "reason": "unreachable", "duration_s": 7.34}
+{"timestamp": "2026-11-21T01:00:04Z", "service": "qwen3", "event": "request", "status": 200, "duration_s": 17.75, "route": "/tts", "voice": "kyu-loan", "mode": "played", "text_chars": 80, "direction_chars": 56, "converted": false}

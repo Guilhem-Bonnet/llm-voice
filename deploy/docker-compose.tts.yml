@@ -396,6 +396,8 @@ services:
       - LOGNAME=llm-voice
       - HOME=/tmp
       - NUMBA_CACHE_DIR=/tmp/numba
+      # Rien n'y est téléchargé (hors-ligne, réseau interne) : seulement un dossier où écrire.
+      - HF_HOME=/tmp/hf
       - PYTHONDONTWRITEBYTECODE=1
       - HF_HUB_OFFLINE=1
       - HF_HUB_DISABLE_TELEMETRY=1

@@ -94,6 +94,10 @@ READ_TIMEOUT_S = 30
 LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "[::1]", "::1")
 # Le service de conversion : connexion courte, puis le temps d'une longue réplique (6 à 7 s mesurées pour 5 s d'audio).
 CONVERT_CONNECT_S = 3.0
+# Service arrêté : le nom `vc` ne se résout plus, et la résolution peut traîner 7 à 8 s (mesuré
+# 2026-11-20). Bornée ici, puis le service n'est plus appelé pendant un moment.
+CONVERT_RESOLVE_S = 1.0
+CONVERT_RETRY_S = 30.0
 CONVERT_TIMEOUT_S = 120.0
 CONVERTED_HEADER = "X-LLM-Voice-Converted"
 
@@ -543,7 +547,14 @@ class Converter(Protocol):
 class HttpConverter:
     """Client du service de conversion (`deploy/vc/server.py`) : `POST /convert`, multipart `source` et `target`."""
 
-    def __init__(self, url: str, connect_timeout_s: float = CONVERT_CONNECT_S, timeout_s: float = CONVERT_TIMEOUT_S) -> None:
+    def __init__(
+        self,
+        url: str,
+        connect_timeout_s: float = CONVERT_CONNECT_S,
+        timeout_s: float = CONVERT_TIMEOUT_S,
+        resolve_timeout_s: float = CONVERT_RESOLVE_S,
+        retry_s: float = CONVERT_RETRY_S,
+    ) -> None:
         address = urlsplit(url)
         if address.scheme != "http" or not address.hostname or address.path not in ("", "/") or address.query or address.username:
             raise ValueError("QWEN3_VC_URL : http://hôte:port, sans chemin, par exemple http://vc:8022.")
@@ -551,6 +562,30 @@ class HttpConverter:
         self.port = address.port or 80
         self.connect_timeout_s = connect_timeout_s
         self.timeout_s = timeout_s
+        self.resolve_timeout_s = resolve_timeout_s
+        self.retry_s = retry_s
+        self._down_until = 0.0
+
+    def _address(self) -> str:
+        """L'adresse du service, en un temps borné : `getaddrinfo` n'a pas de délai à lui."""
+        found: dict[str, str] = {}
+
+        def resolve() -> None:
+            try:
+                found["ip"] = str(socket.getaddrinfo(self.host, self.port, type=socket.SOCK_STREAM)[0][4][0])
+            except (OSError, IndexError):
+                pass
+
+        worker = threading.Thread(target=resolve, name="vc-resolve", daemon=True)
+        worker.start()
+        worker.join(self.resolve_timeout_s)
+        if "ip" not in found:
+            raise OSError("service de conversion introuvable")
+        return found["ip"]
+
+    def _unreachable(self) -> ConversionSkipped:
+        self._down_until = time.monotonic() + self.retry_s
+        return ConversionSkipped("unreachable")
 
     def convert(self, source: bytes, target: bytes, checkpoint: Callable[[], None]) -> bytes:
         boundary = "llm-voice-" + secrets.token_hex(12)
@@ -559,14 +594,22 @@ class HttpConverter:
             body += f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"; filename="{name}.wav"\r\nContent-Type: audio/wav\r\n\r\n'.encode()
             body += value + b"\r\n"
         body += f"--{boundary}--\r\n".encode()
-        connection = http.client.HTTPConnection(self.host, self.port, timeout=self.connect_timeout_s)
+        if time.monotonic() < self._down_until:
+            raise ConversionSkipped("unreachable_recently")
+        try:
+            address = self._address()
+        except OSError:
+            raise self._unreachable() from None
+        connection = http.client.HTTPConnection(address, self.port, timeout=self.connect_timeout_s)
+        # Le nom du service, pas l'adresse : c'est lui que le service de conversion admet dans Host.
+        headers = {"Host": f"{self.host}:{self.port}", "Content-Type": f"multipart/form-data; boundary={boundary}"}
         try:
             try:
                 connection.connect()
                 connection.sock.settimeout(self.timeout_s)
-                connection.request("POST", "/convert", body=body, headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+                connection.request("POST", "/convert", body=body, headers=headers)
             except OSError:
-                raise ConversionSkipped("unreachable") from None
+                raise self._unreachable() from None
             deadline = time.monotonic() + self.timeout_s
             # Le client parti ou le jeu lancé : fermer la connexion annule la conversion de l'autre côté.
             while not select.select([connection.sock], [], [], POLL_S)[0]:

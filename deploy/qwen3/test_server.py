@@ -1061,6 +1061,33 @@ class Conversion(ServerCase):
         self.vc.close()
         self.assert_fallback("unreachable")
 
+    def test_a_slow_name_resolution_is_bounded_then_the_service_rests(self):
+        self.service.converter = srv.HttpConverter("http://vc:8022", resolve_timeout_s=0.3, retry_s=60)
+        calls = []
+        real = socket.getaddrinfo
+
+        def slow(host, *args, **kwargs):
+            if host != "vc":
+                return real(host, *args, **kwargs)
+            calls.append(host)
+            time.sleep(2)
+            raise socket.gaierror("lent")
+
+        with mock.patch.object(srv.socket, "getaddrinfo", slow):
+            started = time.monotonic()
+            self.assert_fallback("unreachable")
+            self.assertLess(time.monotonic() - started, 1.5)
+            self.logged.clear()
+            self.assert_fallback("unreachable_recently")
+        self.assertEqual(len(calls), 1, "pendant le repos, le service n'est plus appelé")
+        self.assertEqual(self.vc.received, [])
+
+    def test_the_service_name_is_sent_as_host(self):
+        self.service.converter = srv.HttpConverter(self.vc.url.replace("127.0.0.1", "localhost"))
+        response, _ = self.tts(text="Bonjour.", voice_url=self.VOICE, direction="Angry.")
+        self.assertEqual(response.getheader("X-LLM-Voice-Converted"), "yes")
+        self.assertEqual(self.vc.received[0]["host"], f"localhost:{self.vc.server.server_address[1]}")
+
     def test_an_unknown_host_gives_the_played_voice_without_error(self):
         self.service.converter = srv.HttpConverter("http://vc.invalid:8022", connect_timeout_s=2)
         self.assert_fallback("unreachable")

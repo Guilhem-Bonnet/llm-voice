@@ -1,0 +1,9 @@
+{"timestamp": "2026-11-21T00:57:48Z", "service": "qwen3", "event": "model_loaded", "mode": "frozen", "duration_s": 26.2}
+{"timestamp": "2026-11-21T00:57:59Z", "service": "qwen3", "event": "request", "status": 200, "duration_s": 37.75, "route": "/tts", "voice": "kyu-yael", "mode": "frozen", "text_chars": 80, "direction_chars": 0}
+{"timestamp": "2026-11-21T00:58:03Z", "service": "qwen3", "event": "model_loaded", "mode": "played", "duration_s": 3.8}
+{"timestamp": "2026-11-21T00:58:46Z", "service": "qwen3", "event": "conversion_done", "voice": "kyu-yael", "duration_s": 32.35}
+{"timestamp": "2026-11-21T00:58:46Z", "service": "qwen3", "event": "request", "status": 200, "duration_s": 46.87, "route": "/tts", "voice": "kyu-yael", "mode": "played", "text_chars": 80, "direction_chars": 56, "converted": true}
+{"timestamp": "2026-11-21T00:58:59Z", "service": "qwen3", "event": "conversion_done", "voice": "kyu-loan", "duration_s": 2.45}
+{"timestamp": "2026-11-21T00:58:59Z", "service": "qwen3", "event": "request", "status": 200, "duration_s": 12.25, "route": "/tts", "voice": "kyu-loan", "mode": "played", "text_chars": 80, "direction_chars": 56, "converted": true}
+{"timestamp": "2026-11-21T00:59:11Z", "service": "qwen3", "event": "conversion_done", "voice": "kyu-yael", "duration_s": 1.83}
+{"timestamp": "2026-11-21T00:59:11Z", "service": "qwen3", "event": "request", "status": 200, "duration_s": 12.31, "route": "/tts", "voice": "kyu-yael", "mode": "played", "text_chars": 80, "direction_chars": 56, "converted": true}

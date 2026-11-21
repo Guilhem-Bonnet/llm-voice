@@ -10,6 +10,7 @@ Cinq services indépendants (ADR-009). Aucun port publié hors `127.0.0.1`.
 | `kyutai16` | `kyutai16` | Kyutai TTS 1.6B, voix de narration, GPU ROCm | 8020 |
 | `qwen3` | `qwen3` | Qwen3-TTS 1.7B, voix figée et voix jouée, GPU ROCm | 8021 |
 | `qwen3` (images) | `rocm` / `cuda` | idem, images `llm-voice-qwen3` (`docker-compose.qwen3.yml`) | 8021 |
+| `vc` | `qwen3`, `vc` | Conversion de timbre (Chatterbox VC) des voix clonées qui jouent, GPU ROCm | aucun (réseau interne, 8022) |
 
 ## Prérequis
 
@@ -191,6 +192,47 @@ Ce qu'il faut savoir :
 
 Tests, sans GPU : `python3 -P deploy/qwen3/test_server.py`. Preuve réelle sur le GPU, hors ligne :
 `_grimoire-output/evidence/GAO-moteur-qwen3-001/proof_real.py`.
+
+### Voix clonées qui jouent : conversion de timbre (`vc`)
+
+Une voix clonée (les 12 `kyu-*`) qui reçoit une `direction` passe par VoiceDesign, qui invente
+un timbre. Le service `vc` (`deploy/vc/server.py`, Chatterbox VC, licence MIT) redit ensuite la
+réplique jouée avec le timbre de la **première référence** de la voix : le jeu reste, la voix revient
+(validé à l'écoute le 2026-11-20). Il démarre avec le profil `qwen3` (ou seul : `--profile vc`).
+
+```bash
+bash deploy/vc/prepare-weights.sh          # une fois : s3gen.pt -> s3gen.safetensors, hors du dépôt
+docker compose -f deploy/docker-compose.tts.yml --profile qwen3 up -d qwen3 vc
+```
+
+- **Catalogue** : `"convert_played": true` dans `deploy/qwen3/voices.json` (faux par défaut ; vrai
+  pour les 12 `kyu-*`, faux pour `fr-essais-21-22` et les voix créées). URL : `QWEN3_VC_URL`
+  (`http://vc:8022` dans le compose ; absente, aucune conversion).
+- **Réponse** : `X-LLM-Voice-Converted: yes` ou `no` sur toute voix jouée marquée ; aucun en-tête
+  sinon (voix figée, voix non marquée).
+- **Repli, jamais d'erreur** : service arrêté, en mode jeu, en échec, réponse illisible ou trop lent
+  (120 s) → la réplique jouée part telle quelle avec `no`, et le journal dit pourquoi
+  (`conversion_skipped`, `reason`), sans le texte. Service arrêté, le nom `vc` mettait 7 à 8 s à
+  ne pas se résoudre : la résolution est bornée à 1 s, puis le service n'est plus appelé pendant 30 s
+  (`unreachable_recently`). Après un redémarrage de `vc`, la conversion revient donc au plus 30 s plus tard.
+- **Contrat** : `GET /health` ; `POST /convert` multipart `source` (WAV joué, 600 s au plus) et
+  `target` (WAV de référence, 60 s au plus ; le modèle n'en garde que 10 s), corps de 48 Mio au plus,
+  WAV PCM seulement → WAV 24 kHz mono. Une conversion à la fois, annulée si le client part ;
+  mode jeu → 503 et mémoire libérée. Host admis : la boucle locale et `vc` (`VC_ALLOWED_HOSTS`) ;
+  tout `Origin` est refusé. Seules des durées et des tailles sont journalisées.
+- **Isolement** : `vc` n'est que sur le réseau `tts-internal` (`internal: true`) : aucun port publié,
+  aucun accès à Internet (vérifié : résolution DNS externe impossible depuis le conteneur). Non-root,
+  `cap_drop: ALL`, code et poids en lecture seule. `qwen3` est sur `default` (port 127.0.0.1:8021)
+  et sur `tts-internal`.
+- **Filigrane** : Chatterbox ajoute à chaque sortie un filigrane inaudible (PerthNet, Resemble AI)
+  qui marque le son comme produit par un modèle. Le service ne le retire pas.
+- **Mesuré sur RX 9070** (2026-11-20, `_grimoire-output/evidence/GAO-conversion-d-001/`) :
+  conversion à chaud de 1,8 à 2,5 s pour 5 s d'audio ; première conversion après démarrage
+  32 à 34 s (chargement 9,7 s puis réglages MIOpen) ; VRAM utilisée sur la carte
+  13,6 Go sur 16 avec Qwen3 figé + joué + VC chargés.
+- **Images** (`docker-compose.qwen3.yml`) : pas de service `vc`, donc pas de conversion.
+
+Tests, sans GPU : `python3 -P deploy/vc/test_server.py`.
 
 ### Qwen3 en images : sans Hugging Face, modèles et voix fournis
 
