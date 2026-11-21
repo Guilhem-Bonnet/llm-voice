@@ -15,6 +15,150 @@
           "audio": "out-gao/chuchote-en-s11.wav"
         }
       ]
+    },
+    "kyu-ariel": {
+      "name": "Ariel, femme mûre",
+      "seed": 11,
+      "description": "French woman in her fifties, native speaker from France, warm mature voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/ariel.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-dany": {
+      "name": "Dany, homme mûr",
+      "seed": 11,
+      "description": "French man in his fifties, native speaker from France, mature steady voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/dany.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-eden": {
+      "name": "Éden, adolescent",
+      "seed": 11,
+      "description": "French teenage boy, native speaker from France, young light voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/eden.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-joss": {
+      "name": "Joss, adolescent",
+      "seed": 11,
+      "description": "French teenage boy, native speaker from France, young clear voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/joss.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-elie": {
+      "name": "Élie, adolescent québécois",
+      "seed": 11,
+      "description": "French-Canadian teenage boy from Quebec, native speaker, young voice with a Quebec accent.",
+      "accent": "Native French-Canadian speaker with a Quebec accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/elie.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-gaby": {
+      "name": "Gaby, femme très mûre",
+      "seed": 11,
+      "description": "French woman in her sixties, native speaker from France, mature deep warm voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/gaby.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-noa": {
+      "name": "Noa, jeune femme",
+      "seed": 11,
+      "description": "French young woman, native speaker from France, bright clear voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/noa.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-ange": {
+      "name": "Ange, adolescente",
+      "seed": 11,
+      "description": "French teenage girl, native speaker from France, bright clear voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/ange.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-yael": {
+      "name": "Yaël, vieille femme",
+      "seed": 11,
+      "description": "French very old woman, native speaker from France, aged voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/yael.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-manu": {
+      "name": "Manu, vieille femme",
+      "seed": 11,
+      "description": "French very old woman, native speaker from France, aged worn voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/manu.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-loan": {
+      "name": "Loan, vieil homme",
+      "seed": 11,
+      "description": "French very old man, native speaker from France, aged voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/loan.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
+    },
+    "kyu-andrea": {
+      "name": "Andréa, garçon",
+      "seed": 11,
+      "description": "French young boy around ten, native speaker from France, child voice.",
+      "accent": "Native French speaker with a standard metropolitan France accent.",
+      "frozen_refs": [
+        {
+          "audio": "refs-kyutai/andrea.wav"
+        }
+      ],
+      "source": "Kyutai TTS 1.6B voice (kyutai/tts-voices, CML-TTS / LibriVox), CC-BY-4.0"
     }
   }
 }

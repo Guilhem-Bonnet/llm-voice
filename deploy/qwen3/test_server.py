@@ -186,7 +186,9 @@ class Contract(ServerCase):
         self.assertEqual(payload["default"], self.voice)
         description = "Young adult woman, medium pitch, clear diction."
         row = {"id": self.voice, "name": "Voix des essais 21 et 22", "available": True, "played": True}
-        self.assertEqual(payload["voices"], [{**row, "description": description, "origin": "catalogue"}])
+        self.assertIn({**row, "description": description, "origin": "catalogue"}, payload["voices"])
+        self.assertEqual({entry["id"] for entry in payload["voices"]}, set(srv.load_catalog().voices))
+        self.assertTrue(all(entry["origin"] == "catalogue" for entry in payload["voices"]))
 
     def test_multipart_returns_a_wav_and_keeps_accents(self):
         response, data = self.tts(text="Éléonore été là", voice_url=self.voice)
