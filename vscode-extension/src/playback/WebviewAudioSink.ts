@@ -26,6 +26,7 @@
  * deliberately does not model since it is a webview-only concern.
  */
 
+import { access } from "node:fs/promises";
 import * as vscode from "vscode";
 import type {
   ExtensionToWebviewMessage,
@@ -62,17 +63,49 @@ export class WebviewAudioSink implements LegacyAudioSink {
     });
   }
 
-  /** Releases the webview reference; queued `on()` listeners stay registered. */
-  detach(): void {
+  /**
+   * Releases the webview reference; queued `on()` listeners stay registered.
+   * Given a `webview`, only if it is still the one this sink routes to: the
+   * two player views share one sink, and a stale one disposing must not null
+   * out the live one (PR #64, GAO-diagnostic-s-001). Without an argument,
+   * detaches unconditionally.
+   */
+  detach(webview?: vscode.Webview): void {
+    if (webview !== undefined && webview !== this.webview) {
+      return;
+    }
     this.webview = undefined;
     this.webviewReady = false;
   }
 
+  /**
+   * A chunk that cannot be handed to the webview is this chunk failing, not
+   * `load()` failing: it surfaces as an `error` event, as with
+   * `NativeAudioSink`, so the controller's failure policy runs and names the
+   * cause (PR #64, GAO-diagnostic-s-001). It used to `return` in silence with
+   * no view attached, and the highlight then ran over no sound at all.
+   */
   async load(chunk: AudioSinkChunk): Promise<void> {
     if (this.webview === undefined) {
+      this.emitLoadError(chunk, "aucune vue du lecteur n'est ouverte (« Lecture en cours »)");
       return;
     }
-    const src = this.webview.asWebviewUri(vscode.Uri.file(chunk.src)).toString();
+    // A cache file gone before playback reached it (eviction racing the
+    // queue) is reported by `<audio>` as an opaque « code 4 »: say it here.
+    try {
+      await access(chunk.src);
+    } catch {
+      this.emitLoadError(chunk, `fichier audio absent du cache (${chunk.src}) — évincé ou jamais écrit`);
+      return;
+    }
+    // Re-read after the await: the URI and the message must target the same
+    // webview, even if another view resolved meanwhile.
+    const target = this.webview;
+    if (target === undefined) {
+      this.emitLoadError(chunk, "la vue du lecteur s'est fermée pendant le chargement");
+      return;
+    }
+    const src = target.asWebviewUri(vscode.Uri.file(chunk.src)).toString();
     const message: ExtensionToWebviewMessage = {
       type: "load",
       chunkId: chunk.chunkId,
@@ -80,7 +113,11 @@ export class WebviewAudioSink implements LegacyAudioSink {
       autoplay: true,
       ...(chunk.durationMs !== undefined ? { durationMs: chunk.durationMs } : {})
     };
-    this.post(message);
+    void target.postMessage(message);
+  }
+
+  private emitLoadError(chunk: AudioSinkChunk, reason: string): void {
+    this.errorEmitter.emit({ chunkId: chunk.chunkId, message: `WebviewAudioSink : ${reason}` });
   }
 
   play(): void {

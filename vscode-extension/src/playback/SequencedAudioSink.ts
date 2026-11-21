@@ -47,7 +47,15 @@ export class SequencedAudioSink implements AudioSink {
   private starved = false;
   private lastPositionMs = 0;
 
-  constructor(private readonly inner: LegacyAudioSink) {
+  readonly noProgressTimeoutMs?: number;
+
+  constructor(
+    private readonly inner: LegacyAudioSink,
+    options: { noProgressTimeoutMs?: number } = {}
+  ) {
+    if (options.noProgressTimeoutMs !== undefined) {
+      this.noProgressTimeoutMs = options.noProgressTimeoutMs;
+    }
     inner.on("timeupdate", (payload) => {
       if (payload.chunkId === this.current?.chunkId) {
         this.lastPositionMs = payload.positionMs;

@@ -348,7 +348,7 @@ export default defineConfig([
     // extension host's IPC unix socket path past the 103-char `sockaddr_un`
     // limit ("Error: listen EINVAL", integration (macos-latest) failing in
     // CI while passing locally on Linux).
-    launchArgs: [`--user-data-dir=${userDataDir("fake-tts")}`]
+    launchArgs: ["--mute-audio", `--user-data-dir=${userDataDir("fake-tts")}`]
   },
   {
     ...common,
@@ -437,7 +437,7 @@ export default defineConfig([
     // hang, whichever way the prompt is answered (`no-voice-available.test.ts`).
     files: "out/test/integration-no-engine/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: undefined, PATH: "/nonexistent-on-purpose" },
-    launchArgs: [`--user-data-dir=${userDataDir("system-no-engine")}`]
+    launchArgs: ["--mute-audio", `--user-data-dir=${userDataDir("system-no-engine")}`]
   },
   {
     ...common,
@@ -453,7 +453,7 @@ export default defineConfig([
     // attempt against an absent loopback server would only add noise.
     files: "out/test/integration-security/**/*.test.js",
     env: { LLM_VOICE_TEST_FAKE_TTS: "1", LLM_VOICE_INBOX: inboxDirSecurity },
-    launchArgs: [`--user-data-dir=${securityUserDataDir}`]
+    launchArgs: ["--mute-audio", `--user-data-dir=${securityUserDataDir}`]
   },
   {
     ...common,

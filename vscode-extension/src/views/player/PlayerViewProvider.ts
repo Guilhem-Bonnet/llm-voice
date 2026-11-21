@@ -17,6 +17,9 @@ export type ScriptDescriber = (document: { uri: string; languageId: string; text
 
 /** Past this, a document is not scanned for a script when it is merely shown. */
 const MAX_SCRIPT_CHARS = 4_000_000;
+
+/** No `timeupdate` this long after `play()`: the webview `<audio>` never started (PR #64). */
+export const PLAYER_NO_PROGRESS_TIMEOUT_MS = 4000;
 import { buildPlayerHtml, getNonce } from "./playerHtml.js";
 
 export class PlayerViewProvider implements vscode.WebviewViewProvider {
@@ -27,7 +30,9 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
 
   private readonly sink = new WebviewAudioSink();
   /** The v2 view of `sink` (ADR-012 §3), built once so its queue survives. */
-  private readonly sequenced = new SequencedAudioSink(this.sink);
+  private readonly sequenced = new SequencedAudioSink(this.sink, {
+    noProgressTimeoutMs: PLAYER_NO_PROGRESS_TIMEOUT_MS
+  });
   private view: vscode.WebviewView | undefined;
   private readonly disposables: vscode.Disposable[] = [];
   private editorWatch: vscode.Disposable[] = [];
@@ -80,10 +85,15 @@ export class PlayerViewProvider implements vscode.WebviewViewProvider {
     this.disposables.push(webviewView.webview.onDidReceiveMessage((raw: unknown) => this.onResponsesMessage(raw)));
     this.followActiveEditor();
 
+    // `llmVoice.player` and `llmVoice.playerView` share this provider: two webviews can be
+    // resolved at once. Only the one the sink still routes to may let it go — a stale view
+    // closing must not cut the live one mid-reading (PR #64, GAO-diagnostic-s-001).
     webviewView.onDidDispose(() => {
-      this.sink.detach();
-      this.stopFollowingEditor();
-      this.view = undefined;
+      this.sink.detach(webviewView.webview);
+      if (this.view === webviewView) {
+        this.stopFollowingEditor();
+        this.view = undefined;
+      }
     });
   }
 
