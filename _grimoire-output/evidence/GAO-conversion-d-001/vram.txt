@@ -1,0 +1,5 @@
+vram_before_mib 1638
+vram_three_models_loaded_mib 13630
+vram_vc_stopped_mib 11351
+vram_final_mib 8809 (qwen3 joué + vc chargés)
+vram_total_mib 16304

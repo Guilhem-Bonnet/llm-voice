@@ -1,0 +1,3 @@
+{"voice": "kyu-yael", "mode": "joue-converti", "status": 200, "converted_header": "yes", "wall_s": 46.87, "audio_s": 5.04, "rate": 24000, "file": "kyu-yael-joue-converti.wav", "vram_used_mib_after": 12908}
+{"voice": "kyu-loan", "mode": "joue-converti", "status": 200, "converted_header": "yes", "wall_s": 12.25, "audio_s": 4.96, "rate": 24000, "file": "kyu-loan-joue-converti.wav", "vram_used_mib_after": 13114}
+{"voice": "kyu-yael", "mode": "joue-converti", "status": 200, "converted_header": "yes", "wall_s": 12.31, "audio_s": 5.04, "rate": 24000, "file": "kyu-yael-joue-converti.wav", "vram_used_mib_after": 13630}

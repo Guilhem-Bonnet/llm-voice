@@ -30,7 +30,7 @@ export const STAGE_PLAY_TABLE: readonly StagePlayRow[] = [
     lasting: true
   },
   { id: "sigh", pattern: /soupir/u, direction: "With a long weary sigh before speaking, tired and resigned" },
-  { id: "laughing", pattern: /\bri(?:t|ant|re|res)\b|rican|glouss|pouff|esclaff|amusé/u, direction: "Speaking while laughing, amused, the laughter audible in the voice" },
+  { id: "laughing", pattern: /\bri(?:t|ant|re|res)\b|rican|glouss|pouff|esclaff|amusé/u, direction: "Speaking French while laughing softly, amused, a smile and light chuckles in the voice" },
   { id: "whisper", pattern: /chuchot|murmur|voix basse|mi-voix|demi-voix|tout bas|^bas$|voix étouffée/u, direction: "Whispering very softly, almost inaudible, secretive" },
   { id: "inner", pattern: /à part|à (?:lui|elle)-même|en (?:lui|elle)-même|pensée/u, direction: "An inner thought spoken inside the head: very close to the microphone, intimate, soft, voice-over narration" },
   {

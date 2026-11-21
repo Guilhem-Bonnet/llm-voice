@@ -1,0 +1,12 @@
+ Container deploy-qwen3-1 Stopping 
+ Container deploy-qwen3-1 Stopped 
+service arrêté 18:25:23
+vram libre après arrêt : utilisée 1570 Mio
+=== FISH essai 1 (bf16)
+fish code 1
+=== MING tentative unique
+ming code 1
+FIN-LOURDS
+ Container deploy-qwen3-1 Starting 
+ Container deploy-qwen3-1 Started 
+SERVICE QWEN3 REDÉMARRÉ 18:28:16

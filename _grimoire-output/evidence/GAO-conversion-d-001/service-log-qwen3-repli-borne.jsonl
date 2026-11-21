@@ -1,0 +1,2 @@
+{"timestamp": "2026-11-21T01:05:30Z", "service": "qwen3", "event": "conversion_skipped", "voice": "kyu-yael", "reason": "unreachable", "duration_s": 1.0}
+{"timestamp": "2026-11-21T01:05:40Z", "service": "qwen3", "event": "conversion_skipped", "voice": "kyu-loan", "reason": "unreachable_recently", "duration_s": 0.0}

@@ -136,3 +136,8 @@
 - **Mesure** : détection de langue faster-whisper small sur l'extrait : 15 % d'anglais, contre 0,6 % au plus pour les 7 autres voix.
 - **Résolution** : mettre le français en tête de la description (« French child… native speaker from Paris… ») : 0,2 % d'anglais sur 3 variantes. Écrire « no English accent » aggrave (20 %) : nommer l'anglais le fait entrer.
 - **Règle** : toute voix créée commence par « French » ; vérifier la langue détectée de l'extrait (seuil : anglais < 1 %).
+
+### [2026-11-20] Hook pre-push Grimoire qui bloque sans message
+- **Symptôme** : `git push` refusé juste après « 🚀 Grimoire pre-push checks... », sans raison affichée.
+- **Cause** : `.git/hooks/pre-push` cherche les ADN dans `archetypes/`, absent de ce projet (ils sont dans `_grimoire/kit/`) ; `find` échoue et `set -o pipefail` arrête le hook en silence.
+- **Résolution** : `DNA_FILES=$({ find ... 2>/dev/null || true; } | wc -l)` ; original gardé dans le scratchpad de session. Le hook est régénéré par `grimoire-init.sh hooks --install` : à signaler au kit.

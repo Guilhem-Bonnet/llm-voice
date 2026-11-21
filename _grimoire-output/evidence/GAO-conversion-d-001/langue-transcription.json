@@ -1,0 +1,159 @@
+{
+  "whisper_model": "large-v3",
+  "files": {
+    "essouffle-avant.wav": {
+      "audio_s": 6.4,
+      "detected": "fr",
+      "p_detected": 1.0,
+      "p_fr": 1.0,
+      "p_en": 0.0,
+      "top3": [
+        [
+          "fr",
+          1.0
+        ],
+        [
+          "en",
+          0.0
+        ],
+        [
+          "ja",
+          0.0
+        ]
+      ],
+      "text": "Attends, attends, je n'en peux plus ! J'ai couru depuis la gare, il fallait que je te prévienne avant qu'il ne soit trop tard."
+    },
+    "essouffle-apres.wav": {
+      "audio_s": 6.4,
+      "detected": "fr",
+      "p_detected": 1.0,
+      "p_fr": 1.0,
+      "p_en": 0.0,
+      "top3": [
+        [
+          "fr",
+          1.0
+        ],
+        [
+          "en",
+          0.0
+        ],
+        [
+          "ru",
+          0.0
+        ]
+      ],
+      "text": "Attends, attends, je n'en peux plus. J'ai couru depuis la gare. Il fallait que je te prévienne avant qu'il ne soit trop tard."
+    },
+    "kyu-yael-joue-converti.wav": {
+      "audio_s": 5.04,
+      "detected": "fr",
+      "p_detected": 0.998,
+      "p_fr": 0.998,
+      "p_en": 0.001,
+      "top3": [
+        [
+          "fr",
+          0.998
+        ],
+        [
+          "en",
+          0.001
+        ],
+        [
+          "pt",
+          0.0
+        ]
+      ],
+      "text": "« Tu m'as menti depuis le début. Je ne veux plus jamais te revoir, tu m'entends ? »"
+    },
+    "kyu-loan-joue-converti.wav": {
+      "audio_s": 4.96,
+      "detected": "fr",
+      "p_detected": 0.997,
+      "p_fr": 0.997,
+      "p_en": 0.001,
+      "top3": [
+        [
+          "fr",
+          0.997
+        ],
+        [
+          "en",
+          0.001
+        ],
+        [
+          "pt",
+          0.0
+        ]
+      ],
+      "text": "« Tu m'as menti depuis le début. Je ne veux plus jamais te revoir, tu m'entends ? »"
+    },
+    "kyu-yael-joue-repli.wav": {
+      "audio_s": 5.04,
+      "detected": "fr",
+      "p_detected": 0.994,
+      "p_fr": 0.994,
+      "p_en": 0.003,
+      "top3": [
+        [
+          "fr",
+          0.994
+        ],
+        [
+          "en",
+          0.003
+        ],
+        [
+          "pt",
+          0.001
+        ]
+      ],
+      "text": "Tu m'as menti depuis le début ! Je ne veux plus jamais te revoir, tu m'entends ?"
+    },
+    "kyu-loan-joue-repli.wav": {
+      "audio_s": 4.96,
+      "detected": "fr",
+      "p_detected": 0.996,
+      "p_fr": 0.996,
+      "p_en": 0.001,
+      "top3": [
+        [
+          "fr",
+          0.996
+        ],
+        [
+          "en",
+          0.001
+        ],
+        [
+          "pt",
+          0.0
+        ]
+      ],
+      "text": "Tu m'as menti depuis le début ! Je ne veux plus jamais te revoir, tu m'entends ?"
+    },
+    "kyu-yael-frozen.wav": {
+      "audio_s": 4.56,
+      "detected": "fr",
+      "p_detected": 1.0,
+      "p_fr": 1.0,
+      "p_en": 0.0,
+      "top3": [
+        [
+          "fr",
+          1.0
+        ],
+        [
+          "en",
+          0.0
+        ],
+        [
+          "ru",
+          0.0
+        ]
+      ],
+      "text": "Tu m'as menti depuis le début, je ne veux plus jamais te revoir, tu m'entends ?"
+    }
+  }
+}

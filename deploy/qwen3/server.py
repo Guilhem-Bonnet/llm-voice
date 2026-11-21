@@ -18,6 +18,12 @@ Deux façons de produire :
   - avec `direction`, voix jouée : modèle VoiceDesign, consigne de jeu libre, en anglais, placée
     entre la description et l'accent de la voix du catalogue.
 
+Une voix clonée qui joue change de timbre : VoiceDesign invente une voix. Pour les voix marquées
+`convert_played` au catalogue, la réplique jouée passe ensuite par le service de conversion
+(`deploy/vc/server.py`, `QWEN3_VC_URL`), qui la redit avec le timbre de la première référence de
+la voix. Service absent, arrêté ou en échec : la réplique jouée part telle quelle, jamais d'erreur ;
+l'en-tête `X-LLM-Voice-Converted` dit `yes` ou `no`, le journal dit pourquoi, sans le texte.
+
 Garanties, chacune couverte par test_server.py :
   - aucun texte ne sort de la machine : pas de téléchargement (HF_HUB_OFFLINE=1 forcé), Host et
     Origin vérifiés, et le service ne journalise jamais ni le texte ni la consigne ;
@@ -40,6 +46,7 @@ import argparse
 import collections
 import gc
 import hashlib
+import http.client
 import io
 import json
 import os
@@ -76,7 +83,7 @@ DEFAULT_SAMPLE_TEXT = (
     "chaque mot, pour que l'écoute reste agréable du début à la fin."
 )
 # Placée entre la description et l'accent : un extrait posé fige une voix posée.
-CREATE_DIRECTION = "Calm, neutral reading at a steady pace."
+CREATE_DIRECTION = "Natural reading at a steady pace, in the character's own tone."
 ORIGIN_CATALOGUE = "catalogue"
 ORIGIN_CREATED = "created"
 MAX_BODY_BYTES = 256 * 1024
@@ -85,6 +92,14 @@ POLL_S = 0.1
 MAINTAIN_S = 2.0
 READ_TIMEOUT_S = 30
 LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "[::1]", "::1")
+# Le service de conversion : connexion courte, puis le temps d'une longue réplique (6 à 7 s mesurées pour 5 s d'audio).
+CONVERT_CONNECT_S = 3.0
+# Service arrêté : le nom `vc` ne se résout plus, et la résolution peut traîner 7 à 8 s (mesuré
+# 2026-11-20). Bornée ici, puis le service n'est plus appelé pendant un moment.
+CONVERT_RESOLVE_S = 1.0
+CONVERT_RETRY_S = 30.0
+CONVERT_TIMEOUT_S = 120.0
+CONVERTED_HEADER = "X-LLM-Voice-Converted"
 
 MODE_FROZEN = "frozen"
 MODE_PLAYED = "played"
@@ -186,6 +201,8 @@ class Voice:
     # Chemins relatifs à la racine des extraits : aucun audio n'entre dans le dépôt.
     frozen_refs: tuple[dict, ...] = ()
     origin: str = ORIGIN_CATALOGUE
+    # Voix jouée reconvertie vers le timbre de sa première référence (service `vc`).
+    convert_played: bool = False
 
 
 @dataclass(frozen=True)
@@ -285,9 +302,12 @@ def load_catalog(path: Path = HERE / "voices.json") -> Catalog:
             description=entry["description"],
             accent=entry["accent"],
             frozen_refs=tuple(entry.get("frozen_refs", ())),
+            convert_played=entry.get("convert_played", False),
         )
         for voice_id, entry in raw["voices"].items()
     }
+    if any(not isinstance(voice.convert_played, bool) for voice in voices.values()):
+        raise ValueError("voices.json : `convert_played` vaut true ou false.")
     if raw["default"] not in voices:
         raise ValueError("voices.json : la voix par défaut n'est pas au catalogue.")
     return Catalog(default=raw["default"], language=raw["language"], voices=voices)
@@ -320,7 +340,9 @@ def find_references(catalog: Catalog, root: Path, log: Callable[..., None] = emi
 
 
 def played_instruction(voice: Voice, direction: str) -> str:
-    return f"{voice.description} {direction} {voice.accent}"
+    # Le français en tête : placé après une longue consigne de jeu en anglais, l'accent de la voix
+    # cède (essoufflé, toux, rire, voix intérieure entendus avec un accent anglais, 2026-11-20).
+    return f"{voice.accent} {voice.description} {direction}"
 
 
 def wav_bytes(pcm: bytes, rate: int) -> bytes:
@@ -508,6 +530,115 @@ def is_out_of_memory(error: BaseException) -> bool:
     return "OutOfMemory" in type(error).__name__ or "out of memory" in str(error).lower()
 
 
+class ConversionSkipped(Exception):
+    """La conversion n'a pas eu lieu : la réplique jouée part telle quelle. `reason` se journalise."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
+class Converter(Protocol):
+    def convert(self, source: bytes, target: bytes, checkpoint: Callable[[], None]) -> bytes:
+        """Le WAV converti, ou `ConversionSkipped`. `checkpoint` lève pour interrompre."""
+        ...
+
+
+class HttpConverter:
+    """Client du service de conversion (`deploy/vc/server.py`) : `POST /convert`, multipart `source` et `target`."""
+
+    def __init__(
+        self,
+        url: str,
+        connect_timeout_s: float = CONVERT_CONNECT_S,
+        timeout_s: float = CONVERT_TIMEOUT_S,
+        resolve_timeout_s: float = CONVERT_RESOLVE_S,
+        retry_s: float = CONVERT_RETRY_S,
+    ) -> None:
+        address = urlsplit(url)
+        if address.scheme != "http" or not address.hostname or address.path not in ("", "/") or address.query or address.username:
+            raise ValueError("QWEN3_VC_URL : http://hôte:port, sans chemin, par exemple http://vc:8022.")
+        self.host = address.hostname
+        self.port = address.port or 80
+        self.connect_timeout_s = connect_timeout_s
+        self.timeout_s = timeout_s
+        self.resolve_timeout_s = resolve_timeout_s
+        self.retry_s = retry_s
+        self._down_until = 0.0
+
+    def _address(self) -> str:
+        """L'adresse du service, en un temps borné : `getaddrinfo` n'a pas de délai à lui."""
+        found: dict[str, str] = {}
+
+        def resolve() -> None:
+            try:
+                found["ip"] = str(socket.getaddrinfo(self.host, self.port, type=socket.SOCK_STREAM)[0][4][0])
+            except (OSError, IndexError):
+                pass
+
+        worker = threading.Thread(target=resolve, name="vc-resolve", daemon=True)
+        worker.start()
+        worker.join(self.resolve_timeout_s)
+        if "ip" not in found:
+            raise OSError("service de conversion introuvable")
+        return found["ip"]
+
+    def _unreachable(self) -> ConversionSkipped:
+        self._down_until = time.monotonic() + self.retry_s
+        return ConversionSkipped("unreachable")
+
+    def convert(self, source: bytes, target: bytes, checkpoint: Callable[[], None]) -> bytes:
+        boundary = "llm-voice-" + secrets.token_hex(12)
+        body = b""
+        for name, value in (("source", source), ("target", target)):
+            body += f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"; filename="{name}.wav"\r\nContent-Type: audio/wav\r\n\r\n'.encode()
+            body += value + b"\r\n"
+        body += f"--{boundary}--\r\n".encode()
+        if time.monotonic() < self._down_until:
+            raise ConversionSkipped("unreachable_recently")
+        try:
+            address = self._address()
+        except OSError:
+            raise self._unreachable() from None
+        connection = http.client.HTTPConnection(address, self.port, timeout=self.connect_timeout_s)
+        # Le nom du service, pas l'adresse : c'est lui que le service de conversion admet dans Host.
+        headers = {"Host": f"{self.host}:{self.port}", "Content-Type": f"multipart/form-data; boundary={boundary}"}
+        try:
+            try:
+                connection.connect()
+                connection.sock.settimeout(self.timeout_s)
+                connection.request("POST", "/convert", body=body, headers=headers)
+            except OSError:
+                raise self._unreachable() from None
+            deadline = time.monotonic() + self.timeout_s
+            # Le client parti ou le jeu lancé : fermer la connexion annule la conversion de l'autre côté.
+            while not select.select([connection.sock], [], [], POLL_S)[0]:
+                checkpoint()
+                if time.monotonic() > deadline:
+                    raise ConversionSkipped("timeout")
+            checkpoint()
+            try:
+                response = connection.getresponse()
+                data = response.read()
+            except (OSError, http.client.HTTPException):
+                raise ConversionSkipped("broken") from None
+        finally:
+            connection.close()
+        if response.status != 200:
+            try:
+                reason = json.loads(data).get("reason")
+            except (ValueError, AttributeError):
+                reason = None
+            raise ConversionSkipped(reason if isinstance(reason, str) and reason.isidentifier() else f"status_{response.status}")
+        try:
+            with wave.open(io.BytesIO(data), "rb") as audio:
+                if audio.getnframes() <= 0:
+                    raise ConversionSkipped("bad_response")
+        except (wave.Error, EOFError):
+            raise ConversionSkipped("bad_response") from None
+        return data
+
+
 class Qwen3Service:
     """Tout ce qui ne dépend pas de HTTP : file, mode jeu, modèles."""
 
@@ -521,8 +652,10 @@ class Qwen3Service:
         free_vram: Callable[[], Optional[int]] = read_free_vram,
         min_free_vram: int = DEFAULT_MIN_FREE_VRAM_MB * 1024 * 1024,
         created_dir: Optional[Path] = None,
+        converter: Optional[Converter] = None,
     ) -> None:
         self.engine = engine
+        self.converter = converter
         self.created_dir = created_dir
         self._catalog_lock = threading.Lock()
         self.catalog = catalog
@@ -579,6 +712,7 @@ class Qwen3Service:
                 "played": True,
                 "description": voice.description,
                 "origin": voice.origin,
+                "convert_played": voice.convert_played,
             }
             for voice in list(self.catalog.voices.values())
         ]
@@ -757,7 +891,7 @@ class Qwen3Service:
             accent=accent,
             origin=ORIGIN_CREATED,
         )
-        instruct = f"{creation.description} {CREATE_DIRECTION} {accent}"
+        instruct = f"{accent} {creation.description} {CREATE_DIRECTION}"
         job = Job(MODE_PLAYED, creation.sample_text, voice.id, seed, instruct)
 
         def finish(pcm: bytes, rate: int) -> dict[str, object]:
@@ -780,7 +914,45 @@ class Qwen3Service:
         return result
 
     def synthesize(self, request: Request, disconnected: Callable[[], bool]) -> bytes:
-        return self._exclusive(self.job_for(request), disconnected, wav_bytes)
+        return self.speak(request, disconnected)[0]
+
+    def speak(self, request: Request, disconnected: Callable[[], bool]) -> tuple[bytes, Optional[bool]]:
+        """Le WAV, et s'il a été converti : `None` quand la voix ne demande pas de conversion."""
+        job = self.job_for(request)
+        voice = self.catalog.voices[request.voice]
+        if job.mode != MODE_PLAYED or not voice.convert_played:
+            return self._exclusive(job, disconnected, wav_bytes), None
+
+        def checkpoint() -> None:
+            if self.yielding():
+                raise GpuYielded()
+            if disconnected():
+                raise Cancelled()
+
+        # Encore dans la file : la conversion ne se dispute pas le GPU avec la synthèse suivante.
+        return self._exclusive(job, disconnected, lambda pcm, rate: self._convert_played(voice, wav_bytes(pcm, rate), checkpoint))
+
+    def _convert_played(self, voice: Voice, played: bytes, checkpoint: Callable[[], None]) -> tuple[bytes, bool]:
+        """Vers le timbre de la première référence ; tout échec rend la réplique jouée, jamais une erreur."""
+        started = time.monotonic()
+        references = self.references.get(voice.id)
+        reason = "not_configured" if self.converter is None else "no_reference" if not references else None
+        if reason is None:
+            try:
+                target = references[0].audio.read_bytes()
+                converted = self.converter.convert(played, target, checkpoint)
+                self.log("conversion_done", voice=voice.id, duration_s=round(time.monotonic() - started, 2))
+                return converted, True
+            except (Cancelled, GpuYielded):
+                raise
+            except ConversionSkipped as skipped:
+                reason = skipped.reason
+            except OSError:
+                reason = "reference_unreadable"
+            except Exception as error:  # noqa: BLE001 : le nom du type seul, voir `_exclusive`
+                reason = "error_" + type(error).__name__
+        self.log("conversion_skipped", voice=voice.id, reason=reason, duration_s=round(time.monotonic() - started, 2))
+        return played, False
 
     def _exclusive(self, job: Job, disconnected: Callable[[], bool], finish: Callable[[bytes, int], T]) -> T:
         """Une synthèse à la fois, dans l'ordre d'arrivée ; `finish` s'exécute encore dans la file."""
@@ -984,9 +1156,13 @@ def make_handler(service: Qwen3Service) -> type[BaseHTTPRequestHandler]:
                     text_chars=len(request.text),
                     direction_chars=len(request.direction),
                 )
-                audio = service.synthesize(request, lambda: peer_is_gone(self.connection))
+                audio, converted = service.speak(request, lambda: peer_is_gone(self.connection))
                 status = 200
-                self._reply(200, audio, "audio/wav")
+                extra = None
+                if converted is not None:
+                    fields["converted"] = converted
+                    extra = {CONVERTED_HEADER: "yes" if converted else "no"}
+                self._reply(200, audio, "audio/wav", extra)
             except Cancelled:
                 status = 499
                 self.close_connection = True
@@ -1134,6 +1310,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=int(os.environ.get("QWEN3_MIN_FREE_VRAM_MB") or DEFAULT_MIN_FREE_VRAM_MB),
     )
+    parser.add_argument(
+        "--vc-url",
+        default=os.environ.get("QWEN3_VC_URL") or None,
+        help="service de conversion de timbre (deploy/vc), par exemple http://vc:8022 ; absent : aucune conversion",
+    )
     return parser
 
 
@@ -1151,6 +1332,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         yield_flag_path(),
         min_free_vram=args.min_free_vram_mb * 1024 * 1024,
         created_dir=created_dir,
+        converter=HttpConverter(args.vc_url) if args.vc_url else None,
     )
     server = serve(service, args.host, args.port)
 
@@ -1161,7 +1343,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     threading.Thread(target=maintain_forever, name="maintain", daemon=True).start()
     signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=server.shutdown, daemon=True).start())
-    emit("listening", host=args.host, port=args.port, voices=len(references), catalog=len(catalog.voices), created=created, device=args.device)
+    emit("listening", host=args.host, port=args.port, voices=len(references), catalog=len(catalog.voices), created=created, device=args.device, conversion=bool(args.vc_url))
     try:
         server.serve_forever()
     except KeyboardInterrupt:

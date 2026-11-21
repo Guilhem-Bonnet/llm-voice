@@ -1,0 +1,5 @@
+torch.OutOfMemoryError: HIP out of memory. Tried to allocate 98.00 MiB. GPU 0 has a total capacity of 15.92 GiB of which 32.00 MiB is free. Of the allocated memory 15.20 GiB is allocated by PyTorch, and 61.47 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+8:2026-11-20 23:26:26.676 +00:00 | INFO     | tools.server.model_manager:load_llama_model:123 - LLAMA model loaded.
+12:2026-11-20 23:26:36.353 +00:00 | INFO     | tools.server.model_manager:load_decoder_model:137 - Decoder model loaded.
+35:    self.warm_up(self.tts_inference_engine)
+36:  File "/lab/code/tools/server/model_manager.py", line 142, in warm_up
