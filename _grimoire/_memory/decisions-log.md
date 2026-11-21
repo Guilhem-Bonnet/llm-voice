@@ -287,3 +287,8 @@
 - **Fait** : PR #72 fusionnée dans main (commit `cbfa22b`, approuvée par guilhem-bonnet) après correction de zod 4.6.7 (GHSA-mrhx-c7xc-m3w5), du lint `as_chunks` de Rust 1.100, de 5 alertes CodeQL et d'un test sans moteur instable sous Windows. Images publiées et publiques sur GHCR : `llm-voice-qwen3:0.1.0-rocm` (testée hors réseau), `llm-voice-qwen3:0.1.0-cuda` (non testée sur GPU NVIDIA), `llm-voice-qwen3-models:0.1.0` (modèles Base + VoiceDesign, catalogue et 9 voix créées) ; accès anonyme vérifié (200).
 - **Contrainte apprise** : une GitHub App ne peut pas créer un paquet GHCR sur un compte personnel (`installation not allowed to Create organization package`) ; premier envoi et passage en public faits par guilhem-bonnet ; le dépôt `llm-voice` a l'accès Write aux paquets pour les versions suivantes.
 - **Agent** : concierge, sur décision de guilhem-bonnet
+
+### [2026-11-20] Voix clonées et jeu : conversion de voix validée
+- **Constat** : Qwen3 clone (Base, sans consigne) ou joue (VoiceDesign, voix inventée), jamais les deux ; une voix clonée qui joue change de timbre. Les voix âgées ne s'obtiennent pas par description.
+- **Décision** : 12 voix clonées depuis les voix Kyutai choisies à l'écoute (CC-BY 4.0, CML-TTS / LibriVox) ; pour les répliques jouées, conversion de voix Chatterbox VC (MIT, local, filigrane PerthNet inaudible) du jeu VoiceDesign vers le timbre cloné. Validé à l'oreille : « ça fonctionne vraiment bien ». Consigne du rire commencée par « Speaking French » validée ; essoufflé encore accentué.
+- **Agent** : concierge, sur décision de guilhem-bonnet
