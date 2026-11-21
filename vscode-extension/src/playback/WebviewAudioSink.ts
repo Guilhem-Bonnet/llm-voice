@@ -26,6 +26,7 @@
  * deliberately does not model since it is a webview-only concern.
  */
 
+import { access } from "node:fs/promises";
 import * as vscode from "vscode";
 import type {
   ExtensionToWebviewMessage,
@@ -42,10 +43,15 @@ import type {
 } from "./AudioSink.js";
 import { Emitter, type Unsubscribe } from "./emitter.js";
 
+/** How long a `load()` waits for the player view to resolve before reporting it missing. */
+export const WEBVIEW_ATTACH_WAIT_MS = 5000;
+
 /** Bridges `AudioSink` calls to `postMessage` against a single webview. */
 export class WebviewAudioSink implements LegacyAudioSink {
   private webview: vscode.Webview | undefined;
   private webviewReady = false;
+  /** Who waits for a view: the first `load()` of a reading often precedes the player view's resolution. */
+  private viewWaiters: Array<() => void> = [];
 
   private readonly timeupdateEmitter = new Emitter<LegacyAudioSinkEventMap["timeupdate"]>();
   private readonly endedEmitter = new Emitter<LegacyAudioSinkEventMap["ended"]>();
@@ -57,22 +63,59 @@ export class WebviewAudioSink implements LegacyAudioSink {
   attach(webview: vscode.Webview): vscode.Disposable {
     this.webview = webview;
     this.webviewReady = false;
+    const waiters = this.viewWaiters;
+    this.viewWaiters = [];
+    waiters.forEach((resolve) => resolve());
     return webview.onDidReceiveMessage((message: WebviewToExtensionMessage) => {
       this.dispatch(message);
     });
   }
 
-  /** Releases the webview reference; queued `on()` listeners stay registered. */
-  detach(): void {
+  /**
+   * Releases the webview reference; queued `on()` listeners stay registered.
+   * Given a `webview`, only if it is still the one this sink routes to: the
+   * two player views share one sink, and a stale one disposing must not null
+   * out the live one (PR #64, GAO-diagnostic-s-001). Without an argument,
+   * detaches unconditionally.
+   */
+  detach(webview?: vscode.Webview): void {
+    if (webview !== undefined && webview !== this.webview) {
+      return;
+    }
     this.webview = undefined;
     this.webviewReady = false;
   }
 
+  /**
+   * A chunk that cannot be handed to the webview is this chunk failing, not
+   * `load()` failing: it surfaces as an `error` event, as with
+   * `NativeAudioSink`, so the controller's failure policy runs and names the
+   * cause (PR #64, GAO-diagnostic-s-001). It used to `return` in silence with
+   * no view attached, and the highlight then ran over no sound at all.
+   */
   async load(chunk: AudioSinkChunk): Promise<void> {
-    if (this.webview === undefined) {
+    // A reading started with the player never opened reveals it (`PlayerViewProvider.reveal`):
+    // its view resolves a moment later. Wait for it before calling the chunk lost.
+    if (this.webview === undefined && !(await this.viewWithin(WEBVIEW_ATTACH_WAIT_MS))) {
+      this.emitLoadError(chunk, "aucune vue du lecteur n'est ouverte (« Lecture en cours »)");
       return;
     }
-    const src = this.webview.asWebviewUri(vscode.Uri.file(chunk.src)).toString();
+    // A cache file gone before playback reached it (eviction racing the
+    // queue) is reported by `<audio>` as an opaque « code 4 »: say it here.
+    try {
+      await access(chunk.src);
+    } catch {
+      this.emitLoadError(chunk, `fichier audio absent du cache (${chunk.src}) — évincé ou jamais écrit`);
+      return;
+    }
+    // Re-read after the await: the URI and the message must target the same
+    // webview, even if another view resolved meanwhile.
+    const target = this.webview;
+    if (target === undefined) {
+      this.emitLoadError(chunk, "la vue du lecteur s'est fermée pendant le chargement");
+      return;
+    }
+    const src = target.asWebviewUri(vscode.Uri.file(chunk.src)).toString();
     const message: ExtensionToWebviewMessage = {
       type: "load",
       chunkId: chunk.chunkId,
@@ -80,7 +123,28 @@ export class WebviewAudioSink implements LegacyAudioSink {
       autoplay: true,
       ...(chunk.durationMs !== undefined ? { durationMs: chunk.durationMs } : {})
     };
-    this.post(message);
+    void target.postMessage(message);
+  }
+
+  private viewWithin(timeoutMs: number): Promise<boolean> {
+    if (this.webview !== undefined) {
+      return Promise.resolve(true);
+    }
+    return new Promise((resolve) => {
+      const done = (): void => {
+        clearTimeout(timer);
+        resolve(this.webview !== undefined);
+      };
+      const timer = setTimeout(() => {
+        this.viewWaiters = this.viewWaiters.filter((waiter) => waiter !== done);
+        resolve(false);
+      }, timeoutMs);
+      this.viewWaiters.push(done);
+    });
+  }
+
+  private emitLoadError(chunk: AudioSinkChunk, reason: string): void {
+    this.errorEmitter.emit({ chunkId: chunk.chunkId, message: `WebviewAudioSink : ${reason}` });
   }
 
   play(): void {

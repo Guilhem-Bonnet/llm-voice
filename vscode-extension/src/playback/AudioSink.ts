@@ -104,6 +104,15 @@ export interface AudioSink {
    */
   readonly gapless: boolean;
   /**
+   * Fallback watchdog (repris de la PR #64, GAO-diagnostic-s-001): when set,
+   * `PlaybackController` expects a `timeupdate` for the playing chunk within
+   * this many milliseconds of `play()` (first chunk, resume, hand-over); none
+   * means the engine never really started, and it is reported as a playback
+   * `error` instead of a highlight running over silence. Only the webview
+   * engine declares it — its `<audio>` element can fail without a word.
+   */
+  readonly noProgressTimeoutMs?: number;
+  /**
    * Loads a chunk, replacing whatever was loaded **and everything enqueued**,
    * paused at 0 ms.
    */

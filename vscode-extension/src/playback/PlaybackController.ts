@@ -186,6 +186,8 @@ export class PlaybackController {
   private preloaded: PreloadedChunk | undefined;
   /** Index a preload is waiting for (synthesis still running). */
   private preloadingIndex: number | undefined;
+  /** Armed at `play()` when the sink declares `noProgressTimeoutMs`; cleared by its first `timeupdate`. */
+  private noProgressTimer: ReturnType<typeof setTimeout> | undefined;
   private sessionCounter = 0;
   private disposed = false;
 
@@ -309,6 +311,7 @@ export class PlaybackController {
       return;
     }
     this.session.sink.pause();
+    this.clearNoProgressWatchdog();
     this.setState("paused");
   }
 
@@ -319,6 +322,7 @@ export class PlaybackController {
     }
     this.session.sink.play();
     this.setState("playing");
+    this.armNoProgressWatchdog();
   }
 
   /** Rewinds to zero and cancels unnecessary synthesis; keeps the cache (CdC §36). */
@@ -329,6 +333,7 @@ export class PlaybackController {
     this.generation += 1;
     this.awaitingIndex = undefined;
     this.forgetPreload();
+    this.clearNoProgressWatchdog();
     this.session.queue.cancelAll();
     this.session.sink.stop();
     this.currentIndex = 0;
@@ -459,6 +464,7 @@ export class PlaybackController {
     this.generation += 1;
     this.awaitingIndex = undefined;
     this.forgetPreload();
+    this.clearNoProgressWatchdog();
     if (this.session !== undefined) {
       this.session.queue.dispose();
       this.session.sink.stop();
@@ -491,6 +497,7 @@ export class PlaybackController {
     if (this.disposed || chunk === undefined || chunk.id !== chunkId) {
       return;
     }
+    this.clearNoProgressWatchdog();
     this.positionMs = positionMs;
     this.progressed.emit({
       positionMs,
@@ -510,6 +517,7 @@ export class PlaybackController {
     ) {
       return;
     }
+    this.clearNoProgressWatchdog();
     chunk.status = "played";
     const preloaded = this.preloaded;
     if (preloaded !== undefined && preloaded.index === this.currentIndex + 1) {
@@ -558,6 +566,7 @@ export class PlaybackController {
       sourceRanges: chunk.sourceRanges
     });
     session.queue.setCursor(preloaded.index);
+    this.armNoProgressWatchdog();
     void this.preloadAfter(preloaded.index, generation);
   }
 
@@ -578,6 +587,7 @@ export class PlaybackController {
     if (this.disposed || chunk === undefined || chunk.id !== chunkId) {
       return;
     }
+    this.clearNoProgressWatchdog();
     chunk.status = "error";
     chunk.error = message;
     // Invalidate the transition in flight before the (possibly slow, user
@@ -606,6 +616,7 @@ export class PlaybackController {
       session.sink.clearQueue();
     }
     this.forgetPreload();
+    this.clearNoProgressWatchdog();
     this.currentIndex = index;
     this.positionMs = 0;
     session.queue.setCursor(index);
@@ -677,6 +688,7 @@ export class PlaybackController {
     chunk.status = "playing";
     session.sink.play();
     this.setState("playing");
+    this.armNoProgressWatchdog();
     this.chunkChanged.emit({ index, chunk, sourceRanges: chunk.sourceRanges });
     // Re-arm the prefetch window now that the cursor really moved.
     session.queue.setCursor(index);
@@ -815,6 +827,7 @@ export class PlaybackController {
     if (decision === "stop") {
       this.generation += 1;
       this.forgetPreload();
+      this.clearNoProgressWatchdog();
       this.session.queue.cancelAll();
       this.session.sink.stop();
       this.setState("error");
@@ -830,9 +843,47 @@ export class PlaybackController {
     }
     this.generation += 1;
     this.forgetPreload();
+    this.clearNoProgressWatchdog();
     this.session.queue.cancelAll();
     this.session.sink.stop();
     this.setState("completed");
+  }
+
+  /**
+   * Fallback watchdog (repris de la PR #64, GAO-diagnostic-s-001): the sink
+   * was told to play the current chunk; if it declares `noProgressTimeoutMs`
+   * and no `timeupdate` for that chunk arrives in time, the engine never
+   * really started. Reported exactly like a sink `error` (origin
+   * `"playback"`), so the failure policy runs and names it, instead of a
+   * highlight moving over silence.
+   */
+  private armNoProgressWatchdog(): void {
+    this.clearNoProgressWatchdog();
+    const session = this.session;
+    const chunk = this.currentChunk();
+    const delayMs = session?.sink.noProgressTimeoutMs;
+    if (session === undefined || chunk === undefined || delayMs === undefined) {
+      return;
+    }
+    const generation = this.generation;
+    const chunkId = chunk.id;
+    this.noProgressTimer = setTimeout(() => {
+      this.noProgressTimer = undefined;
+      if (this.isStale(generation) || this.state !== "playing" || this.currentChunk()?.id !== chunkId) {
+        return;
+      }
+      void this.handleSinkError(
+        chunkId,
+        `aucune progression de la lecture ${delayMs} ms après play() — le moteur audio n'a pas démarré`
+      );
+    }, delayMs);
+  }
+
+  private clearNoProgressWatchdog(): void {
+    if (this.noProgressTimer !== undefined) {
+      clearTimeout(this.noProgressTimer);
+      this.noProgressTimer = undefined;
+    }
   }
 
   private currentChunk(): AudioChunk | undefined {

@@ -3720,8 +3720,12 @@ export class Pipeline implements PipelineFacade {
   /**
    * CdC §52's three synthesis-failure surfaces, all reached through
    * `PlaybackController`'s single `onChunkError` callback:
-   *  - `origin !== "synthesis"` (a playback/decode failure) always skips —
-   *    unchanged from before S5.3, no dialog fits a broken audio *file*.
+   *  - `origin !== "synthesis"` (the sink could not play a file synthesis
+   *    *did* produce, or never started it — no view, file gone, the
+   *    no-progress watchdog) **stops** the reading and says why. It used to
+   *    skip, which turned a broken engine into a highlight racing silently
+   *    through every chunk at JS speed (repris de la PR #64,
+   *    GAO-diagnostic-s-001).
    *  - the session's *first* chunk (`index === 0`) failing after
    *    `AudioQueue`'s retries means the provider itself is unreachable
    *    ("TTS indisponible"): `notifyTtsUnavailable`, and its `Retry` re-runs
@@ -3748,13 +3752,19 @@ export class Pipeline implements PipelineFacade {
    * identically again.
    */
   private async handleChunkError(info: PlaybackErrorInfo): Promise<ChunkErrorDecision> {
-    this.output.warn("chunk failed", { chunkId: info.chunk.id, origin: info.origin, index: info.index });
+    this.output.warn("chunk failed", {
+      chunkId: info.chunk.id,
+      origin: info.origin,
+      index: info.index,
+      message: info.message
+    });
     if (info.origin !== "synthesis") {
+      this.statusBar.update({ ...this.statusBarModel("error") });
       if (this.notificationGate.shouldNotify("playbackFailed")) {
         this.notificationGate.markShown("playbackFailed");
         void vscode.window.showErrorMessage(formatPlaybackFailedMessage(info.message));
       }
-      return "skip";
+      return "stop";
     }
     this.statusBar.update({ ...this.statusBarModel("error") });
 
