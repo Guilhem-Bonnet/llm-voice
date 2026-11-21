@@ -186,7 +186,7 @@ class Contract(ServerCase):
         self.assertEqual(payload["default"], self.voice)
         description = "Young adult woman, medium pitch, clear diction."
         row = {"id": self.voice, "name": "Voix des essais 21 et 22", "available": True, "played": True}
-        self.assertIn({**row, "description": description, "origin": "catalogue"}, payload["voices"])
+        self.assertIn({**row, "description": description, "origin": "catalogue", "convert_played": False}, payload["voices"])
         self.assertEqual({entry["id"] for entry in payload["voices"]}, set(srv.load_catalog().voices))
         self.assertTrue(all(entry["origin"] == "catalogue" for entry in payload["voices"]))
 
@@ -789,7 +789,7 @@ class Creation(ServerCase):
         voices = json.loads(self.request("GET", "/voices")[1])["voices"]
         row = next(voice for voice in voices if voice["id"] == payload["id"])
         expected = {"id": payload["id"], "name": "Homme mûr grave", "available": True, "played": True}
-        self.assertEqual(row, {**expected, "description": self.DESCRIPTION, "origin": "created"})
+        self.assertEqual(row, {**expected, "description": self.DESCRIPTION, "origin": "created", "convert_played": False})
         self.assertEqual(voices[0]["origin"], "catalogue")
 
     def test_the_client_never_chooses_the_id_nor_a_path(self):
@@ -959,6 +959,196 @@ class Creation(ServerCase):
         response, _ = self.request("POST", "/voices/create", body, {"Content-Type": content_type, "Origin": "https://example.com"})
         self.assertEqual(response.status, 403)
         self.assertEqual(self.engine.calls, [])
+
+
+class FakeVc:
+    """Un faux service de conversion sur la boucle locale : ce qu'il reçoit, ce qu'il répond."""
+
+    CONVERTED = srv.wav_bytes(b"\x07\x00" * 4800, 24000)
+
+    def __init__(self) -> None:
+        self.received: list[dict] = []
+        self.status = 200
+        self.body = self.CONVERTED
+        self.hold = threading.Event()
+        self.peer_left = threading.Event()
+        fake = self
+
+        class Handler(srv.BaseHTTPRequestHandler):
+            def log_message(self, *args) -> None:
+                pass
+
+            def do_POST(self) -> None:  # noqa: N802
+                body = self.rfile.read(int(self.headers["Content-Length"]))
+                kind = self.headers["Content-Type"]
+                boundary = kind.split("boundary=", 1)[1].encode()
+                parts = {}
+                for piece in body.split(b"--" + boundary)[1:-1]:
+                    head, _, content = piece.partition(b"\r\n\r\n")
+                    name = re.search(rb'name="([^"]+)"', head).group(1).decode()
+                    parts[name] = content[:-2]
+                fake.received.append({"path": self.path, "host": self.headers["Host"], "origin": self.headers.get("Origin"), **parts})
+                while fake.hold.is_set():
+                    if srv.peer_is_gone(self.connection):
+                        fake.peer_left.set()
+                        return
+                    time.sleep(0.01)
+                self.send_response(fake.status)
+                self.send_header("Content-Length", str(len(fake.body)))
+                self.end_headers()
+                self.wfile.write(fake.body)
+
+        self.server = srv.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.server.daemon_threads = True
+        self.url = f"http://127.0.0.1:{self.server.server_address[1]}"
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def close(self) -> None:
+        self.hold.clear()
+        self.server.shutdown()
+        self.server.server_close()
+
+
+class Conversion(ServerCase):
+    """Voix clonée qui joue : VoiceDesign, puis le timbre de sa référence par le service `vc`."""
+
+    VOICE = "kyu-yael"
+    PLAYED = srv.wav_bytes(b"\x01\x00" * 2400, 24000)
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.vc = FakeVc()
+        self.addCleanup(self.vc.close)
+        self.ref = self.dir / "yael.wav"
+        self.ref.write_bytes(srv.wav_bytes(b"\x05\x00" * 24000, 24000))
+        self.references[self.VOICE] = (srv.Reference(self.ref, "Bonjour."),)
+        self.service.converter = srv.HttpConverter(self.vc.url, timeout_s=5)
+
+    def skipped(self) -> list[dict]:
+        return [record for record in self.logged if record["event"] == "conversion_skipped"]
+
+    def test_a_played_cloned_voice_is_converted_towards_its_first_reference(self):
+        response, body = self.tts(text=SECRET, voice_url=self.VOICE, direction="Furious, shouting.")
+        self.assertEqual(response.status, 200)
+        self.assertEqual(response.getheader("X-LLM-Voice-Converted"), "yes")
+        self.assertEqual(body, FakeVc.CONVERTED)
+        [sent] = self.vc.received
+        self.assertEqual((sent["path"], sent["source"], sent["target"]), ("/convert", self.PLAYED, self.ref.read_bytes()))
+        self.assertIsNone(sent["origin"])
+        self.assertEqual(self.engine.calls[0].mode, srv.MODE_PLAYED)
+        self.assertTrue(any(r["event"] == "conversion_done" for r in self.logged))
+        self.assertTrue(any(r.get("converted") is True for r in self.logged if r["event"] == "request"))
+
+    def test_the_frozen_voice_and_unmarked_voices_are_never_converted(self):
+        response, _ = self.tts(text="Bonjour.", voice_url=self.VOICE)
+        self.assertIsNone(response.getheader("X-LLM-Voice-Converted"))
+        response, body = self.tts(text="Bonjour.", voice_url=self.voice, direction="Furious.")
+        self.assertIsNone(response.getheader("X-LLM-Voice-Converted"))
+        self.assertEqual(body, self.PLAYED)
+        self.assertEqual(self.vc.received, [])
+
+    def assert_fallback(self, reason: str) -> None:
+        response, body = self.tts(text=SECRET, voice_url=self.VOICE, direction=SECRET_DIRECTION)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(response.getheader("X-LLM-Voice-Converted"), "no")
+        self.assertEqual(body, self.PLAYED)
+        self.assertEqual([r["reason"] for r in self.skipped()], [reason])
+        dump = json.dumps(self.logged, ensure_ascii=False)
+        self.assertNotIn(SECRET, dump)
+        self.assertNotIn(SECRET_DIRECTION, dump)
+
+    def test_a_stopped_service_gives_the_played_voice_without_error(self):
+        self.vc.close()
+        self.assert_fallback("unreachable")
+
+    def test_an_unknown_host_gives_the_played_voice_without_error(self):
+        self.service.converter = srv.HttpConverter("http://vc.invalid:8022", connect_timeout_s=2)
+        self.assert_fallback("unreachable")
+
+    def test_a_service_in_game_mode_or_failing_gives_the_played_voice(self):
+        self.vc.status, self.vc.body = 503, json.dumps({"reason": "gpu_yield"}).encode()
+        self.assert_fallback("gpu_yield")
+
+    def test_a_500_without_reason_gives_the_played_voice(self):
+        self.vc.status, self.vc.body = 500, b"<html>"
+        self.assert_fallback("status_500")
+
+    def test_a_reply_that_is_not_a_wav_gives_the_played_voice(self):
+        self.vc.body = b"not a wav"
+        self.assert_fallback("bad_response")
+
+    def test_a_slow_service_gives_the_played_voice_after_the_timeout(self):
+        self.service.converter = srv.HttpConverter(self.vc.url, timeout_s=0.5)
+        self.vc.hold.set()
+        self.assert_fallback("timeout")
+        self.assertTrue(self.vc.peer_left.wait(5), "la conversion abandonnée est annulée de l'autre côté")
+
+    def test_without_url_or_reference_the_played_voice_goes_as_it_is(self):
+        self.service.converter = None
+        self.assert_fallback("not_configured")
+        self.logged.clear()
+        self.service.converter = srv.HttpConverter(self.vc.url)
+        self.ref.rename(self.dir / "ailleurs.wav")
+        self.assert_fallback("reference_unreadable")
+
+    def test_a_client_leaving_during_the_conversion_cancels_it_on_both_sides(self):
+        self.vc.hold.set()
+        body, content_type = multipart({"text": SECRET, "voice_url": self.VOICE, "direction": "Angry."})
+        sock = socket.create_connection(("127.0.0.1", self.port))
+        sock.sendall(f"POST /tts HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: {content_type}\r\nContent-Length: {len(body)}\r\n\r\n".encode() + body)
+        deadline = time.monotonic() + 5
+        while not self.vc.received and time.monotonic() < deadline:
+            time.sleep(0.01)
+        sock.close()
+        self.assertTrue(self.vc.peer_left.wait(5))
+        deadline = time.monotonic() + 5
+        while not any(r.get("status") == 499 for r in self.logged) and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertTrue(any(r.get("status") == 499 for r in self.logged))
+
+    def test_game_mode_during_the_conversion_answers_503_and_frees_the_model(self):
+        self.vc.hold.set()
+        result: dict = {}
+        thread = threading.Thread(target=lambda: result.update(r=self.tts(text="Bonjour.", voice_url=self.VOICE, direction="Angry.")))
+        thread.start()
+        deadline = time.monotonic() + 5
+        while not self.vc.received and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.flag.touch()
+        thread.join(5)
+        self.assertEqual(result["r"][0].status, 503)
+        self.assertEqual(self.engine.loaded, frozenset())
+
+    def test_the_url_is_http_host_and_port_only(self):
+        for bad in ("https://vc:8022", "http://vc:8022/convert", "file:///etc", "http://u:p@vc:8022", "vc:8022"):
+            with self.assertRaises(ValueError):
+                srv.HttpConverter(bad)
+        converter = srv.HttpConverter("http://vc:8022")
+        self.assertEqual((converter.host, converter.port), ("vc", 8022))
+
+    def test_the_url_comes_from_the_environment(self):
+        with mock.patch.dict(os.environ, {"QWEN3_VC_URL": "http://vc:8022"}):
+            self.assertEqual(srv.build_parser().parse_args([]).vc_url, "http://vc:8022")
+        with mock.patch.dict(os.environ, {"QWEN3_VC_URL": ""}):
+            self.assertIsNone(srv.build_parser().parse_args([]).vc_url)
+
+    def test_the_catalogue_converts_the_twelve_cloned_voices_only(self):
+        catalog = srv.load_catalog()
+        converted = sorted(voice.id for voice in catalog.voices.values() if voice.convert_played)
+        self.assertEqual(len(converted), 12)
+        self.assertTrue(all(voice_id.startswith("kyu-") for voice_id in converted))
+        self.assertFalse(catalog.voices["fr-essais-21-22"].convert_played)
+        path = self.dir / "voices.json"
+        path.write_text(json.dumps({"default": "a", "language": "French", "voices": {"a": {"name": "A", "seed": 1, "description": "D.", "accent": "A.", "convert_played": "yes"}}}), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            srv.load_catalog(path)
+
+    def test_compose_points_qwen3_at_the_internal_service(self):
+        compose = (ROOT / "deploy" / "docker-compose.tts.yml").read_text(encoding="utf-8")
+        block = re.split(r"\n  [a-z0-9_-]+:\n", compose.split("\n  qwen3:\n", 1)[1], maxsplit=1)[0]
+        self.assertIn("QWEN3_VC_URL=http://vc:8022", block)
+        self.assertIn("- tts-internal", block)
+        self.assertIn("- default", block)
 
 
 class Catalogue(unittest.TestCase):

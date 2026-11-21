@@ -1,0 +1,4 @@
+# GAO-conversion-d-001 — Conversion de timbre des voix clonées quand elles jouent
+- Portée : deploy/vc/ (server.py, test_server.py, prepare-weights.sh), deploy/qwen3/server.py + test_server.py + voices.json (`convert_played`, `QWEN3_VC_URL`), deploy/docker-compose.tts.yml (service `vc`, réseau interne `tts-internal`), deploy/README.md. Hors portée : vscode-extension/.
+- Critère : `python3 -P deploy/qwen3/test_server.py` et `python3 -P deploy/vc/test_server.py` verts ; en réel, `POST /tts` joué pour kyu-yael et kyu-loan → `X-LLM-Voice-Converted: yes`, puis `vc` arrêté → `no` sans erreur ; mesures (durée, temps, transcription, langue, VRAM) ; essai essoufflé fr-essais-21-22 avant/après avec langue détectée et page d'écoute.
+- Interdits : aucun son sur les enceintes, mode jeu vérifié avant chaque charge GPU, aucun téléchargement, pas de push, pas de suppression, `deploy-qwen3-1` doit tourner à la fin. Pas de needs_verification : écoute utilisateur requise.

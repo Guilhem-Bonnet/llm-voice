@@ -1,0 +1,31 @@
+......................----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 54066)
+Traceback (most recent call last):
+  File "/usr/lib64/python3.14/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib64/python3.14/http/server.py", line 500, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib64/python3.14/http/server.py", line 488, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/mnt/Travail/Projets/Dev/TTS-Voice/deploy/qwen3/test_server.py", line 999, in do_POST
+    self.wfile.write(fake.body)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/usr/lib64/python3.14/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.........................................................................................
+----------------------------------------------------------------------
+Ran 111 tests in 53.546s
+
+OK
