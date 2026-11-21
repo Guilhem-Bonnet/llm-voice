@@ -14,7 +14,7 @@ vi.mock("vscode", () => ({
 }));
 
 import type * as vscode from "vscode";
-import { WebviewAudioSink } from "../../../src/playback/WebviewAudioSink.js";
+import { WEBVIEW_ATTACH_WAIT_MS, WebviewAudioSink } from "../../../src/playback/WebviewAudioSink.js";
 
 function fakeWebview(): vscode.Webview & { posted: unknown[] } {
   const posted: unknown[] = [];
@@ -37,14 +37,33 @@ function existingFile(): string {
 }
 
 describe("WebviewAudioSink.load — failures are named, never silent (PR #64)", () => {
-  it("emits an error when no player view is attached", async () => {
+  it("emits an error when no player view resolves in time", async () => {
+    vi.useFakeTimers();
+    try {
+      const sink = new WebviewAudioSink();
+      const errors: { chunkId: string; message: string }[] = [];
+      sink.on("error", (payload) => errors.push(payload));
+      const loading = sink.load({ chunkId: "c1", src: existingFile() });
+      await vi.advanceTimersByTimeAsync(WEBVIEW_ATTACH_WAIT_MS);
+      await loading;
+      expect(errors).toHaveLength(1);
+      expect(errors[0]?.chunkId).toBe("c1");
+      expect(errors[0]?.message).toContain("aucune vue du lecteur");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("waits for a player view that resolves after the first load(), then loads into it", async () => {
     const sink = new WebviewAudioSink();
-    const errors: { chunkId: string; message: string }[] = [];
+    const errors: unknown[] = [];
     sink.on("error", (payload) => errors.push(payload));
-    await sink.load({ chunkId: "c1", src: existingFile() });
-    expect(errors).toHaveLength(1);
-    expect(errors[0]?.chunkId).toBe("c1");
-    expect(errors[0]?.message).toContain("aucune vue du lecteur");
+    const loading = sink.load({ chunkId: "c0", src: existingFile() });
+    const webview = fakeWebview();
+    sink.attach(webview);
+    await loading;
+    expect(errors).toHaveLength(0);
+    expect(webview.posted).toContainEqual(expect.objectContaining({ type: "load", chunkId: "c0" }));
   });
 
   it("emits an error, and posts nothing, when the cache file is gone", async () => {
@@ -95,7 +114,14 @@ describe("WebviewAudioSink.detach — a stale view cannot steal the live bridge 
     sink.detach(live);
     const errors: unknown[] = [];
     sink.on("error", (payload) => errors.push(payload));
-    await sink.load({ chunkId: "c5", src: existingFile() });
+    vi.useFakeTimers();
+    try {
+      const loading = sink.load({ chunkId: "c5", src: existingFile() });
+      await vi.advanceTimersByTimeAsync(WEBVIEW_ATTACH_WAIT_MS);
+      await loading;
+    } finally {
+      vi.useRealTimers();
+    }
     expect(errors).toHaveLength(1);
     expect(live.posted).toHaveLength(0);
   });

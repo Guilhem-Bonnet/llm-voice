@@ -43,10 +43,15 @@ import type {
 } from "./AudioSink.js";
 import { Emitter, type Unsubscribe } from "./emitter.js";
 
+/** How long a `load()` waits for the player view to resolve before reporting it missing. */
+export const WEBVIEW_ATTACH_WAIT_MS = 5000;
+
 /** Bridges `AudioSink` calls to `postMessage` against a single webview. */
 export class WebviewAudioSink implements LegacyAudioSink {
   private webview: vscode.Webview | undefined;
   private webviewReady = false;
+  /** Who waits for a view: the first `load()` of a reading often precedes the player view's resolution. */
+  private viewWaiters: Array<() => void> = [];
 
   private readonly timeupdateEmitter = new Emitter<LegacyAudioSinkEventMap["timeupdate"]>();
   private readonly endedEmitter = new Emitter<LegacyAudioSinkEventMap["ended"]>();
@@ -58,6 +63,9 @@ export class WebviewAudioSink implements LegacyAudioSink {
   attach(webview: vscode.Webview): vscode.Disposable {
     this.webview = webview;
     this.webviewReady = false;
+    const waiters = this.viewWaiters;
+    this.viewWaiters = [];
+    waiters.forEach((resolve) => resolve());
     return webview.onDidReceiveMessage((message: WebviewToExtensionMessage) => {
       this.dispatch(message);
     });
@@ -86,7 +94,9 @@ export class WebviewAudioSink implements LegacyAudioSink {
    * no view attached, and the highlight then ran over no sound at all.
    */
   async load(chunk: AudioSinkChunk): Promise<void> {
-    if (this.webview === undefined) {
+    // A reading started with the player never opened reveals it (`PlayerViewProvider.reveal`):
+    // its view resolves a moment later. Wait for it before calling the chunk lost.
+    if (this.webview === undefined && !(await this.viewWithin(WEBVIEW_ATTACH_WAIT_MS))) {
       this.emitLoadError(chunk, "aucune vue du lecteur n'est ouverte (« Lecture en cours »)");
       return;
     }
@@ -114,6 +124,23 @@ export class WebviewAudioSink implements LegacyAudioSink {
       ...(chunk.durationMs !== undefined ? { durationMs: chunk.durationMs } : {})
     };
     void target.postMessage(message);
+  }
+
+  private viewWithin(timeoutMs: number): Promise<boolean> {
+    if (this.webview !== undefined) {
+      return Promise.resolve(true);
+    }
+    return new Promise((resolve) => {
+      const done = (): void => {
+        clearTimeout(timer);
+        resolve(this.webview !== undefined);
+      };
+      const timer = setTimeout(() => {
+        this.viewWaiters = this.viewWaiters.filter((waiter) => waiter !== done);
+        resolve(false);
+      }, timeoutMs);
+      this.viewWaiters.push(done);
+    });
   }
 
   private emitLoadError(chunk: AudioSinkChunk, reason: string): void {
